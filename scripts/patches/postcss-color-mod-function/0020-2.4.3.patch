@@ -1,0 +1,206 @@
+From 6ce644fa93fe7a3c8938ff2c1d54906e0e608f8e Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 21 Jul 2018 07:41:50 -0400
+Subject: [PATCH 20/29] 2.4.3
+
+---
+ .appveyor.yml                |  2 +-
+ .gitignore                   |  2 +-
+ .rollup.js                   |  5 ++++-
+ .travis.yml                  |  2 +-
+ CHANGELOG.md                 |  4 ++++
+ README.md                    |  4 ++--
+ index.js                     |  2 +-
+ package.json                 | 26 +++++++++++++-------------
+ test/basic.colors.expect.css |  4 ++++
+ test/basic.css               |  4 ++++
+ test/basic.expect.css        |  4 ++++
+ 11 files changed, 39 insertions(+), 20 deletions(-)
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+index acbf8a5..73f0d8f 100644
+--- a/.appveyor.yml
++++ b/.appveyor.yml
+@@ -2,7 +2,7 @@
+ 
+ environment:
+   matrix:
+-    - nodejs_version: 4
++    - nodejs_version: 6
+ 
+ version: "{build}"
+ build: off
+diff --git a/.gitignore b/.gitignore
+index 6832ce8..de73e5a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,5 +1,5 @@
+ node_modules
+-index.bundle.js
++index.*.js
+ package-lock.json
+ *.log*
+ *.result.css
+diff --git a/.rollup.js b/.rollup.js
+index 7f4e231..0436758 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -2,7 +2,10 @@ import babel from 'rollup-plugin-babel';
+ 
+ export default {
+ 	input: 'index.js',
+-	output: { file: 'index.bundle.js', format: 'cjs' },
++	output: [
++		{ file: 'index.cjs.js', format: 'cjs' },
++		{ file: 'index.es.js', format: 'es' }
++	],
+ 	plugins: [
+ 		babel({
+ 			presets: [
+diff --git a/.travis.yml b/.travis.yml
+index c564664..e1f11a5 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 4
++  - 6
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 5373f2a..1cc2fbd 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS color-mod() Function
+ 
++### 2.4.3 (July 21, 2018)
++
++- Fixed issue with color-mod not being converted within function
++
+ ### 2.4.2 (February 27, 2018)
+ 
+ - Fixed issue with converting colorspaces
+diff --git a/README.md b/README.md
+index 4081d03..976c1aa 100644
+--- a/README.md
++++ b/README.md
+@@ -199,8 +199,8 @@ knowledge of the living DOM tree.
+ 
+ [cli-img]: https://img.shields.io/travis/jonathantneal/postcss-color-mod-function.svg
+ [cli-url]: https://travis-ci.org/jonathantneal/postcss-color-mod-function
+-[css-img]: https://jonathantneal.github.io/cssdb/badge/color-mod-function.svg
+-[css-url]: https://jonathantneal.github.io/css-db/#css-variables
++[css-img]: https://cssdb.org/badge/color-mod-function.svg
++[css-url]: https://preset-env.cssdb.org/features#color-mod-function
+ [git-img]: https://img.shields.io/badge/support-chat-blue.svg
+ [git-url]: https://gitter.im/postcss/postcss
+ [npm-img]: https://img.shields.io/npm/v/postcss-color-mod-function.svg
+diff --git a/index.js b/index.js
+index a4867e3..5d10d76 100644
+--- a/index.js
++++ b/index.js
+@@ -34,4 +34,4 @@ export default postcss.plugin('postcss-color-mod-function', opts => {
+ 	};
+ });
+ 
+-const colorModFunctionMatch = /(^|\s)color-mod\(/i;
++const colorModFunctionMatch = /(^|[^\w-])color-mod\(/i;
+diff --git a/package.json b/package.json
+index da1a0f5..1d36009 100644
+--- a/package.json
++++ b/package.json
+@@ -1,17 +1,17 @@
+ {
+   "name": "postcss-color-mod-function",
+-  "version": "2.4.2",
++  "version": "2.4.3",
+   "description": "Modify colors using the color-mod() function in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+   "repository": "jonathantneal/postcss-color-mod-function",
+   "homepage": "https://github.com/jonathantneal/postcss-color-mod-function#readme",
+   "bugs": "https://github.com/jonathantneal/postcss-color-mod-function/issues",
+-  "main": "index.bundle.js",
+-  "module": "index.js",
++  "main": "index.cjs.js",
++  "module": "index.es.js",
+   "files": [
+-    "index.js",
+-    "index.bundle.js",
++    "index.cjs.js",
++    "index.es.js",
+     "lib"
+   ],
+   "scripts": {
+@@ -27,20 +27,20 @@
+   },
+   "dependencies": {
+     "@csstools/convert-colors": "^1.4.0",
+-    "postcss": "^6.0.19",
+-    "postcss-values-parser": "^1.3.2"
++    "postcss": "^6.0.23",
++    "postcss-values-parser": "^1.5.0"
+   },
+   "devDependencies": {
+-    "babel-core": "^6.26.0",
+-    "babel-eslint": "^8.2.2",
+-    "babel-preset-env": "^1.6.1",
++    "babel-core": "^6.26.3",
++    "babel-eslint": "^8.2.6",
++    "babel-preset-env": "^1.7.0",
+     "echint": "^4.0.1",
+-    "eslint": "^4.18.1",
++    "eslint": "^5.2.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.56.3",
+-    "rollup-plugin-babel": "^3.0.3"
++    "rollup": "^0.63.4",
++    "rollup-plugin-babel": "^3.0.7"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+diff --git a/test/basic.colors.expect.css b/test/basic.colors.expect.css
+index d758803..bc19fc5 100644
+--- a/test/basic.colors.expect.css
++++ b/test/basic.colors.expect.css
+@@ -131,3 +131,7 @@ test-var {
+ test-multiple-value-items {
+ 	border: 1px solid rgb(100% 0% 0%);
+ }
++
++test-linear-gradient {
++	background-image: linear-gradient(rgb(100% 0% 0%), rgb(100% 0% 0% / 0%));
++}
+diff --git a/test/basic.css b/test/basic.css
+index 58f6efc..1bcd540 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -131,3 +131,7 @@ test-var {
+ test-multiple-value-items {
+ 	border: 1px solid color-mod(red);
+ }
++
++test-linear-gradient {
++	background-image: linear-gradient(color-mod(red alpha(100%)), color-mod(red alpha(0%)));
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index ec89f8b..b1f62ab 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -131,3 +131,7 @@ test-var {
+ test-multiple-value-items {
+ 	border: 1px solid rgb(255, 0, 0);
+ }
++
++test-linear-gradient {
++	background-image: linear-gradient(rgb(255, 0, 0), rgba(255, 0, 0, 0));
++}
+-- 
+2.33.1
+

@@ -1,0 +1,33 @@
+From 4ab54f63231e06bf934d5b97a626785c1344d7f9 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 27 Feb 2018 00:56:28 -0500
+Subject: [PATCH 15/29] Detect colorspace
+
+---
+ lib/color.js | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/lib/color.js b/lib/color.js
+index 1f488c8..66e232a 100644
+--- a/lib/color.js
++++ b/lib/color.js
+@@ -4,6 +4,16 @@ export default class Color {
+ 	constructor(color) {
+ 		this.color = Object(Object(color).color || color);
+ 
++		this.color.colorspace = this.color.colorspace
++			? this.color.colorspace
++		: 'red' in color && 'green' in color && 'blue' in color
++			? 'rgb'
++		: 'hue' in color && 'saturation' in color && 'lightness' in color
++			? 'hsl'
++		: 'hue' in color && 'whiteness' in color && 'blackness' in color
++			? 'hwb'
++		: 'unknown';
++
+ 		if (color.colorspace === 'rgb') {
+ 			this.color.hue = rgb2hue(color.red, color.green, color.blue, color.hue || 0);
+ 		}
+-- 
+2.33.1
+

@@ -1,0 +1,279 @@
+From 6a4ed5d33b976f948f96fda6c594f8792a401926 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 21 Nov 2018 11:17:46 -0500
+Subject: [PATCH 02/17] 0.2.0
+
+---
+ .rollup.js     |   8 ++-
+ CHANGELOG.md   |  10 ++++
+ README.md      |   2 +-
+ package.json   |   2 +-
+ src/browser.js | 135 +++++++++++++++++++++----------------------------
+ 5 files changed, 77 insertions(+), 80 deletions(-)
+
+diff --git a/.rollup.js b/.rollup.js
+index fcca42e..cc561fe 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -30,7 +30,13 @@ const plugins = [
+ ].concat(isBrowser
+ 	? [
+ 		trimContentForBrowser(),
+-		terser()
++		terser({
++			mangle: {
++				properties: {
++					reserved: ['addEventListener', 'attributes', 'childList', 'children', 'cloneNode', 'contains', 'createElement', 'cssRules', 'documentElement', 'firstChild', 'innerHTML', 'nodeType', 'observe', 'ownerNode', 'parentNode', 'parentStyleSheet', 'querySelector', 'querySelectorAll', 'removeAttribute', 'selectorText', 'setNamedItem', 'sheet', 'style', 'styleSheets', 'subtree', 'zoom']
++				}
++			}
++		})
+ 	]
+ : isCLI
+ 	? [
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 3f1e9a6..a3ba3a5 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,15 @@
+ # Changes to CSS Has Pseudo
+ 
++### 0.3.0 (November 21, 2018)
++
++- Fixed the misnamed function name for the browser-ready script
++
++### 0.2.0 (November 21, 2018)
++
++- Improved browser compatibility with updated parsers, encoders, and decoders
++- Improved performance by walking the DOM less
++- Reduced script size by 9%; from 855 bytes to 775 bytes
++
+ ### 0.1.0 (November 20, 2018)
+ 
+ - Initial version
+diff --git a/README.md b/README.md
+index fc99ae6..8d6f883 100644
+--- a/README.md
++++ b/README.md
+@@ -41,7 +41,7 @@ Next, use your transformed CSS with this script:
+ <script>cssHasPseudo(document)</script>
+ ```
+ 
+-That’s it. The script is 855 bytes and works in all browsers, including
++That’s it. The script is 775 bytes and works in all browsers, including
+ Internet Explorer 11. With a [Mutation Observer polyfill], the script will work
+ down to Internet Explorer 9.
+ 
+diff --git a/package.json b/package.json
+index 4f07d01..e0101a5 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "css-has-pseudo",
+-  "version": "0.1.0",
++  "version": "0.3.0",
+   "description": "Style elements relative to other elements in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+diff --git a/src/browser.js b/src/browser.js
+index 74d5238..a9fc551 100644
+--- a/src/browser.js
++++ b/src/browser.js
+@@ -1,57 +1,61 @@
+-export default function cssHas(document) {
+-	const hasPseudoRegExp = /^(.*?)\[:(not-)?has\((.+?)\)\]/;
+-	const observedCssRules = [];
++export default function cssHasPseudo(document) {
++	const observedItems = [];
++	const attributeElement = document.createElement('x');
+ 
+ 	// walk all stylesheets to collect observed css rules
+ 	Array.prototype.forEach.call(document.styleSheets, walkStyleSheet);
+-	transformObservedCssRules();
++	transformObservedItems();
+ 
+ 	// observe DOM modifications that affect selectors
+-	new MutationObserver(mutationsList => {
++	const mutationObserver = new MutationObserver(mutationsList => {
+ 		mutationsList.forEach(mutation => {
+ 			Array.prototype.forEach.call(mutation.addedNodes || [], node => {
+ 				// walk stylesheets to collect observed css rules
+ 				if (node.nodeType === 1 && node.sheet) {
+-					cleanupObservedCssRules();
+-					Array.prototype.forEach.call(document.styleSheets, walkStyleSheet);
++					walkStyleSheet(node.sheet);
+ 				}
+ 			});
+ 
+ 			// transform observed css rules
+-			transformObservedCssRules();
++			cleanupObservedCssRules();
++			transformObservedItems();
+ 		});
+-	}).observe(document, { childList: true, subtree: true });
++	});
++
++	mutationObserver.observe(document, { childList: true, subtree: true });
+ 
+ 	// observe DOM events that affect pseudo-selectors
+-	document.addEventListener('focus', () => setImmediate(transformObservedCssRules), true);
+-	document.addEventListener('blur', () => setImmediate(transformObservedCssRules), true);
+-	document.addEventListener('input', () => setImmediate(transformObservedCssRules));
++	document.addEventListener('focus', () => setImmediate(transformObservedItems), true);
++	document.addEventListener('blur', () => setImmediate(transformObservedItems), true);
++	document.addEventListener('input', () => setImmediate(transformObservedItems));
+ 
+ 	// transform observed css rules
+-	function transformObservedCssRules() {
+-		observedCssRules.forEach(
++	function transformObservedItems() {
++		observedItems.forEach(
+ 			item => {
+ 				const nodes = [];
+ 
+ 				Array.prototype.forEach.call(
+-					document.querySelectorAll(item.elementSelector),
++					document.querySelectorAll(item.scopeSelector),
+ 					element => {
+-						const index = Array.prototype.indexOf.call(element.parentNode.children, element) + 1;
+-						const nextSelector = item.scopedSelectors.map(
+-							scopedSelector => item.elementSelector + ':nth-child(' + index + ') ' + scopedSelector
++						const nthChild = Array.prototype.indexOf.call(element.parentNode.children, element) + 1;
++						const relativeSelectors = item.relativeSelectors.map(
++							relativeSelector => item.scopeSelector + ':nth-child(' + nthChild + ') ' + relativeSelector
+ 						).join();
+ 
+-						// find the :has element from the scope of the element
+-						const scopedElement = element.parentNode.querySelector(nextSelector);
++						// find any relative :has element from the :scope element
++						const relativeElement = element.parentNode.querySelector(relativeSelectors);
+ 
+-						const shouldContinue = item.hasSelectorNot ? !scopedElement : scopedElement;
++						const shouldElementMatch = item.isNot ? !relativeElement : relativeElement;
+ 
+-						if (shouldContinue) {
++						if (shouldElementMatch) {
+ 							// memorize the node
+ 							nodes.push(element);
+ 
+-							// set the encoded attribute on the node
+-							setAttribute(element, item.encodedAttributeName);
++							// set an attribute with an irregular attribute name
++							attributeElement.innerHTML = '<x ' + item.attributeName + '>';
++
++							element.attributes.setNamedItem(attributeElement.firstChild.attributes[0].cloneNode());
+ 
+ 							// trigger a style refresh in IE and Edge
+ 							document.documentElement.style.zoom = 1; document.documentElement.style.zoom = null;
+@@ -60,15 +64,16 @@ export default function cssHas(document) {
+ 				);
+ 
+ 				// remove the encoded attribute from all nodes that no longer match them
+-				item.nodes.splice(0).forEach(node => {
++				item.nodes.forEach(node => {
+ 					if (nodes.indexOf(node) === -1) {
+-						node.removeAttribute(item.encodedAttributeName);
++						node.removeAttribute(item.attributeName);
+ 
+ 						// trigger a style refresh in IE and Edge
+ 						document.documentElement.style.zoom = 1; document.documentElement.style.zoom = null;
+ 					}
+ 				});
+ 
++				// update the
+ 				item.nodes = nodes;
+ 			}
+ 		);
+@@ -77,62 +82,38 @@ export default function cssHas(document) {
+ 	// remove any observed cssrules that no longer apply
+ 	function cleanupObservedCssRules() {
+ 		Array.prototype.push.apply(
+-			observedCssRules,
+-			observedCssRules.splice(0).filter(
+-				item => item.cssRule.parentStyleSheet &&
+-					item.cssRule.parentStyleSheet.ownerNode &&
+-					document.contains(item.cssRule.parentStyleSheet.ownerNode)
++			observedItems,
++			observedItems.splice(0).filter(
++				item => item.rule.parentStyleSheet &&
++					item.rule.parentStyleSheet.ownerNode &&
++					document.documentElement.contains(item.rule.parentStyleSheet.ownerNode)
+ 			)
+ 		);
+ 	}
+ 
+ 	// walk a stylesheet to collect observed css rules
+ 	function walkStyleSheet(styleSheet) {
+-		Array.prototype.forEach.call(styleSheet.cssRules, walkCssRule);
+-	}
+-
+-	// walk a css rule to collect observed css rules
+-	function walkCssRule(cssRule) {
+-		hasPseudoRegExp.lastIndex = 0;
+-
+-		// decode the selector text, unifying their design between most browsers and IE/Edge
+-		const selectorText = decodeHasPseudoSelector(cssRule.selectorText);
+-		const selectorTextMatches = selectorText.match(hasPseudoRegExp);
+-
+-		if (selectorTextMatches) {
+-			const hasSelectorNot = selectorTextMatches[2];
+-			const elementSelector = selectorTextMatches[1];
+-			const scopedSelectors = selectorTextMatches[3].split(/\s*,\s*/);
+-			const encodedAttributeName = ':' + (hasSelectorNot ? 'not-' : '') + 'has(' + encodeAttributeName(selectorTextMatches[3]) + ')';
+-
+-			observedCssRules.push({
+-				cssRule,
+-				hasSelectorNot,
+-				elementSelector,
+-				scopedSelectors,
+-				encodedAttributeName,
+-				nodes: []
+-			});
+-		}
+-	}
+-
+-	// set an attribute with an irregular attribute name
+-	function setAttribute(target, attributeName) {
+-		const innerHTML = '<x ' + attributeName + '>';
+-		const x = document.createElement('x');
+-		x.innerHTML = innerHTML;
+-		const attribute = x.firstChild.attributes[0].cloneNode();
+-
+-		target.attributes.setNamedItem(attribute);
+-	}
+-
+-	// encode a :has() pseudo selector as an attribute name
+-	function encodeAttributeName(attributeName) {
+-		return encodeURIComponent(attributeName).replace(/%3A/g, ':').replace(/%5B/g, '[').replace(/%5D/g, ']').replace(/%2C/g, ',');
+-	}
+-
+-	// decode the :has() pseudo selector
+-	function decodeHasPseudoSelector(hasPseudoText) {
+-		return decodeURIComponent(hasPseudoText.replace(/\\([^\\])/g, '$1'))
++		// walk a css rule to collect observed css rules
++		Array.prototype.forEach.call(styleSheet.cssRules, rule => {
++			// decode the selector text in all browsers to:
++			// [1] = :scope, [2] = :not(:has), [3] = :has relative, [4] = :scope relative
++			const selectors = decodeURIComponent(rule.selectorText.replace(/\\(.)/g, '$1')).match(/^(.*?)\[:(not-)?has\((.+?)\)\](.*?)$/);
++
++			if (selectors) {
++				const attributeName = ':' + (selectors[2] ? 'not-' : '') + 'has(' +
++					// encode a :has() pseudo selector as an attribute name
++					selectors[3].replace(/%3A/g, ':').replace(/%5B/g, '[').replace(/%5D/g, ']').replace(/%2C/g, ',') +
++				')';
++
++				observedItems.push({
++					rule,
++					scopeSelector: selectors[1],
++					isNot: selectors[2],
++					relativeSelectors: selectors[3].split(/\s*,\s*/),
++					attributeName,
++					nodes: []
++				});
++			}
++		});
+ 	}
+ }
+-- 
+2.33.1
+

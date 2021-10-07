@@ -1,0 +1,2295 @@
+From 604e99ae76f2df8d24428cbcde0885c386eaf7c5 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 16 Jan 2018 15:19:39 -0500
+Subject: [PATCH 01/29] 1.0.0
+
+---
+ .appveyor.yml                |  18 +
+ .editorconfig                |  15 +
+ .gitignore                   |  12 +
+ .rollup.js                   |  13 +
+ .tape.js                     |  21 ++
+ .travis.yml                  |   9 +
+ CHANGELOG.md                 |   5 +
+ CONTRIBUTING.md              |  65 ++++
+ LICENSE.md                   | 108 ++++++
+ README.md                    | 199 +++++++++++
+ index.js                     |  30 ++
+ lib/color.js                 | 553 +++++++++++++++++++++++++++++
+ lib/manage-unresolved.js     |   7 +
+ lib/transform.js             | 663 +++++++++++++++++++++++++++++++++++
+ package.json                 |  78 +++++
+ test/basic.colors.expect.css |  96 +++++
+ test/basic.css               |  96 +++++
+ test/basic.expect.css        |  96 +++++
+ test/warn.css                |  48 +++
+ 19 files changed, 2132 insertions(+)
+ create mode 100644 .appveyor.yml
+ create mode 100644 .editorconfig
+ create mode 100644 .gitignore
+ create mode 100644 .rollup.js
+ create mode 100644 .tape.js
+ create mode 100644 .travis.yml
+ create mode 100644 CHANGELOG.md
+ create mode 100644 CONTRIBUTING.md
+ create mode 100644 LICENSE.md
+ create mode 100644 README.md
+ create mode 100644 index.js
+ create mode 100644 lib/color.js
+ create mode 100644 lib/manage-unresolved.js
+ create mode 100644 lib/transform.js
+ create mode 100644 package.json
+ create mode 100644 test/basic.colors.expect.css
+ create mode 100644 test/basic.css
+ create mode 100644 test/basic.expect.css
+ create mode 100644 test/warn.css
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+new file mode 100644
+index 0000000..d6b511f
+--- /dev/null
++++ b/.appveyor.yml
+@@ -0,0 +1,18 @@
++# https://www.appveyor.com/docs/appveyor-yml
++
++environment:
++  matrix:
++    - nodejs_version: 4.0
++
++version: "{build}"
++build: off
++deploy: off
++
++install:
++  - ps: Install-Product node $env:nodejs_version
++  - npm install --ignore-scripts
++
++test_script:
++  - node --version
++  - npm --version
++  - cmd: "npm test"
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..e06d798
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,15 @@
++root = true
++
++[*]
++charset = utf-8
++end_of_line = lf
++indent_style = tab
++insert_final_newline = true
++trim_trailing_whitespace = true
++
++[*.md]
++trim_trailing_whitespace = false
++
++[*.{json,md,yml}]
++indent_size = 2
++indent_style = space
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..6832ce8
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,12 @@
++node_modules
++index.bundle.js
++package-lock.json
++*.log*
++*.result.css
++.*
++!.appveyor.yml
++!.editorconfig
++!.gitignore
++!.rollup.js
++!.tape.js
++!.travis.yml
+diff --git a/.rollup.js b/.rollup.js
+new file mode 100644
+index 0000000..7f4e231
+--- /dev/null
++++ b/.rollup.js
+@@ -0,0 +1,13 @@
++import babel from 'rollup-plugin-babel';
++
++export default {
++	input: 'index.js',
++	output: { file: 'index.bundle.js', format: 'cjs' },
++	plugins: [
++		babel({
++			presets: [
++				['env', { modules: false, targets: { node: 4 } }]
++			]
++		})
++	]
++};
+diff --git a/.tape.js b/.tape.js
+new file mode 100644
+index 0000000..2b03327
+--- /dev/null
++++ b/.tape.js
+@@ -0,0 +1,21 @@
++module.exports = {
++	'postcss-color-mod-function': {
++		'basic': {
++			message: 'supports basic usage'
++		},
++		'basic:colors': {
++			message: 'supports { stringifier } usage',
++			options: {
++				stringifier: color => color.toString()
++			}
++		},
++		'warn': {
++			message: 'supports { unresolved } usage',
++			options: {
++				unresolved: 'warn'
++			},
++			warning: 43,
++			expect: 'warn.css'
++		}
++	}
++};
+diff --git a/.travis.yml b/.travis.yml
+new file mode 100644
+index 0000000..c564664
+--- /dev/null
++++ b/.travis.yml
+@@ -0,0 +1,9 @@
++# https://docs.travis-ci.com/user/travis-lint
++
++language: node_js
++
++node_js:
++  - 4
++
++install:
++  - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100644
+index 0000000..c609a56
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,5 @@
++# Changes to PostCSS color-mod() Function
++
++### 1.0.0 (January 16, 2018)
++
++- Initial version
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+new file mode 100644
+index 0000000..1a88ff7
+--- /dev/null
++++ b/CONTRIBUTING.md
+@@ -0,0 +1,65 @@
++# Contributing to PostCSS color-mod() Function
++
++You want to help? You rock! Now, take a moment to be sure your contributions
++make sense to everyone else.
++
++## Reporting Issues
++
++Found a problem? Want a new feature?
++
++- See if your issue or idea has [already been reported].
++- Provide a [reduced test case] or a [live example].
++
++Remember, a bug is a _demonstrable problem_ caused by _our_ code.
++
++## Submitting Pull Requests
++
++Pull requests are the greatest contributions, so be sure they are focused in
++scope and avoid unrelated commits.
++
++1. To begin; [fork this project], clone your fork, and add our upstream.
++   ```bash
++   # Clone your fork of the repo into the current directory
++   git clone git@github.com:YOUR_USER/postcss-color-mod-function.git
++
++   # Navigate to the newly cloned directory
++   cd postcss-color-mod-function
++
++   # Assign the original repo to a remote called "upstream"
++   git remote add upstream git@github.com:jonathantneal/postcss-color-mod-function.git
++
++   # Install the tools necessary for testing
++   npm install
++   ```
++
++2. Create a branch for your feature or fix:
++   ```bash
++   # Move into a new branch for your feature
++   git checkout -b feature/thing
++   ```
++   ```bash
++   # Move into a new branch for your fix
++   git checkout -b fix/something
++   ```
++
++3. If your code follows our practices, then push your feature branch:
++   ```bash
++   # Test current code
++   npm test
++   ```
++   ```bash
++   # Push the branch for your new feature
++   git push origin feature/thing
++   ```
++   ```bash
++   # Or, push the branch for your update
++   git push origin update/something
++   ```
++
++That’s it! Now [open a pull request] with a clear title and description.
++
++[already been reported]: issues
++[fork this project]:     fork
++[live example]:          https://codepen.io/pen
++[open a pull request]:   https://help.github.com/articles/using-pull-requests/
++[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+diff --git a/LICENSE.md b/LICENSE.md
+new file mode 100644
+index 0000000..0bc1fa7
+--- /dev/null
++++ b/LICENSE.md
+@@ -0,0 +1,108 @@
++# CC0 1.0 Universal
++
++## Statement of Purpose
++
++The laws of most jurisdictions throughout the world automatically confer
++exclusive Copyright and Related Rights (defined below) upon the creator and
++subsequent owner(s) (each and all, an “owner”) of an original work of
++authorship and/or a database (each, a “Work”).
++
++Certain owners wish to permanently relinquish those rights to a Work for the
++purpose of contributing to a commons of creative, cultural and scientific works
++(“Commons”) that the public can reliably and without fear of later claims of
++infringement build upon, modify, incorporate in other works, reuse and
++redistribute as freely as possible in any form whatsoever and for any purposes,
++including without limitation commercial purposes. These owners may contribute
++to the Commons to promote the ideal of a free culture and the further
++production of creative, cultural and scientific works, or to gain reputation or
++greater distribution for their Work in part through the use and efforts of
++others.
++
++For these and/or other purposes and motivations, and without any expectation of
++additional consideration or compensation, the person associating CC0 with a
++Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
++and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
++publicly distribute the Work under its terms, with knowledge of his or her
++Copyright and Related Rights in the Work and the meaning and intended legal
++effect of CC0 on those rights.
++
++1. Copyright and Related Rights. A Work made available under CC0 may be
++   protected by copyright and related or neighboring rights (“Copyright and
++   Related Rights”). Copyright and Related Rights include, but are not limited
++   to, the following:
++   1. the right to reproduce, adapt, distribute, perform, display, communicate,
++      and translate a Work;
++   2. moral rights retained by the original author(s) and/or performer(s);
++   3. publicity and privacy rights pertaining to a person’s image or likeness
++      depicted in a Work;
++   4. rights protecting against unfair competition in regards to a Work,
++      subject to the limitations in paragraph 4(i), below;
++   5. rights protecting the extraction, dissemination, use and reuse of data in
++      a Work;
++   6. database rights (such as those arising under Directive 96/9/EC of the
++      European Parliament and of the Council of 11 March 1996 on the legal
++      protection of databases, and under any national implementation thereof,
++      including any amended or successor version of such directive); and
++   7. other similar, equivalent or corresponding rights throughout the world
++      based on applicable law or treaty, and any national implementations
++      thereof.
++
++2. Waiver. To the greatest extent permitted by, but not in contravention of,
++   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++   and Related Rights and associated claims and causes of action, whether now
++   known or unknown (including existing as well as future claims and causes of
++   action), in the Work (i) in all territories worldwide, (ii) for the maximum
++   duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
++   makes the Waiver for the benefit of each member of the public at large and
++   to the detriment of Affirmer’s heirs and successors, fully intending that
++   such Waiver shall not be subject to revocation, rescission, cancellation,
++   termination, or any other legal or equitable action to disrupt the quiet
++   enjoyment of the Work by the public as contemplated by Affirmer’s express
++   Statement of Purpose.
++
++3. Public License Fallback. Should any part of the Waiver for any reason be
++   judged legally invalid or ineffective under applicable law, then the Waiver
++   shall be preserved to the maximum extent permitted taking into account
++   Affirmer’s express Statement of Purpose. In addition, to the extent the
++   Waiver is so judged Affirmer hereby grants to each affected person a
++   royalty-free, non transferable, non sublicensable, non exclusive,
++   irrevocable and unconditional license to exercise Affirmer’s Copyright and
++   Related Rights in the Work (i) in all territories worldwide, (ii) for the
++   maximum duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “License”). The License
++   shall be deemed effective as of the date CC0 was applied by Affirmer to the
++   Work. Should any part of the License for any reason be judged legally
++   invalid or ineffective under applicable law, such partial invalidity or
++   ineffectiveness shall not invalidate the remainder of the License, and in
++   such case Affirmer hereby affirms that he or she will not (i) exercise any
++   of his or her remaining Copyright and Related Rights in the Work or (ii)
++   assert any associated claims and causes of action with respect to the Work,
++   in either case contrary to Affirmer’s express Statement of Purpose.
++
++4. Limitations and Disclaimers.
++   1. No trademark or patent rights held by Affirmer are waived, abandoned,
++      surrendered, licensed or otherwise affected by this document.
++   2. Affirmer offers the Work as-is and makes no representations or warranties
++      of any kind concerning the Work, express, implied, statutory or
++      otherwise, including without limitation warranties of title,
++      merchantability, fitness for a particular purpose, non infringement, or
++      the absence of latent or other defects, accuracy, or the present or
++      absence of errors, whether or not discoverable, all to the greatest
++      extent permissible under applicable law.
++   3. Affirmer disclaims responsibility for clearing rights of other persons
++      that may apply to the Work or any use thereof, including without
++      limitation any person’s Copyright and Related Rights in the Work.
++      Further, Affirmer disclaims responsibility for obtaining any necessary
++      consents, permissions or other rights required for any use of the Work.
++   4. Affirmer understands and acknowledges that Creative Commons is not a
++      party to this document and has no duty or obligation with respect to this
++      CC0 or use of the Work.
++
++For more information, please see
++http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..43f58bb
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,199 @@
++# PostCSS color-mod() Function [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
++
++[![NPM Version][npm-img]][npm-url]
++[![Linux Build Status][cli-img]][cli-url]
++[![Windows Build Status][win-img]][win-url]
++[![Gitter Chat][git-img]][git-url]
++
++[PostCSS color-mod() Function] lets you modify colors using the `color-mod()`
++function in CSS, following the [CSS Color Module Level 4] specification.
++
++```css
++:root {
++  --brand-red:      color-mod(yellow blend(red 50%));
++  --brand-red-hsl:  color-mod(yellow blend(red 50% hsl));
++  --brand-red-hwb:  color-mod(yellow blend(red 50% hwb));
++  --brand-red-dark: color-mod(red blackness(20%));
++}
++
++/* becomes */
++
++:root {
++  --brand-red:      rgb(255, 127.5, 0);
++  --brand-red-hsl:  rgb(255, 127.5, 255);
++  --brand-red-hwb:  rgb(255, 127.5, 0);
++  --brand-red-dark: rgb(204, 0, 0);
++}
++
++/* or, using stringifier(color) { return color.toString() } */
++
++:root {
++  --brand-red:      rgb(100% 50% 0% / 100%);
++  --brand-red-hsl:  hsl(30 100% 50% / 100%);
++  --brand-red-hwb:  hwb(30 0% 0% / 100%);
++  --brand-red-dark: hwb(0 0% 20% / 100%);
++}
++```
++
++## Supported Colors
++
++The `color-mod()` function accepts `rgb()`, legacy `rgb()`, `rgba()`, `hsl()`,
++legacy `hsl()`, `hsla()`, `hwb()`, and `color-mod()` colors, as well as 3, 4,
++6, and 8 digit hex colors, and named colors without the need for additional
++plugins.
++
++Implemention details are available in
++[the specification](https://drafts.csswg.org/css-color/#funcdef-color-mod).
++
++*Because CSS variables (`var()`) cannot not be inferred at compilation, they
++will need to be compiled beforehand.*
++
++## Supported Color Adjusters
++
++The `color-mod()` function accepts `red()`, `green()`, `blue()`, `a()` /
++`alpha()`, `rgb()`, `h()` / `hue()`, `s()` / `saturation()`, `l()` /
++`lightness()`, `w()` / `whiteness()`, `b()` / `blackness()`, `tint()`,
++`shade()`, `blend()`, `blenda()`, and `contrast()` color adjusters.
++
++Implemention details are available in
++[the specification](https://drafts.csswg.org/css-color/#typedef-color-adjuster).
++
++---
++
++## Usage
++
++Add [PostCSS color-mod() Function] to your build tool:
++
++```bash
++npm install postcss-color-mod-function --save-dev
++```
++
++#### Node
++
++Use [PostCSS color-mod() Function] to process your CSS:
++
++```js
++import postcssColorMod from 'postcss-color-mod-function';
++
++postcssColorMod.process(YOUR_CSS);
++```
++
++#### PostCSS
++
++Add [PostCSS] to your build tool:
++
++```bash
++npm install postcss --save-dev
++```
++
++Use [PostCSS color-mod() Function] as a plugin:
++
++```js
++import postcss from 'postcss';
++import postcssColorMod from 'postcss-color-mod-function';
++
++postcss([
++  postcssColorMod(/* options */)
++]).process(YOUR_CSS);
++```
++
++#### Gulp
++
++Add [Gulp PostCSS] to your build tool:
++
++```bash
++npm install gulp-postcss --save-dev
++```
++
++Use [PostCSS color-mod() Function] in your Gulpfile:
++
++```js
++import postcss from 'gulp-postcss';
++import postcssColorMod from 'postcss-color-mod-function';
++
++gulp.task('css',
++  () => gulp.src('./src/*.css')
++  .pipe( postcss([ postcssColorMod(/* options */) ]) )
++  .pipe( gulp.dest('.') );
++```
++
++#### Grunt
++
++Add [Grunt PostCSS] to your build tool:
++
++```bash
++npm install grunt-postcss --save-dev
++```
++
++Use [PostCSS color-mod() Function] in your Gruntfile:
++
++```js
++import postcssColorMod from 'postcss-color-mod-function';
++
++grunt.loadNpmTasks('grunt-postcss');
++
++grunt.initConfig({
++  postcss: {
++    options: {
++      use: [ postcssColorMod(/* options */) ]
++    },
++    dist: {
++      src: '*.css'
++    }
++  }
++});
++```
++
++---
++
++## Options
++
++### stringifier
++
++The `stringifier` option defines how transformed colors will be produced in CSS.
++By default, legacy `rbg()` and `rgba()` colors are produced, but this can be
++easily updated to support [CSS Color Module Level 4 colors] colors.
++
++```js
++import postcssColorMod from 'postcss-color-mod-function';
++
++postcssColorMod({
++  stringifier(color) {
++    return color.toString(); // use CSS Color Module Level 4 colors (rgb, hsl, hwb)
++  }
++});
++```
++
++Future major releases of [PostCSS color-mod() Function] may reverse this
++functionality so that CSS Color Module Level 4 colors are produced by default.
++
++### unresolved
++
++The `unresolved` option defines how unresolved functions and arguments should
++be handled. The available options are `throw`, `warn`, and `ignore`. The
++default option is to `throw`.
++
++If `ignore` is used, the `color-mod()` function will remain unchanged.
++
++```js
++import postcssColorMod from 'postcss-color-mod-function';
++
++postcssColorMod({
++  unresolved: 'ignore' // ignore unresolved color-mod() functions
++});
++```
++
++[npm-url]: https://www.npmjs.com/package/postcss-color-mod-function
++[npm-img]: https://img.shields.io/npm/v/postcss-color-mod-function.svg
++[cli-url]: https://travis-ci.org/jonathantneal/postcss-color-mod-function
++[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-color-mod-function.svg
++[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-color-mod-function
++[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-color-mod-function.svg
++[git-url]: https://gitter.im/postcss/postcss
++[git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
++
++[CSS Color Module Level 4]: https://drafts.csswg.org/css-color/#modifying-colors
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
++[PostCSS]: https://github.com/postcss/postcss
++[PostCSS color-mod() Function]: https://github.com/jonathantneal/postcss-color-mod-function
+diff --git a/index.js b/index.js
+new file mode 100644
+index 0000000..de40f34
+--- /dev/null
++++ b/index.js
+@@ -0,0 +1,30 @@
++// tooling
++import parser from 'postcss-values-parser';
++import postcss from 'postcss';
++import transformAST from './lib/transform';
++
++// plugin
++export default postcss.plugin('postcss-color-mod-function', opts => {
++	const unresolvedOpt = String(Object(opts).unresolved || 'throw').toLowerCase();
++	const stringifierOpt = Object(opts).stringifier || (color => color.toRGBLegacy());
++
++	return (root, result) => {
++		root.walkDecls(decl => {
++			const originalValue = decl.value;
++
++			if (colorModFunctionMatch.test(originalValue)) {
++				const ast = parser(originalValue, { loose: true }).parse();
++
++				transformAST(ast, { unresolved: unresolvedOpt, stringifier: stringifierOpt, decl, result });
++
++				const modifiedValue = ast.toString();
++
++				if (originalValue !== modifiedValue) {
++					decl.value = modifiedValue;
++				}
++			}
++		});
++	};
++});
++
++const colorModFunctionMatch = /(^|\s)color-mod\(/i;
+diff --git a/lib/color.js b/lib/color.js
+new file mode 100644
+index 0000000..2860f80
+--- /dev/null
++++ b/lib/color.js
+@@ -0,0 +1,553 @@
++export default class Color {
++	constructor(color) {
++		this.color = Object(Object(color).color || color);
++
++		if (color.colorspace === 'rgb') {
++			this.color.hue = rgb2hue(color.red, color.green, color.blue, color.hue || 0);
++		}
++	}
++
++	alpha(alpha) {
++		const color = this.color;
++
++		return alpha === undefined
++			? color.alpha
++		: new Color(assign(color, { alpha }));
++	}
++
++	blackness(blackness) {
++		const hwb = color2hwb(this.color);
++
++		return blackness === undefined
++			? hwb.blackness
++		: new Color(assign(hwb, { blackness }));
++	}
++
++	blend(color, percentage, colorspace = 'rgb') {
++		const base = this.color;
++
++		return new Color(blend(base, color, percentage, colorspace));
++	}
++
++	blenda(color, percentage, colorspace = 'rgb') {
++		const base = this.color;
++
++		return new Color(blend(base, color, percentage, colorspace, true));
++	}
++
++	blue(blue) {
++		const rgb = color2rgb(this.color);
++
++		return blue === undefined
++			? rgb.blue
++		: new Color(assign(rgb, { blue }));
++	}
++
++	contrast(percentage) {
++		const base = this.color;
++
++		return new Color(contrast(base, percentage));
++	}
++
++	green(green) {
++		const rgb = color2rgb(this.color);
++
++		return green === undefined
++			? rgb.green
++		: new Color(assign(rgb, { green }));
++	}
++
++	hue(hue) {
++		const hsl = color2hsl(this.color);
++
++		return hue === undefined
++			? hsl.hue
++		: new Color(assign(hsl, { hue }));
++	}
++
++	lightness(lightness) {
++		const hsl = color2hsl(this.color);
++
++		return lightness === undefined
++			? hsl.lightness
++		: new Color(assign(hsl, { lightness }))
++	}
++
++	red(red) {
++		const rgb = color2rgb(this.color);
++
++		return red === undefined
++			? rgb.red
++		: new Color(assign(rgb, { red }));
++	}
++
++	rgb(red, green, blue) {
++		const rgb = color2rgb(this.color);
++
++		return new Color(assign(rgb, { red, green, blue }));
++	}
++
++	saturation(saturation) {
++		const hsl = color2hsl(this.color);
++
++		return saturation === undefined
++			? hsl.saturation
++		: new Color(assign(hsl, { saturation }));
++	}
++
++	shade(percentage) {
++		const hwb = color2hwb(this.color);
++		const shade = { hue: 0, whiteness: 1, blackness: 0, colorspace: 'hwb' };
++		const colorspace = 'hwb';
++
++		return percentage === undefined
++			? hwb.blackness
++		: new Color(blend(hwb, shade, percentage, colorspace));
++	}
++
++	tint(percentage) {
++		const hwb = color2hwb(this.color);
++		const tint = { hue: 0, whiteness: 0, blackness: 1, colorspace: 'hwb' };
++		const colorspace = 'hwb';
++
++		return percentage === undefined
++			? hwb.blackness
++		: new Color(blend(hwb, tint, percentage, colorspace));
++	}
++
++	whiteness(whiteness) {
++		const hwb = color2hwb(this.color);
++
++		return whiteness === undefined
++			? hwb.whiteness
++		: new Color(assign(hwb, { whiteness }));
++	}
++
++	toHSL() {
++		const color      = color2hsl(this.color);
++		const isOpaque   = color.alpha === 1;
++		const hue        = color.hue;
++		const saturation = color.saturation * 100;
++		const lightness  = color.lightness * 100;
++		const alpha      = color.alpha * 100;
++
++		return `hsl(${hue} ${saturation}% ${lightness}%${isOpaque
++			? ''
++		: ` / ${alpha}%`})`;
++	}
++
++	toHWB() {
++		const color     = color2hwb(this.color);
++		const isOpaque  = color.alpha === 1;
++		const hue       = color.hue;
++		const whiteness = color.whiteness * 100;
++		const blackness = color.blackness * 100;
++		const alpha     = color.alpha * 100;
++
++		return `hwb(${hue} ${whiteness}% ${blackness}%${isOpaque
++			? ''
++		: ` / ${alpha}%`})`;
++	}
++
++	toRGB() {
++		const color    = color2rgb(this.color);
++		const isOpaque = color.alpha === 1;
++		const red      = color.red * 100;
++		const green    = color.green * 100;
++		const blue     = color.blue * 100;
++		const alpha    = color.alpha * 100;
++
++		return `rgb(${red}% ${green}% ${blue}%${isOpaque
++			? ''
++		: ` / ${alpha}%`})`;
++	}
++
++	toRGBLegacy() {
++		const color    = color2rgb(this.color);
++		const isOpaque = color.alpha === 1;
++		const name     = isOpaque ? 'rgb' : 'rgba';
++		const red      = color.red * 255;
++		const green    = color.green * 255;
++		const blue     = color.blue * 255;
++		const alpha    = color.alpha;
++
++		return `${name}(${red}, ${green}, ${blue}${isOpaque
++			? ''
++		: `, ${alpha}`})`;
++	}
++
++	toString(rawcolorspace) {
++		const colorspace = rawcolorspace || this.color.colorspace;
++
++		const color = colorspace === 'hsl'
++			? this.toHSL()
++		: colorspace === 'hwb'
++			? this.toHWB()
++		: this.toRGB();
++
++		return color;
++	}
++}
++
++/* Blending
++/* ========================================================================== */
++
++function blend(base, color, percentage, colorspace, isBlendingAlpha) { // eslint-disable-line max-params
++	const subtraction = 1 - percentage;
++
++	if (colorspace === 'hsl') {
++		const { hue: h1, saturation: s1, lightness: l1, alpha: a1 } = color2hsl(base);
++		const { hue: h2, saturation: s2, lightness: l2, alpha: a2 } = color2hsl(color);
++
++		const [hue, saturation, lightness, alpha] = [
++			h1 * percentage + h2 * subtraction,
++			s1 * percentage + s2 * subtraction,
++			l1 * percentage + l2 * subtraction,
++			isBlendingAlpha ? a1 * percentage + a2 * subtraction : a1
++		];
++
++		return { hue, saturation, lightness, alpha, colorspace: 'hsl' };
++	} else if (colorspace === 'hwb') {
++		const { hue: h1, whiteness: w1, blackness: b1, alpha: a1 } = color2hwb(base);
++		const { hue: h2, whiteness: w2, blackness: b2, alpha: a2 } = color2hwb(color);
++
++		const [hue, whiteness, blackness, alpha] = [
++			h1 * percentage + h2 * subtraction,
++			w1 * percentage + w2 * subtraction,
++			b1 * percentage + b2 * subtraction,
++			isBlendingAlpha ? a1 * percentage + a2 * subtraction : a1
++		];
++
++		return { hue, whiteness, blackness, alpha, colorspace: 'hwb' };
++	} else {
++		const { red: r1, green: g1, blue: b1, alpha: a1 } = color2rgb(base);
++		const { red: r2, green: g2, blue: b2, alpha: a2 } = color2rgb(color);
++
++		const [red, green, blue, alpha] = [
++			r1 * percentage + r2 * subtraction,
++			g1 * percentage + g2 * subtraction,
++			b1 * percentage + b2 * subtraction,
++			isBlendingAlpha ? a1 * percentage + a2 * subtraction : a1
++		];
++
++		return { red, green, blue, alpha, colorspace: 'rgb' };
++	}
++}
++
++/* Assign channels to a new instance of a base color
++/* ========================================================================== */
++
++function assign(base, channels) {
++	const color = Object.assign({}, base);
++
++	Object.keys(channels).forEach(
++		channel => {
++			// detect channel
++			const isHue = channel === 'hue';
++			const isRGB = !isHue && blueGreenRedMatch.test(channel);
++
++			// value of the channel
++			const adjustment = channels[channel];
++
++			// value limitations
++			const min = 0;
++			const max = isHue ? 360 : 1;
++
++			// updated value
++			const value = Math.min(Math.max(parseFloat(adjustment), min), max);
++
++			// assign channel to new object
++			if (isHue) {
++				color.hue = value;
++			} else {
++				color[channel] = value;
++
++				color.hue = isRGB
++					? rgb2hue(color.red, color.green, color.blue, base.hue || 0)
++				: base.hue;
++			}
++		}
++	);
++
++	return color;
++}
++
++/* Convert colors
++/* ========================================================================== */
++
++function color2hsl(color) {
++	return color.colorspace === 'rgb'
++		? rgb2hsl(color, color.hue)
++	: color.colorspace === 'hwb'
++		? rgb2hsl(hwb2rgb(color), color.hue)
++	: color;
++}
++
++function color2hwb(color) {
++	return color.colorspace === 'rgb'
++		? rgb2hwb(color, color.hue)
++	: color.colorspace === 'hsl'
++		? rgb2hwb(hsl2rgb(color), color.hue)
++	: color;
++}
++
++function color2rgb(color) {
++	return color.colorspace === 'hsl'
++		? hsl2rgb(color)
++	: color.colorspace === 'hwb'
++		? hwb2rgb(color)
++	: color;
++}
++
++/* Convert HSL to RGB
++/* ========================================================================== */
++
++function hsl2rgb({ hue, saturation, lightness, alpha = 1 }) {
++	const t2 = lightness <= 0.5
++		? lightness * (saturation + 1)
++	: lightness + saturation - lightness * saturation;
++
++	const t1 = lightness * 2 - t2;
++
++	const red   = hue2rgb(t1, t2, hue / 60 + 2);
++	const green = hue2rgb(t1, t2, hue / 60);
++	const blue  = hue2rgb(t1, t2, hue / 60 - 2);
++
++	return { hue, red, green, blue, alpha, colorspace: 'rgb' };
++}
++
++/* Convert HWB to RGB
++/* ========================================================================== */
++
++function hwb2rgb({ hue, whiteness, blackness, alpha = 1 }) {
++	const ratio = whiteness + blackness;
++	const rwhiteness = ratio > 1 ? whiteness / ratio : whiteness;
++	const rblackness = ratio > 1 ? blackness / ratio : blackness;
++
++	const value = 1 - rblackness;
++	const hexagon = 6 * hue / 360;
++	const hexagonFloor = Math.floor(hexagon);
++	const hexagonF = hexagonFloor % 6 ? 1 - (hexagon - hexagonFloor) : hexagon - hexagonFloor;
++	const interpolation = rwhiteness + hexagonF * (value - rwhiteness);
++
++	const [red, green, blue] = hexagonFloor % 6 === 5
++		? [value, rwhiteness, interpolation]
++	: hexagonFloor % 6 === 4
++		? [interpolation, rwhiteness, value]
++	: hexagonFloor % 6 === 3
++		? [rwhiteness, interpolation, value]
++	: hexagonFloor % 6 === 2
++		? [rwhiteness, value, interpolation]
++	: hexagonFloor % 6 === 1
++		? [interpolation, value, rwhiteness]
++	: [value, interpolation, rwhiteness];
++
++	return { hue, red, green, blue, alpha, colorspace: 'rgb' };
++}
++
++/* Convert RGB to HSL
++/* ========================================================================== */
++
++function rgb2hsl({ red, green, blue, alpha = 1 }, fallback = 0) { // eslint-disable-line max-params
++	const hue        = rgb2hue(red, green, blue, fallback);
++	const whiteness  = rgb2whiteness(red, green, blue);
++	const value      = rgb2value(red, green, blue);
++	const lightness   = wv2lightness(whiteness, value);
++	const saturation = lvw2saturation(lightness, value, whiteness);
++
++	return { hue, saturation, lightness, alpha, colorspace: 'hsl' };
++}
++
++/* Convert RGB to HWB
++/* ========================================================================== */
++
++function rgb2hwb({ red, green, blue, alpha = 1 }, fallback = 0) { // eslint-disable-line max-params
++	const hue       = rgb2hue(red, green, blue, fallback);
++	const whiteness = rgb2whiteness(red, green, blue);
++	const value     = rgb2value(red, green, blue);
++	const blackness = 1 - value;
++
++	return { hue, whiteness, blackness, alpha, colorspace: 'hwb' };
++}
++
++/* Convert Hue to RGB
++/* ========================================================================== */
++
++function hue2rgb(t1, t2, hue) {
++	const huerange = hue < 0 ? hue + 6 : hue >= 6 ? hue - 6 : hue;
++
++	const rgb = huerange < 1
++		? (t2 - t1) * hue + t1
++	: hue < 3
++		? t2
++	: hue < 4
++		? (t2 - t1) * (4 - hue) + t1
++	: t1;
++
++	return rgb;
++}
++
++/* Convert RGB to Hue
++/* ========================================================================== */
++
++function rgb2hue(red, green, blue, fallback) { // eslint-disable-line max-params
++	const whiteness = rgb2whiteness(red, green, blue);
++	const value     = rgb2value(red, green, blue);
++	const chroma    = vw2chroma(value, whiteness);
++
++	if (chroma === 0) {
++		return fallback;
++	} else {
++		const segment = value === red
++			? (green - blue) / chroma
++		: value === green
++			? (blue - red) / chroma
++		: (red - green) / chroma;
++
++		const shift = value === red
++			? segment < 0
++				? 360 / 60
++				: 0 / 60
++		: value === green
++			? 120 / 60
++		: 240 / 60;
++
++		const hue = (segment + shift) * 60;
++
++		return hue;
++	}
++}
++
++/* Contrast functions
++/* ========================================================================== */
++
++function contrast(color, percentage) {
++	// https://drafts.csswg.org/css-color/#contrast-adjuster
++	const hwb = color2hwb(color);
++
++	// compute the luminance of the color.
++	const luminance = rgb2luminance(color.red, color.green, color.blue);
++
++	// the maximum-contrast color, if it is less than .5
++	const maxContrastColor = luminance < 0.5
++		// hwb(X, 100%, 0%), where X is the hue angle of the color
++		? { hue: hwb.hue, whiteness: 100, blackness: 0, alpha: hwb.alpha, colorspace: 'hwb' }
++	// otherwise, hwb(X, 0%, 100%), where X is the hue angle of the color
++	: { hue: hwb.hue, whiteness: 0, blackness: 1, alpha: hwb.alpha, colorspace: 'hwb' };
++
++	// contrast ratio
++	const contrastRatio = colors2contrast(color, maxContrastColor);
++
++	const minContrastColor = contrastRatio > 4.5
++		// the color with the smallest contrast ratio with the base color that is greater than 4.5
++		? colors2contrastRatioColor(hwb, maxContrastColor)
++	// otherwise, the maximum-contrast color
++	: maxContrastColor;
++
++	// color(maximum-contrast blend(minimum-contrast <percentage> hwb))
++	return blend(maxContrastColor, minContrastColor, percentage, 'hwb', false);
++}
++
++function colors2contrast(color1, color2) {
++	// https://drafts.csswg.org/css-color/#contrast-ratio
++	const rgb1 = color2rgb(color1);
++	const rgb2 = color2rgb(color2);
++	var l1 = rgb2luminance(rgb1.red, rgb1.green, rgb1.blue);
++	var l2 = rgb2luminance(rgb2.red, rgb2.green, rgb2.blue);
++
++	return l1 > l2
++		// if l1 is the relative luminance of the lighter of the colors
++		? (l1 + 0.05) / (l2 + 0.05)
++	// otherwise, if l2 is the relative luminance of the lighter of the colors
++	: (l2 + 0.05) / (l2 + 0.05);
++}
++
++function rgb2luminance(red, green, blue) {
++	const [ redLuminance, greenLuminance, blueLuminance ] = [
++		channel2luminance(red),
++		channel2luminance(green),
++		channel2luminance(blue)
++	];
++
++	// https://drafts.csswg.org/css-color/#luminance
++	return 0.2126 * redLuminance + 0.7152 * greenLuminance + 0.0722 * blueLuminance;
++}
++
++function channel2luminance(value) {
++	// https://drafts.csswg.org/css-color/#luminance
++	return value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
++}
++
++// return the smallest contrast ratio from a color and a maximum contrast (credit: @thetalecrafter)
++function colors2contrastRatioColor(hwb, maxHWB) {
++	const modifiedHWB = Object.assign({}, hwb);
++
++	// values to be used for linear interpolations in HWB space
++	let minW = hwb.whiteness;
++	let minB = hwb.blackness;
++	let maxW = maxHWB.whiteness;
++	let maxB = maxHWB.blackness;
++
++	// find the color with the smallest contrast ratio with the base color that is greater than 4.5
++	while (Math.abs(minW - maxW) > 1 || Math.abs(minB - maxB) > 1) {
++		const midW = Math.round((maxW + minW) / 2);
++		const midB = Math.round((maxB + minB) / 2);
++
++		modifiedHWB.whiteness = midW;
++		modifiedHWB.blackness = midB;
++
++		if (colors2contrast(modifiedHWB, hwb) > 4.5) {
++			maxW = midW;
++			maxB = midB;
++		} else {
++			minW = midW;
++			minB = midB;
++		}
++	}
++
++	return modifiedHWB;
++}
++
++/* Convert RGB to Whiteness
++/* ========================================================================== */
++
++function rgb2whiteness(red, green, blue) {
++	return Math.min(red, green, blue);
++}
++
++/* Convert RGB to Value
++/* ========================================================================== */
++
++function rgb2value(red, green, blue) {
++	return Math.max(red, green, blue)
++}
++
++/* Convert Whiteness and Value to Lightness
++/* ========================================================================== */
++
++function wv2lightness(whiteness, value) {
++	return (whiteness + value) / 2;
++}
++
++/* Convert Value and Whiteness to Chroma
++/* ========================================================================== */
++
++function vw2chroma(value, whiteness) {
++	return value - whiteness;
++}
++
++/* Convert Lightness, Value, and Whiteness to Saturation
++/* ========================================================================== */
++
++function lvw2saturation(lightness, value, whiteness) {
++	return whiteness === value
++		? 0
++	: lightness < 0.5
++		? (value - whiteness) / (value + whiteness)
++	: (value - whiteness) / (2 - value - whiteness);
++}
++
++/* Match
++/* ========================================================================== */
++
++const blueGreenRedMatch = /^(blue|green|red)$/i;
+diff --git a/lib/manage-unresolved.js b/lib/manage-unresolved.js
+new file mode 100644
+index 0000000..3a8ef68
+--- /dev/null
++++ b/lib/manage-unresolved.js
+@@ -0,0 +1,7 @@
++export default function manageUnresolved(node, opts, word, message) { // eslint-disable-line max-params
++	if ('warn' === opts.unresolved) {
++		opts.decl.warn(opts.result, message, { word });
++	} else if ('ignore' !== opts.unresolved) {
++		throw opts.decl.error(message, { word });
++	}
++}
+diff --git a/lib/transform.js b/lib/transform.js
+new file mode 100644
+index 0000000..00782a8
+--- /dev/null
++++ b/lib/transform.js
+@@ -0,0 +1,663 @@
++// tooling
++import Color from './color';
++import manageUnresolved from './manage-unresolved';
++import names from 'color-name';
++import parser from 'postcss-values-parser';
++
++/* Transform AST
++/* ========================================================================== */
++
++export default function transformAST(node, opts) {
++	node.nodes.slice(0).forEach(child => {
++		if (isColorModFunction(child)) {
++			// transform any color-mod() functions
++			const color = transformColorModFunction(child, opts);
++
++			if (color) {
++				// update the color-mod() function with the transformed value
++				child.replaceWith(
++					parser.word({
++						value: opts.stringifier(color)
++					})
++				);
++			}
++		} else if (child.nodes && Object(child.nodes).length) {
++			transformAST(child, opts);
++		}
++	});
++}
++
++/* Transform <color> functions
++/* ========================================================================== */
++
++function transformColor(node, opts) {
++	if (isRGBFunction(node)) {
++		return transformRGBFunction(node, opts);
++	} else if (isHSLFunction(node)) {
++		return transformHSLFunction(node, opts);
++	} else if (isHWBFunction(node)) {
++		return transformHWBFunction(node, opts);
++	} else if (isColorModFunction(node)) {
++		return transformColorModFunction(node, opts);
++	} else if (isHexColor(node)) {
++		return transformHexColor(node, opts);
++	} else if (isNamedColor(node)) {
++		return transformNamedColor(node, opts);
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a color`);
++	}
++}
++
++// return a transformed rgb/rgba color function
++function transformRGBFunction(node, opts) {
++	const [red, green, blue, alpha = 1] = transformArgsByParams(node, [
++		// [ <percentage>{3} | <rgb-value>{3} ] [ / <alpha-value> ]?
++		[transformRGBValue, transformRGBValue, transformRGBValue, isSlash, transformAlpha],
++		// <number>#{3} [ , <alpha-value> ]? ]
++		[transformRGBValue, isComma, transformRGBValue, isComma, transformRGBValue, isComma, transformAlpha]
++	]);
++
++	if (red !== undefined) {
++		const color = new Color({ red, green, blue, alpha, colorspace: 'rgb' });
++
++		return color;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid rgb() function`);
++	}
++}
++
++// return a transformed hsl/hsla color function
++function transformHSLFunction(node, opts) {
++	const [hue, saturation, lightness, alpha = 1] = transformArgsByParams(node, [
++		// <hue> <percentage>{2} [ / <alpha-value> ]?
++		[transformHue, transformPercentage, transformPercentage, isSlash, transformAlpha],
++		// hue, <percentage>#{2} [ , <alpha-value> ]? ]
++		[transformHue, isComma, transformPercentage, isComma, transformPercentage, isComma, transformAlpha]
++	]);
++
++	if (lightness !== undefined) {
++		const color = new Color({ hue, saturation, lightness, alpha, colorspace: 'hsl' });
++
++		return color;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid hsl() function`);
++	}
++}
++
++// return a transformed hwb color function
++function transformHWBFunction(node, opts) {
++	const [hue, whiteness, blackness, alpha = 1] = transformArgsByParams(node, [
++		// <hue> <percentage> <percentage> [ / <alpha-value> ]?
++		[transformHue, transformPercentage, transformPercentage, isSlash, transformAlpha]
++	]);
++
++	if (blackness !== undefined) {
++		const color = new Color({ hue, whiteness, blackness, alpha, colorspace: 'hwb' });
++
++		return color;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid hwb() function`);
++	}
++}
++
++// return a transformed color-mod color function
++function transformColorModFunction(node, opts) {
++	// [ <color> | <hue> ] <color-adjuster>*
++	const [colorOrHueNode, ...adjusterNodes] = (node.nodes || []).slice(1, -1) || [];
++
++	if (colorOrHueNode !== undefined) {
++		const color = isHue(colorOrHueNode)
++			? new Color({ hue: transformHue(colorOrHueNode, opts), saturation: 1, lightness: 0.5, alpha: 1, colorspace: 'hsl' })
++		: transformColor(colorOrHueNode, opts);
++
++		if (color) {
++			const adjustedColor = transformColorByAdjusters(color, adjusterNodes, opts);
++
++			return adjustedColor;
++		} else {
++			return manageUnresolved(node, opts, node.value, `Expected a valid color`);
++		}
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid color-mod() function`);
++	}
++}
++
++// return a transformed hex color
++function transformHexColor(node, opts) {
++	if (hexColorMatch.test(node.value)) {
++		// #<hex-color>{3,4,6,8}
++		const [r, g, b, a, rr, gg, bb, aa] = (node.value.match(hexColorMatch) || []).slice(1);
++
++		const color = new Color({
++			red:   rr !== undefined ? parseInt(rr, 16) / 255 : r !== undefined ? parseInt(r + r, 16) / 255 : 0,
++			green: gg !== undefined ? parseInt(gg, 16) / 255 : g !== undefined ? parseInt(g + g, 16) / 255 : 0,
++			blue:  bb !== undefined ? parseInt(bb, 16) / 255 : b !== undefined ? parseInt(b + b, 16) / 255 : 0,
++			alpha: aa !== undefined ? parseInt(aa, 16) / 255 : a !== undefined ? parseInt(a + a, 16) / 255 : 1
++		});
++
++		return color;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid hex color`);
++	}
++}
++
++// return a transformed named-color
++function transformNamedColor(node, opts) {
++	if (isNamedColor(node)) {
++		// <named-color>
++		const [red, green, blue] = names[node.value];
++
++		const color = new Color({ red: red / 255, green: green / 255, blue: blue / 255, alpha: 1, colorspace: 'rgb' });
++
++		return color;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid named-color`);
++	}
++}
++
++/* Transform <color-adjuster> functions
++/* ========================================================================== */
++
++// return a transformed color using adjustments
++function transformColorByAdjusters(color, adjusterNodes, opts) {
++	const adjustedColor = adjusterNodes.reduce((base, node) => {
++		if (isAlphaBlueGreenRedAdjuster(node)) {
++			return transformAlphaBlueGreenRedAdjuster(base, node, opts);
++		} else if (isRGBAdjuster(node)) {
++			return transformRGBAdjuster(base, node, opts);
++		} else if (isHueAdjuster(node)) {
++			return transformHueAdjuster(base, node, opts);
++		} else if (isBlacknessLightnessSaturationWhitenessAdjuster(node)) {
++			return transformBlacknessLightnessSaturationWhitenessAdjuster(base, node, opts);
++		} else if (isShadeTintAdjuster(node)) {
++			return transformShadeTintAdjuster(base, node, opts);
++		} else if (isBlendAdjuster(node)) {
++			return transformBlendAdjuster(base, node, node.value === 'blenda', opts);
++		} else if (isContrastAdjuster(node)) {
++			return transformContrastAdjuster(base, node, opts);
++		} else {
++			manageUnresolved(node, opts, node.value, `Expected a valid color adjuster`);
++
++			return base;
++		}
++	}, color);
++
++	return adjustedColor;
++}
++
++// return a transformed color using a/alpha/blue/green/red adjustments
++function transformAlphaBlueGreenRedAdjuster(base, node, opts) {
++	const [operatorOrValue, adjustment] = transformArgsByParams(node, alphaMatch.test(node.value)
++			? [
++				// [ + | - ] <alpha-value>
++				[transformMinusPlusOperator, transformAlpha],
++				// * <alpha-value>
++				[transformTimesOperator, transformPercentage],
++				// <alpha-value>
++				[transformAlpha]
++			]
++		: [
++			// [ + | - ] <rgb-value>
++			[transformMinusPlusOperator, transformRGBValue],
++			// * <percentage>
++			[transformTimesOperator, transformPercentage],
++			// <rgb-value>
++			[transformRGBValue]
++		]
++	);
++
++	if (operatorOrValue !== undefined) {
++		// normalized channel name
++		const channel = node.value.toLowerCase().replace(alphaMatch, 'alpha');
++
++		const existingValue = base[channel]();
++
++		const modifiedValue = adjustment
++			? operatorOrValue === '+'
++				? existingValue + adjustment
++			: operatorOrValue === '-'
++				? existingValue - adjustment
++			: operatorOrValue === '*'
++				? existingValue * adjustment
++			: adjustment
++		: operatorOrValue;
++
++		const modifiedColor = base[channel](modifiedValue);
++
++		return modifiedColor;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid modifier()`);
++	}
++}
++
++// return a transformed color using an rgb adjustment
++function transformRGBAdjuster(base, node, opts) {
++	const [arg1, arg2, arg3, arg4] = transformArgsByParams(node, [
++			// [ + | - ] <number> <number> <number>
++			[transformMinusPlusOperator, transformRGBNumber, transformRGBNumber, transformRGBNumber],
++			// [ + | - ] <percentage> <percentage> <percentage>
++			[transformMinusPlusOperator, transformPercentage, transformPercentage, transformPercentage],
++			// [ + | - ] <hash-token>
++			[transformMinusPlusOperator, transformHexColor],
++			// [ * ] <percentage>
++			[transformTimesOperator, transformPercentage]
++		]
++	);
++
++	if (arg2 !== undefined && arg2.color) {
++		const modifiedColor = base.rgb(
++			arg1 === '+'
++				? base.red() + arg2.red()
++			: base.red() - arg2.red(),
++			arg1 === '+'
++				? base.green() + arg2.green()
++			: base.green() - arg2.green(),
++			arg1 === '+'
++				? base.blue() + arg2.blue()
++			: base.blue() - arg2.blue()
++		);
++
++		return modifiedColor;
++	} else if (arg1 !== undefined && minusPlusMatch.test(arg1)) {
++		const modifiedColor = base.rgb(
++			arg1 === '+'
++				? base.red() + arg2
++			: base.red() - arg2,
++			arg1 === '+'
++				? base.green() + arg3
++			: base.green() - arg3,
++			arg1 === '+'
++				? base.blue() + arg4
++			: base.blue() - arg4
++		);
++
++		return modifiedColor;
++	} else if (arg1 !== undefined && arg2 !== undefined) {
++		const modifiedColor = base.rgb(
++			base.red() * arg2,
++			base.green() * arg2,
++			base.blue() * arg2
++		);
++
++		return modifiedColor;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid rgb() adjuster)`);
++	}
++}
++
++// return a transformed color using a blend/blenda adjustment
++function transformBlendAdjuster(base, node, isAlphaBlend, opts) { // eslint-disable-line max-params
++	const [color, percentage, colorspace = 'rgb'] = transformArgsByParams(node, [
++		[transformColor, transformPercentage, transformColorSpace]
++	]);
++
++	if (percentage !== undefined) {
++		const modifiedColor = isAlphaBlend
++			? base.blenda(color.color, percentage, colorspace)
++		: base.blend(color.color, percentage, colorspace);
++
++		return modifiedColor;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid blend() adjuster)`);
++	}
++}
++
++// return a transformed color using a contrast adjustment
++function transformContrastAdjuster(base, node, opts) {
++	const [percentage] = transformArgsByParams(node, [
++		// <percentage>
++		[transformPercentage]
++	]);
++
++	if (percentage !== undefined) {
++		const modifiedColor = base.contrast(percentage);
++
++		return modifiedColor;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid contrast() adjuster)`);
++	}
++}
++
++// return a transformed color using a hue adjustment
++function transformHueAdjuster(base, node, opts) {
++	const [operatorOrHue, rawAdjustment] = transformArgsByParams(node, [
++		// [ + | - | * ] <angle>
++		[transformMinusPlusTimesOperator, transformHue],
++		// <angle>
++		[transformHue]
++	]);
++
++	if (operatorOrHue !== undefined) {
++		const existingHue = base.hue();
++		const adjustment = parseFloat(rawAdjustment);
++
++		const rawModifiedValue = adjustment
++			? operatorOrHue === '+'
++				? existingHue + adjustment
++			: operatorOrHue === '-'
++				? existingHue - adjustment
++			: operatorOrHue === '*'
++				? existingHue * adjustment
++			: adjustment
++		: parseFloat(operatorOrHue);
++
++		const modifiedValue = rawModifiedValue < 0
++			? 360 + rawModifiedValue % 360
++		: rawModifiedValue % 360;
++
++		return base.hue(modifiedValue);
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid hue() function)`);
++	}
++}
++
++// [ b | blackness | l | lightness | s | saturation | w | whiteness ]( [ + | - | * ]? <percentage> )
++function transformBlacknessLightnessSaturationWhitenessAdjuster(base, node, opts) {
++	const channel = node.value.toLowerCase().replace(/^b$/, 'blackness').replace(/^l$/, 'lightness').replace(/^s$/, 'saturation').replace(/^w$/, 'whiteness');
++	const [operatorOrValue, rawAdjustment] = transformArgsByParams(node, [
++		[transformMinusPlusTimesOperator, transformPercentage],
++		[transformPercentage]
++	]);
++
++	if (operatorOrValue !== undefined) {
++		const existingValue = base[channel]();
++		const adjustment = parseFloat(rawAdjustment);
++
++		const modifiedValue = adjustment
++			? operatorOrValue === '+'
++				? existingValue + adjustment
++			: operatorOrValue === '-'
++				? existingValue - adjustment
++			: operatorOrValue === '*'
++				? existingValue * adjustment
++			: adjustment
++		: parseFloat(operatorOrValue);
++
++		return base[channel](modifiedValue);
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid ${channel}() function)`);
++	}
++}
++
++// return a transformed color using shade/tint adjustments
++function transformShadeTintAdjuster(base, node, opts) {
++	const channel = node.value.toLowerCase();
++	const [percentage] = transformArgsByParams(node, [
++		// [ shade | tint ]( <percentage> )
++		[transformPercentage]
++	]);
++
++	if (percentage !== undefined) {
++		const modifiedValue = parseFloat(percentage);
++
++		return base[channel](modifiedValue);
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected valid ${channel}() arguments`);
++	}
++}
++
++/* Argument Transforms
++/* ========================================================================== */
++
++// return a transformed color space
++function transformColorSpace(node, opts) {
++	if (isColorSpace(node)) {
++		// [ hsl | hwb | rgb ]
++		return node.value;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid color space)`);
++	}
++}
++
++// return a transformed alpha value
++function transformAlpha(node, opts) {
++	if (isNumber(node)) {
++		// <number>
++		return parseFloat(node.value);
++	} else if (isPercentage(node)) {
++		// <percentage>
++		return transformPercentage(node, opts);
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid alpha value)`);
++	}
++}
++
++// return a transformed rgb value
++function transformRGBValue(node, opts) {
++	if (isNumber(node)) {
++		// <rgba-number>
++		return transformRGBNumber(node, opts);
++	} else if (isPercentage(node)) {
++		// <percentage>
++		return transformPercentage(node, opts);
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid RGB value)`);
++	}
++}
++
++// return a transformed rgb number
++function transformRGBNumber(node, opts) {
++	if (isNumber(node)) {
++		// <rgba-number>
++		return parseFloat(node.value) / 255;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid RGB value)`);
++	}
++}
++
++// return a transformed hue
++function transformHue(node, opts) {
++	if (isHue(node)) {
++		// <hue>
++		return parseFloat(node.value);
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid hue`);
++	}
++}
++
++// return a transformed percentage
++function transformPercentage(node, opts) {
++	if (isPercentage(node)) {
++		// <percentage>
++		return parseFloat(node.value) / 100;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a valid hue`);
++	}
++}
++
++// return a transformed minus-plus operator
++function transformMinusPlusOperator(node, opts) {
++	if (isMinusPlusOperator(node)) {
++		// [ - | + ]
++		return node.value;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a plus or minus operator`);
++	}
++}
++
++// return a transformed times operator
++function transformTimesOperator(node, opts) {
++	if (isTimesOperator(node)) {
++		// [ * ]
++		return node.value;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a times operator`);
++	}
++}
++
++// return a transformed minus-plus-times operator
++function transformMinusPlusTimesOperator(node, opts) {
++	if (isMinusPlusTimesOperator(node)) {
++		// [ - | + | * ]
++		return node.value;
++	} else {
++		return manageUnresolved(node, opts, node.value, `Expected a plus, minus, or times operator`);
++	}
++}
++
++/* Transform helper
++/* ========================================================================== */
++
++// return the first set of transformed arguments allowable by the parameters
++function transformArgsByParams(node, params) {
++	const nodes = (node.nodes || []).slice(1, -1);
++	const opts = { unresolved: 'ignore' };
++
++	return params.map(param => nodes.map(
++		(childNode, index) => typeof param[index] === 'function' ? param[index](childNode, opts) : undefined
++	).filter(child => typeof child !== 'boolean')).filter(param => param.every(
++		result => result !== undefined
++	))[0] || [];
++}
++
++/* Adjustment validators
++/* ========================================================================== */
++
++// return whether the node is an a/alpha/blue/green/red adjuster
++function isAlphaBlueGreenRedAdjuster(node) {
++	// [ a(), alpha(), blue(), green(), red() ]
++	return Object(node).type === 'func' && alphaBlueGreenRedMatch.test(node.value);
++}
++
++// return whether the node is an rgb adjuster
++function isRGBAdjuster(node) {
++	return Object(node).type === 'func' && rgbMatch.test(node.value);
++}
++
++// return whether the node is a hue adjuster
++function isHueAdjuster(node) {
++	// [ h() | hue() ]
++	return Object(node).type === 'func' && hueMatch.test(node.value);
++}
++
++// return whether the node is a blackness/lightness/saturation/whiteness adjuster
++function isBlacknessLightnessSaturationWhitenessAdjuster(node) {
++	// [ b() | blackness() | l() | lightness() | s() | saturation() | w() | whiteness() ]
++	return Object(node).type === 'func' && blacknessLightnessSaturationWhitenessMatch.test(node.value);
++}
++
++// return whether the node is a shade/tint adjuster
++function isShadeTintAdjuster(node) {
++	// [ shade() | tint() ]
++	return Object(node).type === 'func' && shadeTintMatch.test(node.value);
++}
++
++// return whether the node is a blend adjuster
++function isBlendAdjuster(node) {
++	// [ blend(), blenda() ]
++	return Object(node).type === 'func' && blendMatch.test(node.value);
++}
++
++// return whether the node is a contrast adjuster
++function isContrastAdjuster(node) {
++	// [ contrast() ]
++	return Object(node).type === 'func' && contrastMatch.test(node.value);
++}
++
++/* Color validators
++/* ========================================================================== */
++
++// return whether the node is an rgb/rgba color function
++function isRGBFunction(node) {
++	// [ rgb(), rgba() ]
++	return Object(node).type === 'func' && rgbaMatch.test(node.value);
++}
++
++// return whether the node is an hsl color function
++function isHSLFunction(node) {
++	// [ hsl(), hsla() ]
++	return Object(node).type === 'func' && hslaMatch.test(node.value);
++}
++
++// return whether the node is an hwb color function
++function isHWBFunction(node) {
++	// hwb()
++	return Object(node).type === 'func' && hwbMatch.test(node.value);
++}
++
++// return whether the node is a color-mod function
++function isColorModFunction(node) {
++	// color-mod()
++	return Object(node).type === 'func' && colorModMatch.test(node.value);
++}
++
++// return whether the node is a valid named-color
++function isNamedColor(node) {
++	return Object(node).type === 'word' && node.value in names;
++}
++
++// return whether the node is a valid hex color
++function isHexColor(node) {
++	// #<hex-color>{3,4,6,8}
++	return Object(node).type === 'word' && hexColorMatch.test(node.value);
++}
++
++// return whether the node is a valid color space
++function isColorSpace(node) {
++	// [ hsl | hwb | rgb ]
++	return Object(node).type === 'word' && colorSpaceMatch.test(node.value);
++}
++
++/* Additional validators
++/* ========================================================================== */
++
++// return whether the hue value is valid
++function isHue(node) {
++	return Object(node).type === 'number' && /^(deg)?$/.test(node.unit);
++}
++
++// return whether the comma is valid
++function isComma(node) {
++	return Object(node).type === 'comma';
++}
++
++// return whether the slash operator is valid
++function isSlash(node) {
++	return Object(node).type === 'operator' && node.value === '/';
++}
++
++// return whether the number is valid
++function isNumber(node) {
++	return Object(node).type === 'number' && node.unit === '';
++}
++
++// return whether the mind-plus operator is valid
++function isMinusPlusOperator(node) {
++	return Object(node).type === 'operator' && minusPlusMatch.test(node.value);
++}
++
++// return whether the minus-plus-times operator is valid
++function isMinusPlusTimesOperator(node) {
++	return Object(node).type === 'operator' && minusPlusTimesMatch.test(node.value);
++}
++
++// return whether the times operator is valid
++function isTimesOperator(node) {
++	return Object(node).type === 'operator' && timesMatch.test(node.value);
++}
++
++// return whether the percentage is valid
++function isPercentage(node) {
++	return Object(node).type === 'number' && node.unit === '%';
++}
++
++/* Matchers
++/* ========================================================================== */
++
++const alphaMatch = /^a(lpha)?$/i;
++const alphaBlueGreenRedMatch = /^(a(lpha)?|blue|green|red)$/i;
++const blacknessLightnessSaturationWhitenessMatch = /^(b(lackness)?|l(ightness)?|s(aturation)?|w(hiteness)?)$/i;
++const blendMatch = /^blenda?$/i;
++const colorModMatch = /^color-mod$/i;
++const colorSpaceMatch = /^(hsl|hwb|rgb)$/i;
++const contrastMatch = /^contrast$/i;
++const hexColorMatch = /^#(?:([a-f0-9])([a-f0-9])([a-f0-9])([a-f0-9])?|([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})?)$/i;
++const hslaMatch = /^hsla?$/i;
++const hueMatch = /^h(ue)?$/i;
++const hwbMatch = /^hwb$/i;
++const minusPlusMatch = /^[+-]$/;
++const minusPlusTimesMatch = /^[*+-]$/;
++const rgbMatch = /^rgb$/i;
++const rgbaMatch = /^rgba?$/i;
++const shadeTintMatch = /^(shade|tint)$/i;
++const timesMatch = /^[*]$/;
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..0ad395d
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,78 @@
++{
++  "name": "postcss-color-mod-function",
++  "version": "1.0.0",
++  "description": "Modify colors using the color-mod() function in CSS",
++  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
++  "license": "CC0-1.0",
++  "repository": "jonathantneal/postcss-color-mod-function",
++  "homepage": "https://github.com/jonathantneal/postcss-color-mod-function#readme",
++  "bugs": "https://github.com/jonathantneal/postcss-color-mod-function/issues",
++  "main": "index.bundle.js",
++  "module": "index.js",
++  "files": [
++    "index.js",
++    "index.bundle.js",
++    "lib"
++  ],
++  "scripts": {
++    "prepublishOnly": "npm test",
++    "pretest": "rollup -c .rollup.js --silent",
++    "test": "echo 'Running tests...'; npm run test:ec && npm run test:js && npm run test:tape",
++    "test:ec": "echint --ignore index.bundle.js test",
++    "test:js": "eslint *.js lib/*.js --cache --ignore-path .gitignore --quiet",
++    "test:tape": "postcss-tape"
++  },
++  "engines": {
++    "node": ">=4.0.0"
++  },
++  "dependencies": {
++    "color-name": "^1.1.3",
++    "postcss": "^6.0",
++    "postcss-values-parser": "^1.3.1"
++  },
++  "devDependencies": {
++    "babel-core": "^6.26",
++    "babel-eslint": "^8.2",
++    "babel-preset-env": "^1.6",
++    "echint": "^4.0",
++    "eslint": "^4.15",
++    "eslint-config-dev": "2.0",
++    "postcss-tape": "2.2",
++    "pre-commit": "^1.2",
++    "rollup": "^0.54",
++    "rollup-plugin-babel": "^3.0"
++  },
++  "eslintConfig": {
++    "extends": "dev",
++    "parser": "babel-eslint"
++  },
++  "keywords": [
++    "postcss",
++    "css",
++    "postcss-plugin",
++    "colors",
++    "colours",
++    "modifications",
++    "mods",
++    "adjusters",
++    "adjustments",
++    "csswg",
++    "rgba",
++    "hsla",
++    "white",
++    "black",
++    "red",
++    "green",
++    "blue",
++    "alpha",
++    "hue",
++    "saturation",
++    "lightness",
++    "whiteness",
++    "blackness",
++    "tint",
++    "shade",
++    "blenda",
++    "contrast"
++  ]
++}
+diff --git a/test/basic.colors.expect.css b/test/basic.colors.expect.css
+new file mode 100644
+index 0000000..ebe329f
+--- /dev/null
++++ b/test/basic.colors.expect.css
+@@ -0,0 +1,96 @@
++test-color-mod {
++	color: rgb(100% 0% 0%);
++	color: rgb(100% 0% 0%);
++	color: rgb(100% 0% 0%);
++	color: rgb(100% 0% 0%);
++	color: rgb(100% 0% 0%);
++	color: rgb(100% 0% 0%);
++	color: rgb(100% 0% 0%);
++	color: rgb(100% 0% 0%);
++	color: rgb(100% 0% 0%);
++	color: rgb(100% 0% 0%);
++	color: rgb(100% 0% 0%);
++	color: rgb(100% 0% 0%);
++	color: hsl(0 100% 50%);
++	color: hsl(0 100% 50%);
++	color: hsl(0 100% 50%);
++	color: hsl(0 100% 50%);
++	color: hsl(0 100% 50%);
++	color: hwb(0 0% 0%);
++	color: hwb(0 0% 0%);
++	color: hsl(0 100% 50%);
++	color: hsl(0 100% 50%);
++}
++
++test-red-green-blue-alpha-adjuster {
++	color: rgb(100% 0% 7.8431372549019605%);
++	color: rgb(100% 0% 20%);
++	color: rgb(100% 7.8431372549019605% 0%);
++	color: rgb(100% 20% 0%);
++	color: rgb(92.15686274509804% 0% 0%);
++	color: rgb(80% 0% 0%);
++	color: rgb(100% 0% 0% / 20%);
++}
++
++test-rgb-adjuster {
++	color: rgb(100% 100% 0%);
++	color: rgb(100% 100% 0%);
++	color: rgb(0% 0% 0%);
++	color: rgb(0% 0% 0%);
++	color: rgb(50% 0% 0%);
++}
++
++test-hue-adjuster {
++	color: hsl(20 100% 50%);
++	color: hsl(20 100% 50%);
++	color: hsl(20 100% 50%);
++	color: hsl(20 100% 50%);
++	color: hsl(340 100% 50%);
++	color: hsl(340 100% 50%);
++	color: hsl(0 100% 50%);
++	color: hsl(0 100% 50%);
++}
++
++test-lightness-saturation-adjuster {
++	color: hsl(0 100% 20%);
++	color: hsl(0 100% 70%);
++	color: hsl(0 100% 30%);
++	color: hsl(0 100% 10%);
++	color: hsl(0 20% 50%);
++	color: hsl(0 100% 50%);
++	color: hsl(0 80% 50%);
++	color: hsl(0 20% 50%);
++}
++
++test-blackness-whiteness-adjuster {
++	color: hwb(0 0% 20%);
++	color: hwb(0 0% 20%);
++	color: hwb(0 0% 0%);
++	color: hwb(0 0% 0%);
++	color: hwb(0 20% 0%);
++	color: hwb(0 20% 0%);
++	color: hwb(0 0% 0%);
++	color: hwb(0 0% 0%);
++}
++
++test-tint-shade-adjuster {
++	color: hwb(0 0% 80%);
++	color: hwb(0 80% 0%);
++}
++
++test-blend-adjuster {
++	color: rgb(100% 50% 0%);
++	color: rgb(100% 50% 0%);
++	color: hsl(30 100% 50%);
++	color: hwb(30 0% 0%);
++}
++
++test-contrast-adjuster {
++	color: hwb(60 0% 25%);
++	color: hwb(60 0% 50%);
++	color: hwb(60 0% 75%);
++}
++
++test-combination-adjuster {
++	color: rgb(34.56764855961519% 17.846405228758172% 44.56764855961519%);
++}
+diff --git a/test/basic.css b/test/basic.css
+new file mode 100644
+index 0000000..eb60051
+--- /dev/null
++++ b/test/basic.css
+@@ -0,0 +1,96 @@
++test-color-mod {
++	color: color-mod(red);
++	color: color-mod(color-mod(red));
++	color: color-mod(color-mod(color-mod(red)));
++	color: color-mod(#f00);
++	color: color-mod(#f00f);
++	color: color-mod(#ff0000);
++	color: color-mod(#ff0000ff);
++	color: color-mod(rgb(100% 0% 0%));
++	color: color-mod(rgb(100% 0% 0% / 100%));
++	color: color-mod(rgb(255, 0, 0));
++	color: color-mod(rgb(255, 0, 0, 1));
++	color: color-mod(rgba(255, 0, 0, 1));
++	color: color-mod(hsl(0 100% 50%));
++	color: color-mod(hsl(0 100% 50% / 100%));
++	color: color-mod(hsl(0, 100%, 50%));
++	color: color-mod(hsl(0, 100%, 50%, 1));
++	color: color-mod(hsla(0, 100%, 50%, 1));
++	color: color-mod(hwb(0 0% 0%));
++	color: color-mod(hwb(0 0% 0% / 100%));
++	color: color-mod(0);
++	color: color-mod(0deg);
++}
++
++test-red-green-blue-alpha-adjuster {
++	color: color-mod(red blue(20));
++	color: color-mod(red blue(20%));
++	color: color-mod(red green(+ 20));
++	color: color-mod(red green(+ 20%));
++	color: color-mod(red red(- 20));
++	color: color-mod(red red(- 20%));
++	color: color-mod(red alpha(* 20%));
++}
++
++test-rgb-adjuster {
++	color: color-mod(red rgb(+ 0 255 0));
++	color: color-mod(red rgb(+ #0f0));
++	color: color-mod(red rgb(- 255 0 0));
++	color: color-mod(red rgb(- #f00));
++	color: color-mod(red rgb(* 50%));
++}
++
++test-hue-adjuster {
++	color: color-mod(red hue(20));
++	color: color-mod(red hue(20deg));
++	color: color-mod(red hue(+ 20));
++	color: color-mod(red hue(+ 20deg));
++	color: color-mod(red hue(- 20));
++	color: color-mod(red hue(- 20deg));
++	color: color-mod(red hue(* 20));
++	color: color-mod(red hue(* 20deg));
++}
++
++test-lightness-saturation-adjuster {
++	color: color-mod(red lightness(20%));
++	color: color-mod(red lightness(+ 20%));
++	color: color-mod(red lightness(- 20%));
++	color: color-mod(red lightness(* 20%));
++	color: color-mod(red saturation(20%));
++	color: color-mod(red saturation(+ 20%));
++	color: color-mod(red saturation(- 20%));
++	color: color-mod(red saturation(* 20%));
++}
++
++test-blackness-whiteness-adjuster {
++	color: color-mod(red blackness(20%));
++	color: color-mod(red blackness(+ 20%));
++	color: color-mod(red blackness(- 20%));
++	color: color-mod(red blackness(* 20%));
++	color: color-mod(red whiteness(20%));
++	color: color-mod(red whiteness(+ 20%));
++	color: color-mod(red whiteness(- 20%));
++	color: color-mod(red whiteness(* 20%));
++}
++
++test-tint-shade-adjuster {
++	color: color-mod(red tint(20%));
++	color: color-mod(red shade(20%));
++}
++
++test-blend-adjuster {
++	color: color-mod(yellow blend(red 50%));
++	color: color-mod(yellow blend(red 50% rgb));
++	color: color-mod(yellow blend(red 50% hsl));
++	color: color-mod(yellow blend(red 50% hwb));
++}
++
++test-contrast-adjuster {
++	color: color-mod(yellow contrast(25%));
++	color: color-mod(yellow contrast(50%));
++	color: color-mod(yellow contrast(75%));
++}
++
++test-combination-adjuster {
++	color: color-mod(color-mod(0deg blue(10%)) rgb(+ 0 10 0) hue(+ 10deg) tint(10%) lightness(+ 10%) saturation(+ 10%) blend(rebeccapurple 50%));
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+new file mode 100644
+index 0000000..d9bcee7
+--- /dev/null
++++ b/test/basic.expect.css
+@@ -0,0 +1,96 @@
++test-color-mod {
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 255);
++	color: rgb(255, 0, 255);
++	color: rgb(255, 0, 255);
++	color: rgb(255, 0, 255);
++	color: rgb(255, 0, 255);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 255);
++	color: rgb(255, 0, 255);
++}
++
++test-red-green-blue-alpha-adjuster {
++	color: rgb(255, 0, 20);
++	color: rgb(255, 0, 51);
++	color: rgb(255, 20, 0);
++	color: rgb(255, 51, 0);
++	color: rgb(235.00000000000003, 0, 0);
++	color: rgb(204, 0, 0);
++	color: rgba(255, 0, 0, 0.2);
++}
++
++test-rgb-adjuster {
++	color: rgb(255, 255, 0);
++	color: rgb(255, 255, 0);
++	color: rgb(0, 0, 0);
++	color: rgb(0, 0, 0);
++	color: rgb(127.5, 0, 0);
++}
++
++test-hue-adjuster {
++	color: rgb(255, 85, 255);
++	color: rgb(255, 85, 255);
++	color: rgb(255, 85, 255);
++	color: rgb(255, 85, 255);
++	color: rgb(0, 0, 84.99999999999993);
++	color: rgb(0, 0, 84.99999999999993);
++	color: rgb(255, 0, 255);
++	color: rgb(255, 0, 255);
++}
++
++test-lightness-saturation-adjuster {
++	color: rgb(102, 0, 102);
++	color: rgb(255, 101.99999999999997, 255);
++	color: rgb(153, 0, 153);
++	color: rgb(51, 0, 51);
++	color: rgb(153, 102, 153);
++	color: rgb(255, 0, 255);
++	color: rgb(229.5, 25.499999999999993, 229.5);
++	color: rgb(153, 102, 153);
++}
++
++test-blackness-whiteness-adjuster {
++	color: rgb(204, 0, 0);
++	color: rgb(204, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 51, 51);
++	color: rgb(255, 51, 51);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++}
++
++test-tint-shade-adjuster {
++	color: rgb(50.999999999999986, 0, 0);
++	color: rgb(255, 204, 204);
++}
++
++test-blend-adjuster {
++	color: rgb(255, 127.5, 0);
++	color: rgb(255, 127.5, 0);
++	color: rgb(255, 127.5, 255);
++	color: rgb(255, 127.5, 0);
++}
++
++test-contrast-adjuster {
++	color: rgb(191.25, 191.25, 0);
++	color: rgb(127.5, 127.5, 0);
++	color: rgb(63.75, 63.75, 0);
++}
++
++test-combination-adjuster {
++	color: rgb(88.14750382701874, 45.50833333333334, 113.64750382701874);
++}
+diff --git a/test/warn.css b/test/warn.css
+new file mode 100644
+index 0000000..702b819
+--- /dev/null
++++ b/test/warn.css
+@@ -0,0 +1,48 @@
++test-color-mod {
++	color: color-mod();
++}
++
++test-color-adjusters {
++	color: color-mod(red red(20deg));
++	color: color-mod(red blue(* 20));
++	color: color-mod(red green(* blue));
++	color: color-mod(red alpha(* 1));
++	color: color-mod(red alpha(0 1));
++	color: color-mod(red rgb(+ 0 255 0 0));
++	color: color-mod(red rgb(* 0 255 0));
++	color: color-mod(red rgb(100%));
++	color: color-mod(red hue(blue));
++	color: color-mod(red hue(20%));
++	color: color-mod(red hue(+ 20em));
++	color: color-mod(red hue(- 20em));
++	color: color-mod(red hue(* 20%));
++	color: color-mod(red lightness(20));
++	color: color-mod(red lightness(+ 20));
++	color: color-mod(red lightness(- 20));
++	color: color-mod(red lightness(* 20));
++	color: color-mod(red lightness(* 20 20));
++	color: color-mod(red saturation(20));
++	color: color-mod(red saturation(+ 20));
++	color: color-mod(red saturation(- 20));
++	color: color-mod(red saturation(* 20));
++	color: color-mod(red saturation(* 20 20));
++	color: color-mod(red blackness(20));
++	color: color-mod(red blackness(+ 20));
++	color: color-mod(red blackness(- 20));
++	color: color-mod(red blackness(* 20));
++	color: color-mod(red blackness(* 20 20));
++	color: color-mod(red whiteness(20));
++	color: color-mod(red whiteness(+ 20));
++	color: color-mod(red whiteness(- 20));
++	color: color-mod(red whiteness(* 20));
++	color: color-mod(red whiteness(* 20 20));
++	color: color-mod(red tint(20));
++	color: color-mod(red tint(+ 20%));
++	color: color-mod(red shade(20));
++	color: color-mod(red shade(+ 20%));
++	color: color-mod(yellow blend(20% 50%));
++	color: color-mod(yellow blend(red 50));
++	color: color-mod(yellow blend(red 50% blue));
++	color: color-mod(yellow contrast(50));
++	color: color-mod(yellow contrast(+ 50%));
++}
+-- 
+2.33.1
+

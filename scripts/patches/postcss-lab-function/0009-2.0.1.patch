@@ -1,0 +1,112 @@
+From 325c378768d1a353af4effdc7ca1a1f82384fc2e Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 18 Sep 2018 11:45:52 -0400
+Subject: [PATCH 09/19] 2.0.1
+
+---
+ CHANGELOG.md |  8 ++++++--
+ INSTALL.md   |  2 +-
+ index.js     | 14 +++++++-------
+ package.json | 10 +++++-----
+ 4 files changed, 19 insertions(+), 15 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 98fa943..540f11f 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,9 +1,13 @@
+ # Changes to PostCSS Lab Function
+ 
++### 2.0.1 (September 18, 2018)
++
++- Updated: PostCSS Values Parser 2.0.0
++
+ ### 2.0.0 (September 17, 2018)
+ 
+-- Updated: Support for PostCSS v7+
+-- Updated: Support for Node v6+
++- Updated: Support for PostCSS 7+
++- Updated: Support for Node 6+
+ 
+ ### 1.1.0 (July 24, 2018)
+ 
+diff --git a/INSTALL.md b/INSTALL.md
+index 74a3344..a123e2d 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -1,4 +1,4 @@
+-# Installing PostCSS
++# Installing PostCSS Lab Function
+ 
+ [PostCSS Lab Function] runs in all Node environments, with special
+ instructions for:
+diff --git a/index.js b/index.js
+index ff94a81..44e1e1f 100644
+--- a/index.js
++++ b/index.js
+@@ -41,7 +41,7 @@ export default postcss.plugin('postcss-lab-function', opts => {
+ 								}
+ 							}
+ 
+-							if (isSlash(slashNode)) {
++							if (slashNode && isSlash(slashNode)) {
+ 								slashNode.replaceWith( newComma() );
+ 							}
+ 
+@@ -129,12 +129,12 @@ const alphaUnitMatch = /^%?$/i;
+ const calcFuncMatch = /^calc$/i;
+ const hueUnitMatch = /^(deg|grad|rad|turn)?$/i;
+ 
+-const isAlphaValue = node => isCalc(node) || Object(node).type === 'number' && alphaUnitMatch.test(node.unit);
+-const isCalc = node => Object(node).type === 'func' && calcFuncMatch.test(node.value);
+-const isHue = node => isCalc(node) || Object(node).type === 'number' && hueUnitMatch.test(node.unit);
+-const isNumber = node => isCalc(node) || Object(node).type === 'number' && node.unit === '';
+-const isPercentage = node => isCalc(node) || Object(node).type === 'number' && node.unit === '%';
+-const isSlash = node => Object(node).type === 'operator' && node.value === '/';
++const isAlphaValue = node => isCalc(node) || node.type === 'number' && alphaUnitMatch.test(node.unit);
++const isCalc = node => node.type === 'func' && calcFuncMatch.test(node.value);
++const isHue = node => isCalc(node) || node.type === 'number' && hueUnitMatch.test(node.unit);
++const isNumber = node => isCalc(node) || node.type === 'number' && node.unit === '';
++const isPercentage = node => isCalc(node) || node.type === 'number' && node.unit === '%';
++const isSlash = node => node.type === 'operator' && node.value === '/';
+ const functionalLABMatch = [isNumber, isNumber, isNumber, isSlash, isAlphaValue];
+ const functionalLCHMatch = [isNumber, isNumber, isHue, isSlash, isAlphaValue];
+ const functionalGrayMatch = [isNumber, isSlash, isAlphaValue];
+diff --git a/package.json b/package.json
+index 77db803..47bf792 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-lab-function",
+-  "version": "2.0.0",
++  "version": "2.0.1",
+   "description": "Use lab() and lch() color functions in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -29,18 +29,18 @@
+   "dependencies": {
+     "@csstools/convert-colors": "^1.4.0",
+     "postcss": "^7.0.2",
+-    "postcss-values-parser": "^1.5.0"
++    "postcss-values-parser": "^2.0.0"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.0.0",
+-    "@babel/preset-env": "^7.0.0",
++    "@babel/core": "^7.1.0",
++    "@babel/preset-env": "^7.1.0",
+     "babel-eslint": "^9.0.0",
+     "eslint": "^5.6.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+     "rollup": "^0.66.0",
+-    "rollup-plugin-babel": "^4.0.1"
++    "rollup-plugin-babel": "^4.0.3"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+-- 
+2.33.1
+

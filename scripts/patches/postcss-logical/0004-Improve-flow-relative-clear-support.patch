@@ -1,0 +1,79 @@
+From 74323d2fa57ee3dc052881102a4fef3d434dd754 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 15 Aug 2017 14:26:38 -0400
+Subject: [PATCH 04/43] Improve flow-relative clear support
+
+---
+ .tape.js              |  3 +++
+ index.js              |  1 +
+ test/clear.css        |  7 +++++++
+ test/clear.expect.css | 17 +++++++++++++++++
+ 4 files changed, 28 insertions(+)
+ create mode 100644 test/clear.css
+ create mode 100644 test/clear.expect.css
+
+diff --git a/.tape.js b/.tape.js
+index aaaff59..05cce54 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -3,6 +3,9 @@ module.exports = {
+ 		'border': {
+ 			message: 'supports logical "border" property values'
+ 		},
++		'clear': {
++			message: 'supports logical "clear" property values'
++		},
+ 		'float': {
+ 			message: 'supports logical "float" property values'
+ 		},
+diff --git a/index.js b/index.js
+index 1cbe746..e445026 100644
+--- a/index.js
++++ b/index.js
+@@ -23,6 +23,7 @@ const transforms = {
+ 	'border-inline-end': transformBorder['border-inline-end'], 'border-inline-end-width': transformBorder['border-inline-end'], 'border-inline-end-style': transformBorder['border-inline-end'], 'border-inline-end-color': transformBorder['border-inline-end'],
+ 	'border-start': transformBorder['border-start'], 'border-start-width': transformBorder['border-start'], 'border-start-style': transformBorder['border-start'], 'border-start-color': transformBorder['border-start'],
+ 	'border-end': transformBorder['border-end'], 'border-end-width': transformBorder['border-end'], 'border-end-style': transformBorder['border-end'], 'border-end-color': transformBorder['border-end'],
++	'clear': transformFloat,
+ 	'inset': transformInset,
+ 	'margin': transformSpacing,
+ 	'padding': transformSpacing,
+diff --git a/test/clear.css b/test/clear.css
+new file mode 100644
+index 0000000..69f0de1
+--- /dev/null
++++ b/test/clear.css
+@@ -0,0 +1,7 @@
++test-clear {
++	clear: both;
++	clear: left;
++	clear: inline-start;
++	clear: inline-end;
++	clear: right;
++}
+diff --git a/test/clear.expect.css b/test/clear.expect.css
+new file mode 100644
+index 0000000..75cc0cc
+--- /dev/null
++++ b/test/clear.expect.css
+@@ -0,0 +1,17 @@
++test-clear {
++	clear: both;
++	clear: left;
++	&:dir(ltr) {
++	clear: left;
++	}
++	&:dir(rtl) {
++	clear: right;
++	}
++	&:dir(ltr) {
++	clear: right;
++	}
++	&:dir(rtl) {
++	clear: left;
++	}
++	clear: right;
++}
+-- 
+2.33.1
+

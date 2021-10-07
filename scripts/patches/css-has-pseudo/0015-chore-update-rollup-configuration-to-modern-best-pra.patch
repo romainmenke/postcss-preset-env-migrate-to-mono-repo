@@ -1,0 +1,33 @@
+From 9c46429db26d17ae18116b0bacf09d13c3291bef Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 16 Sep 2021 11:10:48 -0400
+Subject: [PATCH 15/17] chore: update rollup configuration to modern best
+ practices
+
+---
+ .rollup.js | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/.rollup.js b/.rollup.js
+index 12577f3..7a350f7 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -11,12 +11,12 @@ const output = isCLI
+ 	? { file: 'cli.js', format: 'cjs', sourcemap: true, strict: false }
+ : isPostCSS
+ 	? [
+-	{ file: 'postcss.js', format: 'cjs', sourcemap: true },
++	{ file: 'postcss.js', format: 'cjs', exports: 'default', sourcemap: true },
+ 	{ file: 'postcss.mjs', format: 'esm', sourcemap: true }
+ ] : isBrowser
+-	? { file: 'browser.js', format: 'cjs', sourcemap: true, strict: false }
++	? { file: 'browser.js', format: 'cjs', exports: 'default', sourcemap: true, strict: false }
+ : [
+-	{ file: 'index.js', format: 'cjs', sourcemap: true },
++	{ file: 'index.js', format: 'cjs', exports: 'default', sourcemap: true },
+ 	{ file: 'index.mjs', format: 'esm', sourcemap: true }
+ ];
+ 
+-- 
+2.33.1
+

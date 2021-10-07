@@ -1,0 +1,25 @@
+From e10ab0cabb5e2812ec9442ec95c7d8fb07527fde Mon Sep 17 00:00:00 2001
+From: Aaron Ballard <aaron.ballard@oildex.com>
+Date: Wed, 15 Aug 2018 16:42:27 -0500
+Subject: [PATCH 28/34] Upgrade PostCSS to 7.0.2
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index bf0a6cf..4ba83c9 100644
+--- a/package.json
++++ b/package.json
+@@ -25,7 +25,7 @@
+     "node": ">=4.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^6.0.22",
++    "postcss": "^7.0.2",
+     "postcss-selector-parser": "^4.0.0"
+   },
+   "devDependencies": {
+-- 
+2.33.1
+

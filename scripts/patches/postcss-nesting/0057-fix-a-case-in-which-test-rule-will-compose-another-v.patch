@@ -1,0 +1,71 @@
+From 6a093745e8cc7cb9e57eb498bdaba7f84ad4b46a Mon Sep 17 00:00:00 2001
+From: Junliang Huang <JLHwung@users.noreply.github.com>
+Date: Sun, 20 Aug 2017 00:53:18 +0800
+Subject: [PATCH 57/89] fix: a case in which test rule will compose another
+ valid CSS qualified name (#44)
+
+To be nest-containing, any nesting selector must composed with other selectors into a valid complex selectors. However, the current implementation will turn
+```
+a { &|b { } }
+```
+into
+```
+a|b { }
+```
+which is a valid CSS rule. We should reject the vertical bar on selector validity test.
+---
+ lib/transform-nesting-atrule.js | 2 +-
+ lib/transform-nesting-rule.js   | 2 +-
+ test/ignore.css                 | 3 +++
+ test/ignore.expect.css          | 3 +++
+ 4 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/lib/transform-nesting-atrule.js b/lib/transform-nesting-atrule.js
+index 08ece98..878de25 100644
+--- a/lib/transform-nesting-atrule.js
++++ b/lib/transform-nesting-atrule.js
+@@ -39,5 +39,5 @@ module.exports = (node) => {
+ 
+ // whether the node is a nesting atrule (e.g. @nest .something &)
+ module.exports.test = (node) => node.type === 'atrule' && node.name === 'nest' && node.parent && node.parent.type === 'rule' && comma(node.params).every(
+-	(selector) => selector.split('&').length === 2 && /&([^\w-]|$)/.test(selector)
++	(selector) => selector.split('&').length === 2 && /&([^\w-|]|$)/.test(selector)
+ );
+diff --git a/lib/transform-nesting-rule.js b/lib/transform-nesting-rule.js
+index 4ace658..6895281 100644
+--- a/lib/transform-nesting-rule.js
++++ b/lib/transform-nesting-rule.js
+@@ -25,5 +25,5 @@ module.exports = (node) => {
+ 
+ // whether the node is a nesting rule (e.g. &.something)
+ module.exports.test = (node) => node.type === 'rule' && node.parent && node.parent.type === 'rule' && node.selectors.every(
+-	(selector) => selector.trim().lastIndexOf('&') === 0 && /^&([^\w-]|$)/.test(selector)
++	(selector) => selector.trim().lastIndexOf('&') === 0 && /^&([^\w-|]|$)/.test(selector)
+ );
+diff --git a/test/ignore.css b/test/ignore.css
+index 3829c74..5a5ef98 100644
+--- a/test/ignore.css
++++ b/test/ignore.css
+@@ -31,4 +31,7 @@ f {
+ 	@nest &h {
+ 		order: 5;
+ 	}
++	@nest &|i {
++		order: 6;
++	}
+ }
+diff --git a/test/ignore.expect.css b/test/ignore.expect.css
+index 3829c74..5a5ef98 100644
+--- a/test/ignore.expect.css
++++ b/test/ignore.expect.css
+@@ -31,4 +31,7 @@ f {
+ 	@nest &h {
+ 		order: 5;
+ 	}
++	@nest &|i {
++		order: 6;
++	}
+ }
+-- 
+2.33.1
+

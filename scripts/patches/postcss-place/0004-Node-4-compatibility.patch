@@ -1,0 +1,30 @@
+From 04ccea0af8bac355cd50734f4be32d59b77d51a6 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 30 Jun 2017 09:14:55 -0400
+Subject: [PATCH 04/20] Node 4+ compatibility
+
+---
+ index.js | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/index.js b/index.js
+index 21a0e34..364fb36 100644
+--- a/index.js
++++ b/index.js
+@@ -3,11 +3,9 @@ const postcss = require('postcss');
+ const parser  = require('postcss-value-parser');
+ 
+ // plugin
+-module.exports = postcss.plugin('postcss-place', ({
+-	prefix = ''
+-} = {}) => {
++module.exports = postcss.plugin('postcss-place', (opts) => {
+ 	// dashed prefix
+-	const dashedPrefix = prefix ? `-${ prefix }-` : '';
++	const dashedPrefix = opts && opts.prefix ? `-${ opts.prefix }-` : '';
+ 
+ 	// property matcher
+ 	const propertyMatch = new RegExp(`^${ dashedPrefix }place-(content|items|self)`);
+-- 
+2.33.1
+

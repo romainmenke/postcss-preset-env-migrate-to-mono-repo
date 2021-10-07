@@ -1,0 +1,25 @@
+From 1bfd17af8b4f80f58c655671a9dfeeb69f9d6315 Mon Sep 17 00:00:00 2001
+From: David Clark <david.dave.clark@gmail.com>
+Date: Thu, 18 Feb 2016 19:45:07 -0700
+Subject: [PATCH 40/89] Change plugin name to postcss-nesting
+
+I found it very confusing when I saw that this plugin was registering its name as postcss-nested instead of postcss-nesting. Does this seem like a reasonable change to you?
+---
+ index.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index ac1cc64..d3e984a 100644
+--- a/index.js
++++ b/index.js
+@@ -1,6 +1,6 @@
+ var postcss = require('postcss');
+ 
+-module.exports = postcss.plugin('postcss-nested', function (opts) {
++module.exports = postcss.plugin('postcss-nesting', function (opts) {
+ 	var bubble = ['document', 'media', 'supports'];
+ 	var name   = 'nest';
+ 
+-- 
+2.33.1
+

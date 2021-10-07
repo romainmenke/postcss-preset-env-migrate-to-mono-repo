@@ -1,0 +1,1364 @@
+From e9566e70d66339718c3214e6ce48f4e06c1dac49 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 20 Nov 2018 21:52:57 -0500
+Subject: [PATCH 01/17] 0.1.0
+
+---
+ .editorconfig                  |  15 +++
+ .gitignore                     |  17 ++++
+ .rollup.js                     |  66 +++++++++++++
+ .tape.js                       |  13 +++
+ .travis.yml                    |   9 ++
+ CHANGELOG.md                   |   5 +
+ CONTRIBUTING.md                |  65 +++++++++++++
+ INSTALL-POSTCSS.md             | 171 +++++++++++++++++++++++++++++++++
+ LICENSE.md                     | 108 +++++++++++++++++++++
+ README-BROWSER.md              |  44 +++++++++
+ README-POSTCSS.md              |  94 ++++++++++++++++++
+ README.md                      |  99 +++++++++++++++++++
+ package.json                   |  77 +++++++++++++++
+ src/browser.js                 | 138 ++++++++++++++++++++++++++
+ src/cli.js                     | 119 +++++++++++++++++++++++
+ src/postcss.js                 |  48 +++++++++
+ test/basic.css                 |  28 ++++++
+ test/basic.expect.css          |  57 +++++++++++
+ test/basic.preserve.expect.css |  28 ++++++
+ 19 files changed, 1201 insertions(+)
+ create mode 100644 .editorconfig
+ create mode 100644 .gitignore
+ create mode 100644 .rollup.js
+ create mode 100644 .tape.js
+ create mode 100644 .travis.yml
+ create mode 100644 CHANGELOG.md
+ create mode 100644 CONTRIBUTING.md
+ create mode 100644 INSTALL-POSTCSS.md
+ create mode 100644 LICENSE.md
+ create mode 100644 README-BROWSER.md
+ create mode 100644 README-POSTCSS.md
+ create mode 100644 README.md
+ create mode 100644 package.json
+ create mode 100644 src/browser.js
+ create mode 100644 src/cli.js
+ create mode 100644 src/postcss.js
+ create mode 100644 test/basic.css
+ create mode 100644 test/basic.expect.css
+ create mode 100644 test/basic.preserve.expect.css
+
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..e06d798
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,15 @@
++root = true
++
++[*]
++charset = utf-8
++end_of_line = lf
++indent_style = tab
++insert_final_newline = true
++trim_trailing_whitespace = true
++
++[*.md]
++trim_trailing_whitespace = false
++
++[*.{json,md,yml}]
++indent_size = 2
++indent_style = space
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..1d65a2d
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,17 @@
++node_modules
++/browser.js*
++/cli.js*
++/index.js*
++/index.mjs*
++/postcss.js*
++/postcss.mjs*
++package-lock.json
++*.log*
++*.result.css
++.*
++!.appveyor.yml
++!.editorconfig
++!.gitignore
++!.rollup.js
++!.tape.js
++!.travis.yml
+diff --git a/.rollup.js b/.rollup.js
+new file mode 100644
+index 0000000..fcca42e
+--- /dev/null
++++ b/.rollup.js
+@@ -0,0 +1,66 @@
++import babel from 'rollup-plugin-babel';
++import { terser } from 'rollup-plugin-terser';
++
++const isCLI = String(process.env.NODE_ENV).includes('cli');
++const isPostCSS = String(process.env.NODE_ENV).includes('postcss');
++const isBrowser = String(process.env.NODE_ENV).includes('browser');
++
++const input = `src/${isCLI ? 'cli' : isPostCSS ? 'postcss' : 'browser'}.js`;
++
++const output = isCLI
++	? { file: 'cli.js', format: 'cjs' }
++: isPostCSS
++	? [
++	{ file: 'postcss.js', format: 'cjs', sourcemap: true },
++	{ file: 'postcss.mjs', format: 'esm', sourcemap: true }
++] : isBrowser
++	? { file: 'browser.js', format: 'cjs' }
++: [
++	{ file: 'index.js', format: 'cjs', sourcemap: true },
++	{ file: 'index.mjs', format: 'esm', sourcemap: true }
++];
++
++const targets = isCLI || isPostCSS || !isBrowser ? { node: 6 } : 'last 2 versions, not dead';
++const plugins = [
++	babel({
++		presets: [
++			['@babel/env', { targets }]
++		]
++	})
++].concat(isBrowser
++	? [
++		trimContentForBrowser(),
++		terser()
++	]
++: isCLI
++	? [
++		trimContentForBrowser(),
++		addHashBang()
++	]
++: []);
++
++export default { input, output, plugins };
++
++function addHashBang() {
++	return {
++		name: 'add-hash-bang',
++		renderChunk(code) {
++			const updatedCode = `#!/usr/bin/env node\n\n${code}`;
++
++			return updatedCode;
++		}
++	};
++}
++
++function trimContentForBrowser() {
++	return {
++		name: 'trim-content-for-browser',
++		renderChunk(code) {
++			const updatedCode = code
++				.replace(/'use strict';\n*/, '')
++				.replace(/\n*module\.exports = cssHas;/, '');
++
++			return updatedCode;
++		}
++	};
++}
+diff --git a/.tape.js b/.tape.js
+new file mode 100644
+index 0000000..56e927b
+--- /dev/null
++++ b/.tape.js
+@@ -0,0 +1,13 @@
++module.exports = {
++	'css-has-pseudo': {
++		'basic': {
++			message: 'supports basic usage'
++		},
++		'basic:preserve': {
++			message: 'supports { preserve: false } usage',
++			options: {
++				preserve: false
++			}
++		}
++	}
++};
+diff --git a/.travis.yml b/.travis.yml
+new file mode 100644
+index 0000000..e1f11a5
+--- /dev/null
++++ b/.travis.yml
+@@ -0,0 +1,9 @@
++# https://docs.travis-ci.com/user/travis-lint
++
++language: node_js
++
++node_js:
++  - 6
++
++install:
++  - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100644
+index 0000000..3f1e9a6
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,5 @@
++# Changes to CSS Has Pseudo
++
++### 0.1.0 (November 20, 2018)
++
++- Initial version
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+new file mode 100644
+index 0000000..517c47d
+--- /dev/null
++++ b/CONTRIBUTING.md
+@@ -0,0 +1,65 @@
++# Contributing to CSS Has Pseudo
++
++You want to help? You rock! Now, take a moment to be sure your contributions
++make sense to everyone else.
++
++## Reporting Issues
++
++Found a problem? Want a new feature?
++
++- See if your issue or idea has [already been reported].
++- Provide a [reduced test case] or a [live example].
++
++Remember, a bug is a _demonstrable problem_ caused by _our_ code.
++
++## Submitting Pull Requests
++
++Pull requests are the greatest contributions, so be sure they are focused in
++scope and avoid unrelated commits.
++
++1. To begin; [fork this project], clone your fork, and add our upstream.
++   ```bash
++   # Clone your fork of the repo into the current directory
++   git clone git@github.com:YOUR_USER/css-has-pseudo.git
++
++   # Navigate to the newly cloned directory
++   cd css-has-pseudo
++
++   # Assign the original repo to a remote called "upstream"
++   git remote add upstream git@github.com:csstools/css-has-pseudo.git
++
++   # Install the tools necessary for testing
++   npm install
++   ```
++
++2. Create a branch for your feature or fix:
++   ```bash
++   # Move into a new branch for your feature
++   git checkout -b feature/thing
++   ```
++   ```bash
++   # Move into a new branch for your fix
++   git checkout -b fix/something
++   ```
++
++3. If your code follows our practices, then push your feature branch:
++   ```bash
++   # Test current code
++   npm test
++   ```
++   ```bash
++   # Push the branch for your new feature
++   git push origin feature/thing
++   ```
++   ```bash
++   # Or, push the branch for your update
++   git push origin update/something
++   ```
++
++That’s it! Now [open a pull request] with a clear title and description.
++
++[already been reported]: issues
++[fork this project]:     fork
++[live example]:          https://codepen.io/pen
++[open a pull request]:   https://help.github.com/articles/using-pull-requests/
++[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+diff --git a/INSTALL-POSTCSS.md b/INSTALL-POSTCSS.md
+new file mode 100644
+index 0000000..92f3b64
+--- /dev/null
++++ b/INSTALL-POSTCSS.md
+@@ -0,0 +1,171 @@
++# Installing PostCSS
++
++[CSS Has Pseudo] runs in all Node environments, with special instructions for:
++
++| [Node](#node) | [PostCSS CLI](#postcss-cli) | [Webpack](#webpack) | [Create React App](#create-react-app) | [Gulp](#gulp) | [Grunt](#grunt) |
++| --- | --- | --- | --- | --- | --- |
++
++## Node
++
++Add [CSS Has Pseudo] to your project:
++
++```bash
++npm install css-has-pseudo --save-dev
++```
++
++Use [CSS Has Pseudo] to process your CSS:
++
++```js
++const postcssHasPseudo = require('css-has-pseudo/postcss');
++
++postcssHasPseudo.process(YOUR_CSS /*, processOptions, pluginOptions */);
++```
++
++Or use it as a [PostCSS] plugin:
++
++```js
++const postcss = require('postcss');
++const postcssHasPseudo = require('css-has-pseudo/postcss');
++
++postcss([
++  postcssHasPseudo(/* pluginOptions */)
++]).process(YOUR_CSS /*, processOptions */);
++```
++
++## PostCSS CLI
++
++Add [PostCSS CLI] to your project:
++
++```bash
++npm install postcss-cli --save-dev
++```
++
++Use [CSS Has Pseudo] in your `postcss.config.js` configuration file:
++
++```js
++const postcssHasPseudo = require('css-has-pseudo/postcss');
++
++module.exports = {
++  plugins: [
++    postcssHasPseudo(/* pluginOptions */)
++  ]
++}
++```
++
++## Webpack
++
++Add [PostCSS Loader] to your project:
++
++```bash
++npm install postcss-loader --save-dev
++```
++
++Use [CSS Has Pseudo] in your Webpack configuration:
++
++```js
++const postcssHasPseudo = require('css-has-pseudo/postcss');
++
++module.exports = {
++  module: {
++    rules: [
++      {
++        test: /\.css$/,
++        use: [
++          'style-loader',
++          { loader: 'css-loader', options: { importLoaders: 1 } },
++          { loader: 'postcss-loader', options: {
++            ident: 'postcss',
++            plugins: () => [
++              postcssHasPseudo(/* pluginOptions */)
++            ]
++          } }
++        ]
++      }
++    ]
++  }
++}
++```
++
++## Create React App
++
++Add [React App Rewired] and [React App Rewire PostCSS] to your project:
++
++```bash
++npm install react-app-rewired react-app-rewire-postcss --save-dev
++```
++
++Use [React App Rewire PostCSS] and [CSS Has Pseudo] in your
++`config-overrides.js`
++file:
++
++```js
++const reactAppRewirePostcss = require('react-app-rewire-postcss');
++const postcssHasPseudo = require('css-has-pseudo/postcss');
++
++module.exports = config => reactAppRewirePostcss(config, {
++  plugins: () => [
++    postcssHasPseudo(/* pluginOptions */)
++  ]
++});
++```
++
++## Gulp
++
++Add [Gulp PostCSS] to your project:
++
++```bash
++npm install gulp-postcss --save-dev
++```
++
++Use [CSS Has Pseudo] in your Gulpfile:
++
++```js
++const postcss = require('gulp-postcss');
++const postcssHasPseudo = require('css-has-pseudo/postcss');
++
++gulp.task('css', () => gulp.src('./src/*.css').pipe(
++  postcss([
++    postcssHasPseudo(/* pluginOptions */)
++  ])
++).pipe(
++  gulp.dest('.')
++));
++```
++
++## Grunt
++
++Add [Grunt PostCSS] to your project:
++
++```bash
++npm install grunt-postcss --save-dev
++```
++
++Use [CSS Has Pseudo] in your Gruntfile:
++
++```js
++const postcssHasPseudo = require('css-has-pseudo/postcss');
++
++grunt.loadNpmTasks('grunt-postcss');
++
++grunt.initConfig({
++  postcss: {
++    options: {
++      use: [
++       postcssHasPseudo(/* pluginOptions */)
++      ]
++    },
++    dist: {
++      src: '*.css'
++    }
++  }
++});
++```
++
++[CSS Has Pseudo]: https://github.com/csstools/css-has-pseudo
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
++[PostCSS]: https://github.com/postcss/postcss
++[PostCSS CLI]: https://github.com/postcss/postcss-cli
++[PostCSS Loader]: https://github.com/postcss/postcss-loader
++[React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
++[React App Rewired]: https://github.com/timarney/react-app-rewired
+diff --git a/LICENSE.md b/LICENSE.md
+new file mode 100644
+index 0000000..0bc1fa7
+--- /dev/null
++++ b/LICENSE.md
+@@ -0,0 +1,108 @@
++# CC0 1.0 Universal
++
++## Statement of Purpose
++
++The laws of most jurisdictions throughout the world automatically confer
++exclusive Copyright and Related Rights (defined below) upon the creator and
++subsequent owner(s) (each and all, an “owner”) of an original work of
++authorship and/or a database (each, a “Work”).
++
++Certain owners wish to permanently relinquish those rights to a Work for the
++purpose of contributing to a commons of creative, cultural and scientific works
++(“Commons”) that the public can reliably and without fear of later claims of
++infringement build upon, modify, incorporate in other works, reuse and
++redistribute as freely as possible in any form whatsoever and for any purposes,
++including without limitation commercial purposes. These owners may contribute
++to the Commons to promote the ideal of a free culture and the further
++production of creative, cultural and scientific works, or to gain reputation or
++greater distribution for their Work in part through the use and efforts of
++others.
++
++For these and/or other purposes and motivations, and without any expectation of
++additional consideration or compensation, the person associating CC0 with a
++Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
++and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
++publicly distribute the Work under its terms, with knowledge of his or her
++Copyright and Related Rights in the Work and the meaning and intended legal
++effect of CC0 on those rights.
++
++1. Copyright and Related Rights. A Work made available under CC0 may be
++   protected by copyright and related or neighboring rights (“Copyright and
++   Related Rights”). Copyright and Related Rights include, but are not limited
++   to, the following:
++   1. the right to reproduce, adapt, distribute, perform, display, communicate,
++      and translate a Work;
++   2. moral rights retained by the original author(s) and/or performer(s);
++   3. publicity and privacy rights pertaining to a person’s image or likeness
++      depicted in a Work;
++   4. rights protecting against unfair competition in regards to a Work,
++      subject to the limitations in paragraph 4(i), below;
++   5. rights protecting the extraction, dissemination, use and reuse of data in
++      a Work;
++   6. database rights (such as those arising under Directive 96/9/EC of the
++      European Parliament and of the Council of 11 March 1996 on the legal
++      protection of databases, and under any national implementation thereof,
++      including any amended or successor version of such directive); and
++   7. other similar, equivalent or corresponding rights throughout the world
++      based on applicable law or treaty, and any national implementations
++      thereof.
++
++2. Waiver. To the greatest extent permitted by, but not in contravention of,
++   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++   and Related Rights and associated claims and causes of action, whether now
++   known or unknown (including existing as well as future claims and causes of
++   action), in the Work (i) in all territories worldwide, (ii) for the maximum
++   duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
++   makes the Waiver for the benefit of each member of the public at large and
++   to the detriment of Affirmer’s heirs and successors, fully intending that
++   such Waiver shall not be subject to revocation, rescission, cancellation,
++   termination, or any other legal or equitable action to disrupt the quiet
++   enjoyment of the Work by the public as contemplated by Affirmer’s express
++   Statement of Purpose.
++
++3. Public License Fallback. Should any part of the Waiver for any reason be
++   judged legally invalid or ineffective under applicable law, then the Waiver
++   shall be preserved to the maximum extent permitted taking into account
++   Affirmer’s express Statement of Purpose. In addition, to the extent the
++   Waiver is so judged Affirmer hereby grants to each affected person a
++   royalty-free, non transferable, non sublicensable, non exclusive,
++   irrevocable and unconditional license to exercise Affirmer’s Copyright and
++   Related Rights in the Work (i) in all territories worldwide, (ii) for the
++   maximum duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “License”). The License
++   shall be deemed effective as of the date CC0 was applied by Affirmer to the
++   Work. Should any part of the License for any reason be judged legally
++   invalid or ineffective under applicable law, such partial invalidity or
++   ineffectiveness shall not invalidate the remainder of the License, and in
++   such case Affirmer hereby affirms that he or she will not (i) exercise any
++   of his or her remaining Copyright and Related Rights in the Work or (ii)
++   assert any associated claims and causes of action with respect to the Work,
++   in either case contrary to Affirmer’s express Statement of Purpose.
++
++4. Limitations and Disclaimers.
++   1. No trademark or patent rights held by Affirmer are waived, abandoned,
++      surrendered, licensed or otherwise affected by this document.
++   2. Affirmer offers the Work as-is and makes no representations or warranties
++      of any kind concerning the Work, express, implied, statutory or
++      otherwise, including without limitation warranties of title,
++      merchantability, fitness for a particular purpose, non infringement, or
++      the absence of latent or other defects, accuracy, or the present or
++      absence of errors, whether or not discoverable, all to the greatest
++      extent permissible under applicable law.
++   3. Affirmer disclaims responsibility for clearing rights of other persons
++      that may apply to the Work or any use thereof, including without
++      limitation any person’s Copyright and Related Rights in the Work.
++      Further, Affirmer disclaims responsibility for obtaining any necessary
++      consents, permissions or other rights required for any use of the Work.
++   4. Affirmer understands and acknowledges that Creative Commons is not a
++      party to this document and has no duty or obligation with respect to this
++      CC0 or use of the Work.
++
++For more information, please see
++http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/README-BROWSER.md b/README-BROWSER.md
+new file mode 100644
+index 0000000..706fab7
+--- /dev/null
++++ b/README-BROWSER.md
+@@ -0,0 +1,44 @@
++# CSS Has Pseudo for Browsers [<img src="http://jonathantneal.github.io/js-logo.svg" alt="" width="90" height="90" align="right">][CSS Has Pseudo]
++
++[![NPM Version][npm-img]][npm-url]
++[![Build Status][cli-img]][cli-url]
++[![Support Chat][git-img]][git-url]
++
++[CSS Has Pseudo] lets you style elements relative to other elements in CSS,
++following the [Selectors Level 4] specification.
++
++```css
++input {
++  /* style an input */
++}
++
++body[\:has\(\:focus\)] {
++  /* style an input without a value */
++}
++```
++
++## Usage
++
++Add [CSS Has Pseudo] to your build tool:
++
++```bash
++npm install css-has-pseudo
++```
++
++Then include and initialize it on your document:
++
++```js
++const cssHasPseudo = require('css-has-pseudo');
++
++cssHasPseudo(document);
++```
++
++[cli-img]: https://img.shields.io/travis/csstools/css-has-pseudo/master.svg
++[cli-url]: https://travis-ci.org/csstools/css-has-pseudo
++[git-img]: https://img.shields.io/badge/support-chat-blue.svg
++[git-url]: https://gitter.im/postcss/postcss
++[npm-img]: https://img.shields.io/npm/v/css-has-pseudo.svg
++[npm-url]: https://www.npmjs.com/package/css-has-pseudo
++
++[CSS Has Pseudo]: https://github.com/csstools/css-has-pseudo
++[Selectors Level 4]: https://drafts.csswg.org/selectors-4/#has
+diff --git a/README-POSTCSS.md b/README-POSTCSS.md
+new file mode 100644
+index 0000000..de85c76
+--- /dev/null
++++ b/README-POSTCSS.md
+@@ -0,0 +1,94 @@
++# CSS Has Pseudo for PostCSS [<img src="http://jonathantneal.github.io/postcss-logo.svg" alt="" width="90" height="90" align="right">][CSS Has Pseudo]
++
++[![NPM Version][npm-img]][npm-url]
++[![Build Status][cli-img]][cli-url]
++[![Support Chat][git-img]][git-url]
++
++[CSS Has Pseudo] lets you style elements relative to other elements in CSS,
++following the [Selectors Level 4] specification.
++
++```css
++body:has(:focus) {
++  background-color: yellow;
++}
++
++/* becomes */
++
++body[\:has\(\:focus\)] {
++  background-color: yellow;
++}
++
++body:has(:focus) {
++  background-color: yellow;
++}
++```
++
++[CSS Has Pseudo] duplicates rules using the `:has` pseudo-class with a `[has]`
++attribute selector. The preservation of the original `:has` rule can be
++disabled using the `preserve` option.
++
++## Usage
++
++Add [CSS Has Pseudo] to your project:
++
++```bash
++npm install css-has-pseudo --save-dev
++```
++
++Use [CSS Has Pseudo] to process your CSS:
++
++```js
++const postcssHasPseudo = require('css-has-pseudo/postcss');
++
++postcssHasPseudo.process(YOUR_CSS /*, processOptions, pluginOptions */);
++```
++
++Or use it as a [PostCSS] plugin:
++
++```js
++const postcss = require('postcss');
++const postcssHasPseudo = require('css-has-pseudo/postcss');
++
++postcss([
++  postcssHasPseudo(/* pluginOptions */)
++]).process(YOUR_CSS /*, processOptions */);
++```
++
++[CSS Has Pseudo] runs in all Node environments, with special
++instructions for:
++
++| [Node](INSTALL-POSTCSS.md#node) | [PostCSS CLI](INSTALL-POSTCSS.md#postcss-cli) | [Webpack](INSTALL-POSTCSS.md#webpack) | [Create React App](INSTALL-POSTCSS.md#create-react-app) | [Gulp](INSTALL-POSTCSS.md#gulp) | [Grunt](INSTALL-POSTCSS.md#grunt) |
++| --- | --- | --- | --- | --- | --- |
++
++## Options
++
++### preserve
++
++The `preserve` option defines whether the original selector should remain. By
++default, the original selector is preserved.
++
++```js
++hasPseudo({ preserve: false });
++```
++
++```css
++body:has(:focus) {
++  background-color: yellow;
++}
++
++/* becomes */
++
++body[\:has\(\:focus\)] {
++  background-color: yellow;
++}
++```
++
++[cli-img]: https://img.shields.io/travis/csstools/css-has-pseudo/master.svg
++[cli-url]: https://travis-ci.org/csstools/css-has-pseudo
++[git-img]: https://img.shields.io/badge/support-chat-blue.svg
++[git-url]: https://gitter.im/postcss/postcss
++[npm-img]: https://img.shields.io/npm/v/css-has-pseudo.svg
++[npm-url]: https://www.npmjs.com/package/css-has-pseudo
++
++[CSS Has Pseudo]: https://github.com/csstools/css-has-pseudo
++[Selectors Level 4]: https://drafts.csswg.org/selectors-4/#has-pseudo
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..fc99ae6
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,99 @@
++# CSS Has Pseudo [<img src="http://jonathantneal.github.io/js-logo.svg" alt="" width="90" height="90" align="right">][CSS Has Pseudo]
++
++[![NPM Version][npm-img]][npm-url]
++[![Build Status][cli-img]][cli-url]
++[![Support Chat][git-img]][git-url]
++
++[CSS Has Pseudo] lets you style elements relative to other elements in CSS,
++following the [Selectors Level 4] specification.
++
++```css
++a:has(> img) {
++  /* style links that contain an image */
++}
++
++h1:has(+ p) {
++  /* style level 1 headings that are followed by a paragraph */
++}
++
++section:not(:has(h1, h2, h3, h4, h5, h6)) {
++  /* style sections that don’t contain any heading elements */
++}
++
++body:has(:focus) {
++  /* style the body if it contains a focused element */
++}
++```
++
++## Usage
++
++From the command line, transform CSS files that use `:has` selectors:
++
++```bash
++npx css-has-pseudo SOURCE.css TRANSFORMED.css
++```
++
++Next, use your transformed CSS with this script:
++
++```html
++<link rel="stylesheet" href="TRANSFORMED.css">
++<script src="https://unpkg.com/css-has-pseudo/browser"></script>
++<script>cssHasPseudo(document)</script>
++```
++
++That’s it. The script is 855 bytes and works in all browsers, including
++Internet Explorer 11. With a [Mutation Observer polyfill], the script will work
++down to Internet Explorer 9.
++
++## How it works
++
++The [PostCSS plugin](README-POSTCSS.md) clones rules containing `:has`,
++replacing them with an alternative `[:has]` selector.
++
++```css
++body:has(:focus) {
++  background-color: yellow;
++}
++
++section:not(:has(h1, h2, h3, h4, h5, h6)) {
++  background-color: gray;
++}
++
++/* becomes */
++
++body[\:has\(\:focus\)] {
++  background-color: yellow;
++}
++
++body:has(:focus) {
++  background-color: yellow;
++}
++
++section[\:not-has\(h1\,\%20h2\,\%20h3\,\%20h4\,\%20h5\,\%20h6\)] {
++  background-color: gray;
++}
++
++section:not(:has(h1, h2, h3, h4, h5, h6)) {
++  background-color: gray;
++}
++```
++
++Next, the [JavaScript library](README-BROWSER.md) adds a `[:has]` attribute to
++elements otherwise matching `:has` natively.
++
++```html
++<body :has(:focus)>
++  <input value="This element is focused">
++</body>
++```
++
++[cli-img]: https://img.shields.io/travis/csstools/css-has-pseudo/master.svg
++[cli-url]: https://travis-ci.org/csstools/css-has-pseudo
++[git-img]: https://img.shields.io/badge/support-chat-blue.svg
++[git-url]: https://gitter.im/postcss/postcss
++[npm-img]: https://img.shields.io/npm/v/css-has-pseudo.svg
++[npm-url]: https://www.npmjs.com/package/css-has-pseudo
++
++[CSS Has Pseudo]: https://github.com/csstools/css-has-pseudo
++[Mutation Observer polyfill]: https://github.com/webmodules/mutation-observer
++[Selectors Level 4]: https://drafts.csswg.org/selectors-4/#has-pseudo
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..4f07d01
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,77 @@
++{
++  "name": "css-has-pseudo",
++  "version": "0.1.0",
++  "description": "Style elements relative to other elements in CSS",
++  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
++  "license": "CC0-1.0",
++  "repository": "csstools/css-has-pseudo",
++  "homepage": "https://github.com/csstools/css-has-pseudo#readme",
++  "bugs": "https://github.com/csstools/css-has-pseudo/issues",
++  "main": "index.js",
++  "module": "index.mjs",
++  "bin": {
++    "css-has-pseudo": "cli.js"
++  },
++  "files": [
++    "browser.js",
++    "cli.js",
++    "index.js",
++    "index.js.map",
++    "index.mjs",
++    "index.mjs.map",
++    "postcss.js",
++    "postcss.js.map",
++    "postcss.mjs",
++    "postcss.mjs.map"
++  ],
++  "scripts": {
++    "build": "npm run build:browser && npm run build:cli && npm run build:node && npm run build:postcss",
++    "build:browser": "cross-env NODE_ENV=browser rollup -c .rollup.js --silent",
++    "build:cli": "cross-env NODE_ENV=cli rollup -c .rollup.js --silent",
++    "build:postcss": "cross-env NODE_ENV=postcss rollup -c .rollup.js --silent",
++    "build:node": "rollup -c .rollup.js --silent",
++    "prepublishOnly": "npm run build && npm test",
++    "pretest": "npm run build:postcss",
++    "pretest:postcss": "npm run build:postcss",
++    "test": "npm run test:js && npm run test:postcss",
++    "test:js": "eslint src/*.js --cache --ignore-path .gitignore --quiet",
++    "test:postcss": "postcss-tape --plugin=postcss.js"
++  },
++  "engines": {
++    "node": ">=6.0.0"
++  },
++  "dependencies": {
++    "postcss": "^7.0.6",
++    "postcss-selector-parser": "^5.0.0-rc.4"
++  },
++  "devDependencies": {
++    "@babel/core": "^7.1.6",
++    "@babel/preset-env": "^7.1.6",
++    "babel-eslint": "^10.0.1",
++    "cross-env": "^5.2.0",
++    "eslint": "^5.9.0",
++    "eslint-config-dev": "2.0.0",
++    "postcss-tape": "^2.2.0",
++    "pre-commit": "^1.2.2",
++    "rollup": "^0.67.3",
++    "rollup-plugin-babel": "^4.0.3",
++    "rollup-plugin-terser": "^3.0.0"
++  },
++  "eslintConfig": {
++    "extends": "dev",
++    "parser": "babel-eslint"
++  },
++  "keywords": [
++    "postcss",
++    "css",
++    "postcss-plugin",
++    "javascript",
++    "js",
++    "polyfill",
++    "has",
++    "contains",
++    "descendant",
++    "pseudo",
++    "selector"
++  ]
++}
+diff --git a/src/browser.js b/src/browser.js
+new file mode 100644
+index 0000000..74d5238
+--- /dev/null
++++ b/src/browser.js
+@@ -0,0 +1,138 @@
++export default function cssHas(document) {
++	const hasPseudoRegExp = /^(.*?)\[:(not-)?has\((.+?)\)\]/;
++	const observedCssRules = [];
++
++	// walk all stylesheets to collect observed css rules
++	Array.prototype.forEach.call(document.styleSheets, walkStyleSheet);
++	transformObservedCssRules();
++
++	// observe DOM modifications that affect selectors
++	new MutationObserver(mutationsList => {
++		mutationsList.forEach(mutation => {
++			Array.prototype.forEach.call(mutation.addedNodes || [], node => {
++				// walk stylesheets to collect observed css rules
++				if (node.nodeType === 1 && node.sheet) {
++					cleanupObservedCssRules();
++					Array.prototype.forEach.call(document.styleSheets, walkStyleSheet);
++				}
++			});
++
++			// transform observed css rules
++			transformObservedCssRules();
++		});
++	}).observe(document, { childList: true, subtree: true });
++
++	// observe DOM events that affect pseudo-selectors
++	document.addEventListener('focus', () => setImmediate(transformObservedCssRules), true);
++	document.addEventListener('blur', () => setImmediate(transformObservedCssRules), true);
++	document.addEventListener('input', () => setImmediate(transformObservedCssRules));
++
++	// transform observed css rules
++	function transformObservedCssRules() {
++		observedCssRules.forEach(
++			item => {
++				const nodes = [];
++
++				Array.prototype.forEach.call(
++					document.querySelectorAll(item.elementSelector),
++					element => {
++						const index = Array.prototype.indexOf.call(element.parentNode.children, element) + 1;
++						const nextSelector = item.scopedSelectors.map(
++							scopedSelector => item.elementSelector + ':nth-child(' + index + ') ' + scopedSelector
++						).join();
++
++						// find the :has element from the scope of the element
++						const scopedElement = element.parentNode.querySelector(nextSelector);
++
++						const shouldContinue = item.hasSelectorNot ? !scopedElement : scopedElement;
++
++						if (shouldContinue) {
++							// memorize the node
++							nodes.push(element);
++
++							// set the encoded attribute on the node
++							setAttribute(element, item.encodedAttributeName);
++
++							// trigger a style refresh in IE and Edge
++							document.documentElement.style.zoom = 1; document.documentElement.style.zoom = null;
++						}
++					}
++				);
++
++				// remove the encoded attribute from all nodes that no longer match them
++				item.nodes.splice(0).forEach(node => {
++					if (nodes.indexOf(node) === -1) {
++						node.removeAttribute(item.encodedAttributeName);
++
++						// trigger a style refresh in IE and Edge
++						document.documentElement.style.zoom = 1; document.documentElement.style.zoom = null;
++					}
++				});
++
++				item.nodes = nodes;
++			}
++		);
++	}
++
++	// remove any observed cssrules that no longer apply
++	function cleanupObservedCssRules() {
++		Array.prototype.push.apply(
++			observedCssRules,
++			observedCssRules.splice(0).filter(
++				item => item.cssRule.parentStyleSheet &&
++					item.cssRule.parentStyleSheet.ownerNode &&
++					document.contains(item.cssRule.parentStyleSheet.ownerNode)
++			)
++		);
++	}
++
++	// walk a stylesheet to collect observed css rules
++	function walkStyleSheet(styleSheet) {
++		Array.prototype.forEach.call(styleSheet.cssRules, walkCssRule);
++	}
++
++	// walk a css rule to collect observed css rules
++	function walkCssRule(cssRule) {
++		hasPseudoRegExp.lastIndex = 0;
++
++		// decode the selector text, unifying their design between most browsers and IE/Edge
++		const selectorText = decodeHasPseudoSelector(cssRule.selectorText);
++		const selectorTextMatches = selectorText.match(hasPseudoRegExp);
++
++		if (selectorTextMatches) {
++			const hasSelectorNot = selectorTextMatches[2];
++			const elementSelector = selectorTextMatches[1];
++			const scopedSelectors = selectorTextMatches[3].split(/\s*,\s*/);
++			const encodedAttributeName = ':' + (hasSelectorNot ? 'not-' : '') + 'has(' + encodeAttributeName(selectorTextMatches[3]) + ')';
++
++			observedCssRules.push({
++				cssRule,
++				hasSelectorNot,
++				elementSelector,
++				scopedSelectors,
++				encodedAttributeName,
++				nodes: []
++			});
++		}
++	}
++
++	// set an attribute with an irregular attribute name
++	function setAttribute(target, attributeName) {
++		const innerHTML = '<x ' + attributeName + '>';
++		const x = document.createElement('x');
++		x.innerHTML = innerHTML;
++		const attribute = x.firstChild.attributes[0].cloneNode();
++
++		target.attributes.setNamedItem(attribute);
++	}
++
++	// encode a :has() pseudo selector as an attribute name
++	function encodeAttributeName(attributeName) {
++		return encodeURIComponent(attributeName).replace(/%3A/g, ':').replace(/%5B/g, '[').replace(/%5D/g, ']').replace(/%2C/g, ',');
++	}
++
++	// decode the :has() pseudo selector
++	function decodeHasPseudoSelector(hasPseudoText) {
++		return decodeURIComponent(hasPseudoText.replace(/\\([^\\])/g, '$1'))
++	}
++}
+diff --git a/src/cli.js b/src/cli.js
+new file mode 100644
+index 0000000..e619e73
+--- /dev/null
++++ b/src/cli.js
+@@ -0,0 +1,119 @@
++import fs from 'fs';
++import plugin from './postcss';
++
++if (process.argv.length < 3) {
++	console.log([
++		'CSS Has Pseudo\n',
++		'  Transforms CSS with :has {}\n',
++		'Usage:\n',
++		'  css-has-pseudo source.css transformed.css',
++		'  css-has-pseudo --in=source.css --out=transformed.css --opts={}',
++		'  echo "body:has(:focus) {}" | css-has-pseudo\n'
++	].join('\n'));
++	process.exit(0);
++}
++
++// get process and plugin options from the command line
++const fileRegExp = /^[\w\/.]+$/;
++const argRegExp = /^--(\w+)=("|')?(.+)\2$/;
++const relaxedJsonPropRegExp = /(['"])?([a-z0-9A-Z_]+)(['"])?:/g;
++const relaxedJsonValueRegExp = /("[a-z0-9A-Z_]+":\s*)(?!true|false|null|\d+)'?([A-z0-9]+)'?([,}])/g;
++const argo = process.argv.slice(2).reduce(
++	(object, arg) => {
++		const argMatch = arg.match(argRegExp);
++		const fileMatch = arg.match(fileRegExp);
++
++		if (argMatch) {
++			object[argMatch[1]] = argMatch[3];
++		} else if (fileMatch) {
++			if (object.from === '<stdin>') {
++				object.from = arg;
++			} else if (object.to === '<stdout>') {
++				object.to = arg;
++			}
++		}
++
++		return object;
++	},
++	{ from: '<stdin>', to: '<stdout>', opts: 'null' }
++);
++
++// get css from command line arguments or stdin
++(argo.from === '<stdin>' ? getStdin() : readFile(argo.from))
++.then(css => {
++	const pluginOpts = JSON.parse(
++		argo.opts
++		.replace(relaxedJsonPropRegExp, '"$2": ')
++		.replace(relaxedJsonValueRegExp, '$1"$2"$3')
++	);
++	const processOptions = Object.assign({ from: argo.from, to: argo.to || argo.from }, argo.map ? { map: JSON.parse(argo.map) } : {});
++
++	const result = plugin.process(css, processOptions, pluginOpts);
++
++	if (argo.to === '<stdout>') {
++		return result.css;
++	} else {
++		return writeFile(argo.to, result.css).then(
++			() => `CSS was written to "${argo.to}"`
++		)
++	}
++}).then(
++	result => {
++		console.log(result);
++
++		process.exit(0);
++	},
++	error => {
++		console.error(error);
++
++		process.exit(1);
++	}
++);
++
++function readFile(pathname) {
++	return new Promise((resolve, reject) => {
++		fs.readFile(pathname, 'utf8', (error, data) => {
++			if (error) {
++				reject(error);
++			} else {
++				resolve(data);
++			}
++		});
++	});
++}
++
++function writeFile(pathname, data) {
++	return new Promise((resolve, reject) => {
++		fs.writeFile(pathname, data, (error, content) => {
++			if (error) {
++				reject(error);
++			} else {
++				resolve(content);
++			}
++		});
++	});
++}
++
++function getStdin() {
++	return new Promise(resolve => {
++		let data = '';
++
++		if (process.stdin.isTTY) {
++			resolve(data);
++		} else {
++			process.stdin.setEncoding('utf8');
++
++			process.stdin.on('readable', () => {
++				let chunk;
++
++				while (chunk = process.stdin.read()) {
++					data += chunk;
++				}
++			});
++
++			process.stdin.on('end', () => {
++				resolve(data);
++			});
++		}
++	});
++}
+diff --git a/src/postcss.js b/src/postcss.js
+new file mode 100644
+index 0000000..95619b7
+--- /dev/null
++++ b/src/postcss.js
+@@ -0,0 +1,48 @@
++import parser from 'postcss-selector-parser';
++import postcss from 'postcss';
++
++const selectorRegExp = /:has/;
++
++export default postcss.plugin('css-has-pseudo', opts => {
++	const preserve = Boolean('preserve' in Object(opts) ? opts.preserve : true);
++
++	return root => {
++		root.walkRules(selectorRegExp, rule => {
++			const modifiedSelector = parser(selectors => {
++				selectors.walkPseudos(selector => {
++					if (selector.value === ':has' && selector.nodes) {
++						const isNotHas = checkIfParentIsNot(selector);
++						selector.value = isNotHas ? ':not-has' : ':has';
++
++						const attribute = parser.attribute({
++							attribute: encodeURIComponent(String(selector))
++							.replace(/%3A/g, ':')
++							.replace(/%5B/g, '[')
++							.replace(/%5D/g, ']')
++							.replace(/%2C/g, ',')
++							.replace(/[():%\[\],]/g, '\\$&')
++						});
++
++						if (isNotHas) {
++							selector.parent.parent.replaceWith(attribute);
++						} else {
++							selector.replaceWith(attribute);
++						}
++					}
++				});
++			}).processSync(rule.selector);
++
++			const clone = rule.clone({ selector: modifiedSelector });
++
++			if (preserve) {
++				rule.before(clone);
++			} else {
++				rule.replaceWith(clone);
++			}
++		});
++	};
++});
++
++function checkIfParentIsNot(selector) {
++	return Object(Object(selector.parent).parent).type === 'pseudo' && selector.parent.parent.value === ':not';
++}
+diff --git a/test/basic.css b/test/basic.css
+new file mode 100644
+index 0000000..e9b6237
+--- /dev/null
++++ b/test/basic.css
+@@ -0,0 +1,28 @@
++:has(:focus) {
++	order: 1;
++}
++
++a:has(> img) {
++	order: 2;
++}
++
++h1:has(+ p) {
++	order: 3;
++}
++
++section:not(:has(h1, h2, h3, h4, h5, h6)) {
++	order: 4;
++}
++
++body:has(:focus) {
++  order: 5;
++}
++
++body:not(:has(:focus)) {
++  order: 5;
++}
++
++:has-ignore(:focus),
++:ignore-has(:focus) {
++	order: 6;
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+new file mode 100644
+index 0000000..4d7a040
+--- /dev/null
++++ b/test/basic.expect.css
+@@ -0,0 +1,57 @@
++[\:has\(\:focus\)] {
++	order: 1;
++}
++
++:has(:focus) {
++	order: 1;
++}
++
++a[\:has\(\%3E\%20img\)] {
++	order: 2;
++}
++
++a:has(> img) {
++	order: 2;
++}
++
++h1[\:has\(\%2B\%20p\)] {
++	order: 3;
++}
++
++h1:has(+ p) {
++	order: 3;
++}
++
++section[\:not-has\(h1\,\%20h2\,\%20h3\,\%20h4\,\%20h5\,\%20h6\)] {
++	order: 4;
++}
++
++section:not(:has(h1, h2, h3, h4, h5, h6)) {
++	order: 4;
++}
++
++body[\:has\(\:focus\)] {
++  order: 5;
++}
++
++body:has(:focus) {
++  order: 5;
++}
++
++body[\:not-has\(\:focus\)] {
++  order: 5;
++}
++
++body:not(:has(:focus)) {
++  order: 5;
++}
++
++:has-ignore(:focus),
++:ignore-has(:focus) {
++	order: 6;
++}
++
++:has-ignore(:focus),
++:ignore-has(:focus) {
++	order: 6;
++}
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+new file mode 100644
+index 0000000..4c5f74e
+--- /dev/null
++++ b/test/basic.preserve.expect.css
+@@ -0,0 +1,28 @@
++[\:has\(\:focus\)] {
++	order: 1;
++}
++
++a[\:has\(\%3E\%20img\)] {
++	order: 2;
++}
++
++h1[\:has\(\%2B\%20p\)] {
++	order: 3;
++}
++
++section[\:not-has\(h1\,\%20h2\,\%20h3\,\%20h4\,\%20h5\,\%20h6\)] {
++	order: 4;
++}
++
++body[\:has\(\:focus\)] {
++  order: 5;
++}
++
++body[\:not-has\(\:focus\)] {
++  order: 5;
++}
++
++:has-ignore(:focus),
++:ignore-has(:focus) {
++	order: 6;
++}
+-- 
+2.33.1
+

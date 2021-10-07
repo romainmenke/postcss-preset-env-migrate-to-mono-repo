@@ -1,0 +1,89 @@
+From 162a6b15b2aab2a4cbe4ba9c647f0f13ff525985 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 27 Feb 2018 00:56:41 -0500
+Subject: [PATCH 16/29] Test hex colors
+
+---
+ .tape.js            |  5 ++++-
+ test/hex.css        | 23 +++++++++++++++++++++++
+ test/hex.expect.css | 23 +++++++++++++++++++++++
+ 3 files changed, 50 insertions(+), 1 deletion(-)
+ create mode 100644 test/hex.css
+ create mode 100644 test/hex.expect.css
+
+diff --git a/.tape.js b/.tape.js
+index 2f17776..daa07d1 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -25,6 +25,9 @@ module.exports = {
+ 			},
+ 			warning: 43,
+ 			expect: 'warn.css'
+-		}
++		},
++		'hex': {
++			message: 'supports hex usage'
++		},
+ 	}
+ };
+diff --git a/test/hex.css b/test/hex.css
+new file mode 100644
+index 0000000..c644daf
+--- /dev/null
++++ b/test/hex.css
+@@ -0,0 +1,23 @@
++test {
++	color: color-mod(#000000 b(50%));
++	color: color-mod(#000000 red(50%));
++	color: color-mod(#000000 green(50%));
++	color: color-mod(#000000 blue(50%));
++	color: color-mod(#000000 a(50%));
++	color: color-mod(#000000 alpha(50%));
++	color: color-mod(#000000 h(50deg));
++	color: color-mod(#000000 hue(50deg));
++	color: color-mod(#000000 s(50%));
++	color: color-mod(#000000 saturation(50%));
++	color: color-mod(#000000 l(50%));
++	color: color-mod(#000000 lightness(50%));
++	color: color-mod(#000000 w(50%));
++	color: color-mod(#000000 whiteness(50%));
++	color: color-mod(#000000 b(50%));
++	color: color-mod(#000000 blackness(50%));
++	color: color-mod(#000000 tint(50%));
++	color: color-mod(#000000 shade(50%));
++	color: color-mod(#000000 blend(#ffffff 50%));
++	color: color-mod(#000000 blenda(#ffffff 50%));
++	color: color-mod(#000000 contrast(50%));
++}
+diff --git a/test/hex.expect.css b/test/hex.expect.css
+new file mode 100644
+index 0000000..0423388
+--- /dev/null
++++ b/test/hex.expect.css
+@@ -0,0 +1,23 @@
++test {
++	color: rgb(128, 0, 0);
++	color: rgb(128, 0, 0);
++	color: rgb(0, 128, 0);
++	color: rgb(0, 0, 128);
++	color: rgba(0, 0, 0, 0.5);
++	color: rgba(0, 0, 0, 0.5);
++	color: hsl(50, 0%, 0%);
++	color: hsl(50, 0%, 0%);
++	color: hsl(0, 50%, 0%);
++	color: hsl(0, 50%, 0%);
++	color: hsl(0, 0%, 50%);
++	color: hsl(0, 0%, 50%);
++	color: rgb(0, 128, 128);
++	color: rgb(0, 128, 128);
++	color: rgb(128, 0, 0);
++	color: rgb(128, 0, 0);
++	color: rgb(128, 128, 128);
++	color: rgb(0, 0, 0);
++	color: rgb(128, 128, 128);
++	color: rgb(128, 128, 128);
++	color: rgb(128, 128, 128);
++}
+-- 
+2.33.1
+

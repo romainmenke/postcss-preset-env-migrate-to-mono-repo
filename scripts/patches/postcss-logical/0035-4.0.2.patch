@@ -1,0 +1,123 @@
+From 8d26b47cc20f6afc4a0a2853b5c2215f7187d511 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 10 Jun 2019 14:40:10 -0400
+Subject: [PATCH 35/43] 4.0.2
+
+---
+ CHANGELOG.md              |  5 +++++
+ package.json              |  2 +-
+ src/index.js              |  4 ++--
+ src/lib/transform-size.js | 16 +++++++---------
+ test/size.css             | 14 ++++++++++++--
+ test/size.expect.css      | 14 ++++++++++++--
+ 6 files changed, 39 insertions(+), 16 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 0396112..e2b6d18 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Logical Properties
+ 
++### 4.0.2 (June 10, 2019)
++
++- Fixed: Restored transforms for `max-block-size`, `max-inline-size`,
++  `min-block-size`, and `min-inline-size`.
++
+ ### 4.0.1 (June 10, 2019)
+ 
+ - Fixed: An issue with `block-size` and `inline-size` being miscalculated.
+diff --git a/package.json b/package.json
+index 67ef582..f71b71f 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-logical",
+-  "version": "4.0.1",
++  "version": "4.0.2",
+   "description": "Use logical properties and values in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+diff --git a/src/index.js b/src/index.js
+index 7bc88cc..d2e044f 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -23,8 +23,8 @@ const transforms = {
+ 	'text-align': transformTextAlign,
+ 
+ 	// Logical Height and Logical Width
+-	'block-size': transformSize['block-size'],
+-	'inline-size': transformSize['inline-size'],
++	'block-size': transformSize, 'max-block-size': transformSize, 'min-block-size': transformSize,
++	'inline-size': transformSize, 'max-inline-size': transformSize, 'min-inline-size': transformSize,
+ 
+ 	// Flow-relative Margins
+ 	'margin': transformDirectionalShorthands, 'margin-inline': transformSide['inline'], 'margin-inline-end': transformSide['inline-end'], 'margin-inline-start': transformSide['inline-start'], 'margin-block': transformSide['block'], 'margin-block-end': transformSide['block-end'], 'margin-block-start': transformSide['block-start'],
+diff --git a/src/lib/transform-size.js b/src/lib/transform-size.js
+index 83e4846..f9ea5e5 100644
+--- a/src/lib/transform-size.js
++++ b/src/lib/transform-size.js
+@@ -1,10 +1,8 @@
+-export default {
+-	// block-size
+-	'block-size': decl => {
+-		decl.prop = 'height';
+-	},
+-	// inline-size
+-	'inline-size': decl => {
+-		decl.prop = 'width';
+-	}
++import matchSize from './match-size';
++
++export default decl => {
++	decl.prop = decl.prop.replace(
++		matchSize,
++		($0, minmax, flow) => `${minmax||''}${'block' === flow ? 'height' : 'width'}`
++	);
+ }
+diff --git a/test/size.css b/test/size.css
+index f30df39..6ec7dbf 100644
+--- a/test/size.css
++++ b/test/size.css
+@@ -1,4 +1,14 @@
+ test-size {
+-	block-size: auto;
+-	inline-size: auto;
++	block-size: 320px;
++	inline-size: 180px;
++}
++
++text-max-size {
++	max-block-size: 320px;
++	max-inline-size: 180px;
++}
++
++text-min-size {
++	min-block-size: 320px;
++	min-inline-size: 180px;
+ }
+diff --git a/test/size.expect.css b/test/size.expect.css
+index ed73402..70c4d26 100644
+--- a/test/size.expect.css
++++ b/test/size.expect.css
+@@ -1,4 +1,14 @@
+ test-size {
+-	height: auto;
+-	width: auto;
++	height: 320px;
++	width: 180px;
++}
++
++text-max-size {
++	max-height: 320px;
++	max-width: 180px;
++}
++
++text-min-size {
++	min-height: 320px;
++	min-width: 180px;
+ }
+-- 
+2.33.1
+

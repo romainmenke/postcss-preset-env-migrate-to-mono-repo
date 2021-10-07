@@ -1,0 +1,53 @@
+From dcc69ad453cc7da1add64fc1a693ee8ba9fdd6d7 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 25 Apr 2020 01:43:35 -0400
+Subject: [PATCH 15/19] 3.1.1
+
+---
+ CHANGELOG.md            | 4 ++++
+ package.json            | 2 +-
+ src/onCSSDeclaration.js | 2 +-
+ 3 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 57097a3..6e41f1e 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Lab Function
+ 
++### 3.1.1 (April 25, 2020)
++
++- Updated: Using `walkType` to evade walker bug in `postcss-values-parser`
++
+ ### 3.1.0 (April 25, 2020)
+ 
+ - Updated: `postcss-values-parser` to 3.2.0 (minor).
+diff --git a/package.json b/package.json
+index 834a837..feb1f9d 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-lab-function",
+-  "version": "3.1.0",
++  "version": "3.1.1",
+   "description": "Use lab() and lch() color functions in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+diff --git a/src/onCSSDeclaration.js b/src/onCSSDeclaration.js
+index ecbfc9b..d6db088 100644
+--- a/src/onCSSDeclaration.js
++++ b/src/onCSSDeclaration.js
+@@ -9,7 +9,7 @@ const onCSSDeclaration = decl => {
+ 	if (hasAnyColorFunction(originalValue)) {
+ 		const valueAST = parse(originalValue)
+ 
+-		valueAST.walkFuncs(onCSSFunction)
++		valueAST.walkType('func', onCSSFunction)
+ 
+ 		const modifiedValue = String(valueAST)
+ 
+-- 
+2.33.1
+

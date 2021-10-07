@@ -1,0 +1,141 @@
+From 96225f7840baf35f9f18b47b40b4481b97e462fb Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 18 Feb 2018 18:55:09 -0500
+Subject: [PATCH 10/84] Add PostCSS Page Break and tests
+
+---
+ lib/plugins-by-specification-id.js | 2 ++
+ package.json                       | 1 +
+ test/basic.ch38.expect.css         | 5 +++++
+ test/basic.css                     | 4 ++++
+ test/basic.expect.css              | 5 +++++
+ test/basic.ff49.expect.css         | 5 +++++
+ test/basic.nesting.expect.css      | 4 ++++
+ test/basic.stage1-ff49.expect.css  | 5 +++++
+ test/basic.stage1.expect.css       | 5 +++++
+ 9 files changed, 36 insertions(+)
+
+diff --git a/lib/plugins-by-specification-id.js b/lib/plugins-by-specification-id.js
+index b4ab2fc..09bad24 100644
+--- a/lib/plugins-by-specification-id.js
++++ b/lib/plugins-by-specification-id.js
+@@ -15,6 +15,7 @@ import postcssReplaceOverflowWrap from 'postcss-replace-overflow-wrap';
+ import postcssCustomProperties from 'postcss-custom-properties';
+ import postcssCustomMedia from 'postcss-custom-media';
+ import postcssMediaMinmax from 'postcss-media-minmax';
++import postcssPageBreak from 'postcss-page-break';
+ import postcssPseudoClassAnyLink from 'postcss-pseudo-class-any-link';
+ import postcssAttributeCaseInsensitive from 'postcss-attribute-case-insensitive';
+ import postcssSelectorMatches from 'postcss-selector-matches';
+@@ -23,6 +24,7 @@ import postcssDirPseudoClass from 'postcss-dir-pseudo-class';
+ 
+ // postcss plugins ordered by specification id
+ export default {
++	'break-properties': postcssPageBreak,
+ 	'css-apply-rule': postcssApply,
+ 	'css-cascade-all-shorthand': postcssInitial,
+ 	'css-color-hex-notation': postcssColorHexAlpha,
+diff --git a/package.json b/package.json
+index 8059eeb..148d78a 100644
+--- a/package.json
++++ b/package.json
+@@ -48,6 +48,7 @@
+     "postcss-logical": "^1",
+     "postcss-media-minmax": "^3",
+     "postcss-nesting": "^4",
++    "postcss-page-break": "^1",
+     "postcss-pseudo-class-any-link": "^4",
+     "postcss-replace-overflow-wrap": "^2",
+     "postcss-selector-matches": "^3",
+diff --git a/test/basic.ch38.expect.css b/test/basic.ch38.expect.css
+index 1db687a..7a8d33e 100644
+--- a/test/basic.ch38.expect.css
++++ b/test/basic.ch38.expect.css
+@@ -16,3 +16,8 @@ test-css-color-valdef-color-rebeccapurple {
+ test.focus-visible {
+ 	order: 4;
+ }
++
++test-break {
++	page-break-inside: avoid;
++	break-inside: avoid;
++}
+diff --git a/test/basic.css b/test/basic.css
+index 9740993..7d86620 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -16,3 +16,7 @@ test-css-color-valdef-color-rebeccapurple {
+ test:focus-visible {
+ 	order: 4;
+ }
++
++test-break {
++	break-inside: avoid;
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 51b3d10..1d1016e 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -16,3 +16,8 @@ test-css-color-valdef-color-rebeccapurple {
+ test.focus-visible {
+ 	order: 4;
+ }
++
++test-break {
++	page-break-inside: avoid;
++	break-inside: avoid;
++}
+diff --git a/test/basic.ff49.expect.css b/test/basic.ff49.expect.css
+index 9740993..9a85217 100644
+--- a/test/basic.ff49.expect.css
++++ b/test/basic.ff49.expect.css
+@@ -16,3 +16,8 @@ test-css-color-valdef-color-rebeccapurple {
+ test:focus-visible {
+ 	order: 4;
+ }
++
++test-break {
++	page-break-inside: avoid;
++	break-inside: avoid;
++}
+diff --git a/test/basic.nesting.expect.css b/test/basic.nesting.expect.css
+index 390316a..12a23cd 100644
+--- a/test/basic.nesting.expect.css
++++ b/test/basic.nesting.expect.css
+@@ -14,3 +14,7 @@ test-css-color-valdef-color-rebeccapurple {
+ test:focus-visible {
+ 	order: 4;
+ }
++
++test-break {
++	break-inside: avoid;
++}
+diff --git a/test/basic.stage1-ff49.expect.css b/test/basic.stage1-ff49.expect.css
+index 390316a..f111ef6 100644
+--- a/test/basic.stage1-ff49.expect.css
++++ b/test/basic.stage1-ff49.expect.css
+@@ -14,3 +14,8 @@ test-css-color-valdef-color-rebeccapurple {
+ test:focus-visible {
+ 	order: 4;
+ }
++
++test-break {
++	page-break-inside: avoid;
++	break-inside: avoid;
++}
+diff --git a/test/basic.stage1.expect.css b/test/basic.stage1.expect.css
+index 1a23780..6d59ee8 100644
+--- a/test/basic.stage1.expect.css
++++ b/test/basic.stage1.expect.css
+@@ -14,3 +14,8 @@ test-css-color-valdef-color-rebeccapurple {
+ test.focus-visible {
+ 	order: 4;
+ }
++
++test-break {
++	page-break-inside: avoid;
++	break-inside: avoid;
++}
+-- 
+2.33.1
+

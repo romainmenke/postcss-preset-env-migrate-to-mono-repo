@@ -1,0 +1,102 @@
+From 4e87315b05e526ad3bd69f60d34311b190da1694 Mon Sep 17 00:00:00 2001
+From: Jordan Pittman <jordan@cryptica.me>
+Date: Tue, 3 Mar 2020 16:51:19 -0500
+Subject: [PATCH 09/15] Allow :focus-within to appear escaped in a selector
+
+---
+ index.js                          |  2 +-
+ test/basic.css                    |  7 +++++++
+ test/basic.expect.css             | 14 ++++++++++++++
+ test/basic.preserve.expect.css    |  7 +++++++
+ test/basic.replacewith.expect.css | 14 ++++++++++++++
+ 5 files changed, 43 insertions(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index d82d2e0..284f2b0 100644
+--- a/index.js
++++ b/index.js
+@@ -1,6 +1,6 @@
+ import postcss from 'postcss';
+ 
+-const selectorRegExp = /:focus-within([^\w-]|$)/gi;
++const selectorRegExp = /(?<!\\):focus-within([^\w-]|$)/gi;
+ 
+ export default postcss.plugin('postcss-focus-within', opts => {
+ 	const replaceWith = String(Object(opts).replaceWith || '[focus-within]');
+diff --git a/test/basic.css b/test/basic.css
+index 3dc9068..c09f8f1 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -25,3 +25,10 @@ test :matches(test :focus-within :focus-within test) test {
+ :focus-withinignore {
+ 	order: 3;
+ }
++
++.escaped\:focus-within,
++.escaped\:times\:two\:focus-within,
++.escaped\:focus-within:focus-within,
++.escaped\:times\:two:focus-within {
++	order: 4;
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index b83063a..5cdbbda 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -46,3 +46,17 @@ test :matches(test :focus-within :focus-within test) test {
+ :focus-withinignore {
+ 	order: 3;
+ }
++
++.escaped\:focus-within,
++.escaped\:times\:two\:focus-within,
++.escaped\:focus-within[focus-within],
++.escaped\:times\:two[focus-within] {
++	order: 4;
++}
++
++.escaped\:focus-within,
++.escaped\:times\:two\:focus-within,
++.escaped\:focus-within:focus-within,
++.escaped\:times\:two:focus-within {
++	order: 4;
++}
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index 7691c5e..716915d 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -25,3 +25,10 @@ test :matches(test [focus-within] [focus-within] test) test {
+ :focus-withinignore {
+ 	order: 3;
+ }
++
++.escaped\:focus-within,
++.escaped\:times\:two\:focus-within,
++.escaped\:focus-within[focus-within],
++.escaped\:times\:two[focus-within] {
++	order: 4;
++}
+diff --git a/test/basic.replacewith.expect.css b/test/basic.replacewith.expect.css
+index b8fe632..e0adc94 100644
+--- a/test/basic.replacewith.expect.css
++++ b/test/basic.replacewith.expect.css
+@@ -46,3 +46,17 @@ test :matches(test :focus-within :focus-within test) test {
+ :focus-withinignore {
+ 	order: 3;
+ }
++
++.escaped\:focus-within,
++.escaped\:times\:two\:focus-within,
++.escaped\:focus-within.focus-within,
++.escaped\:times\:two.focus-within {
++	order: 4;
++}
++
++.escaped\:focus-within,
++.escaped\:times\:two\:focus-within,
++.escaped\:focus-within:focus-within,
++.escaped\:times\:two:focus-within {
++	order: 4;
++}
+-- 
+2.33.1
+

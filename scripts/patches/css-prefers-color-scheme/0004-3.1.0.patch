@@ -1,0 +1,674 @@
+From 01a507f314758792aac0d76364147ed29eee44c1 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 10 Nov 2018 16:12:58 -0500
+Subject: [PATCH 04/12] 3.1.0
+
+---
+ CHANGELOG.md       |   5 +
+ README-BROWSER.md  |  85 +++++++++++++++++
+ README-POSTCSS.md  | 115 +++++++++++++++++++++++
+ README.md          | 229 +++++----------------------------------------
+ package.json       |  14 ++-
+ src/postcss-cli.js | 104 ++++++++++++++++++++
+ 6 files changed, 344 insertions(+), 208 deletions(-)
+ create mode 100644 README-BROWSER.md
+ create mode 100644 README-POSTCSS.md
+ create mode 100755 src/postcss-cli.js
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 7d21e33..425a349 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to Prefers Color Scheme
+ 
++### 3.1.0 (November 10, 2018)
++
++- Include CLI tool for transforming CSS without any installation
++- Update documentation
++
+ ### 3.0.0 (November 4, 2018)
+ 
+ - Preserve `prefers-color-scheme` queries by default for non-JS environments
+diff --git a/README-BROWSER.md b/README-BROWSER.md
+new file mode 100644
+index 0000000..99e1f0c
+--- /dev/null
++++ b/README-BROWSER.md
+@@ -0,0 +1,85 @@
++# Prefers Color Scheme [<img src="https://jonathantneal.github.io/js-logo.svg" alt="" width="90" height="90" align="right">][Prefers Color Scheme]
++
++[![NPM Version][npm-img]][npm-url]
++[![Build Status][cli-img]][cli-url]
++[![Support Chat][git-img]][git-url]
++
++[Prefers Color Scheme] applies color schemes with fallbacks provided by the
++[Prefers Color Scheme PostCSS plugin](README-POSTCSS.md).
++
++```js
++// initialize prefersColorScheme (applies the current OS color scheme, if available)
++const prefersColorScheme = require('css-prefers-color-scheme')();
++
++// apply "dark" queries (you can also apply "light")
++prefersColorScheme.scheme = 'dark';
++```
++
++[Prefers Color Scheme] works in all major browsers, including Safari 6+ and
++Internet Explorer 9+ without any polyfills.
++[See it for yourself.](https://app.crossbrowsertesting.com/public/i76b092cd2b52b86/screenshots/z25c0ccdfcc9c9b8956f?size=medium&type=windowed)
++
++To maintain compatibility with browsers supporting `prefers-color-scheme`, the
++library will remove `prefers-color-scheme` media queries in favor of
++cross-browser compatible `color-index` media queries. This ensures a seemless
++experience, even when JavaScript is unable to run.
++
++## Usage
++
++Use [Prefers Color Scheme] to activate your `prefers-color-scheme` queries:
++
++```js
++const prefersColorScheme = require('css-prefers-color-scheme')();
++```
++
++By default, the current OS color scheme is applied if your browser supports it.
++Otherwise, the light color scheme is applied. You may override this by passing
++in a color scheme.
++
++```js
++const prefersColorScheme = require('css-prefers-color-scheme')('dark');
++```
++
++The `prefersColorScheme` object returns the following properties — `value`,
++`hasNativeSupport`, `onChange`, and `removeListener`.
++
++### value
++
++The `value` property returns the currently preferred color scheme, and it can
++be changed.
++
++```js
++const prefersColorScheme = require('css-prefers-color-scheme')();
++
++// log the preferred color scheme
++console.log(prefersColorScheme.scheme);
++
++// apply "dark" queries
++prefersColorScheme.scheme = 'dark';
++```
++
++### hasNativeSupport
++
++The `hasNativeSupport` boolean represents whether `prefers-color-scheme` is
++supported by the browser.
++
++### onChange
++
++The optional `onChange` function is run when the preferred color scheme is
++changed, either from the OS or manually.
++
++### removeListener
++
++The `removeListener` function removes the native `prefers-color-scheme`
++listener, which may or may not be applied, depending on your browser support.
++This is provided to give you complete control over plugin cleanup.
++
++[cli-img]: https://img.shields.io/travis/csstools/css-prefers-color-scheme.svg
++[cli-url]: https://travis-ci.org/csstools/css-prefers-color-scheme
++[git-img]: https://img.shields.io/badge/support-chat-blue.svg
++[git-url]: https://gitter.im/postcss/postcss
++[npm-img]: https://img.shields.io/npm/v/css-prefers-color-scheme.svg
++[npm-url]: https://www.npmjs.com/package/css-prefers-color-scheme
++
++[PostCSS]: https://github.com/postcss/postcss
++[Prefers Color Scheme]: https://github.com/csstools/css-prefers-color-scheme
+diff --git a/README-POSTCSS.md b/README-POSTCSS.md
+new file mode 100644
+index 0000000..6f90a8c
+--- /dev/null
++++ b/README-POSTCSS.md
+@@ -0,0 +1,115 @@
++# Prefers Color Scheme [<img src="https://jonathantneal.github.io/postcss-logo.svg" alt="" width="90" height="90" align="right">][Prefers Color Scheme]
++
++[![NPM Version][npm-img]][npm-url]
++[![Build Status][cli-img]][cli-url]
++[![Support Chat][git-img]][git-url]
++
++[Prefers Color Scheme] transforms `prefers-color-scheme` media queries into
++something all browsers understand.
++
++```css
++@media (prefers-color-scheme: dark) {
++  :root {
++    --site-bgcolor: #1b1b1b;
++    --site-color: #fff;
++  }
++}
++
++body {
++  background-color: var(--site-bgcolor, #f9f9f9);
++  color: var(--site-color, #111);
++  font: 100%/1.5 system-ui;
++}
++
++/* becomes */
++
++@media (color-index: 48) {
++  :root {
++    --site-bgcolor: #1b1b1b;
++    --site-color: #fff;
++  }
++}
++
++@media (prefers-color-scheme: dark) {
++  :root {
++    --site-bgcolor: #1b1b1b;
++    --site-color: #fff;
++  }
++}
++
++body {
++  background-color: var(--site-bgcolor, #f9f9f9);
++  color: var(--site-color, #111);
++  font: 100%/1.5 system-ui;
++}
++```
++
++## Usage
++
++Use [Prefers Color Scheme] to process your CSS:
++
++```bash
++npx css-prefers-color-scheme INPUT.css OUTPUT.css
++```
++
++Or use it within Node:
++
++```js
++const postcssPrefersColorScheme = require('css-prefers-color-scheme/postcss');
++
++postcssPrefersColorScheme.process(YOUR_CSS /*, processOptions, pluginOptions */);
++```
++
++Or use it as a [PostCSS] plugin:
++
++```js
++const postcss = require('postcss');
++const postcssPrefersColorScheme = require('css-prefers-color-scheme/postcss');
++
++postcss([
++  postcssPrefersColorScheme(/* pluginOptions */)
++]).process(YOUR_CSS /*, processOptions */);
++```
++
++[Prefers Color Scheme] runs in all Node environments, with special
++instructions for:
++
++| [Node](INSTALL.md#node) | [Webpack](INSTALL.md#webpack) | [Create React App](INSTALL.md#create-react-app) | [Gulp](INSTALL.md#gulp) | [Grunt](INSTALL.md#grunt) |
++| --- | --- | --- | --- | --- |
++
++### Options
++
++#### preserve
++
++The `preserve` option determines whether the original `prefers-color-scheme`
++query will be preserved or removed. By default, it is preserved.
++
++```js
++require('css-prefers-color-scheme/postcss')({ preserve: false });
++```
++
++```css
++@media (prefers-color-scheme: dark) {
++  body {
++    background-color: black;
++  }
++}
++
++/* becomes */
++
++@media (color-index: 48) {
++  body {
++    background-color: black;
++  }
++}
++```
++
++[cli-img]: https://img.shields.io/travis/csstools/css-prefers-color-scheme.svg
++[cli-url]: https://travis-ci.org/csstools/css-prefers-color-scheme
++[git-img]: https://img.shields.io/badge/support-chat-blue.svg
++[git-url]: https://gitter.im/postcss/postcss
++[npm-img]: https://img.shields.io/npm/v/css-prefers-color-scheme.svg
++[npm-url]: https://www.npmjs.com/package/css-prefers-color-scheme
++
++[PostCSS]: https://github.com/postcss/postcss
++[Prefers Color Scheme]: https://github.com/csstools/css-prefers-color-scheme
+diff --git a/README.md b/README.md
+index 14065a1..f31872c 100644
+--- a/README.md
++++ b/README.md
+@@ -1,4 +1,4 @@
+-# Prefers Color Scheme [<img src="https://jonathantneal.github.io/dom-logo.svg" alt="PostCSS" width="90" height="90" align="right">][Prefers Color Scheme]
++# Prefers Color Scheme [<img src="https://jonathantneal.github.io/js-logo.svg" alt="" width="90" height="90" align="right">][Prefers Color Scheme]
+ 
+ [![NPM Version][npm-img]][npm-url]
+ [![Build Status][cli-img]][cli-url]
+@@ -7,229 +7,52 @@
+ [Prefers Color Scheme] lets you use light and dark color schemes in all
+ browsers, following the [Media Queries] specification.
+ 
+-```bash
+-npm install css-prefers-color-scheme
+-```
+-
+-There are 2 steps required to get color schemes working:
+-
+-- Transform your queries using the included [PostCSS plugin](#PostCSS-Plugin).
+-- Apply your queries using the included [browser library](#Browser-Library).
+-
+-## PostCSS Plugin
+-
+-[Prefers Color Scheme] transforms `prefers-color-scheme` media queries into
+-something all browsers understand.
+-
+-```css
+-@media (prefers-color-scheme: dark) {
+-  :root {
+-    --site-bgcolor: #1b1b1b;
+-    --site-color: #fff;
+-  }
+-}
+-
+-body {
+-  background-color: var(--site-bgcolor, #f9f9f9);
+-  color: var(--site-color, #111);
+-  font: 100%/1.5 system-ui;
+-}
+-
+-/* becomes */
+-
+-@media (color-index: 48) {
+-  :root {
+-    --site-bgcolor: #1b1b1b;
+-    --site-color: #fff;
+-  }
+-}
+-
+-@media (prefers-color-scheme: dark) {
+-  :root {
+-    --site-bgcolor: #1b1b1b;
+-    --site-color: #fff;
+-  }
+-}
+-
+-body {
+-  background-color: var(--site-bgcolor, #f9f9f9);
+-  color: var(--site-color, #111);
+-  font: 100%/1.5 system-ui;
+-}
+-```
+-
+-## Browser Library
+-
+-[Prefers Color Scheme] applies color schemes previously transformed by the
+-[PostCSS plugin](#PostCSS-Plugin).
++## Usage
+ 
+-```js
+-// initialize prefersColorScheme (applies the system color scheme, if available)
+-const prefersColorScheme = require('css-prefers-color-scheme')();
+-
+-// apply "dark" queries
+-prefersColorScheme.scheme = 'dark';
+-
+-// apply "light" queries (also disabling "dark" queries)
+-prefersColorScheme.scheme = 'light';
+-```
++From the command line, transform CSS files that use `prefers-color-scheme`
++media queries:
+ 
+-The script is also available from the [unpkg.com](https://unpkg.com/) CDN:
+-
+-```html
+-<script src="https://unpkg.com/css-prefers-color-scheme/browser.js"></script>
+-<script>
+-// initialize prefersColorScheme (applies the system color scheme, if available)
+-initPrefersColorScheme()
+-</script>
++```bash
++npx css-prefers-color-scheme SOURCE.css TRANSFORMED.css
+ ```
+ 
+-A minified version is also available:
++Next, use that transformed CSS with this script:
+ 
+ ```html
+-<script src="https://unpkg.com/css-prefers-color-scheme/browser.js"></script>
++<link rel="stylesheet" href="TRANSFORMED.css">
++<script src="https://unpkg.com/css-prefers-color-scheme/browser.min"></script>
+ <script>
+-// initialize prefersColorScheme (applies the system color scheme, if available)
+-initPrefersColorScheme()
++colorScheme = initPrefersColorScheme('dark') // apply "dark" queries (you can change it afterward, too)
+ </script>
+ ```
+ 
+-[Prefers Color Scheme] works in all major browsers, including Safari 6+ and
+-Internet Explorer 9+ without any polyfills.
+-[See it for yourself.](https://app.crossbrowsertesting.com/public/i76b092cd2b52b86/screenshots/z25c0ccdfcc9c9b8956f?size=medium&type=windowed)
+-
+-To maintain compatibility with browsers supporting `prefers-color-scheme`, the
+-library will remove `prefers-color-scheme` media queries in favor of the
+-cross-browser compatible `color-index` media queries. This ensures a seemless
+-experience when JavaScript is unable to run.
+-
+----
+-
+-## Browser Usage
+-
+-Use [Prefers Color Scheme] to activate your `prefers-color-scheme` queries:
+-
+-```js
+-const prefersColorScheme = require('css-prefers-color-scheme')();
+-```
+-
+-By default, the system color scheme is applied, if your browser supports it.
+-Otherwise, the light color scheme is applied. You may override this by passing
+-in a color scheme.
+-
+-```js
+-const prefersColorScheme = require('css-prefers-color-scheme')('dark');
+-```
++Dependencies got you down? Don’t worry, this script is only 537 bytes.
+ 
+-The `prefersColorScheme` object returns the following properties:
++## Usage
+ 
+-### value
+-
+-The `value` property returns the currently preferred color scheme, and can be
+-set to change it.
+-
+-```js
+-const prefersColorScheme = require('css-prefers-color-scheme')();
+-
+-// log the preferred color scheme
+-console.log(prefersColorScheme.scheme);
+-
+-// apply "dark" queries
+-prefersColorScheme.scheme = 'dark';
+-```
+-
+-### hasNativeSupport
+-
+-The `hasNativeSupport` boolean represents whether `prefers-color-scheme` is
+-supported by the current browser.
+-
+-### onChange
+-
+-The `onChange` function can be added in order to listen for changes to the
+-preferred color scheme, whether they are triggered by the system or manually by
+-the `change` function.
+-
+-### removeListener
+-
+-The `removeListener` function removes the native `prefers-color-scheme`
+-listener, which may or may not be applied, depending on your browser support.
+-This is provided to give you complete control over plugin cleanup.
+-
+----
+-
+-## PostCSS Usage
+-
+-Use [Prefers Color Scheme] to process your CSS:
+-
+-```js
+-const postcssPrefersColorScheme = require('css-prefers-color-scheme/postcss');
+-
+-postcssPrefersColorScheme.process(YOUR_CSS /*, processOptions, pluginOptions */);
+-```
+-
+-Or use it as a [PostCSS] plugin:
+-
+-```js
+-const postcss = require('postcss');
+-const postcssPrefersColorScheme = require('css-prefers-color-scheme/postcss');
+-
+-postcss([
+-  postcssPrefersColorScheme(/* pluginOptions */)
+-]).process(YOUR_CSS /*, processOptions */);
+-```
+-
+-[Prefers Color Scheme] runs in all Node environments, with special
+-instructions for:
+-
+-| [Node](INSTALL.md#node) | [Webpack](INSTALL.md#webpack) | [Create React App](INSTALL.md#create-react-app) | [Gulp](INSTALL.md#gulp) | [Grunt](INSTALL.md#grunt) |
+-| --- | --- | --- | --- | --- |
+-
+-### Options
+-
+-#### preserve
+-
+-The `preserve` option determines whether the original `prefers-color-scheme`
+-query will be preserved or removed. By default, it is preserved.
+-
+-
+-```js
+-require('css-prefers-color-scheme/postcss')({ preserve: false });
+-```
+-
+-```css
+-@media (prefers-color-scheme: dark) {
+-  body {
+-    background-color: black;
+-  }
+-}
+-
+-/* becomes */
+-
+-@media (color-index: 48) {
+-  body {
+-    background-color: black;
+-  }
+-}
+-```
++- First, transform `prefers-color-scheme` queries using this
++  [PostCSS plugin](README-POSTCSS.md).
++- Next, apply light and dark color schemes everywhere using this
++  [browser script](README-BROWSER.md).
+ 
+ ---
+ 
+ ## How does it work?
+ 
+-The [Prefers Color Scheme] [PostCSS plugin](#PostCSS-Plugin) transforms
+-`prefers-color-scheme` queries into `color-index` queries, changing
++[Prefers Color Scheme] uses a [PostCSS plugin](README-POSTCSS.md) to transform
++`prefers-color-scheme` queries into `color-index` queries. This changes
+ `prefers-color-scheme: dark` into `(color-index: 48)`,
+ `prefers-color-scheme: light` into `(color-index: 70)`, and
+ `prefers-color-scheme: no-preference` into `(color-index: 22)`.
+ 
+ The frontend receives these `color-index` queries, which are understood in all
+-major browsers going back to Internet Explorer 9. However, all browsers only
+-apply a `color-index` of `0`, so all other values are otherwise ignored.
++major browsers going back to Internet Explorer 9. However, since browsers only
++apply `color-index` queries of `0`, our color scheme values are ignored.
+ 
+-[Prefers Color Scheme] changes `(color-index: 48)` queries into
+-`not all and (color-index: 48)` to activate “dark mode” specific CSS, and then
+-it inverts `(color-index: 70)` queries into `not all and (color-index: 48)`
+-to activate “light mode” specific CSS.
++[Prefers Color Scheme] uses a [browser script](README-BROWSER.md) to change
++`(color-index: 48)` queries into `not all and (color-index: 48)` in order to
++activate “dark mode” specific CSS, and it changes `(color-index: 70)` queries
++into `not all and (color-index: 48)` to activate “light mode” specific CSS.
+ 
+ ```css
+ @media (color-index: 70) { /* prefers-color-scheme: light */
+@@ -240,8 +63,8 @@ to activate “light mode” specific CSS.
+ }
+ ```
+ 
+-These valid queries are accessible to `document.styleSheet`, so no css parsing
+-is required to use this library, which is how the script is only 539 bytes.
++Since these media queries are accessible to `document.styleSheet`, no CSS
++parsing is required.
+ 
+ ## Why does the fallback work this way?
+ 
+diff --git a/package.json b/package.json
+index 93d27e7..c87ac55 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "css-prefers-color-scheme",
+-  "version": "3.0.0",
++  "version": "3.1.0",
+   "description": "Use light and dark color schemes in all browsers",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -9,6 +9,9 @@
+   "bugs": "https://github.com/csstools/css-prefers-color-scheme/issues",
+   "main": "index.js",
+   "module": "index.mjs",
++  "bin": {
++    "css-prefers-color-scheme": "src/postcss-cli.js"
++  },
+   "files": [
+     "browser.js",
+     "browser.js.map",
+@@ -40,15 +43,16 @@
+     "postcss": "^7.0.5"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.1.2",
+-    "@babel/preset-env": "^7.1.0",
++    "@babel/core": "^7.1.5",
++    "@babel/preset-env": "^7.1.5",
+     "babel-eslint": "^10.0.1",
+     "cross-env": "^5.2.0",
+-    "eslint": "^5.8.0",
++    "eslint": "^5.9.0",
+     "eslint-config-dev": "^2.0.0",
++    "get-stdin": "^6.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.6",
++    "rollup": "^0.67.0",
+     "rollup-plugin-babel": "^4.0.3",
+     "rollup-plugin-terser": "^3.0.0",
+     "uglify-js": "^3.4.9"
+diff --git a/src/postcss-cli.js b/src/postcss-cli.js
+new file mode 100755
+index 0000000..f8cb19d
+--- /dev/null
++++ b/src/postcss-cli.js
+@@ -0,0 +1,104 @@
++#!/usr/bin/env node
++
++const fs = require('fs');
++const prefersColorScheme = require('../postcss');
++
++// get process and plugin options from the command line
++const fileRegExp = /^[\w\/.]+$/;
++const argRegExp = /^--(\w+)=("|')?(.+)\2$/;
++const relaxedJsonRegExp = /(['"])?([a-z0-9A-Z_]+)(['"])?:/g;
++const argo = process.argv.slice(2).reduce(
++	(object, arg) => {
++		const argMatch = arg.match(argRegExp);
++		const fileMatch = arg.match(fileRegExp);
++
++		if (argMatch) {
++			object[argMatch[1]] = argMatch[3];
++		} else if (fileMatch) {
++			if (object.from === '<stdin>') {
++				object.from = arg;
++			} else if (object.to === '<stdout>') {
++				object.to = arg;
++			}
++		}
++
++		return object;
++	},
++	{ from: '<stdin>', to: '<stdout>', opts: 'null' }
++);
++
++// get css from command line arguments or stdin
++(argo.from === '<stdin>' ? getStdin() : readFile(argo.from))
++.then(css => {
++	const pluginOpts = JSON.parse(argo.opts.replace(relaxedJsonRegExp, '"$2": '));
++	const processOptions = Object.assign({ from: argo.from, to: argo.to || argo.from }, argo.map ? { map: JSON.parse(argo.map) } : {});
++
++	const result = prefersColorScheme.process(css, processOptions, pluginOpts);
++
++	if (argo.to === '<stdout>') {
++		return result.css;
++	} else {
++		return writeFile(argo.to, result.css).then(
++			() => `CSS was written to "${argo.to}"`
++		)
++	}
++}).then(
++	result => {
++		console.log(result);
++
++		process.exit(0);
++	},
++	error => {
++		console.error(error);
++
++		process.exit(1);
++	}
++);
++
++function readFile(pathname) {
++	return new Promise((resolve, reject) => {
++		fs.readFile(pathname, 'utf8', (error, data) => {
++			if (error) {
++				reject(error);
++			} else {
++				resolve(data);
++			}
++		});
++	});
++}
++
++function writeFile(pathname, data) {
++	return new Promise((resolve, reject) => {
++		fs.writeFile(pathname, data, (error, content) => {
++			if (error) {
++				reject(error);
++			} else {
++				resolve(content);
++			}
++		});
++	});
++}
++
++function getStdin() {
++	return new Promise(resolve => {
++		let data = '';
++
++		if (process.stdin.isTTY) {
++			resolve(data);
++		} else {
++			process.stdin.setEncoding('utf8');
++
++			process.stdin.on('readable', () => {
++				let chunk;
++
++				while (chunk = process.stdin.read()) {
++					data += chunk;
++				}
++			});
++
++			process.stdin.on('end', () => {
++				resolve(data);
++			});
++		}
++	});
++}
+-- 
+2.33.1
+

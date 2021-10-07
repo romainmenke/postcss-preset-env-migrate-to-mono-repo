@@ -1,0 +1,46 @@
+From d4b09d4cd238031f77cbf6a79925536ac80bf604 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 2 Jun 2017 12:47:14 -0400
+Subject: [PATCH 03/34] Update Plugin: Support presumed "dir" option
+
+---
+ index.js | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/index.js b/index.js
+index d745d51..984d435 100644
+--- a/index.js
++++ b/index.js
+@@ -33,8 +33,9 @@ module.exports = postcss.plugin('postcss-dir-pseudo-class', (opts) => (root) =>
+ 							// conditionally prepend a combinator before inserting the [dir] attribute
+ 							const first = selector.nodes[0];
+ 							const firstIsSpaceCombinator = first && 'combinator' === first.type && ' ' === first.value;
++							const firstIsRoot = first && 'pseudo' === first.type && ':root' === first.value;
+ 
+-							if (first && !firstIsSpaceCombinator) {
++							if (first && !firstIsRoot && !firstIsSpaceCombinator) {
+ 								selector.prepend(
+ 									selectorParser.combinator({
+ 										value: ' '
+@@ -45,9 +46,16 @@ module.exports = postcss.plugin('postcss-dir-pseudo-class', (opts) => (root) =>
+ 							// value of the :dir pseudo-class
+ 							const value = node.nodes.toString();
+ 
+-							// prepend the dir attribute
++							// whether that value matches the presumed direction
++							const isdir = opts && Object(opts).dir === value;
++
+ 							selector.prepend(
+-								selectorParser.attribute({
++								// prepend :root if the direction is presumed
++								isdir ? selectorParser.pseudo({
++									value: ':root'
++								})
++								// otherwise, prepend the dir attribute
++								: selectorParser.attribute({
+ 									attribute: 'dir',
+ 									operator: '=',
+ 									value: `"${ value }"`
+-- 
+2.33.1
+

@@ -1,0 +1,31 @@
+From 5dde535f05868b6ed4e79e595aebf9c182fed7fd Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 16 Mar 2018 10:08:12 -0400
+Subject: [PATCH 16/84] Update developer dependencies
+
+---
+ package.json | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/package.json b/package.json
+index 06933c4..0af6907 100644
+--- a/package.json
++++ b/package.json
+@@ -59,12 +59,12 @@
+     "babel-eslint": "^8.2.2",
+     "babel-preset-env": "^1.6.1",
+     "echint": "^4.0.1",
+-    "eslint": "^4.18.1",
++    "eslint": "^4.18.2",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-simple-vars": "^4.1.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.56.3",
++    "rollup": "^0.57.0",
+     "rollup-plugin-babel": "^3.0.3"
+   },
+   "eslintConfig": {
+-- 
+2.33.1
+

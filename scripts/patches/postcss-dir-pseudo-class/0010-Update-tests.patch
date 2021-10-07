@@ -1,0 +1,253 @@
+From 315993c9aa25ece3c8ffacfa8e5c14857a53d6c7 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 24 Jul 2017 21:57:13 -0400
+Subject: [PATCH 10/34] Update tests
+
+---
+ test/basic.css                  | 42 +++++++++++++++++++++++-
+ test/basic.dir.expect.css       | 58 ++++++++++++++++++++++++++++-----
+ test/basic.expect.css           | 42 +++++++++++++++++++++++-
+ test/basic.supported.expect.css | 42 +++++++++++++++++++++++-
+ 4 files changed, 172 insertions(+), 12 deletions(-)
+
+diff --git a/test/basic.css b/test/basic.css
+index be2282f..0037e7d 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -27,5 +27,45 @@ test test:dir(ltr) {
+ }
+ 
+ :root :dir(ltr) {
+-	order: 7
++	order: 7;
++}
++
++html :dir(ltr) {
++	order: 8;
++}
++
++:dir(rtl) {
++	order: 9;
++}
++
++:dir(rtl) test {
++	order: 10;
++}
++
++test :dir(rtl) {
++	order: 11;
++}
++
++test :dir(rtl) test {
++	order: 12;
++}
++
++test:dir(rtl) {
++	order: 13;
++}
++
++test:dir(rtl) test {
++	order: 14;
++}
++
++test test:dir(rtl) {
++	order: 15;
++}
++
++:root :dir(rtl) {
++	order: 16;
++}
++
++html :dir(rtl) {
++	order: 17;
+ }
+diff --git a/test/basic.dir.expect.css b/test/basic.dir.expect.css
+index 4a11562..b1a24dd 100644
+--- a/test/basic.dir.expect.css
++++ b/test/basic.dir.expect.css
+@@ -1,31 +1,71 @@
+-:root {
++:not([dir="rtl"]) {
+ 	order: 0;
+ }
+ 
+-:root test {
++:not([dir="rtl"]) test {
+ 	order: 1;
+ }
+ 
+-:root test * {
++:not([dir="rtl"]) test * {
+ 	order: 2;
+ }
+ 
+-:root test * test {
++:not([dir="rtl"]) test * test {
+ 	order: 3;
+ }
+ 
+-:root test {
++:not([dir="rtl"]) test {
+ 	order: 4;
+ }
+ 
+-:root test test {
++:not([dir="rtl"]) test test {
+ 	order: 5;
+ }
+ 
+-:root test test {
++:not([dir="rtl"]) test test {
+ 	order: 6;
+ }
+ 
+-:root:root * {
+-	order: 7
++:not([dir="rtl"]):root * {
++	order: 7;
++}
++
++html:not([dir="rtl"]) * {
++	order: 8;
++}
++
++[dir="rtl"] {
++	order: 9;
++}
++
++[dir="rtl"] test {
++	order: 10;
++}
++
++[dir="rtl"] test * {
++	order: 11;
++}
++
++[dir="rtl"] test * test {
++	order: 12;
++}
++
++[dir="rtl"] test {
++	order: 13;
++}
++
++[dir="rtl"] test test {
++	order: 14;
++}
++
++[dir="rtl"] test test {
++	order: 15;
++}
++
++[dir="rtl"]:root * {
++	order: 16;
++}
++
++html[dir="rtl"] * {
++	order: 17;
+ }
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 7dae80c..f1983a2 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -27,5 +27,45 @@
+ }
+ 
+ [dir="ltr"]:root * {
+-	order: 7
++	order: 7;
++}
++
++html[dir="ltr"] * {
++	order: 8;
++}
++
++[dir="rtl"] {
++	order: 9;
++}
++
++[dir="rtl"] test {
++	order: 10;
++}
++
++[dir="rtl"] test * {
++	order: 11;
++}
++
++[dir="rtl"] test * test {
++	order: 12;
++}
++
++[dir="rtl"] test {
++	order: 13;
++}
++
++[dir="rtl"] test test {
++	order: 14;
++}
++
++[dir="rtl"] test test {
++	order: 15;
++}
++
++[dir="rtl"]:root * {
++	order: 16;
++}
++
++html[dir="rtl"] * {
++	order: 17;
+ }
+diff --git a/test/basic.supported.expect.css b/test/basic.supported.expect.css
+index be2282f..0037e7d 100644
+--- a/test/basic.supported.expect.css
++++ b/test/basic.supported.expect.css
+@@ -27,5 +27,45 @@ test test:dir(ltr) {
+ }
+ 
+ :root :dir(ltr) {
+-	order: 7
++	order: 7;
++}
++
++html :dir(ltr) {
++	order: 8;
++}
++
++:dir(rtl) {
++	order: 9;
++}
++
++:dir(rtl) test {
++	order: 10;
++}
++
++test :dir(rtl) {
++	order: 11;
++}
++
++test :dir(rtl) test {
++	order: 12;
++}
++
++test:dir(rtl) {
++	order: 13;
++}
++
++test:dir(rtl) test {
++	order: 14;
++}
++
++test test:dir(rtl) {
++	order: 15;
++}
++
++:root :dir(rtl) {
++	order: 16;
++}
++
++html :dir(rtl) {
++	order: 17;
+ }
+-- 
+2.33.1
+

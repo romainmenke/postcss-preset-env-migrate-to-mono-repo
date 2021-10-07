@@ -1,0 +1,79 @@
+From f97cb2b985aef07994342d3a05d1bc884ed55607 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 16 Sep 2015 02:11:05 -0400
+Subject: [PATCH 18/89] Update CONTRIBUTING.md
+
+---
+ CONTRIBUTING.md | 60 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 60 insertions(+)
+ create mode 100644 CONTRIBUTING.md
+
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+new file mode 100644
+index 0000000..a33aec2
+--- /dev/null
++++ b/CONTRIBUTING.md
+@@ -0,0 +1,60 @@
++You want to help? You rock! Now, take a moment to be sure your contributions make sense to everyone else.
++
++## Reporting Issues
++
++Found a problem? Want a new feature?
++
++- See if your issue or idea has [already been reported].
++- Provide a [reduced test case] or a [live example].
++
++Remember, a bug is a _demonstrable problem_ caused by _our_ code.
++
++## Submitting Pull Requests
++
++Pull requests are the greatest contributions, so be sure they are focused in scope, and do avoid unrelated commits.
++
++1. To begin, [fork this project], clone your fork, and add our upstream.
++   ```bash
++   # Clone your fork of the repo into the current directory
++   git clone https://github.com/<your-username>/postcss-nesting
++   # Navigate to the newly cloned directory
++   cd postcss-nesting
++   # Assign the original repo to a remote called "upstream"
++   git remote add upstream https://github.com/jonathantneal/postcss-nesting
++   # Install the tools necessary for development
++   npm install
++   ```
++
++2. Create a branch for your feature or fix:
++   ```bash
++   # Move into a new branch for a feature
++   git checkout -b feature/thing
++   ```
++   ```bash
++   # Move into a new branch for a fix
++   git checkout -b fix/something
++   ```
++
++3. Be sure your code follows our practices.
++   ```bash
++   # Test current code
++   npm run test
++   ```
++
++4. Push your branch up to your fork:
++   ```bash
++   # Push a feature branch
++   git push origin feature/thing
++   ```
++   ```bash
++   # Push a fix branch
++   git push origin fix/something
++   ```
++
++5. Now [open a pull request] with a clear title and description.
++
++[already been reported]: issues
++[fork this project]:     fork
++[live example]:          http://codepen.io/pen
++[open a pull request]:   https://help.github.com/articles/using-pull-requests/
++[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+-- 
+2.33.1
+

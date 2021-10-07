@@ -1,0 +1,1189 @@
+From 2bf861f36e2bcdb812c6fa8adea73b9a418ac30e Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 16 Jan 2018 16:07:37 -0500
+Subject: [PATCH 01/84] 2.0.0
+
+---
+ .appveyor.yml                               |  18 ++
+ .editorconfig                               |  15 ++
+ .gitignore                                  |  12 +
+ .rollup.js                                  |  13 ++
+ .tape.js                                    |  99 +++++++++
+ .travis.yml                                 |   9 +
+ CHANGELOG.md                                |   9 +
+ CONTRIBUTING.md                             |  65 ++++++
+ LICENSE.md                                  | 108 +++++++++
+ README.md                                   | 233 ++++++++++++++++++++
+ index.js                                    |  97 ++++++++
+ lib/get-transformed-insertions.js           |  14 ++
+ lib/get-unsupported-browsers-by-feature.js  |  29 +++
+ lib/plugins-by-specification-id.js          |  45 ++++
+ lib/specification-ids-by-execution-order.js |  23 ++
+ package.json                                |  85 +++++++
+ test/basic.ch38.expect.css                  |  13 ++
+ test/basic.css                              |  13 ++
+ test/basic.expect.css                       |  13 ++
+ test/basic.ff49.expect.css                  |  13 ++
+ test/basic.nesting.expect.css               |  11 +
+ test/basic.stage1-ff49.expect.css           |  11 +
+ test/basic.stage1.expect.css                |  11 +
+ test/insert.after.expect.css                |   3 +
+ test/insert.before.expect.css               |   3 +
+ test/insert.css                             |   5 +
+ 26 files changed, 970 insertions(+)
+ create mode 100644 .appveyor.yml
+ create mode 100644 .editorconfig
+ create mode 100644 .gitignore
+ create mode 100644 .rollup.js
+ create mode 100644 .tape.js
+ create mode 100644 .travis.yml
+ create mode 100644 CHANGELOG.md
+ create mode 100644 CONTRIBUTING.md
+ create mode 100644 LICENSE.md
+ create mode 100644 README.md
+ create mode 100644 index.js
+ create mode 100644 lib/get-transformed-insertions.js
+ create mode 100644 lib/get-unsupported-browsers-by-feature.js
+ create mode 100644 lib/plugins-by-specification-id.js
+ create mode 100644 lib/specification-ids-by-execution-order.js
+ create mode 100644 package.json
+ create mode 100644 test/basic.ch38.expect.css
+ create mode 100644 test/basic.css
+ create mode 100644 test/basic.expect.css
+ create mode 100644 test/basic.ff49.expect.css
+ create mode 100644 test/basic.nesting.expect.css
+ create mode 100644 test/basic.stage1-ff49.expect.css
+ create mode 100644 test/basic.stage1.expect.css
+ create mode 100644 test/insert.after.expect.css
+ create mode 100644 test/insert.before.expect.css
+ create mode 100644 test/insert.css
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+new file mode 100644
+index 0000000..d6b511f
+--- /dev/null
++++ b/.appveyor.yml
+@@ -0,0 +1,18 @@
++# https://www.appveyor.com/docs/appveyor-yml
++
++environment:
++  matrix:
++    - nodejs_version: 4.0
++
++version: "{build}"
++build: off
++deploy: off
++
++install:
++  - ps: Install-Product node $env:nodejs_version
++  - npm install --ignore-scripts
++
++test_script:
++  - node --version
++  - npm --version
++  - cmd: "npm test"
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..e06d798
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,15 @@
++root = true
++
++[*]
++charset = utf-8
++end_of_line = lf
++indent_style = tab
++insert_final_newline = true
++trim_trailing_whitespace = true
++
++[*.md]
++trim_trailing_whitespace = false
++
++[*.{json,md,yml}]
++indent_size = 2
++indent_style = space
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..6832ce8
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,12 @@
++node_modules
++index.bundle.js
++package-lock.json
++*.log*
++*.result.css
++.*
++!.appveyor.yml
++!.editorconfig
++!.gitignore
++!.rollup.js
++!.tape.js
++!.travis.yml
+diff --git a/.rollup.js b/.rollup.js
+new file mode 100644
+index 0000000..7f4e231
+--- /dev/null
++++ b/.rollup.js
+@@ -0,0 +1,13 @@
++import babel from 'rollup-plugin-babel';
++
++export default {
++	input: 'index.js',
++	output: { file: 'index.bundle.js', format: 'cjs' },
++	plugins: [
++		babel({
++			presets: [
++				['env', { modules: false, targets: { node: 4 } }]
++			]
++		})
++	]
++};
+diff --git a/.tape.js b/.tape.js
+new file mode 100644
+index 0000000..373438d
+--- /dev/null
++++ b/.tape.js
+@@ -0,0 +1,99 @@
++module.exports = {
++	'postcss-preset-env': {
++		'basic': {
++			message: 'supports basic usage'
++		},
++		'basic:ff49': {
++			message: 'supports { browsers: "ff >= 49" } usage',
++			options: {
++				browsers: 'ff >= 49'
++			}
++		},
++		'basic:ch38': {
++			message: 'supports { browsers: "chrome >= 38" } usage',
++			options: {
++				browsers: 'chrome >= 38'
++			}
++		},
++		'basic:stage1': {
++			message: 'supports { stage: 1 } usage',
++			options: {
++				stage: 1
++			}
++		},
++		'basic:stage1-ff49': {
++			message: 'supports { browsers: "ff >= 49", stage: 1 } usage',
++			options: {
++				browsers: 'ff >= 49',
++				stage: 1
++			}
++		},
++		'basic:nesting': {
++			message: 'supports { stage: false, features: { "css-nesting": true } } usage',
++			options: {
++				stage: false,
++				features: {
++					'css-nesting': true
++				}
++			}
++		},
++		'insert:before': {
++			message: 'supports { stage: 2, before: { "css-color-modifying-colors": [ require("postcss-simple-vars") ] } } usage',
++			options: {
++				stage: 2,
++				insertBefore: {
++					'css-color-modifying-colors': [
++						require('postcss-simple-vars')
++					]
++				}
++			}
++		},
++		'insert:after': {
++			message: 'supports { stage: 2, after: { "css-color-modifying-colors": [ require("postcss-simple-vars")() ] } } usage',
++			options: {
++				stage: 2,
++				insertAfter: {
++					'css-color-modifying-colors': require('postcss-simple-vars')
++				},
++				features: {
++					'css-color-modifying-colors': {
++						unresolved: 'warn'
++					}
++				}
++			},
++			warning: 2
++		},
++		'insert:after:exec': {
++			message: 'supports { stage: 2, after: { "css-color-modifying-colors": require("postcss-simple-vars")() } } usage',
++			options: {
++				stage: 2,
++				insertAfter: {
++					'css-color-modifying-colors': require('postcss-simple-vars')()
++				},
++				features: {
++					'css-color-modifying-colors': {
++						unresolved: 'ignore'
++					}
++				}
++			},
++			expect: 'insert.after.expect.css'
++		},
++		'insert:after:array': {
++			message: 'supports { stage: 2, after: { "css-color-modifying-colors": [ require("postcss-simple-vars") ] } } usage',
++			options: {
++				stage: 2,
++				insertAfter: {
++					'css-color-modifying-colors': [
++						require('postcss-simple-vars')
++					]
++				},
++				features: {
++					'css-color-modifying-colors': {
++						unresolved: 'ignore'
++					}
++				}
++			},
++			expect: 'insert.after.expect.css'
++		}
++	}
++};
+diff --git a/.travis.yml b/.travis.yml
+new file mode 100644
+index 0000000..c564664
+--- /dev/null
++++ b/.travis.yml
+@@ -0,0 +1,9 @@
++# https://docs.travis-ci.com/user/travis-lint
++
++language: node_js
++
++node_js:
++  - 4
++
++install:
++  - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100644
+index 0000000..990f49d
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,9 @@
++# Changes to PostCSS Preset Env
++
++### 2.0.0 (January 16, 2018)
++
++- Initial version
++
++### 1.0.0 (December 20, 2017)
++
++- Unsupported version accidentally published by a member of the community
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+new file mode 100644
+index 0000000..4e25a97
+--- /dev/null
++++ b/CONTRIBUTING.md
+@@ -0,0 +1,65 @@
++# Contributing to PostCSS Preset Env
++
++You want to help? You rock! Now, take a moment to be sure your contributions
++make sense to everyone else.
++
++## Reporting Issues
++
++Found a problem? Want a new feature?
++
++- See if your issue or idea has [already been reported].
++- Provide a [reduced test case] or a [live example].
++
++Remember, a bug is a _demonstrable problem_ caused by _our_ code.
++
++## Submitting Pull Requests
++
++Pull requests are the greatest contributions, so be sure they are focused in
++scope and avoid unrelated commits.
++
++1. To begin; [fork this project], clone your fork, and add our upstream.
++   ```bash
++   # Clone your fork of the repo into the current directory
++   git clone git@github.com:YOUR_USER/postcss-preset-env.git
++
++   # Navigate to the newly cloned directory
++   cd postcss-preset-env
++
++   # Assign the original repo to a remote called "upstream"
++   git remote add upstream git@github.com:jonathantneal/postcss-preset-env.git
++
++   # Install the tools necessary for testing
++   npm install
++   ```
++
++2. Create a branch for your feature or fix:
++   ```bash
++   # Move into a new branch for your feature
++   git checkout -b feature/thing
++   ```
++   ```bash
++   # Move into a new branch for your fix
++   git checkout -b fix/something
++   ```
++
++3. If your code follows our practices, then push your feature branch:
++   ```bash
++   # Test current code
++   npm test
++   ```
++   ```bash
++   # Push the branch for your new feature
++   git push origin feature/thing
++   ```
++   ```bash
++   # Or, push the branch for your update
++   git push origin update/something
++   ```
++
++That’s it! Now [open a pull request] with a clear title and description.
++
++[already been reported]: issues
++[fork this project]:     fork
++[live example]:          https://codepen.io/pen
++[open a pull request]:   https://help.github.com/articles/using-pull-requests/
++[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+diff --git a/LICENSE.md b/LICENSE.md
+new file mode 100644
+index 0000000..0bc1fa7
+--- /dev/null
++++ b/LICENSE.md
+@@ -0,0 +1,108 @@
++# CC0 1.0 Universal
++
++## Statement of Purpose
++
++The laws of most jurisdictions throughout the world automatically confer
++exclusive Copyright and Related Rights (defined below) upon the creator and
++subsequent owner(s) (each and all, an “owner”) of an original work of
++authorship and/or a database (each, a “Work”).
++
++Certain owners wish to permanently relinquish those rights to a Work for the
++purpose of contributing to a commons of creative, cultural and scientific works
++(“Commons”) that the public can reliably and without fear of later claims of
++infringement build upon, modify, incorporate in other works, reuse and
++redistribute as freely as possible in any form whatsoever and for any purposes,
++including without limitation commercial purposes. These owners may contribute
++to the Commons to promote the ideal of a free culture and the further
++production of creative, cultural and scientific works, or to gain reputation or
++greater distribution for their Work in part through the use and efforts of
++others.
++
++For these and/or other purposes and motivations, and without any expectation of
++additional consideration or compensation, the person associating CC0 with a
++Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
++and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
++publicly distribute the Work under its terms, with knowledge of his or her
++Copyright and Related Rights in the Work and the meaning and intended legal
++effect of CC0 on those rights.
++
++1. Copyright and Related Rights. A Work made available under CC0 may be
++   protected by copyright and related or neighboring rights (“Copyright and
++   Related Rights”). Copyright and Related Rights include, but are not limited
++   to, the following:
++   1. the right to reproduce, adapt, distribute, perform, display, communicate,
++      and translate a Work;
++   2. moral rights retained by the original author(s) and/or performer(s);
++   3. publicity and privacy rights pertaining to a person’s image or likeness
++      depicted in a Work;
++   4. rights protecting against unfair competition in regards to a Work,
++      subject to the limitations in paragraph 4(i), below;
++   5. rights protecting the extraction, dissemination, use and reuse of data in
++      a Work;
++   6. database rights (such as those arising under Directive 96/9/EC of the
++      European Parliament and of the Council of 11 March 1996 on the legal
++      protection of databases, and under any national implementation thereof,
++      including any amended or successor version of such directive); and
++   7. other similar, equivalent or corresponding rights throughout the world
++      based on applicable law or treaty, and any national implementations
++      thereof.
++
++2. Waiver. To the greatest extent permitted by, but not in contravention of,
++   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++   and Related Rights and associated claims and causes of action, whether now
++   known or unknown (including existing as well as future claims and causes of
++   action), in the Work (i) in all territories worldwide, (ii) for the maximum
++   duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
++   makes the Waiver for the benefit of each member of the public at large and
++   to the detriment of Affirmer’s heirs and successors, fully intending that
++   such Waiver shall not be subject to revocation, rescission, cancellation,
++   termination, or any other legal or equitable action to disrupt the quiet
++   enjoyment of the Work by the public as contemplated by Affirmer’s express
++   Statement of Purpose.
++
++3. Public License Fallback. Should any part of the Waiver for any reason be
++   judged legally invalid or ineffective under applicable law, then the Waiver
++   shall be preserved to the maximum extent permitted taking into account
++   Affirmer’s express Statement of Purpose. In addition, to the extent the
++   Waiver is so judged Affirmer hereby grants to each affected person a
++   royalty-free, non transferable, non sublicensable, non exclusive,
++   irrevocable and unconditional license to exercise Affirmer’s Copyright and
++   Related Rights in the Work (i) in all territories worldwide, (ii) for the
++   maximum duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “License”). The License
++   shall be deemed effective as of the date CC0 was applied by Affirmer to the
++   Work. Should any part of the License for any reason be judged legally
++   invalid or ineffective under applicable law, such partial invalidity or
++   ineffectiveness shall not invalidate the remainder of the License, and in
++   such case Affirmer hereby affirms that he or she will not (i) exercise any
++   of his or her remaining Copyright and Related Rights in the Work or (ii)
++   assert any associated claims and causes of action with respect to the Work,
++   in either case contrary to Affirmer’s express Statement of Purpose.
++
++4. Limitations and Disclaimers.
++   1. No trademark or patent rights held by Affirmer are waived, abandoned,
++      surrendered, licensed or otherwise affected by this document.
++   2. Affirmer offers the Work as-is and makes no representations or warranties
++      of any kind concerning the Work, express, implied, statutory or
++      otherwise, including without limitation warranties of title,
++      merchantability, fitness for a particular purpose, non infringement, or
++      the absence of latent or other defects, accuracy, or the present or
++      absence of errors, whether or not discoverable, all to the greatest
++      extent permissible under applicable law.
++   3. Affirmer disclaims responsibility for clearing rights of other persons
++      that may apply to the Work or any use thereof, including without
++      limitation any person’s Copyright and Related Rights in the Work.
++      Further, Affirmer disclaims responsibility for obtaining any necessary
++      consents, permissions or other rights required for any use of the Work.
++   4. Affirmer understands and acknowledges that Creative Commons is not a
++      party to this document and has no duty or obligation with respect to this
++      CC0 or use of the Work.
++
++For more information, please see
++http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..41db15d
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,233 @@
++# PostCSS Preset Env [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
++
++[![NPM Version][npm-img]][npm-url]
++[![Linux Build Status][cli-img]][cli-url]
++[![Windows Build Status][win-img]][win-url]
++[![Gitter Chat][git-img]][git-url]
++
++[PostCSS Preset Env] lets you convert modern CSS into something most browsers
++can understand, determining the polyfills you need based on your targeted
++browsers or runtime environments.
++
++```sh
++npm install postcss-preset-env
++```
++
++```css
++@custom-media --viewport-medium (width <= 50rem);
++@custom-selector :--heading h1, h2, h3, h4, h5, h6;
++
++:root {
++  --mainColor: #12345678;
++}
++
++@media (--viewport-medium) {
++  body {
++    color: var(--mainColor);
++    font-family: system-ui;
++    overflow-wrap: break-word;
++  }
++
++  :--heading {
++    background-image: image-set(url(img/heading.png) 1x, url(img/heading@2x.png) 2x);
++    margin-block: 0;
++  }
++}
++
++a {
++  color: rebeccapurple;
++
++  &:hover {
++    color: color-mod(var(--mainColor) alpha(80%));
++  }
++}
++
++/* becomes */
++
++@media (max-width: 50rem) {
++  body {
++    color: rgba(18, 52, 86, 0.47059);
++    font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue;
++    word-wrap: break-word;
++  }
++
++  h1, h2, h3, h4, h5, h6 {
++    background-image: url(img/heading.png);
++    margin-top: 0;
++    margin-bottom: 0;
++  }
++}
++
++@media (max-width: 50rem) and (-webkit-min-device-pixel-ratio: 2), (max-width: 50rem) and (min-resolution: 192dpi) {
++  h1, h2, h3, h4, h5, h6 {
++    background-image: url(img/heading@2x.png);
++  }
++}
++
++a {
++  color: #639
++}
++
++a:hover {
++  color: rgba(18, 52, 86, 0.8);
++}
++```
++
++Without any configuration options, [postcss-preset-env] enables **stage 3**
++features and supports all browsers.
++
++## Usage
++
++Add [PostCSS Preset Env] to your build tool:
++
++```sh
++npm install postcss-preset-env --save-dev
++```
++
++#### Node
++
++Use [PostCSS Preset Env] to process your CSS:
++
++```js
++require('postcss-preset-env').process(YOUR_CSS);
++```
++
++#### PostCSS
++
++Add [PostCSS] to your build tool:
++
++```sh
++npm install postcss --save-dev
++```
++
++Use [PostCSS Preset Env] as a plugin:
++
++```js
++postcss([
++  require('postcss-preset-env')()
++]).process(YOUR_CSS);
++```
++
++#### Gulp
++
++Add [Gulp PostCSS] to your build tool:
++
++```sh
++npm install gulp-postcss --save-dev
++```
++
++Use [PostCSS Preset Env] in your Gulpfile:
++
++```js
++var postcss = require('gulp-postcss');
++
++gulp.task('css', function () {
++  return gulp.src('./src/*.css').pipe(
++    postcss([
++      require('postcss-preset-env')()
++    ])
++  ).pipe(
++    gulp.dest('.')
++  );
++});
++```
++
++#### Grunt
++
++Add [Grunt PostCSS] to your build tool:
++
++```sh
++npm install grunt-postcss --save-dev
++```
++
++Use [PostCSS Preset Env] in your Gruntfile:
++
++```js
++grunt.loadNpmTasks('grunt-postcss');
++
++grunt.initConfig({
++  postcss: {
++    options: {
++      use: [
++        require('postcss-preset-env')()
++      ]
++    },
++    dist: {
++      src: '*.css'
++    }
++  }
++});
++```
++
++## Options
++
++### stage
++
++The `stage` key determines which CSS features to polyfill, based upon their
++position in the process of becoming implemented web standards found at [cssdb].
++The stages are 0 through 5. You can specify `false` to ignore all stages and
++rely on [features][#features] exclusively.
++
++```js
++require('postcss-preset-env')({
++  stage: 0
++})
++```
++
++### features
++
++The `features` key determines which CSS features to polyfill based upon their
++unique specification id found at [cssdb]. Pass `true` to enable a feature, and
++pass `false` to disable a feature. Pass an object `{}` to configure options of
++an individual polyfill. Any features not explicitly toggled here will be
++determined by [stage][#stage].
++
++```js
++require('postcss-preset-env')({
++  stage: false,
++  features: [ 'css-nesting' ]
++})
++```
++
++### browsers
++
++The `browsers` key determines the browsers to support, which will enable or
++disable polyfills based upon their support matrix found at [caniuse].
++By default, [postcss-preset-env] will inherit any existing browserslist config,
++.browserslistrc config, browserslist section in package.json, or browserslist
++environment variables.
++
++```js
++require('postcss-preset-env')({
++  browsers: 'last two versions'
++})
++```
++
++### insertBefore / insertAfter
++
++The `insertBefore` and `insertAfter` keys allow you to insert other PostCSS
++plugins along the chain. This is highly valuable if you are also using sugary
++PostCSS plugins that must execute between plugins within postcss-preset-env.
++Both `insertBefore` and `insertAfter` support chaining one or multiple plugins.
++
++```js
++require('postcss-preset-env')({
++  insertBefore: {
++    'css-color-modifying-colors': require('postcss-simple-vars')
++  }
++})
++```
++
++[npm-url]: https://www.npmjs.com/package/postcss-preset-env
++[npm-img]: https://img.shields.io/npm/v/postcss-preset-env.svg
++[cli-url]: https://travis-ci.org/jonathantneal/postcss-preset-env
++[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-preset-env.svg
++[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-preset-env
++[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-preset-env.svg
++[git-url]: https://gitter.im/postcss/postcss
++[git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
++
++[PostCSS Preset Env]: https://github.com/jonathantneal/postcss-preset-env
++[PostCSS]: https://github.com/postcss/postcss
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+diff --git a/index.js b/index.js
+new file mode 100644
+index 0000000..7a4f54b
+--- /dev/null
++++ b/index.js
+@@ -0,0 +1,97 @@
++// tooling
++import browserslist from 'browserslist';
++import cssdb from 'cssdb';
++import postcss from 'postcss';
++import plugins from './lib/plugins-by-specification-id';
++import getTransformedInsertions from './lib/get-transformed-insertions';
++import getUnsupportedBrowsersByFeature from './lib/get-unsupported-browsers-by-feature';
++import specificationIdsByExecutionOrder from './lib/specification-ids-by-execution-order';
++
++// plugin
++export default postcss.plugin('postcss-preset-env', opts => {
++	// initialize options
++	const features = Object(Object(opts).features);
++	const insertBefore = Object(Object(opts).insertBefore);
++	const insertAfter = Object(Object(opts).insertAfter);
++	const browsers = Object(opts).browsers;
++	const stage = 'stage' in Object(opts)
++		? opts.stage === false
++			? 6
++		: parseInt(opts.stage) || 0
++	: 3;
++
++	// polyfillable features (those with an available postcss plugin)
++	const polyfillableFeatures = cssdb.concat(
++		// additional features to be inserted before cssdb features
++		getTransformedInsertions(insertBefore, 'insertBefore'),
++		// additional features to be inserted after cssdb features
++		getTransformedInsertions(insertAfter, 'insertAfter')
++	).filter(
++		// inserted features or features with an available postcss plugin
++		feature => feature.insertBefore || feature.specificationId in plugins
++	).sort(
++		// features sorted by execution order and then insertion order
++		(a, b) => specificationIdsByExecutionOrder.indexOf(a.specificationId) - specificationIdsByExecutionOrder.indexOf(b.specificationId) || (a.insertBefore ? -1 : b.insertBefore ? 1 : 0) || (a.insertAfter ? 1 : b.insertAfter ? -1 : 0)
++	).map(
++		// polyfillable features as an object
++		feature => {
++			// target browsers for the polyfill
++			const unsupportedBrowsers = getUnsupportedBrowsersByFeature(feature.caniuse);
++
++			return feature.insertBefore || feature.insertAfter ? {
++				browsers:        unsupportedBrowsers,
++				plugin:          feature.plugin,
++				specificationId: `${feature.insertBefore ? 'before' : 'after'}-${feature.specificationId}`,
++				stage:           6
++			} : {
++				browsers:        unsupportedBrowsers,
++				plugin:          plugins[feature.specificationId],
++				specificationId: feature.specificationId,
++				stage:           feature.stage
++			};
++		}
++	);
++
++	// staged features (those at or above the selected stage)
++	const stagedFeatures = polyfillableFeatures.filter(
++		feature => feature.specificationId in features
++			? features[feature.specificationId]
++		: feature.stage >= stage
++	).map(
++		feature => ({
++			browsers: feature.browsers,
++			plugin: typeof feature.plugin.process === 'function'
++				? features[feature.specificationId] === true
++					? feature.plugin()
++				: feature.plugin(features[feature.specificationId])
++			: feature.plugin,
++			specificationId: feature.specificationId
++		})
++	);
++
++	return (root, result) => {
++		// browsers supported by the configuration
++		const supportedBrowsers = browserslist(browsers, {
++			path: result.root.source && result.root.source.input && result.root.source.input.file
++		});
++
++		// features supported by the stage and browsers
++		const supportedFeatures = stagedFeatures.filter(
++			feature => supportedBrowsers.some(
++				supportedBrowser => browserslist(feature.browsers).some(
++					polyfillBrowser => polyfillBrowser === supportedBrowser
++				)
++			)
++		);
++
++		// polyfills run in execution order
++		const polyfills = supportedFeatures.reduce(
++			(promise, feature) => promise.then(
++				() => feature.plugin(result.root, result)
++			),
++			Promise.resolve()
++		);
++
++		return polyfills;
++	};
++});
+diff --git a/lib/get-transformed-insertions.js b/lib/get-transformed-insertions.js
+new file mode 100644
+index 0000000..26615dc
+--- /dev/null
++++ b/lib/get-transformed-insertions.js
+@@ -0,0 +1,14 @@
++// return a list of features to be inserted before or after cssdb features
++export default function getTransformedInsertions(insertions, placement) {
++	return Object.keys(insertions).map(
++		specificationId => [].concat(insertions[specificationId]).map(
++			plugin => ({
++				[placement]: true,
++				plugin,
++				specificationId
++			})
++		)
++	).reduce(
++		(array, feature) => array.concat(feature), []
++	);
++}
+diff --git a/lib/get-unsupported-browsers-by-feature.js b/lib/get-unsupported-browsers-by-feature.js
+new file mode 100644
+index 0000000..cbd40c8
+--- /dev/null
++++ b/lib/get-unsupported-browsers-by-feature.js
+@@ -0,0 +1,29 @@
++// tooling
++import caniuse from 'caniuse-lite';
++
++// return a list of browsers that do not support the feature
++export default function getUnsupportedBrowsersByFeature(feature) {
++	const caniuseFeature = caniuse.features[feature];
++
++	// if feature support can be determined
++	if (caniuseFeature) {
++		const stats = caniuse.feature(caniuse.features[feature]).stats;
++
++		// return an array of browsers and versions that do not support the feature
++		const results = Object.keys(stats).reduce(
++			(browsers, browser) => browsers.concat(
++				Object.keys(stats[browser]).filter(
++					version => stats[browser][version].indexOf('y') !== 0
++				).map(
++					version => `${browser} ${version}`
++				)
++			),
++			[]
++		);
++
++		return results;
++	} else {
++		// otherwise, return that the feature does not work in any browser
++		return [ '> 0%' ];
++	}
++}
+diff --git a/lib/plugins-by-specification-id.js b/lib/plugins-by-specification-id.js
+new file mode 100644
+index 0000000..294fd80
+--- /dev/null
++++ b/lib/plugins-by-specification-id.js
+@@ -0,0 +1,45 @@
++// tooling
++import postcssApply from 'postcss-apply';
++import postcssInitial from 'postcss-initial';
++import postcssColorHexAlpha from 'postcss-color-hex-alpha';
++import postcssColorModFunction from 'postcss-color-mod-function';
++import postcssColorRebeccapurple from 'postcss-color-rebeccapurple';
++import postcssCustomSelectors from 'postcss-custom-selectors';
++import postcssFontVariant from 'postcss-font-variant';
++import postcssFontFamilySystemUi from 'postcss-font-family-system-ui';
++import postcssImageSetPolyfill from 'postcss-image-set-polyfill';
++import postcssLogical from 'postcss-logical';
++import postcssNesting from 'postcss-nesting';
++import postcssReplaceOverflowWrap from 'postcss-replace-overflow-wrap';
++import postcssCustomProperties from 'postcss-custom-properties';
++import postcssCustomMedia from 'postcss-custom-media';
++import postcssMediaMinmax from 'postcss-media-minmax';
++import postcssPseudoClassAnyLink from 'postcss-pseudo-class-any-link';
++import postcssAttributeCaseInsensitive from 'postcss-attribute-case-insensitive';
++import postcssSelectorMatches from 'postcss-selector-matches';
++import postcssSelectorNot from 'postcss-selector-not';
++import postcssDirPseudoClass from 'postcss-dir-pseudo-class';
++
++// postcss plugins ordered by specification id
++export default {
++	'css-apply-rule': postcssApply,
++	'css-cascade-all-shorthand': postcssInitial,
++	'css-color-hex-notation': postcssColorHexAlpha,
++	'css-color-modifying-colors': postcssColorModFunction,
++	'css-color-valdef-color-rebeccapurple': postcssColorRebeccapurple,
++	'css-extensions-custom-selectors': postcssCustomSelectors,
++	'css-fonts-propdef-font-variant': postcssFontVariant,
++	'css-fonts-system-ui-def': postcssFontFamilySystemUi,
++	'css-images-image-set-notation': postcssImageSetPolyfill,
++	'css-logical': postcssLogical,
++	'css-nesting': postcssNesting,
++	'css-text-overflow-wrap-property': postcssReplaceOverflowWrap,
++	'css-variables': postcssCustomProperties,
++	'mediaqueries-custom-mq': postcssCustomMedia,
++	'mediaqueries-mq-ranges': postcssMediaMinmax,
++	'selectors-any-link-pseudo': postcssPseudoClassAnyLink,
++	'selectors-attribute-case': postcssAttributeCaseInsensitive,
++	'selectors-dir-pseudo': postcssDirPseudoClass,
++	'selectors-matches': postcssSelectorMatches,
++	'selectors-negation': postcssSelectorNot
++};
+diff --git a/lib/specification-ids-by-execution-order.js b/lib/specification-ids-by-execution-order.js
+new file mode 100644
+index 0000000..0170aa3
+--- /dev/null
++++ b/lib/specification-ids-by-execution-order.js
+@@ -0,0 +1,23 @@
++// specification ids ordered by execution
++export default [
++	'css-variables',
++	'postcss-apply',
++	'css-images-image-set-notation',
++	'css-logical',
++	'css-nesting',
++	'mediaqueries-5-custom-mq',
++	'mediaqueries-mq-ranges',
++	'css-extensions-custom-selectors',
++	'selectors-attribute-case',
++	'css-color-valdef-color-rebeccapurple',
++	'css-color-hex-notation',
++	'css-color-modifying-colors',
++	'css-fonts-system-ui-def',
++	'css-fonts-propdef-font-variant',
++	'css-cascade-all-shorthand',
++	'selectors-matches',
++	'selectors-negation',
++	'selectors-any-link-pseudo',
++	'selectors-dir-pseudo',
++	'css-text-overflow-wrap-property'
++];
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..11d580f
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,85 @@
++{
++  "name": "postcss-preset-env",
++  "version": "2.0.0",
++  "description": "Convert modern CSS into something browsers understand",
++  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
++  "license": "CC0-1.0",
++  "repository": "jonathantneal/postcss-preset-env",
++  "homepage": "https://github.com/jonathantneal/postcss-preset-env#readme",
++  "bugs": "https://github.com/jonathantneal/postcss-preset-env/issues",
++  "main": "index.bundle.js",
++  "module": "index.js",
++  "files": [
++    "index.js",
++    "index.bundle.js",
++    "lib"
++  ],
++  "scripts": {
++    "prepublishOnly": "npm test",
++    "pretest": "rollup -c .rollup.js --silent",
++    "test": "echo 'Running tests...'; npm run test:ec && npm run test:js && npm run test:tape",
++    "test:ec": "echint --ignore index.bundle.js test",
++    "test:js": "eslint *.js lib/*.js --cache --ignore-path .gitignore --quiet",
++    "test:tape": "postcss-tape"
++  },
++  "engines": {
++    "node": ">=4.0.0"
++  },
++  "dependencies": {
++    "browserslist": "^2.11",
++    "caniuse-lite": "^1.0",
++    "cssdb": "^1.3",
++    "postcss": "^6.0",
++    "postcss-apply": "^0.8",
++    "postcss-attribute-case-insensitive": "^2.0",
++    "postcss-color-mod-function": "^1.0",
++    "postcss-color-hex-alpha": "^3.0",
++    "postcss-color-rebeccapurple": "^3.0",
++    "postcss-custom-media": "^6.0",
++    "postcss-custom-properties": "^6.2",
++    "postcss-custom-selectors": "^4.0",
++    "postcss-dir-pseudo-class": "^2.1",
++    "postcss-font-family-system-ui": "github:jonathantneal/postcss-font-family-system-ui",
++    "postcss-font-variant": "^3.0",
++    "postcss-image-set-polyfill": "^0.4",
++    "postcss-initial": "^2.0",
++    "postcss-logical": "^1.0",
++    "postcss-media-minmax": "^3.0",
++    "postcss-nesting": "^4.2",
++    "postcss-pseudo-class-any-link": "^4.0",
++    "postcss-replace-overflow-wrap": "^2.0",
++    "postcss-selector-matches": "^3.0",
++    "postcss-selector-not": "^3.0"
++  },
++  "devDependencies": {
++    "babel-core": "^6.26",
++    "babel-eslint": "^8.2",
++    "babel-preset-env": "^1.6",
++    "echint": "^4.0",
++    "eslint": "^4.15",
++    "eslint-config-dev": "2.0",
++    "postcss-simple-vars": "^4.1",
++    "postcss-tape": "2.2",
++    "pre-commit": "^1.2",
++    "rollup": "^0.54",
++    "rollup-plugin-babel": "^3.0"
++  },
++  "eslintConfig": {
++    "extends": "dev",
++    "parser": "babel-eslint"
++  },
++  "keywords": [
++    "postcss",
++    "css",
++    "postcss-plugin",
++    "specifications",
++    "specs",
++    "features",
++    "lists",
++    "stages",
++    "w3c",
++    "csswg",
++    "future",
++    "next"
++  ]
++}
+diff --git a/test/basic.ch38.expect.css b/test/basic.ch38.expect.css
+new file mode 100644
+index 0000000..cade848
+--- /dev/null
++++ b/test/basic.ch38.expect.css
+@@ -0,0 +1,13 @@
++[dir="ltr"] test-selectors-dir-pseudo {
++	order: 1;
++}
++
++test-css-nesting {
++	& {
++		order: 2;
++	}
++}
++
++test-css-color-valdef-color-rebeccapurple {
++	color: rebeccapurple;
++}
+diff --git a/test/basic.css b/test/basic.css
+new file mode 100644
+index 0000000..da64a43
+--- /dev/null
++++ b/test/basic.css
+@@ -0,0 +1,13 @@
++test-selectors-dir-pseudo:dir(ltr) {
++	order: 1;
++}
++
++test-css-nesting {
++	& {
++		order: 2;
++	}
++}
++
++test-css-color-valdef-color-rebeccapurple {
++	color: rebeccapurple;
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+new file mode 100644
+index 0000000..e926b02
+--- /dev/null
++++ b/test/basic.expect.css
+@@ -0,0 +1,13 @@
++[dir="ltr"] test-selectors-dir-pseudo {
++	order: 1;
++}
++
++test-css-nesting {
++	& {
++		order: 2;
++	}
++}
++
++test-css-color-valdef-color-rebeccapurple {
++	color: #639;
++}
+diff --git a/test/basic.ff49.expect.css b/test/basic.ff49.expect.css
+new file mode 100644
+index 0000000..da64a43
+--- /dev/null
++++ b/test/basic.ff49.expect.css
+@@ -0,0 +1,13 @@
++test-selectors-dir-pseudo:dir(ltr) {
++	order: 1;
++}
++
++test-css-nesting {
++	& {
++		order: 2;
++	}
++}
++
++test-css-color-valdef-color-rebeccapurple {
++	color: rebeccapurple;
++}
+diff --git a/test/basic.nesting.expect.css b/test/basic.nesting.expect.css
+new file mode 100644
+index 0000000..e4f9915
+--- /dev/null
++++ b/test/basic.nesting.expect.css
+@@ -0,0 +1,11 @@
++test-selectors-dir-pseudo:dir(ltr) {
++	order: 1;
++}
++
++test-css-nesting {
++	order: 2;
++}
++
++test-css-color-valdef-color-rebeccapurple {
++	color: rebeccapurple;
++}
+diff --git a/test/basic.stage1-ff49.expect.css b/test/basic.stage1-ff49.expect.css
+new file mode 100644
+index 0000000..e4f9915
+--- /dev/null
++++ b/test/basic.stage1-ff49.expect.css
+@@ -0,0 +1,11 @@
++test-selectors-dir-pseudo:dir(ltr) {
++	order: 1;
++}
++
++test-css-nesting {
++	order: 2;
++}
++
++test-css-color-valdef-color-rebeccapurple {
++	color: rebeccapurple;
++}
+diff --git a/test/basic.stage1.expect.css b/test/basic.stage1.expect.css
+new file mode 100644
+index 0000000..6241c7d
+--- /dev/null
++++ b/test/basic.stage1.expect.css
+@@ -0,0 +1,11 @@
++[dir="ltr"] test-selectors-dir-pseudo {
++	order: 1;
++}
++
++test-css-nesting {
++	order: 2;
++}
++
++test-css-color-valdef-color-rebeccapurple {
++	color: #639;
++}
+diff --git a/test/insert.after.expect.css b/test/insert.after.expect.css
+new file mode 100644
+index 0000000..611769c
+--- /dev/null
++++ b/test/insert.after.expect.css
+@@ -0,0 +1,3 @@
++test-css-color-modifying-colors {
++	color: color-mod(#639 alpha(80%));
++}
+diff --git a/test/insert.before.expect.css b/test/insert.before.expect.css
+new file mode 100644
+index 0000000..a31f12d
+--- /dev/null
++++ b/test/insert.before.expect.css
+@@ -0,0 +1,3 @@
++test-css-color-modifying-colors {
++	color: rgba(102, 51, 153, 0.8);
++}
+diff --git a/test/insert.css b/test/insert.css
+new file mode 100644
+index 0000000..12d2d1a
+--- /dev/null
++++ b/test/insert.css
+@@ -0,0 +1,5 @@
++$color: rebeccapurple;
++
++test-css-color-modifying-colors {
++	color: color-mod($color alpha(80%));
++}
+-- 
+2.33.1
+

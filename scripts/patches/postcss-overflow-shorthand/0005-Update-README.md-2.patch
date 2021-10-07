@@ -1,0 +1,26 @@
+From b1ee213dc61a11ddf52d0ff59a3efb0106898130 Mon Sep 17 00:00:00 2001
+From: Dmitry Semigradsky <semigradskyd@gmail.com>
+Date: Mon, 13 Apr 2020 00:34:36 +0300
+Subject: [PATCH 5/8] Update README.md (#2)
+
+Add cool 'Can I use' table
+---
+ README.md | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/README.md b/README.md
+index c53cc0d..a55a3e1 100644
+--- a/README.md
++++ b/README.md
+@@ -8,6 +8,8 @@
+ [PostCSS Overflow Shorthand] lets you use the `overflow` shorthand in CSS,
+ following the [CSS Overflow] specification.
+ 
++[!['Can I use' table](https://caniuse.bitsofco.de/image/css-overflow.png)](https://caniuse.com/#feat=css-overflow)
++
+ ```pcss
+ html {
+   overflow: hidden auto;
+-- 
+2.33.1
+

@@ -1,0 +1,25 @@
+From 52ec2d9a1d209b7b32ac07fe4a6edb7ae19943a2 Mon Sep 17 00:00:00 2001
+From: ambar <ambar.lee@gmail.com>
+Date: Tue, 2 Mar 2021 21:28:46 +0800
+Subject: [PATCH 80/89] build: fix output filename (#74)
+
+---
+ .rollup.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/.rollup.js b/.rollup.js
+index f508944..db8409c 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -4,7 +4,7 @@ export default {
+ 	input: 'index.js',
+ 	output: [
+ 		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
+-		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
++		{ file: 'index.es.js', format: 'es', sourcemap: true }
+ 	],
+ 	plugins: [
+ 		babel({
+-- 
+2.33.1
+

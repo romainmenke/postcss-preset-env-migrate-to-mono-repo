@@ -1,0 +1,39 @@
+From 16bd403e37cdbb8696dbdb7d6937cd93e248b005 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 17 Jan 2018 01:19:10 -0500
+Subject: [PATCH 03/29] 1.1.0
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 2 +-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index c609a56..aedd457 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS color-mod() Function
+ 
++### 1.1.0 (January 17, 2018)
++
++- Round stringified color values
++
+ ### 1.0.0 (January 16, 2018)
+ 
+ - Initial version
+diff --git a/package.json b/package.json
+index 0ad395d..13b5902 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-mod-function",
+-  "version": "1.0.0",
++  "version": "1.1.0",
+   "description": "Modify colors using the color-mod() function in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

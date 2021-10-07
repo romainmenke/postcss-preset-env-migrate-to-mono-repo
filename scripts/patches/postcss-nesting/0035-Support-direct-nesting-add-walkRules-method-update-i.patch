@@ -1,0 +1,281 @@
+From 9311892398aa2ff63adcb1437603e4d15520ac51 Mon Sep 17 00:00:00 2001
+From: Tom Bremer <tom.bremer@asynchrony.com>
+Date: Mon, 9 Nov 2015 15:14:19 -0600
+Subject: [PATCH 35/89] Support direct nesting, add walkRules method, update
+ ignore tests, add direct nesting test. This resolves
+ jonathantneal/postcss-nesting#10
+
+---
+ index.js                        | 12 +++++
+ test/fixtures/direct.css        | 79 ++++++++++++++++++++++++++++
+ test/fixtures/direct.expect.css | 91 +++++++++++++++++++++++++++++++++
+ test/fixtures/ignore.css        |  6 ++-
+ test/fixtures/ignore.expect.css |  6 ++-
+ test/index.js                   |  3 ++
+ 6 files changed, 195 insertions(+), 2 deletions(-)
+ create mode 100644 test/fixtures/direct.css
+ create mode 100644 test/fixtures/direct.expect.css
+
+diff --git a/index.js b/index.js
+index 82ad356..3b7d36d 100644
+--- a/index.js
++++ b/index.js
+@@ -58,5 +58,17 @@ module.exports = postcss.plugin('postcss-nested', function (opts) {
+ 				}
+ 			}
+ 		});
++
++		css.walkRules(function (rule) {
++			if (rule.parent.type === 'root' || rule.selector.indexOf('&') === -1) return;
++
++			transpileSelectors(rule.parent, rule);
++
++			rule.moveAfter(rule.parent);
++
++			if (!rule.prev().nodes.length) {
++				rule.prev().remove();
++			}
++		});
+ 	};
+ });
+diff --git a/test/fixtures/direct.css b/test/fixtures/direct.css
+new file mode 100644
+index 0000000..f48fdc1
+--- /dev/null
++++ b/test/fixtures/direct.css
+@@ -0,0 +1,79 @@
++a, b {
++	color: white;
++
++	& c, & d {
++		color: blue
++	}
++}
++
++a, b {
++	color: white;
++
++	& c, & d {
++		color: blue;
++
++		& e, & f {
++			color: black
++		}
++	}
++}
++
++a, b {
++	color: red;
++
++	& & {
++		color: white
++	}
++}
++
++a {
++	color: red;
++
++	@media {
++		color: white
++	}
++}
++
++a {
++	color: red;
++
++	& b {
++		color: white;
++
++		@media {
++			color: blue
++		}
++	}
++
++	@media {
++		color: black;
++
++		& c {
++			color: yellow
++		}
++	}
++}
++
++a {
++	color: red;
++
++	@unknown test {
++		color: white
++	}
++}
++
++b {
++	color: white;
++
++	@phone {
++		color: blue
++	}
++
++	@media {
++		color: black;
++
++		& c {
++			color: yellow
++		}
++	}
++}
+diff --git a/test/fixtures/direct.expect.css b/test/fixtures/direct.expect.css
+new file mode 100644
+index 0000000..f83a98f
+--- /dev/null
++++ b/test/fixtures/direct.expect.css
+@@ -0,0 +1,91 @@
++a, b {
++	color: white
++}
++
++a c, a d, b c, b d {
++	color: blue
++}
++
++a, b {
++	color: white
++}
++
++a c, a d, b c, b d {
++	color: blue
++}
++
++a c e, a c f, a d e, a d f, b c e, b c f, b d e, b d f {
++	color: black
++}
++
++a, b {
++	color: red
++}
++
++a a, b b {
++	color: white
++}
++
++a {
++	color: red
++}
++
++@media {
++
++	a {
++		color: white
++	}
++	}
++
++a {
++	color: red
++}
++
++a b {
++	color: white
++}
++
++@media {
++
++	a b {
++		color: blue
++	}
++		}
++
++@media {
++
++	a {
++		color: black
++	}
++
++	a c {
++		color: yellow
++	}
++	}
++
++a {
++	color: red;
++
++	@unknown test {
++		color: white
++	}
++}
++
++b {
++	color: white;
++
++	@phone {
++		color: blue
++	}
++}
++
++@media {
++
++	b {
++		color: black
++	}
++
++	b c {
++		color: yellow
++	}
++	}
+diff --git a/test/fixtures/ignore.css b/test/fixtures/ignore.css
+index 5d6091a..ec65a94 100644
+--- a/test/fixtures/ignore.css
++++ b/test/fixtures/ignore.css
+@@ -1,7 +1,7 @@
+ a, b {
+ 	color: white;
+ 
+-	& c, & d {
++	c, d {
+ 		color: blue;
+ 	}
+ }
+@@ -13,3 +13,7 @@ a, b {
+ 		color: blue;
+ 	}
+ }
++
++& a {
++	color: white;
++}
+diff --git a/test/fixtures/ignore.expect.css b/test/fixtures/ignore.expect.css
+index 5d6091a..ec65a94 100644
+--- a/test/fixtures/ignore.expect.css
++++ b/test/fixtures/ignore.expect.css
+@@ -1,7 +1,7 @@
+ a, b {
+ 	color: white;
+ 
+-	& c, & d {
++	c, d {
+ 		color: blue;
+ 	}
+ }
+@@ -13,3 +13,7 @@ a, b {
+ 		color: blue;
+ 	}
+ }
++
++& a {
++	color: white;
++}
+diff --git a/test/index.js b/test/index.js
+index 73e9b06..566f50d 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -3,6 +3,9 @@ var tests = {
+ 		'basic': {
+ 			message: 'supports basic usage'
+ 		},
++		'direct': {
++			message: 'supports direct nesting'
++		},
+ 		'ignore': {
+ 			message: 'ignores invalid syntax'
+ 		}
+-- 
+2.33.1
+

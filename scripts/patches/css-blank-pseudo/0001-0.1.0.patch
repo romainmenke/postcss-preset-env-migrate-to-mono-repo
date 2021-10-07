@@ -1,0 +1,1382 @@
+From d0582142e05b9504a7e12ad5ff4ebbedadca8904 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 17 Nov 2018 08:56:49 -0500
+Subject: [PATCH 01/13] 0.1.0
+
+---
+ .editorconfig                     |  15 +++
+ .gitignore                        |  17 +++
+ .rollup.js                        |  64 +++++++++++
+ .tape.js                          |  19 ++++
+ .travis.yml                       |   9 ++
+ CHANGELOG.md                      |   5 +
+ CONTRIBUTING.md                   |  65 ++++++++++++
+ INSTALL-POSTCSS.md                | 171 ++++++++++++++++++++++++++++++
+ LICENSE.md                        | 108 +++++++++++++++++++
+ README-BROWSER.md                 |  70 ++++++++++++
+ README-POSTCSS.md                 | 120 +++++++++++++++++++++
+ README.md                         |  83 +++++++++++++++
+ package.json                      |  79 ++++++++++++++
+ src/browser.js                    |  93 ++++++++++++++++
+ src/cli.js                        | 119 +++++++++++++++++++++
+ src/postcss.js                    |  24 +++++
+ test/basic.css                    |  27 +++++
+ test/basic.expect.css             |  48 +++++++++
+ test/basic.preserve.expect.css    |  27 +++++
+ test/basic.replacewith.expect.css |  48 +++++++++
+ 20 files changed, 1211 insertions(+)
+ create mode 100644 .editorconfig
+ create mode 100644 .gitignore
+ create mode 100644 .rollup.js
+ create mode 100644 .tape.js
+ create mode 100644 .travis.yml
+ create mode 100644 CHANGELOG.md
+ create mode 100644 CONTRIBUTING.md
+ create mode 100644 INSTALL-POSTCSS.md
+ create mode 100644 LICENSE.md
+ create mode 100644 README-BROWSER.md
+ create mode 100644 README-POSTCSS.md
+ create mode 100644 README.md
+ create mode 100644 package.json
+ create mode 100644 src/browser.js
+ create mode 100644 src/cli.js
+ create mode 100644 src/postcss.js
+ create mode 100644 test/basic.css
+ create mode 100644 test/basic.expect.css
+ create mode 100644 test/basic.preserve.expect.css
+ create mode 100644 test/basic.replacewith.expect.css
+
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..e06d798
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,15 @@
++root = true
++
++[*]
++charset = utf-8
++end_of_line = lf
++indent_style = tab
++insert_final_newline = true
++trim_trailing_whitespace = true
++
++[*.md]
++trim_trailing_whitespace = false
++
++[*.{json,md,yml}]
++indent_size = 2
++indent_style = space
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..1d65a2d
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,17 @@
++node_modules
++/browser.js*
++/cli.js*
++/index.js*
++/index.mjs*
++/postcss.js*
++/postcss.mjs*
++package-lock.json
++*.log*
++*.result.css
++.*
++!.appveyor.yml
++!.editorconfig
++!.gitignore
++!.rollup.js
++!.tape.js
++!.travis.yml
+diff --git a/.rollup.js b/.rollup.js
+new file mode 100644
+index 0000000..107a3ce
+--- /dev/null
++++ b/.rollup.js
+@@ -0,0 +1,64 @@
++import babel from 'rollup-plugin-babel';
++import { terser } from 'rollup-plugin-terser';
++
++const isBrowser = String(process.env.NODE_ENV).includes('browser');
++const isCLI = String(process.env.NODE_ENV).includes('cli');
++const isPostCSS = String(process.env.NODE_ENV).includes('postcss');
++const targets = isCLI || isPostCSS || !isBrowser ? { node: 6 } : 'last 2 versions, not dead';
++
++const input = `src/${isCLI ? 'cli' : isPostCSS ? 'postcss' : 'browser'}.js`;
++const output = isCLI
++	? { file: 'cli.js', format: 'cjs' }
++: isBrowser
++	? { file: 'browser.js', format: 'cjs' }
++: isPostCSS
++	? [
++	{ file: 'postcss.js', format: 'cjs', sourcemap: true },
++	{ file: 'postcss.mjs', format: 'esm', sourcemap: true }
++] : [
++	{ file: 'index.js', format: 'cjs', sourcemap: true },
++	{ file: 'index.mjs', format: 'esm', sourcemap: true }
++];
++const plugins = [
++	babel({
++		presets: [
++			['@babel/env', { targets }]
++		]
++	})
++].concat(isBrowser
++	? [
++		trimContentForBrowser(),
++		terser()
++	]
++: isCLI
++	? [
++		trimContentForBrowser(),
++		addHashBang()
++	]
++: []);
++
++export default { input, output, plugins };
++
++function addHashBang() {
++	return {
++		name: 'add-hash-bang',
++		renderChunk(code) {
++			const updatedCode = `#!/usr/bin/env node\n\n${code}`;
++
++			return updatedCode;
++		}
++	};
++}
++
++function trimContentForBrowser() {
++	return {
++		name: 'trim-content-for-browser',
++		renderChunk(code) {
++			const updatedCode = code
++				.replace(/'use strict';\n*/, '')
++				.replace(/\n*module\.exports = cssBlankPseudo;/, '');
++
++			return updatedCode;
++		}
++	};
++}
+diff --git a/.tape.js b/.tape.js
+new file mode 100644
+index 0000000..66730ed
+--- /dev/null
++++ b/.tape.js
+@@ -0,0 +1,19 @@
++module.exports = {
++	'css-blank-pseudo': {
++		'basic': {
++			message: 'supports basic usage'
++		},
++		'basic:replacewith': {
++			message: 'supports { replaceWith: ".css-blank" } usage',
++			options: {
++				replaceWith: '.css-blank'
++			}
++		},
++		'basic:preserve': {
++			message: 'supports { preserve: false } usage',
++			options: {
++				preserve: false
++			}
++		}
++	}
++};
+diff --git a/.travis.yml b/.travis.yml
+new file mode 100644
+index 0000000..e1f11a5
+--- /dev/null
++++ b/.travis.yml
+@@ -0,0 +1,9 @@
++# https://docs.travis-ci.com/user/travis-lint
++
++language: node_js
++
++node_js:
++  - 6
++
++install:
++  - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100644
+index 0000000..dced96e
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,5 @@
++# Changes to CSS Blank Pseudo
++
++### 1.0.0 (November 17, 2018)
++
++- Initial version
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+new file mode 100644
+index 0000000..dc00fa7
+--- /dev/null
++++ b/CONTRIBUTING.md
+@@ -0,0 +1,65 @@
++# Contributing to CSS Blank Pseudo
++
++You want to help? You rock! Now, take a moment to be sure your contributions
++make sense to everyone else.
++
++## Reporting Issues
++
++Found a problem? Want a new feature?
++
++- See if your issue or idea has [already been reported].
++- Provide a [reduced test case] or a [live example].
++
++Remember, a bug is a _demonstrable problem_ caused by _our_ code.
++
++## Submitting Pull Requests
++
++Pull requests are the greatest contributions, so be sure they are focused in
++scope and avoid unrelated commits.
++
++1. To begin; [fork this project], clone your fork, and add our upstream.
++   ```bash
++   # Clone your fork of the repo into the current directory
++   git clone git@github.com:YOUR_USER/css-blank-pseudo.git
++
++   # Navigate to the newly cloned directory
++   cd css-blank-pseudo
++
++   # Assign the original repo to a remote called "upstream"
++   git remote add upstream git@github.com:csstools/css-blank-pseudo.git
++
++   # Install the tools necessary for testing
++   npm install
++   ```
++
++2. Create a branch for your feature or fix:
++   ```bash
++   # Move into a new branch for your feature
++   git checkout -b feature/thing
++   ```
++   ```bash
++   # Move into a new branch for your fix
++   git checkout -b fix/something
++   ```
++
++3. If your code follows our practices, then push your feature branch:
++   ```bash
++   # Test current code
++   npm test
++   ```
++   ```bash
++   # Push the branch for your new feature
++   git push origin feature/thing
++   ```
++   ```bash
++   # Or, push the branch for your update
++   git push origin update/something
++   ```
++
++That’s it! Now [open a pull request] with a clear title and description.
++
++[already been reported]: issues
++[fork this project]:     fork
++[live example]:          https://codepen.io/pen
++[open a pull request]:   https://help.github.com/articles/using-pull-requests/
++[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+diff --git a/INSTALL-POSTCSS.md b/INSTALL-POSTCSS.md
+new file mode 100644
+index 0000000..479965b
+--- /dev/null
++++ b/INSTALL-POSTCSS.md
+@@ -0,0 +1,171 @@
++# Installing PostCSS
++
++[CSS Blank Pseudo] runs in all Node environments, with special instructions for:
++
++| [Node](#node) | [PostCSS CLI](#postcss-cli) | [Webpack](#webpack) | [Create React App](#create-react-app) | [Gulp](#gulp) | [Grunt](#grunt) |
++| --- | --- | --- | --- | --- | --- |
++
++## Node
++
++Add [CSS Blank Pseudo] to your project:
++
++```bash
++npm install css-blank-pseudo --save-dev
++```
++
++Use [CSS Blank Pseudo] to process your CSS:
++
++```js
++const postcssBlankPseudo = require('css-blank-pseudo/postcss');
++
++postcssBlankPseudo.process(YOUR_CSS /*, processOptions, pluginOptions */);
++```
++
++Or use it as a [PostCSS] plugin:
++
++```js
++const postcss = require('postcss');
++const postcssBlankPseudo = require('css-blank-pseudo/postcss');
++
++postcss([
++  postcssBlankPseudo(/* pluginOptions */)
++]).process(YOUR_CSS /*, processOptions */);
++```
++
++## PostCSS CLI
++
++Add [PostCSS CLI] to your project:
++
++```bash
++npm install postcss-cli --save-dev
++```
++
++Use [CSS Blank Pseudo] in your `postcss.config.js` configuration file:
++
++```js
++const postcssBlankPseudo = require('css-blank-pseudo/postcss');
++
++module.exports = {
++  plugins: [
++    postcssBlankPseudo(/* pluginOptions */)
++  ]
++}
++```
++
++## Webpack
++
++Add [PostCSS Loader] to your project:
++
++```bash
++npm install postcss-loader --save-dev
++```
++
++Use [CSS Blank Pseudo] in your Webpack configuration:
++
++```js
++const postcssBlankPseudo = require('css-blank-pseudo/postcss');
++
++module.exports = {
++  module: {
++    rules: [
++      {
++        test: /\.css$/,
++        use: [
++          'style-loader',
++          { loader: 'css-loader', options: { importLoaders: 1 } },
++          { loader: 'postcss-loader', options: {
++            ident: 'postcss',
++            plugins: () => [
++              postcssBlankPseudo(/* pluginOptions */)
++            ]
++          } }
++        ]
++      }
++    ]
++  }
++}
++```
++
++## Create React App
++
++Add [React App Rewired] and [React App Rewire PostCSS] to your project:
++
++```bash
++npm install react-app-rewired react-app-rewire-postcss --save-dev
++```
++
++Use [React App Rewire PostCSS] and [CSS Blank Pseudo] in your
++`config-overrides.js`
++file:
++
++```js
++const reactAppRewirePostcss = require('react-app-rewire-postcss');
++const postcssBlankPseudo = require('css-blank-pseudo/postcss');
++
++module.exports = config => reactAppRewirePostcss(config, {
++  plugins: () => [
++    postcssBlankPseudo(/* pluginOptions */)
++  ]
++});
++```
++
++## Gulp
++
++Add [Gulp PostCSS] to your project:
++
++```bash
++npm install gulp-postcss --save-dev
++```
++
++Use [CSS Blank Pseudo] in your Gulpfile:
++
++```js
++const postcss = require('gulp-postcss');
++const postcssBlankPseudo = require('css-blank-pseudo/postcss');
++
++gulp.task('css', () => gulp.src('./src/*.css').pipe(
++  postcss([
++    postcssBlankPseudo(/* pluginOptions */)
++  ])
++).pipe(
++  gulp.dest('.')
++));
++```
++
++## Grunt
++
++Add [Grunt PostCSS] to your project:
++
++```bash
++npm install grunt-postcss --save-dev
++```
++
++Use [CSS Blank Pseudo] in your Gruntfile:
++
++```js
++const postcssBlankPseudo = require('css-blank-pseudo/postcss');
++
++grunt.loadNpmTasks('grunt-postcss');
++
++grunt.initConfig({
++  postcss: {
++    options: {
++      use: [
++       postcssBlankPseudo(/* pluginOptions */)
++      ]
++    },
++    dist: {
++      src: '*.css'
++    }
++  }
++});
++```
++
++[CSS Blank Pseudo]: https://github.com/csstools/css-blank-pseudo
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
++[PostCSS]: https://github.com/postcss/postcss
++[PostCSS CLI]: https://github.com/postcss/postcss-cli
++[PostCSS Loader]: https://github.com/postcss/postcss-loader
++[React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
++[React App Rewired]: https://github.com/timarney/react-app-rewired
+diff --git a/LICENSE.md b/LICENSE.md
+new file mode 100644
+index 0000000..0bc1fa7
+--- /dev/null
++++ b/LICENSE.md
+@@ -0,0 +1,108 @@
++# CC0 1.0 Universal
++
++## Statement of Purpose
++
++The laws of most jurisdictions throughout the world automatically confer
++exclusive Copyright and Related Rights (defined below) upon the creator and
++subsequent owner(s) (each and all, an “owner”) of an original work of
++authorship and/or a database (each, a “Work”).
++
++Certain owners wish to permanently relinquish those rights to a Work for the
++purpose of contributing to a commons of creative, cultural and scientific works
++(“Commons”) that the public can reliably and without fear of later claims of
++infringement build upon, modify, incorporate in other works, reuse and
++redistribute as freely as possible in any form whatsoever and for any purposes,
++including without limitation commercial purposes. These owners may contribute
++to the Commons to promote the ideal of a free culture and the further
++production of creative, cultural and scientific works, or to gain reputation or
++greater distribution for their Work in part through the use and efforts of
++others.
++
++For these and/or other purposes and motivations, and without any expectation of
++additional consideration or compensation, the person associating CC0 with a
++Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
++and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
++publicly distribute the Work under its terms, with knowledge of his or her
++Copyright and Related Rights in the Work and the meaning and intended legal
++effect of CC0 on those rights.
++
++1. Copyright and Related Rights. A Work made available under CC0 may be
++   protected by copyright and related or neighboring rights (“Copyright and
++   Related Rights”). Copyright and Related Rights include, but are not limited
++   to, the following:
++   1. the right to reproduce, adapt, distribute, perform, display, communicate,
++      and translate a Work;
++   2. moral rights retained by the original author(s) and/or performer(s);
++   3. publicity and privacy rights pertaining to a person’s image or likeness
++      depicted in a Work;
++   4. rights protecting against unfair competition in regards to a Work,
++      subject to the limitations in paragraph 4(i), below;
++   5. rights protecting the extraction, dissemination, use and reuse of data in
++      a Work;
++   6. database rights (such as those arising under Directive 96/9/EC of the
++      European Parliament and of the Council of 11 March 1996 on the legal
++      protection of databases, and under any national implementation thereof,
++      including any amended or successor version of such directive); and
++   7. other similar, equivalent or corresponding rights throughout the world
++      based on applicable law or treaty, and any national implementations
++      thereof.
++
++2. Waiver. To the greatest extent permitted by, but not in contravention of,
++   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++   and Related Rights and associated claims and causes of action, whether now
++   known or unknown (including existing as well as future claims and causes of
++   action), in the Work (i) in all territories worldwide, (ii) for the maximum
++   duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
++   makes the Waiver for the benefit of each member of the public at large and
++   to the detriment of Affirmer’s heirs and successors, fully intending that
++   such Waiver shall not be subject to revocation, rescission, cancellation,
++   termination, or any other legal or equitable action to disrupt the quiet
++   enjoyment of the Work by the public as contemplated by Affirmer’s express
++   Statement of Purpose.
++
++3. Public License Fallback. Should any part of the Waiver for any reason be
++   judged legally invalid or ineffective under applicable law, then the Waiver
++   shall be preserved to the maximum extent permitted taking into account
++   Affirmer’s express Statement of Purpose. In addition, to the extent the
++   Waiver is so judged Affirmer hereby grants to each affected person a
++   royalty-free, non transferable, non sublicensable, non exclusive,
++   irrevocable and unconditional license to exercise Affirmer’s Copyright and
++   Related Rights in the Work (i) in all territories worldwide, (ii) for the
++   maximum duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “License”). The License
++   shall be deemed effective as of the date CC0 was applied by Affirmer to the
++   Work. Should any part of the License for any reason be judged legally
++   invalid or ineffective under applicable law, such partial invalidity or
++   ineffectiveness shall not invalidate the remainder of the License, and in
++   such case Affirmer hereby affirms that he or she will not (i) exercise any
++   of his or her remaining Copyright and Related Rights in the Work or (ii)
++   assert any associated claims and causes of action with respect to the Work,
++   in either case contrary to Affirmer’s express Statement of Purpose.
++
++4. Limitations and Disclaimers.
++   1. No trademark or patent rights held by Affirmer are waived, abandoned,
++      surrendered, licensed or otherwise affected by this document.
++   2. Affirmer offers the Work as-is and makes no representations or warranties
++      of any kind concerning the Work, express, implied, statutory or
++      otherwise, including without limitation warranties of title,
++      merchantability, fitness for a particular purpose, non infringement, or
++      the absence of latent or other defects, accuracy, or the present or
++      absence of errors, whether or not discoverable, all to the greatest
++      extent permissible under applicable law.
++   3. Affirmer disclaims responsibility for clearing rights of other persons
++      that may apply to the Work or any use thereof, including without
++      limitation any person’s Copyright and Related Rights in the Work.
++      Further, Affirmer disclaims responsibility for obtaining any necessary
++      consents, permissions or other rights required for any use of the Work.
++   4. Affirmer understands and acknowledges that Creative Commons is not a
++      party to this document and has no duty or obligation with respect to this
++      CC0 or use of the Work.
++
++For more information, please see
++http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/README-BROWSER.md b/README-BROWSER.md
+new file mode 100644
+index 0000000..24edb39
+--- /dev/null
++++ b/README-BROWSER.md
+@@ -0,0 +1,70 @@
++# CSS Blank Pseudo for Browsers [<img src="http://jonathantneal.github.io/js-logo.svg" alt="" width="90" height="90" align="right">][CSS Blank Pseudo]
++
++[![NPM Version][npm-img]][npm-url]
++[![Build Status][cli-img]][cli-url]
++[![Support Chat][git-img]][git-url]
++
++[CSS Blank Pseudo] lets you style form elements when they are empty, following
++the [Selectors Level 4] specification.
++
++```css
++input {
++  /* style an input */
++}
++
++input[blank] {
++  /* style an input without a value */
++}
++```
++
++## Usage
++
++Add [CSS Blank Pseudo] to your build tool:
++
++```bash
++npm install css-blank-pseudo
++```
++
++Then include and initialize it on your document:
++
++```js
++const cssBlankPseudo = require('css-blank-pseudo');
++
++cssBlankPseudo(document);
++```
++
++## Options
++
++[CSS Blank Pseudo] accepts a secondary paramater to configure the attribute or
++class name added to elements matching focused elements or containing focused
++elements.
++
++```js
++cssBlankPseudo(document, {
++  attr: false,
++  className: '.blank'
++});
++```
++
++Falsey values on either `attr` or `className` will disable setting the
++attribute or class name on elements matching `:blank`.
++
++[CSS Blank Pseudo] also accepts a secondary paramater to configure whether the
++polyfill is loaded regardless of support. If `force` is given a truthy value,
++then the polyfill will always execute.
++
++```js
++cssBlankPseudo(document, {
++  force: true
++});
++```
++
++[cli-img]: https://img.shields.io/travis/csstools/css-blank-pseudo/master.svg
++[cli-url]: https://travis-ci.org/csstools/css-blank-pseudo
++[git-img]: https://img.shields.io/badge/support-chat-blue.svg
++[git-url]: https://gitter.im/postcss/postcss
++[npm-img]: https://img.shields.io/npm/v/css-blank-pseudo.svg
++[npm-url]: https://www.npmjs.com/package/css-blank-pseudo
++
++[CSS Blank Pseudo]: https://github.com/csstools/css-blank-pseudo
++[Selectors Level 4]: https://drafts.csswg.org/selectors-4/#blank
+diff --git a/README-POSTCSS.md b/README-POSTCSS.md
+new file mode 100644
+index 0000000..b821ec4
+--- /dev/null
++++ b/README-POSTCSS.md
+@@ -0,0 +1,120 @@
++# CSS Blank Pseudo for PostCSS [<img src="http://jonathantneal.github.io/postcss-logo.svg" alt="" width="90" height="90" align="right">][CSS Blank Pseudo]
++
++[![NPM Version][npm-img]][npm-url]
++[![Build Status][cli-img]][cli-url]
++[![Support Chat][git-img]][git-url]
++
++[CSS Blank Pseudo] lets you style form elements when they are empty, following
++the [Selectors Level 4] specification.
++
++```css
++input:blank {
++  background-color: yellow;
++}
++
++/* becomes */
++
++.field[blank] label {
++  background-color: yellow;
++}
++
++.field:blank label {
++  background-color: yellow;
++}
++```
++
++[CSS Blank Pseudo] duplicates rules using the `:blank` pseudo-class with a
++`[blank]` attribute selector. This replacement selector can be changed
++using the `replaceWith` option. Also, the preservation of the original
++`:blank` rule can be disabled using the `preserve` option.
++
++## Usage
++
++Add [CSS Blank Pseudo] to your project:
++
++```bash
++npm install css-blank-pseudo --save-dev
++```
++
++Use [CSS Blank Pseudo] to process your CSS:
++
++```js
++const postcssBlankPseudo = require('css-blank-pseudo/postcss');
++
++postcssBlankPseudo.process(YOUR_CSS /*, processOptions, pluginOptions */);
++```
++
++Or use it as a [PostCSS] plugin:
++
++```js
++const postcss = require('postcss');
++const postcssBlankPseudo = require('css-blank-pseudo/postcss');
++
++postcss([
++  postcssBlankPseudo(/* pluginOptions */)
++]).process(YOUR_CSS /*, processOptions */);
++```
++
++[CSS Blank Pseudo] runs in all Node environments, with special
++instructions for:
++
++| [Node](INSTALL-POSTCSS.md#node) | [PostCSS CLI](INSTALL-POSTCSS.md#postcss-cli) | [Webpack](INSTALL-POSTCSS.md#webpack) | [Create React App](INSTALL-POSTCSS.md#create-react-app) | [Gulp](INSTALL-POSTCSS.md#gulp) | [Grunt](INSTALL-POSTCSS.md#grunt) |
++| --- | --- | --- | --- | --- | --- |
++
++## Options
++
++### preserve
++
++The `preserve` option defines whether the original selector should remain. By
++default, the original selector is preserved.
++
++```js
++focusWithin({ preserve: false });
++```
++
++```css
++input:blank {
++  background-color: yellow;
++}
++
++/* becomes */
++
++.field[blank] label {
++  background-color: yellow;
++}
++```
++
++### replaceWith
++
++The `replaceWith` option defines the selector to replace `:blank`. By
++default, the replacement selector is `[blank]`.
++
++```js
++focusWithin({ replaceWith: '.blank' });
++```
++
++```css
++input:blank {
++  background-color: yellow;
++}
++
++/* becomes */
++
++.field.blank label {
++  background-color: yellow;
++}
++
++.field:blank label {
++  background-color: yellow;
++}
++```
++
++[cli-img]: https://img.shields.io/travis/csstools/css-blank-pseudo/master.svg
++[cli-url]: https://travis-ci.org/csstools/css-blank-pseudo
++[git-img]: https://img.shields.io/badge/support-chat-blue.svg
++[git-url]: https://gitter.im/postcss/postcss
++[npm-img]: https://img.shields.io/npm/v/css-blank-pseudo.svg
++[npm-url]: https://www.npmjs.com/package/css-blank-pseudo
++
++[CSS Blank Pseudo]: https://github.com/csstools/css-blank-pseudo
++[Selectors Level 4]: https://drafts.csswg.org/selectors-4/#blank
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..48cf5d7
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,83 @@
++# CSS Blank Pseudo [<img src="http://jonathantneal.github.io/js-logo.svg" alt="" width="90" height="90" align="right">][CSS Blank Pseudo]
++
++[![NPM Version][npm-img]][npm-url]
++[![Build Status][cli-img]][cli-url]
++[![Support Chat][git-img]][git-url]
++
++[CSS Blank Pseudo] lets you style form elements when they are empty, following
++the [Selectors Level 4] specification.
++
++```css
++input {
++  /* style an input */
++}
++
++input:blank {
++  /* style an input without a value */
++}
++```
++
++## Usage
++
++From the command line, transform CSS files that use `:blank` selectors:
++
++```bash
++npx css-blank-pseudo SOURCE.css TRANSFORMED.css
++```
++
++Next, use your transformed CSS with this script:
++
++```html
++<link rel="stylesheet" href="TRANSFORMED.css">
++<script src="https://unpkg.com/css-blank-pseudo/browser"></script>
++<script>cssBlankPseudo(document)</script>
++```
++
++That’s it. The script is 483 bytes and works in all browsers, as far back as
++Internet Explorer 11.
++
++## How it works
++
++The [PostCSS plugin](README-POSTCSS.md) clones rules containing `:blank`,
++replacing them with an alternative `[blank]` selector.
++
++```css
++input:blank {
++  background-color: yellow;
++}
++
++/* becomes */
++
++.field[blank] label {
++  background-color: yellow;
++}
++
++.field:blank label {
++  background-color: yellow;
++}
++```
++
++Next, the [JavaScript library](README-BROWSER.md) adds a `blank` attribute to
++elements otherwise matching `:blank` natively.
++
++```html
++<div class="field">
++  <label for="a">Field</label>
++  <input id="a" value="" blank>
++</div>
++<div class="field">
++  <label for="b">Field</label>
++  <input id="b" value="This element has a value">
++</div>
++```
++
++[cli-img]: https://img.shields.io/travis/csstools/css-blank-pseudo/master.svg
++[cli-url]: https://travis-ci.org/csstools/css-blank-pseudo
++[git-img]: https://img.shields.io/badge/support-chat-blue.svg
++[git-url]: https://gitter.im/postcss/postcss
++[npm-img]: https://img.shields.io/npm/v/css-blank-pseudo.svg
++[npm-url]: https://www.npmjs.com/package/css-blank-pseudo
++
++[CSS Blank Pseudo]: https://github.com/csstools/css-blank-pseudo
++[PostCSS Preset Env]: https://preset-env.cssdb.org/
++[Selectors Level 4]: https://drafts.csswg.org/selectors-4/#blank
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..09fc443
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,79 @@
++{
++  "name": "css-blank-pseudo",
++  "version": "0.1.0",
++  "description": "Style form elements when they are empty",
++  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
++  "license": "CC0-1.0",
++  "repository": "csstools/css-blank-pseudo",
++  "homepage": "https://github.com/csstools/css-blank-pseudo#readme",
++  "bugs": "https://github.com/csstools/css-blank-pseudo/issues",
++  "main": "index.js",
++  "module": "index.mjs",
++  "bin": {
++    "css-blank-pseudo": "cli.js"
++  },
++  "files": [
++    "browser.js",
++    "cli.js",
++    "index.js",
++    "index.js.map",
++    "index.mjs",
++    "index.mjs.map",
++    "postcss.js",
++    "postcss.js.map",
++    "postcss.mjs",
++    "postcss.mjs.map"
++  ],
++  "scripts": {
++    "build": "npm run build:browser && npm run build:cli && npm run build:node && npm run build:postcss",
++    "build:browser": "cross-env NODE_ENV=browser rollup -c .rollup.js --silent",
++    "build:cli": "cross-env NODE_ENV=cli rollup -c .rollup.js --silent",
++    "build:postcss": "cross-env NODE_ENV=postcss rollup -c .rollup.js --silent",
++    "build:node": "rollup -c .rollup.js --silent",
++    "prepublishOnly": "npm build && npm test",
++    "pretest": "npm run build:postcss",
++    "pretest:postcss": "npm run build:postcss",
++    "test": "npm run test:js && npm run test:postcss",
++    "test:js": "eslint src/*.js --cache --ignore-path .gitignore --quiet",
++    "test:postcss": "postcss-tape --plugin=postcss.js"
++  },
++  "engines": {
++    "node": ">=6.0.0"
++  },
++  "dependencies": {
++    "postcss": "^7.0.5"
++  },
++  "devDependencies": {
++    "@babel/core": "^7.1.6",
++    "@babel/preset-env": "^7.1.6",
++    "babel-eslint": "^10.0.1",
++    "cross-env": "^5.2.0",
++    "eslint": "^5.9.0",
++    "eslint-config-dev": "2.0.0",
++    "postcss-tape": "^2.2.0",
++    "pre-commit": "^1.2.2",
++    "rollup": "^0.67.3",
++    "rollup-plugin-babel": "^4.0.3",
++    "rollup-plugin-terser": "^3.0.0"
++  },
++  "eslintConfig": {
++    "extends": "dev",
++    "parser": "babel-eslint"
++  },
++  "keywords": [
++    "postcss",
++    "css",
++    "postcss-plugin",
++    "javascript",
++    "js",
++    "polyfill",
++    "focus",
++    "within",
++    "pseudos",
++    "selectors",
++    "accessibility",
++    "a11y",
++    "descendants",
++    "ancestors"
++  ]
++}
+diff --git a/src/browser.js b/src/browser.js
+new file mode 100644
+index 0000000..0be0848
+--- /dev/null
++++ b/src/browser.js
+@@ -0,0 +1,93 @@
++export default function cssBlankPseudo(document, opts) {
++	// configuration
++	const className = Object(opts).className;
++	const attr = Object(opts).attr || 'blank';
++	const force = Object(opts).force;
++
++	try {
++		document.querySelector(':blank');
++
++		if (!force) {
++			return;
++		}
++	} catch (ignoredError) { /* do nothing and continue */ }
++
++	// observe value changes on <input>, <select>, and <textarea>
++	observeValueOfHTMLElement(HTMLInputElement);
++	observeValueOfHTMLElement(HTMLSelectElement);
++	observeValueOfHTMLElement(HTMLTextAreaElement);
++
++	// form control elements selector
++	const selector = 'input,select,textarea';
++
++	// conditionally update all form control elements
++	Array.prototype.forEach.call(
++		document.querySelectorAll(selector),
++		node => {
++			node.addEventListener('input', configureCssBlankAttribute);
++			configureCssBlankAttribute.call(node);
++		}
++	);
++
++	// conditionally observe added or unobserve removed form control elements
++	new MutationObserver(mutationsList => {
++		mutationsList.forEach(mutation => {
++			if (mutation.addedNodes) {
++				mutation.addedNodes.forEach(
++					node => {
++						if (node.nodeType === 1 && node.matches(selector)) {
++							node.addEventListener('input', configureCssBlankAttribute);
++							configureCssBlankAttribute.call(node);
++						}
++					}
++				);
++			}
++
++			if (mutation.removedNodes) {
++				mutation.removedNodes.forEach(
++					node => {
++						if (node.nodeType === 1 && node.matches(selector)) {
++							node.removeEventListener('input', configureCssBlankAttribute);
++						}
++					}
++				);
++			}
++		});
++	}).observe(document, { childList: true, subtree: true });
++
++	// update a form control element’s css-blank attribute
++	function configureCssBlankAttribute() {
++		if (this.value) {
++			if (attr) {
++				this.removeAttribute(attr);
++			}
++
++			if (className) {
++				this.classList.remove(className);
++			}
++			this.removeAttribute('blank');
++		} else {
++			if (attr) {
++				this.setAttribute('blank', attr);
++			}
++
++			if (className) {
++				this.classList.add(className);
++			}
++		}
++	}
++
++	// observe changes to the "value" property on an HTML Element
++	function observeValueOfHTMLElement(HTMLElement) {
++		const descriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'value');
++		const nativeSet = descriptor.set;
++
++		descriptor.set = function set(value) { // eslint-disable-line no-unused-vars
++			nativeSet.apply(this, arguments);
++
++			configureCssBlankAttribute.apply(this);
++		}
++
++		Object.defineProperty(HTMLElement.prototype, 'value', descriptor);
++	}
++}
+diff --git a/src/cli.js b/src/cli.js
+new file mode 100644
+index 0000000..ded6a74
+--- /dev/null
++++ b/src/cli.js
+@@ -0,0 +1,119 @@
++import fs from 'fs';
++import plugin from './postcss';
++
++if (process.argv.length < 3) {
++	console.log([
++		'CSS Blank Pseudo\n',
++		'  Transforms CSS with :blank {}\n',
++		'Usage:\n',
++		'  css-blank-pseudo source.css transformed.css',
++		'  css-blank-pseudo --in=source.css --out=transformed.css --opts={}',
++		'  echo "@media (prefers-color-scheme: dark) {}" | css-\n'
++	].join('\n'));
++	process.exit(0);
++}
++
++// get process and plugin options from the command line
++const fileRegExp = /^[\w\/.]+$/;
++const argRegExp = /^--(\w+)=("|')?(.+)\2$/;
++const relaxedJsonPropRegExp = /(['"])?([a-z0-9A-Z_]+)(['"])?:/g;
++const relaxedJsonValueRegExp = /("[a-z0-9A-Z_]+":\s*)'([^']*)'/g;
++const argo = process.argv.slice(2).reduce(
++	(object, arg) => {
++		const argMatch = arg.match(argRegExp);
++		const fileMatch = arg.match(fileRegExp);
++
++		if (argMatch) {
++			object[argMatch[1]] = argMatch[3];
++		} else if (fileMatch) {
++			if (object.from === '<stdin>') {
++				object.from = arg;
++			} else if (object.to === '<stdout>') {
++				object.to = arg;
++			}
++		}
++
++		return object;
++	},
++	{ from: '<stdin>', to: '<stdout>', opts: 'null' }
++);
++
++// get css from command line arguments or stdin
++(argo.from === '<stdin>' ? getStdin() : readFile(argo.from))
++.then(css => {
++	const pluginOpts = JSON.parse(
++		argo.opts
++		.replace(relaxedJsonPropRegExp, '"$2": ')
++		.replace(relaxedJsonValueRegExp, '$1"$2"')
++	);
++	const processOptions = Object.assign({ from: argo.from, to: argo.to || argo.from }, argo.map ? { map: JSON.parse(argo.map) } : {});
++
++	const result = plugin.process(css, processOptions, pluginOpts);
++
++	if (argo.to === '<stdout>') {
++		return result.css;
++	} else {
++		return writeFile(argo.to, result.css).then(
++			() => `CSS was written to "${argo.to}"`
++		)
++	}
++}).then(
++	result => {
++		console.log(result);
++
++		process.exit(0);
++	},
++	error => {
++		console.error(error);
++
++		process.exit(1);
++	}
++);
++
++function readFile(pathname) {
++	return new Promise((resolve, reject) => {
++		fs.readFile(pathname, 'utf8', (error, data) => {
++			if (error) {
++				reject(error);
++			} else {
++				resolve(data);
++			}
++		});
++	});
++}
++
++function writeFile(pathname, data) {
++	return new Promise((resolve, reject) => {
++		fs.writeFile(pathname, data, (error, content) => {
++			if (error) {
++				reject(error);
++			} else {
++				resolve(content);
++			}
++		});
++	});
++}
++
++function getStdin() {
++	return new Promise(resolve => {
++		let data = '';
++
++		if (process.stdin.isTTY) {
++			resolve(data);
++		} else {
++			process.stdin.setEncoding('utf8');
++
++			process.stdin.on('readable', () => {
++				let chunk;
++
++				while (chunk = process.stdin.read()) {
++					data += chunk;
++				}
++			});
++
++			process.stdin.on('end', () => {
++				resolve(data);
++			});
++		}
++	});
++}
+diff --git a/src/postcss.js b/src/postcss.js
+new file mode 100644
+index 0000000..e8e0a92
+--- /dev/null
++++ b/src/postcss.js
+@@ -0,0 +1,24 @@
++import postcss from 'postcss';
++
++const selectorRegExp = /:blank([^\w-]|$)/gi;
++
++export default postcss.plugin('css-blank-pseudo', opts => {
++	const replaceWith = String(Object(opts).replaceWith || '[blank]');
++	const preserve = Boolean('preserve' in Object(opts) ? opts.preserve : true);
++
++	return root => {
++		root.walkRules(selectorRegExp, rule => {
++			const selector = rule.selector.replace(selectorRegExp, ($0, $1) => {
++				return `${replaceWith}${$1}`;
++			});
++
++			const clone = rule.clone({ selector });
++
++			if (preserve) {
++				rule.before(clone);
++			} else {
++				rule.replaceWith(clone);
++			}
++		});
++	};
++});
+diff --git a/test/basic.css b/test/basic.css
+new file mode 100644
+index 0000000..46251c5
+--- /dev/null
++++ b/test/basic.css
+@@ -0,0 +1,27 @@
++:blank {
++	order: 1;
++}
++
++:blank,
++:blank test,
++test :blank,
++test test:blank,
++test :blank test,
++test test:blank test,
++test :blank :blank test,
++test :matches(:blank) test,
++test :matches(:blank test) test,
++test :matches(test :blank) test,
++test :matches(test test:blank) test,
++test :matches(test :blank test) test,
++test :matches(test test:blank test) test,
++test :matches(test :blank :blank test) test {
++	order: 2;
++}
++
++:ignore-blank,
++:blank-ignore,
++:ignoreblank,
++:blankignore {
++	order: 3;
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+new file mode 100644
+index 0000000..cf36042
+--- /dev/null
++++ b/test/basic.expect.css
+@@ -0,0 +1,48 @@
++[blank] {
++	order: 1;
++}
++
++:blank {
++	order: 1;
++}
++
++[blank],
++[blank] test,
++test [blank],
++test test[blank],
++test [blank] test,
++test test[blank] test,
++test [blank] [blank] test,
++test :matches([blank]) test,
++test :matches([blank] test) test,
++test :matches(test [blank]) test,
++test :matches(test test[blank]) test,
++test :matches(test [blank] test) test,
++test :matches(test test[blank] test) test,
++test :matches(test [blank] [blank] test) test {
++	order: 2;
++}
++
++:blank,
++:blank test,
++test :blank,
++test test:blank,
++test :blank test,
++test test:blank test,
++test :blank :blank test,
++test :matches(:blank) test,
++test :matches(:blank test) test,
++test :matches(test :blank) test,
++test :matches(test test:blank) test,
++test :matches(test :blank test) test,
++test :matches(test test:blank test) test,
++test :matches(test :blank :blank test) test {
++	order: 2;
++}
++
++:ignore-blank,
++:blank-ignore,
++:ignoreblank,
++:blankignore {
++	order: 3;
++}
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+new file mode 100644
+index 0000000..54111d7
+--- /dev/null
++++ b/test/basic.preserve.expect.css
+@@ -0,0 +1,27 @@
++[blank] {
++	order: 1;
++}
++
++[blank],
++[blank] test,
++test [blank],
++test test[blank],
++test [blank] test,
++test test[blank] test,
++test [blank] [blank] test,
++test :matches([blank]) test,
++test :matches([blank] test) test,
++test :matches(test [blank]) test,
++test :matches(test test[blank]) test,
++test :matches(test [blank] test) test,
++test :matches(test test[blank] test) test,
++test :matches(test [blank] [blank] test) test {
++	order: 2;
++}
++
++:ignore-blank,
++:blank-ignore,
++:ignoreblank,
++:blankignore {
++	order: 3;
++}
+diff --git a/test/basic.replacewith.expect.css b/test/basic.replacewith.expect.css
+new file mode 100644
+index 0000000..79902eb
+--- /dev/null
++++ b/test/basic.replacewith.expect.css
+@@ -0,0 +1,48 @@
++.css-blank {
++	order: 1;
++}
++
++:blank {
++	order: 1;
++}
++
++.css-blank,
++.css-blank test,
++test .css-blank,
++test test.css-blank,
++test .css-blank test,
++test test.css-blank test,
++test .css-blank .css-blank test,
++test :matches(.css-blank) test,
++test :matches(.css-blank test) test,
++test :matches(test .css-blank) test,
++test :matches(test test.css-blank) test,
++test :matches(test .css-blank test) test,
++test :matches(test test.css-blank test) test,
++test :matches(test .css-blank .css-blank test) test {
++	order: 2;
++}
++
++:blank,
++:blank test,
++test :blank,
++test test:blank,
++test :blank test,
++test test:blank test,
++test :blank :blank test,
++test :matches(:blank) test,
++test :matches(:blank test) test,
++test :matches(test :blank) test,
++test :matches(test test:blank) test,
++test :matches(test :blank test) test,
++test :matches(test test:blank test) test,
++test :matches(test :blank :blank test) test {
++	order: 2;
++}
++
++:ignore-blank,
++:blank-ignore,
++:ignoreblank,
++:blankignore {
++	order: 3;
++}
+-- 
+2.33.1
+

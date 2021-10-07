@@ -1,0 +1,214 @@
+From 332595d17a923577075db34e69b9484559cfa0fc Mon Sep 17 00:00:00 2001
+From: Armano <armano2@users.noreply.github.com>
+Date: Tue, 6 Jul 2021 02:07:41 +0200
+Subject: [PATCH 07/10] feat: upgrade to PostCSS 8 (#4)
+
+---
+ .gitignore   |  1 -
+ .rollup.js   | 16 ----------------
+ .tape.js     | 28 +++++++++++++---------------
+ .travis.yml  |  3 ++-
+ README.md    |  2 +-
+ index.js     | 21 +++++++++++----------
+ package.json | 34 ++++++++++------------------------
+ 7 files changed, 37 insertions(+), 68 deletions(-)
+ delete mode 100644 .rollup.js
+
+diff --git a/.gitignore b/.gitignore
+index d920b78..5aea2cb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -6,6 +6,5 @@ package-lock.json
+ .*
+ !.editorconfig
+ !.gitignore
+-!.rollup.js
+ !.tape.js
+ !.travis.yml
+diff --git a/.rollup.js b/.rollup.js
+deleted file mode 100644
+index ebe39f9..0000000
+--- a/.rollup.js
++++ /dev/null
+@@ -1,16 +0,0 @@
+-import babel from 'rollup-plugin-babel';
+-
+-export default {
+-	input: 'index.js',
+-	output: [
+-		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
+-		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
+-	],
+-	plugins: [
+-		babel({
+-			presets: [
+-				['@babel/env', { modules: false, targets: { node: 6 } }]
+-			]
+-		})
+-	]
+-};
+diff --git a/.tape.js b/.tape.js
+index 31fec61..f97aa5f 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,19 +1,17 @@
+ module.exports = {
+-	'postcss-gap-properties': {
+-		'basic': {
+-			message: 'supports basic usage'
+-		},
+-		'basic:preserve-false': {
+-			message: 'supports { preserve: false } usage',
+-			options: {
+-				preserve: false
+-			}
+-		},
+-		'ignore-flexbox': {
+-			message: 'ignore flexbox declarations'
+-		},
+-		'ignore-multicolumn': {
+-			message: 'ignore multi column declarations'
++	'basic': {
++		message: 'supports basic usage'
++	},
++	'basic:preserve-false': {
++		message: 'supports { preserve: false } usage',
++		options: {
++			preserve: false
+ 		}
++	},
++	'ignore-flexbox': {
++		message: 'ignore flexbox declarations'
++	},
++	'ignore-multicolumn': {
++		message: 'ignore multi column declarations'
+ 	}
+ };
+diff --git a/.travis.yml b/.travis.yml
+index e1f11a5..6b7feec 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,8 @@
+ language: node_js
+ 
+ node_js:
+-  - 6
++  - 10
++  - 12
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/README.md b/README.md
+index 6fb9111..3308f25 100644
+--- a/README.md
++++ b/README.md
+@@ -38,7 +38,7 @@ shorthand properties in CSS, following the [CSS Grid Layout] specification.
+ Add [PostCSS Gap Properties] to your project:
+ 
+ ```bash
+-npm install postcss-gap-properties --save-dev
++npm install postcss postcss-gap-properties --save-dev
+ ```
+ 
+ Use [PostCSS Gap Properties] to process your CSS:
+diff --git a/index.js b/index.js
+index b462cf0..ae126cd 100644
+--- a/index.js
++++ b/index.js
+@@ -1,18 +1,17 @@
+-import postcss from 'postcss';
+-
+ // gap shorthand property matcher
+ const gapPropertyRegExp = /^(column-gap|gap|row-gap)$/i;
+ 
+ // filter `display: grid` declarations
+ const isDisplayGrid = (node) => node.prop === 'display' && node.value === 'grid';
+ 
+-export default postcss.plugin('postcss-gap-properties', opts => {
++module.exports = function creator(opts) {
+ 	const preserve = 'preserve' in Object(opts) ? Boolean(opts.preserve) : true;
+ 
+-	return root => {
+-		// for each shorthand gap, column-gap, or row-gap declaration
+-		root.walkDecls(gapPropertyRegExp, decl => {
+-			if (decl.parent.some(isDisplayGrid)) {
++	return {
++		postcssPlugin: 'postcss-gap-properties',
++		// walk decl shorthand gap, column-gap, or row-gap declaration
++		Declaration(decl) {
++			if (gapPropertyRegExp.test(decl.prop) && decl.parent.some(isDisplayGrid)) {
+ 				// insert a grid-* fallback declaration
+ 				decl.cloneBefore({
+ 					prop: `grid-${decl.prop}`
+@@ -23,6 +22,8 @@ export default postcss.plugin('postcss-gap-properties', opts => {
+ 					decl.remove();
+ 				}
+ 			}
+-		})
+-	};
+-});
++		}
++	}
++}
++
++module.exports.postcss = true;
+diff --git a/package.json b/package.json
+index f3fc678..7e2a346 100644
+--- a/package.json
++++ b/package.json
+@@ -7,42 +7,28 @@
+   "repository": "jonathantneal/postcss-gap-properties",
+   "homepage": "https://github.com/jonathantneal/postcss-gap-properties#readme",
+   "bugs": "https://github.com/jonathantneal/postcss-gap-properties/issues",
+-  "main": "index.cjs.js",
+-  "module": "index.es.mjs",
+-  "files": [
+-    "index.cjs.js",
+-    "index.cjs.js.map",
+-    "index.es.mjs",
+-    "index.es.mjs.map"
+-  ],
++  "main": "index.js",
+   "scripts": {
+     "prepublishOnly": "npm test",
+-    "pretest": "rollup -c .rollup.js --silent",
+     "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+-    "test:ec": "echint --ignore index.*.js test",
+     "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+-    "node": ">=6.0.0"
+-  },
+-  "dependencies": {
+-    "postcss": "^7.0.2"
++    "node": "^10 || ^12 || >=14"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.0.0",
+-    "@babel/preset-env": "^7.0.0",
+-    "babel-eslint": "^9.0.0",
+-    "eslint": "^5.6.0",
++    "eslint": "^7.9.0",
+     "eslint-config-dev": "^2.0.0",
+-    "postcss-tape": "^2.2.0",
+-    "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.0",
+-    "rollup-plugin-babel": "^4.0.1"
++    "postcss": "^8.0.0",
++    "postcss-tape": "^6.0.0",
++    "pre-commit": "^1.2.2"
++  },
++  "peerDependencies": {
++    "postcss": "^8.0.0"
+   },
+   "eslintConfig": {
+-    "extends": "dev",
+-    "parser": "babel-eslint"
++    "extends": "dev"
+   },
+   "keywords": [
+     "postcss",
+-- 
+2.33.1
+

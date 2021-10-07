@@ -1,0 +1,233 @@
+From 3c91a1b531ceca1e771bfb6c693e2f5476045d96 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 28 Oct 2018 15:03:47 -0400
+Subject: [PATCH 62/84] 6.3.0
+
+---
+ CHANGELOG.md                             |  8 ++++++++
+ lib/ids-by-execution-order.js            |  1 +
+ lib/plugins-by-id.js                     |  2 ++
+ package.json                             | 13 +++++++------
+ test/basic.autoprefixer.expect.css       |  5 +++++
+ test/basic.autoprefixer.false.expect.css |  5 +++++
+ test/basic.ch38.expect.css               |  5 +++++
+ test/basic.css                           |  4 ++++
+ test/basic.expect.css                    |  5 +++++
+ test/basic.ff49.expect.css               |  5 +++++
+ test/basic.nesting.expect.css            |  4 ++++
+ test/basic.stage0-ff49.expect.css        |  5 +++++
+ test/basic.stage0.expect.css             |  5 +++++
+ 13 files changed, 61 insertions(+), 6 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index ef75b8c..c30dbad 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,13 @@
+ # Changes to PostCSS Preset Env
+ 
++### 6.3.0 (October 28, 2018)
++
++- Added `postcss-double-position-gradients` 1.0.0 (major, non-breaking for this project)
++- Updated `autoprefixer` to 9.3.1 (minor)
++- Updated `browserslist` to 4.3.4 (patch)
++- Updated `caniuse-lite` to 1.0.30000899 (patch)
++- Updated `cssdb` to 4.1.0 (major, non-breaking for this project)
++
+ ### 6.2.0 (October 22, 2018)
+ 
+ - Updated `autoprefixer` to 9.2.1 (minor)
+diff --git a/lib/ids-by-execution-order.js b/lib/ids-by-execution-order.js
+index ba22253..f853e34 100644
+--- a/lib/ids-by-execution-order.js
++++ b/lib/ids-by-execution-order.js
+@@ -17,6 +17,7 @@ export default [
+ 	'dir-pseudo-class',
+ 	'all-property', // run all-property before other property polyfills
+ 	'color-functional-notation',
++	'double-position-gradients',
+ 	'gray-function',
+ 	'hexadecimal-alpha-notation',
+ 	'lab-function',
+diff --git a/lib/plugins-by-id.js b/lib/plugins-by-id.js
+index aad89c2..44f5c22 100644
+--- a/lib/plugins-by-id.js
++++ b/lib/plugins-by-id.js
+@@ -8,6 +8,7 @@ import postcssCustomMedia from 'postcss-custom-media';
+ import postcssCustomProperties from 'postcss-custom-properties';
+ import postcssCustomSelectors from 'postcss-custom-selectors';
+ import postcssDirPseudoClass from 'postcss-dir-pseudo-class';
++import postcssDoublePositionGradients from 'postcss-double-position-gradients';
+ import postcssEnvFunction from 'postcss-env-function';
+ import postcssFocusVisible from 'postcss-focus-visible';
+ import postcssFocusWithin from 'postcss-focus-within';
+@@ -40,6 +41,7 @@ export default {
+ 	'custom-properties': postcssCustomProperties,
+ 	'custom-selectors': postcssCustomSelectors,
+ 	'dir-pseudo-class': postcssDirPseudoClass,
++	'double-position-gradients': postcssDoublePositionGradients,
+ 	'environment-variables': postcssEnvFunction,
+ 	'focus-visible-pseudo-class': postcssFocusVisible,
+ 	'focus-within-pseudo-class': postcssFocusWithin,
+diff --git a/package.json b/package.json
+index 3520855..ac25e24 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-preset-env",
+-  "version": "6.2.0",
++  "version": "6.3.0",
+   "description": "Convert modern CSS into something browsers understand",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -26,10 +26,10 @@
+     "node": ">=6.0.0"
+   },
+   "dependencies": {
+-    "autoprefixer": "^9.2.1",
+-    "browserslist": "^4.3.1",
+-    "caniuse-lite": "^1.0.30000893",
+-    "cssdb": "^3.2.1",
++    "autoprefixer": "^9.3.1",
++    "browserslist": "^4.3.4",
++    "caniuse-lite": "^1.0.30000899",
++    "cssdb": "^4.1.0",
+     "postcss": "^7.0.5",
+     "postcss-attribute-case-insensitive": "^4.0.0",
+     "postcss-color-functional-notation": "^2.0.1",
+@@ -41,6 +41,7 @@
+     "postcss-custom-properties": "^8.0.8",
+     "postcss-custom-selectors": "^5.1.2",
+     "postcss-dir-pseudo-class": "^5.0.0",
++    "postcss-double-position-gradients": "^1.0.0",
+     "postcss-env-function": "^2.0.2",
+     "postcss-focus-visible": "^4.0.0",
+     "postcss-focus-within": "^3.0.0",
+@@ -64,7 +65,7 @@
+     "@babel/core": "^7.1.2",
+     "@babel/preset-env": "^7.1.0",
+     "babel-eslint": "^10.0.1",
+-    "eslint": "^5.7.0",
++    "eslint": "^5.8.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-simple-vars": "^5.0.1",
+     "postcss-tape": "^2.2.0",
+diff --git a/test/basic.autoprefixer.expect.css b/test/basic.autoprefixer.expect.css
+index 940c9dd..07b5882 100644
+--- a/test/basic.autoprefixer.expect.css
++++ b/test/basic.autoprefixer.expect.css
+@@ -230,3 +230,8 @@
+ .test-focus-visible-pseudo-class:focus-visible {
+ 	order: 23;
+ }
++
++.test-double-position-gradients {
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg, gold 75%, #f06 0deg);
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg 75%, #f06 0deg);
++}
+diff --git a/test/basic.autoprefixer.false.expect.css b/test/basic.autoprefixer.false.expect.css
+index 940c9dd..07b5882 100644
+--- a/test/basic.autoprefixer.false.expect.css
++++ b/test/basic.autoprefixer.false.expect.css
+@@ -230,3 +230,8 @@
+ .test-focus-visible-pseudo-class:focus-visible {
+ 	order: 23;
+ }
++
++.test-double-position-gradients {
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg, gold 75%, #f06 0deg);
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg 75%, #f06 0deg);
++}
+diff --git a/test/basic.ch38.expect.css b/test/basic.ch38.expect.css
+index 2ae1e69..842f0c8 100644
+--- a/test/basic.ch38.expect.css
++++ b/test/basic.ch38.expect.css
+@@ -137,3 +137,8 @@
+ .test-focus-visible-pseudo-class:focus-visible {
+ 	order: 23;
+ }
++
++.test-double-position-gradients {
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg, gold 75%, #f06 0deg);
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg 75%, #f06 0deg);
++}
+diff --git a/test/basic.css b/test/basic.css
+index 039d810..0cd53a5 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -117,3 +117,7 @@
+ .test-focus-visible-pseudo-class:focus-visible {
+ 	order: 23;
+ }
++
++.test-double-position-gradients {
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg 75%, #f06 0deg);
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index a4b6653..87be838 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -260,3 +260,8 @@
+ .test-focus-visible-pseudo-class:focus-visible {
+ 	order: 23;
+ }
++
++.test-double-position-gradients {
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg, gold 75%, #f06 0deg);
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg 75%, #f06 0deg);
++}
+diff --git a/test/basic.ff49.expect.css b/test/basic.ff49.expect.css
+index d215bc3..a1d26c6 100644
+--- a/test/basic.ff49.expect.css
++++ b/test/basic.ff49.expect.css
+@@ -132,3 +132,8 @@
+ .test-focus-visible-pseudo-class:focus-visible {
+ 	order: 23;
+ }
++
++.test-double-position-gradients {
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg, gold 75%, #f06 0deg);
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg 75%, #f06 0deg);
++}
+diff --git a/test/basic.nesting.expect.css b/test/basic.nesting.expect.css
+index 64d7a67..66928e5 100644
+--- a/test/basic.nesting.expect.css
++++ b/test/basic.nesting.expect.css
+@@ -129,3 +129,7 @@
+ .test-focus-visible-pseudo-class:focus-visible {
+ 	order: 23;
+ }
++
++.test-double-position-gradients {
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg 75%, #f06 0deg);
++}
+diff --git a/test/basic.stage0-ff49.expect.css b/test/basic.stage0-ff49.expect.css
+index 5beb251..ce70f8e 100644
+--- a/test/basic.stage0-ff49.expect.css
++++ b/test/basic.stage0-ff49.expect.css
+@@ -131,3 +131,8 @@ h1.test-custom-selectors,h2.test-custom-selectors,h3.test-custom-selectors,h4.te
+ .test-focus-visible-pseudo-class:focus-visible {
+ 	order: 23;
+ }
++
++.test-double-position-gradients {
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg, gold 75%, #f06 0deg);
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg 75%, #f06 0deg);
++}
+diff --git a/test/basic.stage0.expect.css b/test/basic.stage0.expect.css
+index cf134b9..9409d7a 100644
+--- a/test/basic.stage0.expect.css
++++ b/test/basic.stage0.expect.css
+@@ -259,3 +259,8 @@ h1.test-custom-selectors,h2.test-custom-selectors,h3.test-custom-selectors,h4.te
+ .test-focus-visible-pseudo-class:focus-visible {
+ 	order: 23;
+ }
++
++.test-double-position-gradients {
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg, gold 75%, #f06 0deg);
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg 75%, #f06 0deg);
++}
+-- 
+2.33.1
+

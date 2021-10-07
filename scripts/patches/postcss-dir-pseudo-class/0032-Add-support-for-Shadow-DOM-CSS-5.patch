@@ -1,0 +1,158 @@
+From 465a0adb3444275ae6323f015e03b28bfc26e7a6 Mon Sep 17 00:00:00 2001
+From: Zacky Ma <zacky@marchbox.com>
+Date: Mon, 5 Jul 2021 07:11:34 -0700
+Subject: [PATCH 32/34] Add support for Shadow DOM CSS (#5)
+
+* Add support for shadow DOM CSS
+
+* Change spaces to tabs for consistency
+
+* Fix comment language
+
+* Make sure this won't do anything to selectors with leading :root
+
+Co-authored-by: Zacky Ma <zacky@nianticlabs.com>
+Co-authored-by: Jonathan Neal <jonathantneal@hotmail.com>
+---
+ .tape.js                     |  9 ++++-
+ index.js                     | 12 +++++-
+ test/basic.shadow.expect.css | 71 ++++++++++++++++++++++++++++++++++++
+ 3 files changed, 90 insertions(+), 2 deletions(-)
+ create mode 100644 test/basic.shadow.expect.css
+
+diff --git a/.tape.js b/.tape.js
+index 61ed099..624e890 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -15,5 +15,12 @@ module.exports = {
+ 		options: {
+ 			preserve: true,
+ 		},
+-	},
++  },
++  "basic:shadow": {
++    message: "support { shadow: true } usage",
++    source: "basic.css",
++    options: {
++      shadow: true
++    },
++  },
+ };
+diff --git a/index.js b/index.js
+index 395bf82..186d398 100644
+--- a/index.js
++++ b/index.js
+@@ -5,6 +5,7 @@ const dirRegex = /:dir\([^\)]*\)/;
+ module.exports = function creator(opts) {
+ 	const dir = Object(opts).dir;
+ 	const preserve = Boolean(Object(opts).preserve);
++	const shadow = Boolean(Object(opts).shadow);
+ 
+ 	return {
+ 		postcssPlugin: 'postcss-dir-pseudo-class',
+@@ -73,6 +74,12 @@ module.exports = function creator(opts) {
+ 								value:     `"${ value }"`
+ 							});
+ 
++							// :host-context([dir]) for Shadow DOM CSS
++							const hostContextPseudo = selectorParser.pseudo({
++								value: ':host-context'
++							});
++							hostContextPseudo.append(dirAttr);
++
+ 							// not[dir] attribute
+ 							const notDirAttr = selectorParser.pseudo({
+ 								value: `${firstIsHtml || firstIsRoot ? '' : 'html'}:not`
+@@ -97,8 +104,11 @@ module.exports = function creator(opts) {
+ 									selector.prepend(notDirAttr);
+ 								}
+ 							} else if (firstIsHtml) {
+-								// otherwise, insert dir attribute after html tag
++								// insert dir attribute after html tag
+ 								selector.insertAfter(first, dirAttr);
++							} else if (shadow && !firstIsRoot) {
++								// prepend :host-context([dir])
++								selector.prepend(hostContextPseudo);
+ 							} else {
+ 								// otherwise, prepend the dir attribute
+ 								selector.prepend(dirAttr);
+diff --git a/test/basic.shadow.expect.css b/test/basic.shadow.expect.css
+new file mode 100644
+index 0000000..e68cbe6
+--- /dev/null
++++ b/test/basic.shadow.expect.css
+@@ -0,0 +1,71 @@
++:host-context([dir="ltr"]) {
++	order: 0;
++}
++
++:host-context([dir="ltr"]) test {
++	order: 1;
++}
++
++:host-context([dir="ltr"]) test * {
++	order: 2;
++}
++
++:host-context([dir="ltr"]) test * test {
++	order: 3;
++}
++
++:host-context([dir="ltr"]) test {
++	order: 4;
++}
++
++:host-context([dir="ltr"]) test test {
++	order: 5;
++}
++
++:host-context([dir="ltr"]) test test {
++	order: 6;
++}
++
++[dir="ltr"]:root * {
++	order: 7;
++}
++
++html[dir="ltr"] * {
++	order: 8;
++}
++
++:host-context([dir="rtl"]) {
++	order: 9;
++}
++
++:host-context([dir="rtl"]) test {
++	order: 10;
++}
++
++:host-context([dir="rtl"]) test * {
++	order: 11;
++}
++
++:host-context([dir="rtl"]) test * test {
++	order: 12;
++}
++
++:host-context([dir="rtl"]) test {
++	order: 13;
++}
++
++:host-context([dir="rtl"]) test test {
++	order: 14;
++}
++
++:host-context([dir="rtl"]) test test {
++	order: 15;
++}
++
++[dir="rtl"]:root * {
++	order: 16;
++}
++
++html[dir="rtl"] * {
++	order: 17;
++}
+-- 
+2.33.1
+

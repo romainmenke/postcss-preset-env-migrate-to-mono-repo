@@ -1,0 +1,24 @@
+From 837cddccd3a410762241b61e40f6a1138e40c0bf Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 22 Sep 2015 09:06:58 -0400
+Subject: [PATCH 27/89] 2.0.3
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index d922f67..020f9e1 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-nesting",
+-  "version": "2.0.2",
++  "version": "2.0.3",
+   "description": "Transpiles nested rules according to CSS Nesting Module Level 3",
+   "keywords": [
+     "postcss",
+-- 
+2.33.1
+

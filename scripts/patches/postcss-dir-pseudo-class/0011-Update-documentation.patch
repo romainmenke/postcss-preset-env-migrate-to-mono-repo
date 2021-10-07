@@ -1,0 +1,45 @@
+From ef36b0c4cd222464332f8b9292513eb60d18fa49 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 24 Jul 2017 21:57:25 -0400
+Subject: [PATCH 11/34] Update documentation
+
+---
+ README.md | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index b4da5e9..5f8706b 100644
+--- a/README.md
++++ b/README.md
+@@ -12,11 +12,19 @@
+   margin-right: 10px;
+ }
+ 
++.example:dir(ltr) {
++  margin-left: 10px;
++}
++
+ /* becomes */
+ 
+ [dir="rtl"] .example {
+   margin-right: 10px;
+ }
++
++[dir="ltr"] .example {
++  margin-left: 10px;
++}
+ ```
+ 
+ If your [browserslist] already supports the `:dir` pseudo-class, this plugin
+@@ -176,7 +184,7 @@ require('postcss-dir-pseudo-class')({
+ 
+ /* becomes */
+ 
+-:root .example {
++:not([dir="rtl"]) .example {
+   margin-left: 10px;
+ }
+ 
+-- 
+2.33.1
+

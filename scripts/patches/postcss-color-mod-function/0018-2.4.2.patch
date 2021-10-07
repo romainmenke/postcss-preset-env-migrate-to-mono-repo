@@ -1,0 +1,39 @@
+From 39f669e5be337dd72defb31bf461e808c07f1c91 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 27 Feb 2018 00:57:36 -0500
+Subject: [PATCH 18/29] 2.4.2
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 2 +-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 8dd9418..5373f2a 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS color-mod() Function
+ 
++### 2.4.2 (February 27, 2018)
++
++- Fixed issue with converting colorspaces
++
+ ### 2.4.1 (February 21, 2018)
+ 
+ - Fixed issue with spacing around `color-mod` (credit: [@leesdolphin])
+diff --git a/package.json b/package.json
+index 28f11d2..da1a0f5 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-mod-function",
+-  "version": "2.4.1",
++  "version": "2.4.2",
+   "description": "Modify colors using the color-mod() function in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

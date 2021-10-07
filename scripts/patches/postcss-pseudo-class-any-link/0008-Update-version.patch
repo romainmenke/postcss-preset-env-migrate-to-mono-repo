@@ -1,0 +1,109 @@
+From 4031e178f990669a927008584d5bf821ab24d54c Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 15 Jun 2015 09:12:02 -0400
+Subject: [PATCH 08/30] Update version
+
+Update index.js: use postcss-selector-parser
+Update package.json: use postcss-selector-parser and bump version
+Update tests.js: postcss-selector-parser preserves selector separators
+---
+ index.js     | 36 ++++++++++++++++++++++++++++--------
+ package.json |  5 +++--
+ test/test.js |  4 ++--
+ 3 files changed, 33 insertions(+), 12 deletions(-)
+
+diff --git a/index.js b/index.js
+index cf24648..6f17ba6 100644
+--- a/index.js
++++ b/index.js
+@@ -1,15 +1,35 @@
+ var postcss = require('postcss');
++var postcssSelectorParser = require('postcss-selector-parser');
+ 
+ module.exports = postcss.plugin('postcss-pseudo-class-any-link', function (opts) {
+-	var match = new RegExp(':' + (opts && opts.prefix ? '-' + opts.prefix + '-' : '') + 'any-link\\b', 'g');
++	var pseudoValue = ':' + (opts && opts.prefix ? '-' + opts.prefix + '-' : '') + 'any-link';
++	var pseudoFallbackValues = [':link', ':visited'];
++
++	function eachRule(rule) {
++		rule.selector = postcssSelectorParser(function (selectors) {
++			selectors.each(function (selector, index) {
++				var originalIndex = index;
++
++				pseudoFallbackValues.forEach(function (pseudoFallbackValue) {
++					var clone = selector.clone();
++
++					clone.eachPseudo(function (pseudo) {
++						if (pseudo.value === pseudoValue) {
++							pseudo.value = pseudoFallbackValue;
++
++							selectors.nodes.splice(++index, 0, clone);
++						}
++					});
++				});
++
++				if (originalIndex !== index) {
++					selector.removeSelf();
++				}
++			});
++		}).process(rule.selector).result;
++	}
+ 
+ 	return function (css) {
+-		css.eachRule(function (rule) {
+-			if (match.test(rule.selector)) {
+-				rule.selector = ['link', 'visited'].map(function (replacement) {
+-					return rule.selector.replace(match, ':' + replacement);
+-				}).join(', ');
+-			}
+-		});
++		css.eachRule(eachRule);
+ 	};
+ });
+diff --git a/package.json b/package.json
+index 9e73ca5..56ba8f8 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+ 	"name": "postcss-pseudo-class-any-link",
+-	"version": "0.1.0",
++	"version": "0.2.0",
+ 	"description": "Use the proposed :any-link pseudo-class in CSS",
+ 	"keywords": ["postcss", "css", "postcss-plugin", "link", "visited", "any-link", "a", "area", "hyperlink", "href"],
+ 	"author": "Jonathan Neal <jonathantneal@hotmail.com>",
+@@ -20,7 +20,8 @@
+ 		"chai": "^2.3.0",
+ 		"gulp": "^3.8.11",
+ 		"gulp-eslint": "^0.12.0",
+-		"gulp-mocha": "^2.0.1"
++		"gulp-mocha": "^2.0.1",
++		"postcss-selector-parser": "^1.0.0"
+ 	},
+ 	"scripts": {
+ 		"test": "gulp"
+diff --git a/test/test.js b/test/test.js
+index 2bbd432..ae93d07 100644
+--- a/test/test.js
++++ b/test/test.js
+@@ -15,7 +15,7 @@ var test = function (input, output, opts, done) {
+ 
+ describe('postcss-pseudo-class-any-link', function () {
+ 	it(':any-link transforms to :link and :visited', function (done) {
+-		test('ul a:any-link > span { background: yellow; }', 'ul a:link > span, ul a:visited > span { background: yellow; }', {}, done);
++		test('ul a:any-link > span { background: yellow; }', 'ul a:link > span,ul a:visited > span { background: yellow; }', {}, done);
+ 	});
+ 
+ 	it(':any-link remains :any-link { prefix: "foo" }', function (done) {
+@@ -25,7 +25,7 @@ describe('postcss-pseudo-class-any-link', function () {
+ 	});
+ 
+ 	it(':-foo-any-link transforms to :link and :visited { prefix: "foo" }', function (done) {
+-		test('ul a:-foo-any-link > span { background: yellow; }', 'ul a:link > span, ul a:visited > span { background: yellow; }', {
++		test('ul a:-foo-any-link > span { background: yellow; }', 'ul a:link > span,ul a:visited > span { background: yellow; }', {
+ 			prefix: 'foo'
+ 		}, done);
+ 	});
+-- 
+2.33.1
+

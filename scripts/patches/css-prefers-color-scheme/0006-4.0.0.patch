@@ -1,0 +1,208 @@
+From 07de7b67a60c4cfd6cc7f77ddafd073e9ea96e0d Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 24 May 2019 18:08:09 -0400
+Subject: [PATCH 06/12] 4.0.0
+
+---
+ .rollup.js   |  8 ++++----
+ .tape.js     |  8 +++-----
+ .travis.yml  |  2 +-
+ CHANGELOG.md |  9 +++++++++
+ cli.js       |  6 +++---
+ package.json | 52 +++++++++++++++++++++++++++++++---------------------
+ 6 files changed, 51 insertions(+), 34 deletions(-)
+
+diff --git a/.rollup.js b/.rollup.js
+index 29f1930..3877cb2 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -6,7 +6,7 @@ const isBrowserMin = String(process.env.NODE_ENV).includes('browser:min');
+ const isPostCSS = String(process.env.NODE_ENV).includes('postcss');
+ 
+ // support IE9+ browsers, otherwise node 6+
+-const targets = isBrowser ? 'ie >= 9' : { node: 6 };
++const targets = isBrowser ? 'ie >= 9' : { node: 8 };
+ 
+ // read from src/browser.js for browsers/node, src/postcss.js for postcss
+ const input = isPostCSS ? 'src/postcss.js' : 'src/browser.js';
+@@ -14,13 +14,13 @@ const input = isPostCSS ? 'src/postcss.js' : 'src/browser.js';
+ // write to browser.js/browser.min.js for browsers, index.js/index.mjs for node
+ const output = isPostCSS
+   ? [
+-		{ file: 'postcss.js', format: 'cjs' },
+-    { file: 'postcss.mjs', format: 'esm' }
++		{ file: 'postcss.js', format: 'cjs', sourcemap: true, strict: false },
++    { file: 'postcss.mjs', format: 'esm', sourcemap: true, strict: false }
+ ] : isBrowser
+ 	? { file: `browser${isBrowserMin ? '.min' : ''}.js`, format: 'iife', name: 'initPrefersColorScheme', sourcemap: !isBrowserMin }
+ : [
+ 	{ file: 'index.js', format: 'cjs', sourcemap: true },
+-	{ file: 'index.mjs', format: 'es', sourcemap: true }
++	{ file: 'index.mjs', format: 'esm', sourcemap: true }
+ ];
+ 
+ // use babel, and also terser to minify browser.min.js
+diff --git a/.tape.js b/.tape.js
+index a100e08..52be6d1 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,7 +1,5 @@
+ module.exports = {
+-	'postcss-prefers-color-scheme': {
+-		'basic': {
+-			message: 'supports basic usage'
+-		}
+-	}
++  'basic': {
++    message: 'supports basic usage'
++  }
+ };
+diff --git a/.travis.yml b/.travis.yml
+index e1f11a5..6ebed1d 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 6
++  - 8
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 425a349..00a966c 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,14 @@
+ # Changes to Prefers Color Scheme
+ 
++### 4.0.0 (May 24, 2019)
++
++- Updated: `postcss` to 7.0.16 (patch)
++- Updated: Node 8+ compatibility (major)
++
++### 3.1.1 (November 10, 2018)
++
++- Updated: Project organization. No functional changes.
++
+ ### 3.1.0 (November 10, 2018)
+ 
+ - Include CLI tool for transforming CSS without any installation
+diff --git a/cli.js b/cli.js
+index 715c69a..db77ec8 100755
+--- a/cli.js
++++ b/cli.js
+@@ -67,7 +67,7 @@ const argo = process.argv.slice(2).reduce(
+ 	}
+ );
+ 
+-function readFile(pathname) {
++function readFile (pathname) {
+ 	return new Promise((resolve, reject) => {
+ 		fs.readFile(pathname, 'utf8', (error, data) => {
+ 			if (error) {
+@@ -79,7 +79,7 @@ function readFile(pathname) {
+ 	});
+ }
+ 
+-function writeFile(pathname, data) {
++function writeFile (pathname, data) {
+ 	return new Promise((resolve, reject) => {
+ 		fs.writeFile(pathname, data, (error, content) => {
+ 			if (error) {
+@@ -91,7 +91,7 @@ function writeFile(pathname, data) {
+ 	});
+ }
+ 
+-function getStdin() {
++function getStdin () {
+ 	return new Promise(resolve => {
+ 		let data = '';
+ 
+diff --git a/package.json b/package.json
+index 3beffef..151501a 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "css-prefers-color-scheme",
+-  "version": "3.1.1",
++  "version": "4.0.0",
+   "description": "Use light and dark color schemes in all browsers",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -27,40 +27,50 @@
+   "scripts": {
+     "build": "npm run build:browser && npm run build:node && npm run build:postcss",
+     "build:browser": "npm run build:browser:dist && npm run build:browser:min",
+-    "build:browser:dist": "cross-env NODE_ENV=browser rollup -c .rollup.js --silent",
+-    "build:browser:min": "cross-env NODE_ENV=browser:min rollup -c .rollup.js --silent",
+-    "build:node": "rollup -c .rollup.js --silent",
+-    "build:postcss": "cross-env NODE_ENV=postcss rollup -c .rollup.js --silent",
++    "build:browser:dist": "cross-env NODE_ENV=browser rollup --config .rollup.js --silent",
++    "build:browser:min": "cross-env NODE_ENV=browser:min rollup --config .rollup.js --silent",
++    "build:node": "rollup --config .rollup.js --silent",
++    "build:postcss": "cross-env NODE_ENV=postcss rollup --config .rollup.js --silent",
+     "prepublishOnly": "npm test",
+     "pretest": "npm run build",
+     "test": "npm run test:js && npm run test:tape",
+-    "test:js": "eslint src/*.js --cache --ignore-path .gitignore --quiet",
+-    "test:tape": "postcss-tape --plugin=postcss.js"
++    "test:js": "eslint src/{*,**/*}.js --cache --ignore-path .gitignore --quiet",
++    "test:tape": "postcss-tape --plugin postcss.js"
+   },
+   "engines": {
+-    "node": ">=6.0.0"
++    "node": ">=8.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.5"
++    "postcss": "^7.0.16"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.1.5",
+-    "@babel/preset-env": "^7.1.5",
++    "@babel/core": "^7.4.5",
++    "@babel/preset-env": "^7.4.5",
+     "babel-eslint": "^10.0.1",
+     "cross-env": "^5.2.0",
+-    "eslint": "^5.9.0",
+-    "eslint-config-dev": "^2.0.0",
+-    "get-stdin": "^6.0.0",
+-    "postcss-tape": "^2.2.0",
++    "eslint": "^5.16.0",
++    "get-stdin": "^7.0.0",
++    "postcss-tape": "^5.0.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.67.0",
+-    "rollup-plugin-babel": "^4.0.3",
+-    "rollup-plugin-terser": "^3.0.0",
+-    "uglify-js": "^3.4.9"
++    "rollup": "^1.12.3",
++    "rollup-plugin-babel": "^4.3.2",
++    "rollup-plugin-terser": "^5.0.0",
++    "uglify-js": "^3.5.15"
+   },
+   "eslintConfig": {
+-    "extends": "dev",
+-    "parser": "babel-eslint"
++    "env": {
++      "browser": true,
++      "es6": true,
++      "node": true
++    },
++    "extends": "eslint:recommended",
++    "parser": "babel-eslint",
++    "parserOptions": {
++      "ecmaVersion": 2018,
++      "impliedStrict": true,
++      "sourceType": "module"
++    },
++    "root": true
+   },
+   "keywords": [
+     "postcss",
+-- 
+2.33.1
+

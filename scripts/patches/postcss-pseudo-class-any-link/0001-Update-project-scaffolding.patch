@@ -1,0 +1,80 @@
+From af2d72e2f2db95ef6fe2d6806a0de970989f9e93 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 14 Jun 2015 20:33:21 -0400
+Subject: [PATCH 01/30] Update project scaffolding
+
+---
+ .eslintrc   | 21 +++++++++++++++++++++
+ .gitignore  |  2 ++
+ .npmignore  |  8 ++++++++
+ .travis.yml |  6 ++++++
+ 4 files changed, 37 insertions(+)
+ create mode 100644 .eslintrc
+ create mode 100644 .gitignore
+ create mode 100644 .npmignore
+ create mode 100644 .travis.yml
+
+diff --git a/.eslintrc b/.eslintrc
+new file mode 100644
+index 0000000..1031b9d
+--- /dev/null
++++ b/.eslintrc
+@@ -0,0 +1,21 @@
++{
++	"rules": {
++		"no-unused-expressions": [0],
++		"no-underscore-dangle":  [0],
++		"no-reserved-keys":      [2],
++		"no-multi-spaces":       [0],
++		"no-extra-parens":       [2],
++		"no-unused-vars":        [2],
++		"no-loop-func":          [0],
++		"key-spacing":           [0],
++		"max-len":               [2],
++		"strict":                [0],
++		"indent":                [1, "tab"],
++		"quotes":                [2, "single", "avoid-escape"],
++		"curly":                 [0]
++	},
++	"env": {
++		"mocha": true,
++		"node":  true
++	}
++}
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..1ca9571
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,2 @@
++node_modules/
++npm-debug.log
+diff --git a/.npmignore b/.npmignore
+new file mode 100644
+index 0000000..1aa2d59
+--- /dev/null
++++ b/.npmignore
+@@ -0,0 +1,8 @@
++.gitignore
++
++node_modules/
++
++test/
++.travis.yml
++
++gulpfile.js
+diff --git a/.travis.yml b/.travis.yml
+new file mode 100644
+index 0000000..ffb8b39
+--- /dev/null
++++ b/.travis.yml
+@@ -0,0 +1,6 @@
++sudo: false
++language: node_js
++node_js:
++  - iojs
++  - "0.12"
++  - "0.10"
+-- 
+2.33.1
+

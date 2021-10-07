@@ -1,0 +1,34 @@
+From 806ae5b28169d933a0bf9340fbb746c35ee3f89f Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 9 Sep 2017 23:10:03 -0400
+Subject: [PATCH 21/30] Add .editorconfig
+
+---
+ .editorconfig | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+ create mode 100644 .editorconfig
+
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..e06d798
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,15 @@
++root = true
++
++[*]
++charset = utf-8
++end_of_line = lf
++indent_style = tab
++insert_final_newline = true
++trim_trailing_whitespace = true
++
++[*.md]
++trim_trailing_whitespace = false
++
++[*.{json,md,yml}]
++indent_size = 2
++indent_style = space
+-- 
+2.33.1
+

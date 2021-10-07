@@ -1,0 +1,105 @@
+From 0ca961931b5e5ac2b54ce0dc7a06c7f1db201ce0 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 13 Jul 2018 15:05:39 -0400
+Subject: [PATCH 05/15] Fix issue with badly determined hsl and rgb
+
+---
+ index.js                            | 16 ++++++++++------
+ test/basic.css                      |  1 +
+ test/basic.expect.css               |  1 +
+ test/basic.preserve-true.expect.css |  2 ++
+ 4 files changed, 14 insertions(+), 6 deletions(-)
+
+diff --git a/index.js b/index.js
+index 18e90cc..3769674 100644
+--- a/index.js
++++ b/index.js
+@@ -14,9 +14,9 @@ export default postcss.plugin('postcss-color-functional-notation', opts => {
+ 				ast.walkType('func', node => {
+ 					if (colorRegExp.test(node.value)) {
+ 						const children = node.nodes.slice(1, -1);
+-						const isFunctionalHSL = matchFunctionalHSL(children);
+-						const isFunctionalRGB1 = matchFunctionalRGB1(children);
+-						const isFunctionalRGB2 = matchFunctionalRGB2(children);
++						const isFunctionalHSL = matchFunctionalHSL(node, children);
++						const isFunctionalRGB1 = matchFunctionalRGB1(node, children);
++						const isFunctionalRGB2 = matchFunctionalRGB2(node, children);
+ 
+ 						if (isFunctionalHSL || isFunctionalRGB1 || isFunctionalRGB2) {
+ 							const slashNode = children[3];
+@@ -69,28 +69,32 @@ const alphaUnitMatch = /^%?$/i;
+ const calcFuncMatch = /^calc$/i;
+ const colorAnyRegExp = /(^|[^\w-])(hsla?|rgba?)\(/i;
+ const colorRegExp = /^(hsla?|rgba?)$/i;
++const hslishRegExp = /^hsla?$/i;
+ const hslRgbFuncMatch = /^(hsl|rgb)$/i;
+ const hslaRgbaFuncMatch = /^(hsla|rgba)$/i;
+ const hueUnitMatch = /^(deg|grad|rad|turn)?$/i;
++const rgbishRegExp = /^rgba?$/i;
+ const isAlphaValue = node => isCalc(node) || Object(node).type === 'number' && alphaUnitMatch.test(node.unit);
+ const isCalc = node => Object(node).type === 'func' && calcFuncMatch.test(node.value);
+ const isHue = node => isCalc(node) || Object(node).type === 'number' && hueUnitMatch.test(node.unit);
+ const isNumber = node => isCalc(node) || Object(node).type === 'number' && node.unit === '';
+ const isPercentage = node => isCalc(node) || Object(node).type === 'number' && (node.unit === '%' || node.unit === '' && node.value === '0');
++const isHslish = node => Object(node).type === 'func' && hslishRegExp.test(node.value);
+ const isHslRgb = node => Object(node).type === 'func' && hslRgbFuncMatch.test(node.value);
+ const isHslaRgba = node => Object(node).type === 'func' && hslaRgbaFuncMatch.test(node.value);
++const isRgbish = node => Object(node).type === 'func' && rgbishRegExp.test(node.value);
+ const isSlash = node => Object(node).type === 'operator' && node.value === '/';
+ const functionalHSLMatch = [isHue, isPercentage, isPercentage, isSlash, isAlphaValue];
+ const functionalRGB1Match = [isNumber, isNumber, isNumber, isSlash, isAlphaValue];
+ const functionalRGB2Match = [isPercentage, isPercentage, isPercentage, isSlash, isAlphaValue];
+ 
+-const matchFunctionalHSL = children => children.every(
++const matchFunctionalHSL = (node, children) => isHslish(node) && children.every(
+ 	(child, index) => typeof functionalHSLMatch[index] === 'function' && functionalHSLMatch[index](child)
+ );
+-const matchFunctionalRGB1 = children => children.every(
++const matchFunctionalRGB1 = (node, children) => isRgbish(node) && children.every(
+ 	(child, index) => typeof functionalRGB1Match[index] === 'function' && functionalRGB1Match[index](child)
+ );
+-const matchFunctionalRGB2 = children => children.every(
++const matchFunctionalRGB2 = (node, children) => isRgbish(node) && children.every(
+ 	(child, index) => typeof functionalRGB2Match[index] === 'function' && functionalRGB2Match[index](child)
+ );
+ 
+diff --git a/test/basic.css b/test/basic.css
+index 4dcca46..b334ca9 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -19,6 +19,7 @@
+ }
+ 
+ .test-hsl {
++	color: hsl(0 0% 100%);
+ 	color: hsl(120deg 100% 50%);
+ 	color: hsl(120 100% 50%);
+ 	color: hsl(120 100% 50% / 1);
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 9c0d84b..1da2148 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -19,6 +19,7 @@
+ }
+ 
+ .test-hsl {
++	color: hsl(0, 0%, 100%);
+ 	color: hsl(120deg, 100%, 50%);
+ 	color: hsl(120, 100%, 50%);
+ 	color: hsla(120, 100%, 50%, 1);
+diff --git a/test/basic.preserve-true.expect.css b/test/basic.preserve-true.expect.css
+index bb946f2..90a63f4 100644
+--- a/test/basic.preserve-true.expect.css
++++ b/test/basic.preserve-true.expect.css
+@@ -30,6 +30,8 @@
+ }
+ 
+ .test-hsl {
++	color: hsl(0, 0%, 100%);
++	color: hsl(0 0% 100%);
+ 	color: hsl(120deg, 100%, 50%);
+ 	color: hsl(120deg 100% 50%);
+ 	color: hsl(120, 100%, 50%);
+-- 
+2.33.1
+

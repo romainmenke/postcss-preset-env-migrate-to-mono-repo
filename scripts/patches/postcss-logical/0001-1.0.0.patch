@@ -1,0 +1,2011 @@
+From eb7ee123ce562a24b239c8ae3fee20958ae8f3d5 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 9 Aug 2017 13:00:41 -0400
+Subject: [PATCH 01/43] 1.0.0
+
+---
+ .appveyor.yml                              |  18 ++
+ .editorconfig                              |  15 ++
+ .gitignore                                 |   9 +
+ .tape.js                                   |  28 +++
+ .travis.yml                                |   9 +
+ CHANGELOG.md                               |   5 +
+ CONTRIBUTING.md                            |  65 +++++++
+ LICENSE.md                                 | 106 +++++++++++
+ README.md                                  | 193 +++++++++++++++++++
+ dependent-js/clone-decl.js                 |   7 +
+ dependent-js/clone-rule.js                 |  23 +++
+ dependent-js/match-inset-prefix.js         |   1 +
+ dependent-js/match-side.js                 |   1 +
+ dependent-js/match-size.js                 |   1 +
+ dependent-js/match-supported-properties.js |   1 +
+ dependent-js/transform-border.js           | 210 +++++++++++++++++++++
+ dependent-js/transform-float.js            |  21 +++
+ dependent-js/transform-inset.js            |  29 +++
+ dependent-js/transform-resize.js           |   5 +
+ dependent-js/transform-side.js             |  82 ++++++++
+ dependent-js/transform-size.js             |   8 +
+ dependent-js/transform-spacing.js          |  30 +++
+ dependent-js/transform-text-align.js       |  21 +++
+ index.js                                   |  57 ++++++
+ package.json                               |  55 ++++++
+ test/border.css                            |  52 +++++
+ test/border.expect.css                     | 177 +++++++++++++++++
+ test/float.css                             |   6 +
+ test/float.expect.css                      |  16 ++
+ test/inset.css                             |  26 +++
+ test/inset.expect.css                      | 121 ++++++++++++
+ test/margin.css                            |  32 ++++
+ test/margin.expect.css                     |  86 +++++++++
+ test/padding.css                           |  32 ++++
+ test/padding.expect.css                    |  86 +++++++++
+ test/resize.css                            |   4 +
+ test/resize.expect.css                     |   4 +
+ test/size.css                              |   4 +
+ test/size.expect.css                       |   4 +
+ test/text-align.css                        |   6 +
+ test/text-align.expect.css                 |  16 ++
+ 41 files changed, 1672 insertions(+)
+ create mode 100644 .appveyor.yml
+ create mode 100644 .editorconfig
+ create mode 100644 .gitignore
+ create mode 100644 .tape.js
+ create mode 100644 .travis.yml
+ create mode 100644 CHANGELOG.md
+ create mode 100644 CONTRIBUTING.md
+ create mode 100644 LICENSE.md
+ create mode 100644 README.md
+ create mode 100644 dependent-js/clone-decl.js
+ create mode 100644 dependent-js/clone-rule.js
+ create mode 100644 dependent-js/match-inset-prefix.js
+ create mode 100644 dependent-js/match-side.js
+ create mode 100644 dependent-js/match-size.js
+ create mode 100644 dependent-js/match-supported-properties.js
+ create mode 100644 dependent-js/transform-border.js
+ create mode 100644 dependent-js/transform-float.js
+ create mode 100644 dependent-js/transform-inset.js
+ create mode 100644 dependent-js/transform-resize.js
+ create mode 100644 dependent-js/transform-side.js
+ create mode 100644 dependent-js/transform-size.js
+ create mode 100644 dependent-js/transform-spacing.js
+ create mode 100644 dependent-js/transform-text-align.js
+ create mode 100644 index.js
+ create mode 100644 package.json
+ create mode 100644 test/border.css
+ create mode 100644 test/border.expect.css
+ create mode 100644 test/float.css
+ create mode 100644 test/float.expect.css
+ create mode 100644 test/inset.css
+ create mode 100644 test/inset.expect.css
+ create mode 100644 test/margin.css
+ create mode 100644 test/margin.expect.css
+ create mode 100644 test/padding.css
+ create mode 100644 test/padding.expect.css
+ create mode 100644 test/resize.css
+ create mode 100644 test/resize.expect.css
+ create mode 100644 test/size.css
+ create mode 100644 test/size.expect.css
+ create mode 100644 test/text-align.css
+ create mode 100644 test/text-align.expect.css
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+new file mode 100644
+index 0000000..d6b511f
+--- /dev/null
++++ b/.appveyor.yml
+@@ -0,0 +1,18 @@
++# https://www.appveyor.com/docs/appveyor-yml
++
++environment:
++  matrix:
++    - nodejs_version: 4.0
++
++version: "{build}"
++build: off
++deploy: off
++
++install:
++  - ps: Install-Product node $env:nodejs_version
++  - npm install --ignore-scripts
++
++test_script:
++  - node --version
++  - npm --version
++  - cmd: "npm test"
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..e06d798
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,15 @@
++root = true
++
++[*]
++charset = utf-8
++end_of_line = lf
++indent_style = tab
++insert_final_newline = true
++trim_trailing_whitespace = true
++
++[*.md]
++trim_trailing_whitespace = false
++
++[*.{json,md,yml}]
++indent_size = 2
++indent_style = space
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..f8952c9
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,9 @@
++node_modules
++.*
++!.appveyor.yml
++!.editorconfig
++!.gitignore
++!.tape.js
++!.travis.yml
++*.log*
++*.result.css
+diff --git a/.tape.js b/.tape.js
+new file mode 100644
+index 0000000..aaaff59
+--- /dev/null
++++ b/.tape.js
+@@ -0,0 +1,28 @@
++module.exports = {
++	'postcss-logical-properties': {
++		'border': {
++			message: 'supports logical "border" property values'
++		},
++		'float': {
++			message: 'supports logical "float" property values'
++		},
++		'inset': {
++			message: 'supports logical "inset" properties'
++		},
++		'margin': {
++			message: 'supports logical "margin" properties'
++		},
++		'padding': {
++			message: 'supports logical "padding" properties'
++		},
++		'resize': {
++			message: 'supports logical "resize" properties'
++		},
++		'size': {
++			message: 'supports logical "size" properties'
++		},
++		'text-align': {
++			message: 'supports logical "text-align" properties'
++		}
++	}
++};
+diff --git a/.travis.yml b/.travis.yml
+new file mode 100644
+index 0000000..c564664
+--- /dev/null
++++ b/.travis.yml
+@@ -0,0 +1,9 @@
++# https://docs.travis-ci.com/user/travis-lint
++
++language: node_js
++
++node_js:
++  - 4
++
++install:
++  - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100644
+index 0000000..5bdbfd8
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,5 @@
++# Changes to PostCSS Logical Properties
++
++### 1.0.0 (Aug 8, 2017)
++
++- Initial version
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+new file mode 100644
+index 0000000..ccd6aea
+--- /dev/null
++++ b/CONTRIBUTING.md
+@@ -0,0 +1,65 @@
++# Contributing to PostCSS Logical Properties
++
++You want to help? You rock! Now, take a moment to be sure your contributions
++make sense to everyone else.
++
++## Reporting Issues
++
++Found a problem? Want a new feature?
++
++- See if your issue or idea has [already been reported].
++- Provide a [reduced test case] or a [live example].
++
++Remember, a bug is a _demonstrable problem_ caused by _our_ code.
++
++## Submitting Pull Requests
++
++Pull requests are the greatest contributions, so be sure they are focused in
++scope and avoid unrelated commits.
++
++1. To begin; [fork this project], clone your fork, and add our upstream.
++   ```bash
++   # Clone your fork of the repo into the current directory
++   git clone git@github.com:YOUR_USER/postcss-logical-properties.git
++
++   # Navigate to the newly cloned directory
++   cd postcss-logical-properties
++
++   # Assign the original repo to a remote called "upstream"
++   git remote add upstream git@github.com:jonathantneal/postcss-logical-properties.git
++
++   # Install the tools necessary for testing
++   npm install
++   ```
++
++2. Create a branch for your feature or fix:
++   ```bash
++   # Move into a new branch for your feature
++   git checkout -b feature/thing
++   ```
++   ```bash
++   # Move into a new branch for your fix
++   git checkout -b fix/something
++   ```
++
++3. If your code follows our practices, then push your feature branch:
++   ```bash
++   # Test current code
++   npm test
++   ```
++   ```bash
++   # Push the branch for your new feature
++   git push origin feature/thing
++   ```
++   ```bash
++   # Or, push the branch for your update
++   git push origin update/something
++   ```
++
++That’s it! Now [open a pull request] with a clear title and description.
++
++[already been reported]: issues
++[fork this project]:     fork
++[live example]:          https://codepen.io/pen
++[open a pull request]:   https://help.github.com/articles/using-pull-requests/
++[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+diff --git a/LICENSE.md b/LICENSE.md
+new file mode 100644
+index 0000000..b5bc55c
+--- /dev/null
++++ b/LICENSE.md
+@@ -0,0 +1,106 @@
++# CC0 1.0 Universal
++
++## Statement of Purpose
++
++The laws of most jurisdictions throughout the world automatically confer
++exclusive Copyright and Related Rights (defined below) upon the creator and
++subsequent owner(s) (each and all, an “owner”) of an original work of
++authorship and/or a database (each, a “Work”).
++
++Certain owners wish to permanently relinquish those rights to a Work for the
++purpose of contributing to a commons of creative, cultural and scientific works
++(“Commons”) that the public can reliably and without fear of later claims of
++infringement build upon, modify, incorporate in other works, reuse and
++redistribute as freely as possible in any form whatsoever and for any purposes,
++including without limitation commercial purposes. These owners may contribute
++to the Commons to promote the ideal of a free culture and the further
++production of creative, cultural and scientific works, or to gain reputation or
++greater distribution for their Work in part through the use and efforts of
++others.
++
++For these and/or other purposes and motivations, and without any expectation of
++additional consideration or compensation, the person associating CC0 with a
++Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
++and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
++publicly distribute the Work under its terms, with knowledge of his or her
++Copyright and Related Rights in the Work and the meaning and intended legal
++effect of CC0 on those rights.
++
++1. Copyright and Related Rights. A Work made available under CC0 may be
++	 protected by copyright and related or neighboring rights (“Copyright and
++	 Related Rights”). Copyright and Related Rights include, but are not limited
++	 to, the following:
++	1. the right to reproduce, adapt, distribute, perform, display,
++		 communicate, and translate a Work;
++	2. moral rights retained by the original author(s) and/or performer(s);
++	3. publicity and privacy rights pertaining to a person’s image or likeness
++		 depicted in a Work;
++	4. rights protecting against unfair competition in regards to a Work,
++		 subject to the limitations in paragraph 4(i), below;
++	5. rights protecting the extraction, dissemination, use and reuse of data
++		 in a Work;
++	6. database rights (such as those arising under Directive 96/9/EC of the
++		 European Parliament and of the Council of 11 March 1996 on the legal
++		 protection of databases, and under any national implementation thereof,
++		 including any amended or successor version of such directive); and
++	7. other similar, equivalent or corresponding rights throughout the world
++		 based on applicable law or treaty, and any national implementations
++		 thereof.
++
++2. Waiver. To the greatest extent permitted by, but not in contravention of,
++applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++and Related Rights and associated claims and causes of action, whether now
++known or unknown (including existing as well as future claims and causes of
++action), in the Work (i) in all territories worldwide, (ii) for the maximum
++duration provided by applicable law or treaty (including future time
++extensions), (iii) in any current or future medium and for any number of
++copies, and (iv) for any purpose whatsoever, including without limitation
++commercial, advertising or promotional purposes (the “Waiver”). Affirmer makes
++the Waiver for the benefit of each member of the public at large and to the
++detriment of Affirmer’s heirs and successors, fully intending that such Waiver
++shall not be subject to revocation, rescission, cancellation, termination, or
++any other legal or equitable action to disrupt the quiet enjoyment of the Work
++by the public as contemplated by Affirmer’s express Statement of Purpose.
++
++3. Public License Fallback. Should any part of the Waiver for any reason be
++judged legally invalid or ineffective under applicable law, then the Waiver
++shall be preserved to the maximum extent permitted taking into account
++Affirmer’s express Statement of Purpose. In addition, to the extent the Waiver
++is so judged Affirmer hereby grants to each affected person a royalty-free, non
++transferable, non sublicensable, non exclusive, irrevocable and unconditional
++license to exercise Affirmer’s Copyright and Related Rights in the Work (i) in
++all territories worldwide, (ii) for the maximum duration provided by applicable
++law or treaty (including future time extensions), (iii) in any current or
++future medium and for any number of copies, and (iv) for any purpose
++whatsoever, including without limitation commercial, advertising or promotional
++purposes (the “License”). The License shall be deemed effective as of the date
++CC0 was applied by Affirmer to the Work. Should any part of the License for any
++reason be judged legally invalid or ineffective under applicable law, such
++partial invalidity or ineffectiveness shall not invalidate the remainder of the
++License, and in such case Affirmer hereby affirms that he or she will not (i)
++exercise any of his or her remaining Copyright and Related Rights in the Work
++or (ii) assert any associated claims and causes of action with respect to the
++Work, in either case contrary to Affirmer’s express Statement of Purpose.
++
++4. Limitations and Disclaimers.
++		1. No trademark or patent rights held by Affirmer are waived, abandoned,
++			 surrendered, licensed or otherwise affected by this document.
++		2. Affirmer offers the Work as-is and makes no representations or
++			 warranties of any kind concerning the Work, express, implied, statutory
++			 or otherwise, including without limitation warranties of title,
++			 merchantability, fitness for a particular purpose, non infringement, or
++			 the absence of latent or other defects, accuracy, or the present or
++			 absence of errors, whether or not discoverable, all to the greatest
++			 extent permissible under applicable law.
++		3. Affirmer disclaims responsibility for clearing rights of other persons
++			 that may apply to the Work or any use thereof, including without
++			 limitation any person’s Copyright and Related Rights in the Work.
++			 Further, Affirmer disclaims responsibility for obtaining any necessary
++			 consents, permissions or other rights required for any use of the Work.
++		4. Affirmer understands and acknowledges that Creative Commons is not a
++			 party to this document and has no duty or obligation with respect to
++			 this CC0 or use of the Work.
++
++For more information, please see
++https://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..448fdad
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,193 @@
++# PostCSS Logical Properties [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
++
++[![NPM Version][npm-img]][npm-url]
++[![Linux Build Status][cli-img]][cli-url]
++[![Windows Build Status][win-img]][win-url]
++[![Gitter Chat][git-img]][git-url]
++
++[PostCSS Logical Properties] lets you use nearly 60 new [logical properties]
++and a half dozen flow-relative values in CSS.
++
++```css
++.banner {
++  color: #222222;
++  inset: logical 0 5px 10px;
++  padding-inline: 20px 40px;
++  resize: block;
++}
++
++/* used alongside postcss-nesting, postcss-dir-pseudo-class */
++
++.banner {
++  color: #222222;
++  top: 0; left: 5px; bottom: 10px; right: 5px;
++}
++
++[dir="ltr"] .banner {
++  padding-left: 20px; padding-right: 40px;
++}
++
++[dir="rtl"] .banner {
++  padding-right: 20px; padding-left: 40px;
++}
++
++.banner {
++  resize: vertical;
++}
++```
++
++These shorthand properties set values for physical properties by default.
++Specifying the `logical` keyboard at the beginning of the property value will
++transform the flow-relative values afterward into both physical LTR and RTL
++properties:
++
++#### Logical Borders
++
++- `border`, `border-block`, `border-block-start`, `border-block-end`,
++  `border-inline`, `border-inline-start`, `border-inline-end`, `border-start`,
++  `border-end`, `border-color`, `border-block-color`,
++  `border-block-start-color`, `border-block-end-color`, `border-inline-color`,
++  `border-inline-start-color`, `border-inline-end-color`, `border-start-color`,
++  `border-end-color`, `border-style`, `border-block-style`,
++  `border-block-start-style`, `border-block-end-style`, `border-inline-style`,
++  `border-inline-start-style`, `border-inline-end-style`, `border-start-style`,
++  `border-end-style`, `border-width`, `border-block-width`,
++  `border-block-start-width`, `border-block-end-width`, `border-inline-width`,
++  `border-inline-start-width`, `border-inline-end-width`, `border-start-width`,
++  `border-end-width`
++
++#### Logical Offsets
++
++- `inset`, `inset-block`, `inset-block-start`, `inset-block-end`,
++  `inset-inline`, `inset-inline-start`, `inset-inline-end`, `inset-start`,
++  `inset-end`
++
++#### Logical Margins
++
++- `margin`, `margin-block`, `margin-block-start`, `margin-block-end`,
++  `margin-inline`, `margin-inline-start`, `margin-inline-end`, `margin-start`,
++  `margin-end`
++
++#### Logical Paddings
++
++- `padding`, `padding-block`, `padding-block-start`, `padding-block-end`,
++  `padding-inline`, `padding-inline-start`, `padding-inline-end`,
++  `padding-start`, `padding-end`
++
++#### Logical Sizes
++
++- `block-size`, `inline-size`
++
++#### Flow-Relative Values
++
++- `float: inline-start`, `float: inline-end`, `text-align: start`,
++  `text-align: end`
++
++---
++
++[PostCSS Logical Properties] changes the selector weight of flow-relative
++declarations and requires at least one [dir] attribute in your HTML. If you
++don’t have any [dir] attributes, consider using the following JavaScript:
++
++```js
++// force at least one dir attribute (this can run at any time)
++document.documentElement.dir=document.documentElement.dir||'ltr';
++```
++
++## Usage
++
++Add [PostCSS Logical Properties] to your build tool:
++
++```bash
++npm install postcss-logical --save-dev
++```
++
++#### Node
++
++Use [PostCSS Logical Properties] to process your CSS:
++
++```js
++require('postcss-logical').process(YOUR_CSS);
++```
++
++#### PostCSS
++
++Add [PostCSS] to your build tool:
++
++```bash
++npm install postcss --save-dev
++```
++
++Use [PostCSS Logical Properties] as a plugin:
++
++```js
++postcss([
++  require('postcss-logical')()
++]).process(YOUR_CSS);
++```
++
++#### Gulp
++
++Add [Gulp PostCSS] to your build tool:
++
++```bash
++npm install gulp-postcss --save-dev
++```
++
++Use [PostCSS Logical Properties] in your Gulpfile:
++
++```js
++var postcss = require('gulp-postcss');
++
++gulp.task('css', function () {
++  return gulp.src('./src/*.css').pipe(
++    postcss([
++      require('postcss-logical')()
++    ])
++  ).pipe(
++    gulp.dest('.')
++  );
++});
++```
++
++#### Grunt
++
++Add [Grunt PostCSS] to your build tool:
++
++```bash
++npm install grunt-postcss --save-dev
++```
++
++Use [PostCSS Logical Properties] in your Gruntfile:
++
++```js
++grunt.loadNpmTasks('grunt-postcss');
++
++grunt.initConfig({
++  postcss: {
++    options: {
++      use: [
++        require('postcss-logical')()
++      ]
++    },
++    dist: {
++      src: '*.css'
++    }
++  }
++});
++```
++
++[npm-url]: https://www.npmjs.com/package/postcss-logical
++[npm-img]: https://img.shields.io/npm/v/postcss-logical.svg
++[cli-url]: https://travis-ci.org/jonathantneal/postcss-logical-properties
++[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-logical-properties.svg
++[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-logical-properties
++[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-logical-properties.svg
++[git-url]: https://gitter.im/postcss/postcss
++[git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
++
++[PostCSS Logical Properties]: https://github.com/jonathantneal/postcss-logical-properties
++[logical properties]: https://drafts.csswg.org/css-logical/
++[PostCSS]: https://github.com/postcss/postcss
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+diff --git a/dependent-js/clone-decl.js b/dependent-js/clone-decl.js
+new file mode 100644
+index 0000000..06e2a12
+--- /dev/null
++++ b/dependent-js/clone-decl.js
+@@ -0,0 +1,7 @@
++const matchSide = require('./match-side');
++const matchInsetPrefix = require('./match-inset-prefix');
++
++module.exports = (decl, suffix, value) => decl.clone({
++	prop: `${decl.prop.replace(matchSide, '$1')}${suffix}`.replace(matchInsetPrefix, ''),
++	value
++});
+diff --git a/dependent-js/clone-rule.js b/dependent-js/clone-rule.js
+new file mode 100644
+index 0000000..032213b
+--- /dev/null
++++ b/dependent-js/clone-rule.js
+@@ -0,0 +1,23 @@
++'use strict';
++
++const postcss = require('postcss');
++
++module.exports = (decl, dir) => {
++	let node = decl.parent;
++
++	while (node && 'rule' !== node.type) {
++		node = node.parent;
++	}
++
++	if (node) {
++		node = node.clone({
++			raws: {}
++		}).removeAll()
++	} else {
++		node = postcss.rule();
++	}
++
++	node.selector = `&:dir(${dir})`;
++
++	return node;
++};
+diff --git a/dependent-js/match-inset-prefix.js b/dependent-js/match-inset-prefix.js
+new file mode 100644
+index 0000000..0a6c302
+--- /dev/null
++++ b/dependent-js/match-inset-prefix.js
+@@ -0,0 +1 @@
++module.exports = /^inset-/i;
+diff --git a/dependent-js/match-side.js b/dependent-js/match-side.js
+new file mode 100644
+index 0000000..285a554
+--- /dev/null
++++ b/dependent-js/match-side.js
+@@ -0,0 +1 @@
++module.exports = /^(inset|margin|padding)(?:-(block|block-start|block-end|inline|inline-start|inline-end|start|end))$/i;
+diff --git a/dependent-js/match-size.js b/dependent-js/match-size.js
+new file mode 100644
+index 0000000..1514b4c
+--- /dev/null
++++ b/dependent-js/match-size.js
+@@ -0,0 +1 @@
++module.exports = /^(min-|max-)?(block|inline)-(size)$/i;
+diff --git a/dependent-js/match-supported-properties.js b/dependent-js/match-supported-properties.js
+new file mode 100644
+index 0000000..8c9eeb8
+--- /dev/null
++++ b/dependent-js/match-supported-properties.js
+@@ -0,0 +1 @@
++module.exports = /^(?:(inset|margin|padding)(?:-(block|block-start|block-end|inline|inline-start|inline-end|start|end))|(min-|max-)?(block|inline)-(size))$/i;
+diff --git a/dependent-js/transform-border.js b/dependent-js/transform-border.js
+new file mode 100644
+index 0000000..b2d7530
+--- /dev/null
++++ b/dependent-js/transform-border.js
+@@ -0,0 +1,210 @@
++const cloneRule = require('./clone-rule');
++
++const matchLogical = /^\s*logical\s+/i;
++const matchLogicalBorder = /^border(-width|-style|-color)?$/i;
++const matchLogicalBorderSide = /^border-(?:(width|style|color)-)?(block|block-start|block-end|inline|inline-start|inline-end|start|end)/i;
++
++// border
++module.exports['border'] = (decl, values) => {
++	const isLogical = matchLogical.test(values[0]);
++
++	if (isLogical) {
++		values[0] = values[0].replace(matchLogical, '');
++	}
++
++	return isLogical ? 1 === values.length
++		? decl.clone({
++			value: decl.value.replace(matchLogical, '')
++		})
++		: !values[3] || values[3] === values[1]
++			? [
++				decl.clone({
++					prop: `border-top${decl.prop.replace(matchLogicalBorder, '$1')}`,
++					value: values[0]
++				}),
++				decl.clone({
++					prop: `border-right${decl.prop.replace(matchLogicalBorder, '$1')}`,
++					value: values[3] || values[1] || values[0]
++				}),
++				decl.clone({
++					prop: `border-bottom${decl.prop.replace(matchLogicalBorder, '$1')}`,
++					value: values[2] || values[0]
++				}),
++				decl.clone({
++					prop: `border-left${decl.prop.replace(matchLogicalBorder, '$1')}`,
++					value: values[1] || values[0]
++				})
++			]
++			: [
++				cloneRule(decl, 'ltr').append([
++					decl.clone({
++						prop: `border-top${decl.prop.replace(matchLogicalBorder, '$1')}`,
++						value: values[0]
++					}),
++					decl.clone({
++						prop: `border-left${decl.prop.replace(matchLogicalBorder, '$1')}`,
++						value: values[1] || values[0]
++					}),
++					decl.clone({
++						prop: `border-bottom${decl.prop.replace(matchLogicalBorder, '$1')}`,
++						value: values[2] || values[0]
++					}),
++					decl.clone({
++						prop: `border-right${decl.prop.replace(matchLogicalBorder, '$1')}`,
++						value: values[3] || values[1] || values[0]
++					})
++				]),
++				cloneRule(decl, 'rtl').append([
++					decl.clone({
++						prop: `border-top${decl.prop.replace(matchLogicalBorder, '$1')}`,
++						value: values[0]
++					}),
++					decl.clone({
++						prop: `border-right${decl.prop.replace(matchLogicalBorder, '$1')}`,
++						value: values[1] || values[0]
++					}),
++					decl.clone({
++						prop: `border-bottom${decl.prop.replace(matchLogicalBorder, '$1')}`,
++						value: values[2] || values[0]
++					}),
++					decl.clone({
++						prop: `border-left${decl.prop.replace(matchLogicalBorder, '$1')}`,
++						value: values[3] || values[1] || values[0]
++					})
++				])
++			]
++		: null;
++};
++
++
++// border-block
++module.exports['border-block'] = (decl, values) => [
++	decl.clone({
++		prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++		value: values[0]
++	}),
++	decl.clone({
++		prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++		value: values[0]
++	})
++];
++
++// border-block-start
++module.exports['border-block-start'] = (decl) => {
++	decl.prop = 'border-top';
++};
++
++// border-block-end
++module.exports['border-block-end'] = (decl) => {
++	decl.prop = 'border-bottom';
++};
++
++// border-inline
++module.exports['border-inline'] = (decl, values) => 1 === values.length || 2 === values.length && values[0] === values[1]
++? [
++	decl.clone({
++		prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++		value: values[0]
++	}),
++	decl.clone({
++		prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++		value: values[1] || values[0]
++	})
++]
++: [
++	cloneRule(decl, 'ltr').append([
++		decl.clone({
++			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			value: values[0]
++		}),
++		decl.clone({
++			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			value: values[1] || values[0]
++		})
++	]),
++	cloneRule(decl, 'rtl').append([
++		decl.clone({
++			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			value: values[0]
++		}),
++		decl.clone({
++			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			value: values[1] || values[0]
++		})
++	])
++];
++
++// border-inline-start
++module.exports['border-inline-start'] = (decl) => [
++	cloneRule(decl, 'ltr').append(
++		decl.clone({
++			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$1')}`
++		})
++	),
++	cloneRule(decl, 'rtl').append(
++		decl.clone({
++			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$1')}`
++		})
++	)
++];
++
++// border-inline-end
++module.exports['border-inline-end'] = (decl) => [
++	cloneRule(decl, 'ltr').append(
++		decl.clone({
++			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$1')}`
++		})
++	),
++	cloneRule(decl, 'rtl').append(
++		decl.clone({
++			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$1')}`
++		})
++	)
++];
++
++// border-start
++module.exports['border-start'] = (decl, values) => [
++	cloneRule(decl, 'ltr').append([
++		decl.clone({
++			prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			value: values[0]
++		}),
++		decl.clone({
++			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			value: values[1] || values[0]
++		})
++	]),
++	cloneRule(decl, 'rtl').append([
++		decl.clone({
++			prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			value: values[0]
++		}),
++		decl.clone({
++			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			value: values[1] || values[0]
++		})
++	])
++];
++
++// border-end
++module.exports['border-end'] = (decl, values) => [
++	cloneRule(decl, 'ltr').append([decl.clone({
++			prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			value: values[0]
++		}),
++		decl.clone({
++			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			value: values[1] || values[0]
++		})
++	]),
++	cloneRule(decl, 'rtl').append([
++		decl.clone({
++			prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			value: values[0]
++		}),
++		decl.clone({
++			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			value: values[1] || values[0]
++		})
++	])
++];
+diff --git a/dependent-js/transform-float.js b/dependent-js/transform-float.js
+new file mode 100644
+index 0000000..8b1be7e
+--- /dev/null
++++ b/dependent-js/transform-float.js
+@@ -0,0 +1,21 @@
++const cloneRule = require('./clone-rule');
++
++module.exports = (decl) => /^inline-start$/i.test(decl.value)
++	? [
++		cloneRule(decl, 'ltr').append([
++			decl.clone({ value: 'left' })
++		]),
++		cloneRule(decl, 'rtl').append([
++			decl.clone({ value: 'right' })
++		])
++	]
++	: /^inline-end$/i.test(decl.value)
++		? [
++			cloneRule(decl, 'ltr').append([
++				decl.clone({ value: 'right' })
++			]),
++			cloneRule(decl, 'rtl').append([
++				decl.clone({ value: 'left' })
++			])
++		]
++		: null;
+diff --git a/dependent-js/transform-inset.js b/dependent-js/transform-inset.js
+new file mode 100644
+index 0000000..e4ce88d
+--- /dev/null
++++ b/dependent-js/transform-inset.js
+@@ -0,0 +1,29 @@
++const cloneRule = require('./clone-rule');
++
++module.exports = (decl, values) => 'logical' === values[0]
++	? !values[4] || values[2] === values[4]
++		? [
++			decl.clone({ prop: 'top', value: values[1] }),
++			decl.clone({ prop: 'left', value: values[2] || values[1] }),
++			decl.clone({ prop: 'bottom', value: values[3] || values[1] }),
++			decl.clone({ prop: 'right', value: values[4] || values[2] || values[1] })
++		] : [
++			cloneRule(decl, 'ltr').append([
++				decl.clone({ prop: 'top', value: values[1] }),
++				decl.clone({ prop: 'left', value: values[2] || values[1] }),
++				decl.clone({ prop: 'bottom', value: values[3] || values[1] }),
++				decl.clone({ prop: 'right', value: values[4] || values[2] || values[1] })
++			]),
++			cloneRule(decl, 'rtl').append([
++				decl.clone({ prop: 'top', value: values[1] }),
++				decl.clone({ prop: 'right', value: values[2] || values[1] }),
++				decl.clone({ prop: 'bottom', value: values[3] || values[1] }),
++				decl.clone({ prop: 'left', value: values[4] || values[2] || values[1] })
++			])
++		]
++	: [
++		decl.clone({ prop: 'top', value: values[0] }),
++		decl.clone({ prop: 'right', value: values[1] || values[0] }),
++		decl.clone({ prop: 'bottom', value: values[2] || values[0] }),
++		decl.clone({ prop: 'left', value: values[3] || values[1] || values[0] })
++	];
+diff --git a/dependent-js/transform-resize.js b/dependent-js/transform-resize.js
+new file mode 100644
+index 0000000..d48aa04
+--- /dev/null
++++ b/dependent-js/transform-resize.js
+@@ -0,0 +1,5 @@
++module.exports = (decl) => /^block$/i.test(decl.value)
++	? decl.clone({ value: 'vertical' })
++	: /^inline$/i.test(decl.value)
++		? decl.clone({ value: 'horizontal' })
++		: null;
+diff --git a/dependent-js/transform-side.js b/dependent-js/transform-side.js
+new file mode 100644
+index 0000000..c4a8b0b
+--- /dev/null
++++ b/dependent-js/transform-side.js
+@@ -0,0 +1,82 @@
++const cloneDecl = require('./clone-decl');
++const cloneRule = require('./clone-rule');
++const matchSide = require('./match-side');
++
++const matchInsetPrefix = require('./match-inset-prefix');
++
++// inset-block, margin-block, padding-block
++module.exports['block'] = (decl, values) => [
++	cloneDecl(decl, '-top', values[0]),
++	cloneDecl(decl, '-bottom', values[1] || values[0])
++];
++
++// inset-block-start, margin-block-start, padding-block-start
++module.exports['block-start'] = (decl) => {
++	decl.prop = decl.prop.replace(matchSide, '$1-top').replace(matchInsetPrefix, '');
++};
++
++// inset-block-end, margin-block-end, padding-block-end
++module.exports['block-end'] = (decl) => {
++	decl.prop = decl.prop.replace(matchSide, '$1-bottom').replace(matchInsetPrefix, '');
++};
++
++// inset-inline, margin-inline, padding-inline
++module.exports['inline'] = (decl, values) => 1 === values.length || 2 === values.length && values[0] === values[1]
++? [
++	cloneDecl(decl, '-left', values[0]),
++	cloneDecl(decl, '-right', values[1] || values[0])
++]
++: [
++	cloneRule(decl, 'ltr').append([
++		cloneDecl(decl, '-left', values[0]),
++		cloneDecl(decl, '-right', values[1] || values[0])
++	]),
++	cloneRule(decl, 'rtl').append([
++		cloneDecl(decl, '-right', values[0]),
++		cloneDecl(decl, '-left', values[1] || values[0])
++	]),
++];
++
++// inset-inline-start, margin-inline-start, padding-inline-start
++module.exports['inline-start'] = (decl) => [
++	cloneRule(decl, 'ltr').append(
++		cloneDecl(decl, '-left', decl.value)
++	),
++	cloneRule(decl, 'rtl').append(
++		cloneDecl(decl, '-right', decl.value)
++	)
++];
++
++// inset-inline-end, margin-inline-end, padding-inline-end
++module.exports['inline-end'] = (decl) => [
++	cloneRule(decl, 'ltr').append(
++		cloneDecl(decl, '-right', decl.value)
++	),
++	cloneRule(decl, 'rtl').append(
++		cloneDecl(decl, '-left', decl.value)
++	)
++];
++
++// inset-start, margin-start, padding-start
++module.exports['start'] = (decl, values) => [
++	cloneRule(decl, 'ltr').append([
++		cloneDecl(decl, '-top', values[0]),
++		cloneDecl(decl, '-left', values[1] || values[0])
++	]),
++	cloneRule(decl, 'rtl').append([
++		cloneDecl(decl, '-top', values[0]),
++		cloneDecl(decl, '-right', values[1] || values[0])
++	])
++];
++
++// inset-end, margin-end, padding-end
++module.exports['end'] = (decl, values) => [
++	cloneRule(decl, 'ltr').append([
++		cloneDecl(decl, '-bottom', values[0]),
++		cloneDecl(decl, '-right', values[1] || values[0])
++	]),
++	cloneRule(decl, 'rtl').append([
++		cloneDecl(decl, '-bottom', values[0]),
++		cloneDecl(decl, '-left', values[1] || values[0])
++	])
++];
+diff --git a/dependent-js/transform-size.js b/dependent-js/transform-size.js
+new file mode 100644
+index 0000000..17c89b3
+--- /dev/null
++++ b/dependent-js/transform-size.js
+@@ -0,0 +1,8 @@
++const matchSize = require('./match-size');
++
++module.exports = (decl) => {
++	decl.prop = decl.prop.replace(
++		matchSize,
++		($0, minmax, flow) => `${minmax||''}${'block' === flow ? 'height' : 'width'}`
++	);
++};
+diff --git a/dependent-js/transform-spacing.js b/dependent-js/transform-spacing.js
+new file mode 100644
+index 0000000..cbe4d4d
+--- /dev/null
++++ b/dependent-js/transform-spacing.js
+@@ -0,0 +1,30 @@
++const cloneRule = require('./clone-rule');
++
++module.exports = (decl, values) => 'logical' === values[0]
++	? !values[4] || values[4] === values[2]
++		? decl.clone({
++			value: decl.value.replace(/^\s*logical\s+/i, '')
++		})
++		: [
++			cloneRule(decl, 'ltr').append(
++				decl.clone({
++					value: [
++						values[1],
++						values[4] || values[2] || values[1],
++						values[3] || values[1],
++						values[2] || values[1]
++					].join(' ')
++				})
++			),
++			cloneRule(decl, 'rtl').append(
++				decl.clone({
++					value: [
++						values[1],
++						values[2] || values[1],
++						values[3] || values[1],
++						values[4] || values[2] || values[1]
++					].join(' ')
++				})
++			)
++		]
++	: null;
+diff --git a/dependent-js/transform-text-align.js b/dependent-js/transform-text-align.js
+new file mode 100644
+index 0000000..7dc40d3
+--- /dev/null
++++ b/dependent-js/transform-text-align.js
+@@ -0,0 +1,21 @@
++const cloneRule = require('./clone-rule');
++
++module.exports = (decl) => /^start$/i.test(decl.value)
++	? [
++		cloneRule(decl, 'ltr').append([
++			decl.clone({ value: 'left' })
++		]),
++		cloneRule(decl, 'rtl').append([
++			decl.clone({ value: 'right' })
++		])
++	]
++	: /^end$/i.test(decl.value)
++		? [
++			cloneRule(decl, 'ltr').append([
++				decl.clone({ value: 'right' })
++			]),
++			cloneRule(decl, 'rtl').append([
++				decl.clone({ value: 'left' })
++			])
++		]
++		: null;
+diff --git a/index.js b/index.js
+new file mode 100644
+index 0000000..de65b86
+--- /dev/null
++++ b/index.js
+@@ -0,0 +1,57 @@
++// tooling
++const postcss = require('postcss');
++
++// internal tooling
++const transformBorder = require('./dependent-js/transform-border');
++const transformFloat = require('./dependent-js/transform-float');
++const transformInset = require('./dependent-js/transform-inset');
++const transformResize = require('./dependent-js/transform-resize');
++const transformSide = require('./dependent-js/transform-side');
++const transformSize = require('./dependent-js/transform-size');
++const transformSpacing = require('./dependent-js/transform-spacing');
++const transformTextAlign = require('./dependent-js/transform-text-align');
++const matchSupportedProperties = require('./dependent-js/match-supported-properties');
++
++// supported transforms
++const transforms = {
++	'border': transformBorder['border'], 'border-width': transformBorder['border'], 'border-style': transformBorder['border'], 'border-color': transformBorder['border'],
++	'border-block': transformBorder['border-block'], 'border-block-width': transformBorder['border-block'], 'border-block-style': transformBorder['border-block'], 'border-block-color': transformBorder['border-block'],
++	'border-block-start': transformBorder['border-block-start'], 'border-block-start-width': transformBorder['border-block-start'], 'border-block-start-style': transformBorder['border-block-start'], 'border-block-start-color': transformBorder['border-block-start'],
++	'border-block-end': transformBorder['border-block-end'], 'border-block-end-width': transformBorder['border-block-end'], 'border-block-end-style': transformBorder['border-block-end'], 'border-block-end-color': transformBorder['border-block-end'],
++	'border-inline': transformBorder['border-inline'], 'border-inline-width': transformBorder['border-inline'], 'border-inline-style': transformBorder['border-inline'], 'border-inline-color': transformBorder['border-inline'],
++	'border-inline-start': transformBorder['border-inline-start'], 'border-inline-start-width': transformBorder['border-inline-start'], 'border-inline-start-style': transformBorder['border-inline-start'], 'border-inline-start-color': transformBorder['border-inline-start'],
++	'border-inline-end': transformBorder['border-inline-end'], 'border-inline-end-width': transformBorder['border-inline-end'], 'border-inline-end-style': transformBorder['border-inline-end'], 'border-inline-end-color': transformBorder['border-inline-end'],
++	'border-start': transformBorder['border-start'], 'border-start-width': transformBorder['border-start'], 'border-start-style': transformBorder['border-start'], 'border-start-color': transformBorder['border-start'],
++	'border-end': transformBorder['border-end'], 'border-end-width': transformBorder['border-end'], 'border-end-style': transformBorder['border-end'], 'border-end-color': transformBorder['border-end'],
++	'inset': transformInset,
++	'margin': transformSpacing,
++	'padding': transformSpacing,
++	'block': transformSide['block'],
++	'block-start': transformSide['block-start'],
++	'block-end': transformSide['block-end'],
++	'inline': transformSide['inline'],
++	'inline-start': transformSide['inline-start'],
++	'inline-end': transformSide['inline-end'],
++	'start': transformSide['start'],
++	'end': transformSide['end'],
++	'float': transformFloat,
++	'resize': transformResize,
++	'size': transformSize,
++	'text-align': transformTextAlign
++};
++
++// plugin
++module.exports = postcss.plugin('postcss-logical-properties', () => (root) => {
++	root.walkDecls((decl) => {
++		const values = postcss.list.split(decl.value, /^border/i.test(decl.prop) ? '/' : ' ');
++		const prop = decl.prop.replace(matchSupportedProperties, '$2$5').toLowerCase();
++
++		if (prop in transforms) {
++			const replacer = transforms[prop](decl, values);
++
++			if (replacer) {
++				decl.replaceWith(replacer);
++			}
++		}
++	});
++});
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..c78ef9a
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,55 @@
++{
++  "name": "postcss-logical",
++  "version": "1.0.0",
++  "description": "Use logical properties and flow-relative values in CSS",
++  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
++  "license": "CC0-1.0",
++  "repository": "jonathantneal/postcss-logical-properties",
++  "homepage": "https://github.com/jonathantneal/postcss-logical-properties#readme",
++  "bugs": "https://github.com/jonathantneal/postcss-logical-properties/issues",
++  "main": "index.js",
++  "files": [
++    "index.js",
++    "dependent-js"
++  ],
++  "scripts": {
++    "clean": "git clean -X -d -f",
++    "prepublish": "npm test",
++    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
++    "test:js": "eslint *.js --cache --ignore-pattern .gitignore",
++    "test:tape": "postcss-tape"
++  },
++  "engines": {
++    "node": ">=4.0.0"
++  },
++  "dependencies": {
++    "postcss": "^6.0.8"
++  },
++  "devDependencies": {
++    "eslint": "^4.3.0",
++    "eslint-config-dev": "2.0.0",
++    "postcss-tape": "2.0.1",
++    "pre-commit": "^1.2.2"
++  },
++  "eslintConfig": {
++    "extends": "dev"
++  },
++  "keywords": [
++    "postcss",
++    "css",
++    "postcss-plugin",
++    "logical",
++    "flow",
++    "relative",
++    "ltr",
++    "rtl",
++    "properties",
++    "values",
++    "directions",
++    "dirs",
++    "inline",
++    "block",
++    "start",
++    "end"
++  ]
++}
+diff --git a/test/border.css b/test/border.css
+new file mode 100644
+index 0000000..08341b0
+--- /dev/null
++++ b/test/border.css
+@@ -0,0 +1,52 @@
++test-border {
++	border: logical 1px solid black;
++	border: logical 2px solid black / 3px solid black;
++	border: logical 4px solid black / 5px solid black / 6px solid black;
++	border: logical 7px solid black / 8px solid black / 9px solid black / 8px solid black;
++	border-inline: 10px solid black;
++	border-inline: 11px solid black / 11px solid black;
++	border-block: 12px solid black;
++	border-block: 13px solid black / 14px solid black;
++	border-block-start: 15px solid black;
++	border-block-end: 16px solid black;
++}
++
++test-flowing-border {
++	border: inherit;
++	border: logical 1px solid black / 2px solid black / 3px solid black / 4px solid black;
++	border: inherit;
++	border-inline: 5px solid black / 6px solid black;
++	border: inherit;
++	border-inline-start: 7px solid black;
++	border: inherit;
++	border-inline-end: 8px solid black;
++	border: inherit;
++	border-start: 9px solid black;
++	border: inherit;
++	border-start: 10px solid black / 11px solid black;
++	border: inherit;
++	border-end: 12px solid black;
++	border: inherit;
++	border-end: 13px solid black / 14px solid black;
++	border: inherit;
++}
++
++test-flowing-border-color {
++	border-color: inherit;
++	border-color: logical 1px solid black / 2px solid black / 3px solid black / 4px solid black;
++	border-color: inherit;
++	border-inline-color: 5px solid black / 6px solid black;
++	border-color: inherit;
++	border-inline-start-color: 7px solid black;
++	border-color: inherit;
++	border-inline-end-color: 8px solid black;
++	border-color: inherit;
++	border-start-color: 9px solid black;
++	border-color: inherit;
++	border-start-color: 10px solid black / 11px solid black;
++	border-color: inherit;
++	border-end-color: 12px solid black;
++	border-color: inherit;
++	border-end-color: 13px solid black / 14px solid black;
++	border-color: inherit;
++}
+diff --git a/test/border.expect.css b/test/border.expect.css
+new file mode 100644
+index 0000000..0d9d5c0
+--- /dev/null
++++ b/test/border.expect.css
+@@ -0,0 +1,177 @@
++test-border {
++	border: 1px solid black;
++	border-top: 2px solid black;
++	border-right: 3px solid black;
++	border-bottom: 2px solid black;
++	border-left: 3px solid black;
++	border-top: 4px solid black;
++	border-right: 5px solid black;
++	border-bottom: 6px solid black;
++	border-left: 5px solid black;
++	border-top: 7px solid black;
++	border-right: 8px solid black;
++	border-bottom: 9px solid black;
++	border-left: 8px solid black;
++	border-left: 10px solid black;
++	border-right: 10px solid black;
++	border-left: 11px solid black;
++	border-right: 11px solid black;
++	border-top: 12px solid black;
++	border-bottom: 12px solid black;
++	border-top: 13px solid black;
++	border-bottom: 13px solid black;
++	border-top: 15px solid black;
++	border-bottom: 16px solid black;
++}
++
++test-flowing-border {
++	border: inherit;
++	&:dir(ltr) {
++	border-top: 1px solid black;
++	border-left: 2px solid black;
++	border-bottom: 3px solid black;
++	border-right: 4px solid black;
++	}
++	&:dir(rtl) {
++	border-top: 1px solid black;
++	border-right: 2px solid black;
++	border-bottom: 3px solid black;
++	border-left: 4px solid black;
++	}
++	border: inherit;
++	&:dir(ltr) {
++	border-left: 5px solid black;
++	border-right: 6px solid black;
++	}
++	&:dir(rtl) {
++	border-right: 5px solid black;
++	border-left: 6px solid black;
++	}
++	border: inherit;
++	&:dir(ltr) {
++	border-left-start: 7px solid black;
++	}
++	&:dir(rtl) {
++	border-right-start: 7px solid black;
++	}
++	border: inherit;
++	&:dir(ltr) {
++	border-right-end: 8px solid black;
++	}
++	&:dir(rtl) {
++	border-left-end: 8px solid black;
++	}
++	border: inherit;
++	&:dir(ltr) {
++	border-top: 9px solid black;
++	border-left: 9px solid black;
++	}
++	&:dir(rtl) {
++	border-top: 9px solid black;
++	border-right: 9px solid black;
++	}
++	border: inherit;
++	&:dir(ltr) {
++	border-top: 10px solid black;
++	border-left: 11px solid black;
++	}
++	&:dir(rtl) {
++	border-top: 10px solid black;
++	border-right: 11px solid black;
++	}
++	border: inherit;
++	&:dir(ltr) {
++	border-bottom: 12px solid black;
++	border-right: 12px solid black;
++	}
++	&:dir(rtl) {
++	border-bottom: 12px solid black;
++	border-left: 12px solid black;
++	}
++	border: inherit;
++	&:dir(ltr) {
++	border-bottom: 13px solid black;
++	border-right: 14px solid black;
++	}
++	&:dir(rtl) {
++	border-bottom: 13px solid black;
++	border-left: 14px solid black;
++	}
++	border: inherit;
++}
++
++test-flowing-border-color {
++	border-color: inherit;
++	&:dir(ltr) {
++	border-top-color: 1px solid black;
++	border-left-color: 2px solid black;
++	border-bottom-color: 3px solid black;
++	border-right-color: 4px solid black;
++	}
++	&:dir(rtl) {
++	border-top-color: 1px solid black;
++	border-right-color: 2px solid black;
++	border-bottom-color: 3px solid black;
++	border-left-color: 4px solid black;
++	}
++	border-color: inherit;
++	&:dir(ltr) {
++	border-left-color: 5px solid black;
++	border-right-color: 6px solid black;
++	}
++	&:dir(rtl) {
++	border-right-color: 5px solid black;
++	border-left-color: 6px solid black;
++	}
++	border-color: inherit;
++	&:dir(ltr) {
++	border-left-start-color: 7px solid black;
++	}
++	&:dir(rtl) {
++	border-right-start-color: 7px solid black;
++	}
++	border-color: inherit;
++	&:dir(ltr) {
++	border-right-end-color: 8px solid black;
++	}
++	&:dir(rtl) {
++	border-left-end-color: 8px solid black;
++	}
++	border-color: inherit;
++	&:dir(ltr) {
++	border-top-color: 9px solid black;
++	border-left-color: 9px solid black;
++	}
++	&:dir(rtl) {
++	border-top-color: 9px solid black;
++	border-right-color: 9px solid black;
++	}
++	border-color: inherit;
++	&:dir(ltr) {
++	border-top-color: 10px solid black;
++	border-left-color: 11px solid black;
++	}
++	&:dir(rtl) {
++	border-top-color: 10px solid black;
++	border-right-color: 11px solid black;
++	}
++	border-color: inherit;
++	&:dir(ltr) {
++	border-bottom-color: 12px solid black;
++	border-right-color: 12px solid black;
++	}
++	&:dir(rtl) {
++	border-bottom-color: 12px solid black;
++	border-left-color: 12px solid black;
++	}
++	border-color: inherit;
++	&:dir(ltr) {
++	border-bottom-color: 13px solid black;
++	border-right-color: 14px solid black;
++	}
++	&:dir(rtl) {
++	border-bottom-color: 13px solid black;
++	border-left-color: 14px solid black;
++	}
++	border-color: inherit;
++}
+diff --git a/test/float.css b/test/float.css
+new file mode 100644
+index 0000000..c6bc1a5
+--- /dev/null
++++ b/test/float.css
+@@ -0,0 +1,6 @@
++test-float {
++	float: left;
++	float: inline-start;
++	float: inline-end;
++	float: right;
++}
+diff --git a/test/float.expect.css b/test/float.expect.css
+new file mode 100644
+index 0000000..d2c5c40
+--- /dev/null
++++ b/test/float.expect.css
+@@ -0,0 +1,16 @@
++test-float {
++	float: left;
++	&:dir(ltr) {
++	float: left;
++	}
++	&:dir(rtl) {
++	float: right;
++	}
++	&:dir(ltr) {
++	float: right;
++	}
++	&:dir(rtl) {
++	float: left;
++	}
++	float: right;
++}
+diff --git a/test/inset.css b/test/inset.css
+new file mode 100644
+index 0000000..5e0c8ab
+--- /dev/null
++++ b/test/inset.css
+@@ -0,0 +1,26 @@
++test-inset {
++	inset: logical 1px;
++	inset: logical 2px 3px;
++	inset: logical 4px 5px 6px;
++	inset: logical 7px 8px 9px 8px;
++}
++
++test-flowing-inset {
++	inset: auto;
++	inset: logical 1px 2px 3px 4px;
++	inset: auto;
++	inset-inline: 5px 6px;
++	inset: auto;
++	inset-inline-start: 7px;
++	inset: auto;
++	inset-inline-end: 8px;
++	inset: auto;
++	inset-start: 9px;
++	inset: auto;
++	inset-start: 10px 11px;
++	inset: auto;
++	inset-end: 12px;
++	inset: auto;
++	inset-end: 13px 14px;
++	inset: auto;
++}
+diff --git a/test/inset.expect.css b/test/inset.expect.css
+new file mode 100644
+index 0000000..9be548e
+--- /dev/null
++++ b/test/inset.expect.css
+@@ -0,0 +1,121 @@
++test-inset {
++	top: 1px;
++	left: 1px;
++	bottom: 1px;
++	right: 1px;
++	top: 2px;
++	left: 3px;
++	bottom: 2px;
++	right: 3px;
++	top: 4px;
++	left: 5px;
++	bottom: 6px;
++	right: 5px;
++	top: 7px;
++	left: 8px;
++	bottom: 9px;
++	right: 8px;
++}
++
++test-flowing-inset {
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	&:dir(ltr) {
++	top: 1px;
++	left: 2px;
++	bottom: 3px;
++	right: 4px;
++	}
++	&:dir(rtl) {
++	top: 1px;
++	right: 2px;
++	bottom: 3px;
++	left: 4px;
++	}
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	&:dir(ltr) {
++	left: 5px;
++	right: 6px;
++	}
++	&:dir(rtl) {
++	right: 5px;
++	left: 6px;
++	}
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	&:dir(ltr) {
++	left: 7px;
++	}
++	&:dir(rtl) {
++	right: 7px;
++	}
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	&:dir(ltr) {
++	right: 8px;
++	}
++	&:dir(rtl) {
++	left: 8px;
++	}
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	&:dir(ltr) {
++	top: 9px;
++	left: 9px;
++	}
++	&:dir(rtl) {
++	top: 9px;
++	right: 9px;
++	}
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	&:dir(ltr) {
++	top: 10px;
++	left: 11px;
++	}
++	&:dir(rtl) {
++	top: 10px;
++	right: 11px;
++	}
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	&:dir(ltr) {
++	bottom: 12px;
++	right: 12px;
++	}
++	&:dir(rtl) {
++	bottom: 12px;
++	left: 12px;
++	}
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	&:dir(ltr) {
++	bottom: 13px;
++	right: 14px;
++	}
++	&:dir(rtl) {
++	bottom: 13px;
++	left: 14px;
++	}
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++}
+diff --git a/test/margin.css b/test/margin.css
+new file mode 100644
+index 0000000..15c1739
+--- /dev/null
++++ b/test/margin.css
+@@ -0,0 +1,32 @@
++test-margin {
++	margin: logical 1px;
++	margin: logical 2px 3px;
++	margin: logical 4px 5px 6px;
++	margin: logical 7px 8px 9px 8px;
++	margin-inline: 10px;
++	margin-inline: 11px 11px;
++	margin-block: 12px;
++	margin-block: 13px 14px;
++	margin-block-start: 15px;
++	margin-block-end: 16px;
++}
++
++test-flowing-margin {
++	margin: auto;
++	margin: logical 1px 2px 3px 4px;
++	margin: auto;
++	margin-inline: 5px 6px;
++	margin: auto;
++	margin-inline-start: 7px;
++	margin: auto;
++	margin-inline-end: 8px;
++	margin: auto;
++	margin-start: 9px;
++	margin: auto;
++	margin-start: 10px 11px;
++	margin: auto;
++	margin-end: 12px;
++	margin: auto;
++	margin-end: 13px 14px;
++	margin: auto;
++}
+diff --git a/test/margin.expect.css b/test/margin.expect.css
+new file mode 100644
+index 0000000..fb8b4a8
+--- /dev/null
++++ b/test/margin.expect.css
+@@ -0,0 +1,86 @@
++test-margin {
++	margin: 1px;
++	margin: 2px 3px;
++	margin: 4px 5px 6px;
++	margin: 7px 8px 9px 8px;
++	margin-left: 10px;
++	margin-right: 10px;
++	margin-left: 11px;
++	margin-right: 11px;
++	margin-top: 12px;
++	margin-bottom: 12px;
++	margin-top: 13px;
++	margin-bottom: 14px;
++	margin-top: 15px;
++	margin-bottom: 16px;
++}
++
++test-flowing-margin {
++	margin: auto;
++	&:dir(ltr) {
++	margin: 1px 4px 3px 2px;
++	}
++	&:dir(rtl) {
++	margin: 1px 2px 3px 4px;
++	}
++	margin: auto;
++	&:dir(ltr) {
++	margin-left: 5px;
++	margin-right: 6px;
++	}
++	&:dir(rtl) {
++	margin-right: 5px;
++	margin-left: 6px;
++	}
++	margin: auto;
++	&:dir(ltr) {
++	margin-left: 7px;
++	}
++	&:dir(rtl) {
++	margin-right: 7px;
++	}
++	margin: auto;
++	&:dir(ltr) {
++	margin-right: 8px;
++	}
++	&:dir(rtl) {
++	margin-left: 8px;
++	}
++	margin: auto;
++	&:dir(ltr) {
++	margin-top: 9px;
++	margin-left: 9px;
++	}
++	&:dir(rtl) {
++	margin-top: 9px;
++	margin-right: 9px;
++	}
++	margin: auto;
++	&:dir(ltr) {
++	margin-top: 10px;
++	margin-left: 11px;
++	}
++	&:dir(rtl) {
++	margin-top: 10px;
++	margin-right: 11px;
++	}
++	margin: auto;
++	&:dir(ltr) {
++	margin-bottom: 12px;
++	margin-right: 12px;
++	}
++	&:dir(rtl) {
++	margin-bottom: 12px;
++	margin-left: 12px;
++	}
++	margin: auto;
++	&:dir(ltr) {
++	margin-bottom: 13px;
++	margin-right: 14px;
++	}
++	&:dir(rtl) {
++	margin-bottom: 13px;
++	margin-left: 14px;
++	}
++	margin: auto;
++}
+diff --git a/test/padding.css b/test/padding.css
+new file mode 100644
+index 0000000..9f040e0
+--- /dev/null
++++ b/test/padding.css
+@@ -0,0 +1,32 @@
++test-padding {
++	padding: logical 1px;
++	padding: logical 2px 3px;
++	padding: logical 4px 5px 6px;
++	padding: logical 7px 8px 9px 8px;
++	padding-inline: 10px;
++	padding-inline: 11px 11px;
++	padding-block: 12px;
++	padding-block: 13px 14px;
++	padding-block-start: 15px;
++	padding-block-end: 16px;
++}
++
++test-flowing-padding {
++	padding: auto;
++	padding: logical 1px 2px 3px 4px;
++	padding: auto;
++	padding-inline: 5px 6px;
++	padding: auto;
++	padding-inline-start: 7px;
++	padding: auto;
++	padding-inline-end: 8px;
++	padding: auto;
++	padding-start: 9px;
++	padding: auto;
++	padding-start: 10px 11px;
++	padding: auto;
++	padding-end: 12px;
++	padding: auto;
++	padding-end: 13px 14px;
++	padding: auto;
++}
+diff --git a/test/padding.expect.css b/test/padding.expect.css
+new file mode 100644
+index 0000000..0819c1e
+--- /dev/null
++++ b/test/padding.expect.css
+@@ -0,0 +1,86 @@
++test-padding {
++	padding: 1px;
++	padding: 2px 3px;
++	padding: 4px 5px 6px;
++	padding: 7px 8px 9px 8px;
++	padding-left: 10px;
++	padding-right: 10px;
++	padding-left: 11px;
++	padding-right: 11px;
++	padding-top: 12px;
++	padding-bottom: 12px;
++	padding-top: 13px;
++	padding-bottom: 14px;
++	padding-top: 15px;
++	padding-bottom: 16px;
++}
++
++test-flowing-padding {
++	padding: auto;
++	&:dir(ltr) {
++	padding: 1px 4px 3px 2px;
++	}
++	&:dir(rtl) {
++	padding: 1px 2px 3px 4px;
++	}
++	padding: auto;
++	&:dir(ltr) {
++	padding-left: 5px;
++	padding-right: 6px;
++	}
++	&:dir(rtl) {
++	padding-right: 5px;
++	padding-left: 6px;
++	}
++	padding: auto;
++	&:dir(ltr) {
++	padding-left: 7px;
++	}
++	&:dir(rtl) {
++	padding-right: 7px;
++	}
++	padding: auto;
++	&:dir(ltr) {
++	padding-right: 8px;
++	}
++	&:dir(rtl) {
++	padding-left: 8px;
++	}
++	padding: auto;
++	&:dir(ltr) {
++	padding-top: 9px;
++	padding-left: 9px;
++	}
++	&:dir(rtl) {
++	padding-top: 9px;
++	padding-right: 9px;
++	}
++	padding: auto;
++	&:dir(ltr) {
++	padding-top: 10px;
++	padding-left: 11px;
++	}
++	&:dir(rtl) {
++	padding-top: 10px;
++	padding-right: 11px;
++	}
++	padding: auto;
++	&:dir(ltr) {
++	padding-bottom: 12px;
++	padding-right: 12px;
++	}
++	&:dir(rtl) {
++	padding-bottom: 12px;
++	padding-left: 12px;
++	}
++	padding: auto;
++	&:dir(ltr) {
++	padding-bottom: 13px;
++	padding-right: 14px;
++	}
++	&:dir(rtl) {
++	padding-bottom: 13px;
++	padding-left: 14px;
++	}
++	padding: auto;
++}
+diff --git a/test/resize.css b/test/resize.css
+new file mode 100644
+index 0000000..1503859
+--- /dev/null
++++ b/test/resize.css
+@@ -0,0 +1,4 @@
++test-resize {
++	resize: block;
++	resize: inline;
++}
+diff --git a/test/resize.expect.css b/test/resize.expect.css
+new file mode 100644
+index 0000000..d9cf49b
+--- /dev/null
++++ b/test/resize.expect.css
+@@ -0,0 +1,4 @@
++test-resize {
++	resize: vertical;
++	resize: horizontal;
++}
+diff --git a/test/size.css b/test/size.css
+new file mode 100644
+index 0000000..f30df39
+--- /dev/null
++++ b/test/size.css
+@@ -0,0 +1,4 @@
++test-size {
++	block-size: auto;
++	inline-size: auto;
++}
+diff --git a/test/size.expect.css b/test/size.expect.css
+new file mode 100644
+index 0000000..ed73402
+--- /dev/null
++++ b/test/size.expect.css
+@@ -0,0 +1,4 @@
++test-size {
++	height: auto;
++	width: auto;
++}
+diff --git a/test/text-align.css b/test/text-align.css
+new file mode 100644
+index 0000000..950d748
+--- /dev/null
++++ b/test/text-align.css
+@@ -0,0 +1,6 @@
++test-text-align {
++	text-align: left;
++	text-align: start;
++	text-align: end;
++	text-align: right;
++}
+diff --git a/test/text-align.expect.css b/test/text-align.expect.css
+new file mode 100644
+index 0000000..605981c
+--- /dev/null
++++ b/test/text-align.expect.css
+@@ -0,0 +1,16 @@
++test-text-align {
++	text-align: left;
++	&:dir(ltr) {
++	text-align: left;
++	}
++	&:dir(rtl) {
++	text-align: right;
++	}
++	&:dir(ltr) {
++	text-align: right;
++	}
++	&:dir(rtl) {
++	text-align: left;
++	}
++	text-align: right;
++}
+-- 
+2.33.1
+

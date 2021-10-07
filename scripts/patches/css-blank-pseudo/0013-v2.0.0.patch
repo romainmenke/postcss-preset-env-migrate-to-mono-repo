@@ -1,0 +1,40 @@
+From 0c624acddf3d361efeac731974e142b9d9bc8d97 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 16 Sep 2021 10:54:23 -0400
+Subject: [PATCH 13/13] v2.0.0
+
+---
+ CHANGELOG.md | 5 +++++
+ package.json | 2 +-
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index ec2b2c0..33b1bda 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to CSS Blank Pseudo
+ 
++### 2.0.0 (September 16, 2021)
++
++- Changed: Supports PostCSS 8.3+ (major).
++- Changed: Supports Node 10+ (major).
++
+ ### 1.0.0 (June 10, 2019)
+ 
+ - Updated: `postcss` to 7.0.16 (patch)
+diff --git a/package.json b/package.json
+index e0a4992..c00782e 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "css-blank-pseudo",
+-  "version": "1.0.0",
++  "version": "2.0.0",
+   "description": "Style form elements when they are empty",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

@@ -1,0 +1,25 @@
+From a534ff7f8d7981ba17910628b5047e579ebd3283 Mon Sep 17 00:00:00 2001
+From: in-in <in-in@users.noreply.github.com>
+Date: Tue, 9 Jul 2019 07:22:03 +0300
+Subject: [PATCH 74/84] Add link to list of IDs
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index e14b57e..3c4ba5c 100644
+--- a/README.md
++++ b/README.md
+@@ -141,7 +141,7 @@ features.
+ 
+ The `features` option enables or disables specific polyfills by ID. Passing
+ `true` to a specific feature ID will enable its polyfill, while passing `false`
+-will disable it.
++will disable it. [List of IDs](https://github.com/csstools/postcss-preset-env/blob/master/src/lib/plugins-by-id.js#L36)
+ 
+ ```js
+ postcssPresetEnv({
+-- 
+2.33.1
+

@@ -1,0 +1,24 @@
+From d18eca1f5665eec77b8ed68bff4bc6727cab77a9 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 16 Sep 2021 11:13:53 -0400
+Subject: [PATCH 17/17] 2.0.0
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 882da32..3cfb401 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "css-has-pseudo",
+-  "version": "1.0.0",
++  "version": "2.0.0",
+   "description": "Style elements relative to other elements in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

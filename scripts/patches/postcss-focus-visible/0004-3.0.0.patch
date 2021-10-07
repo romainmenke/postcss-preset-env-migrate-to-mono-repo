@@ -1,0 +1,501 @@
+From fc74d538f6b67a78ce144c0668252b5e3104184a Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 7 Apr 2018 22:34:27 -0400
+Subject: [PATCH 04/15] 3.0.0
+
+---
+ .gitignore                        |  2 +-
+ .rollup.js                        |  5 ++-
+ .tape.js                          | 10 ++++--
+ CHANGELOG.md                      |  5 +++
+ README.md                         | 48 ++++++++++++++++++++++++-----
+ index.js                          | 15 +++++++--
+ package.json                      | 18 +++++------
+ test/basic.expect.css             | 21 +++++++++++++
+ test/basic.preserve.expect.css    | 27 ++++++++++++++++
+ test/basic.replacewith.expect.css | 51 ++++++++++++++++++++++---------
+ test/basic.replacewith.result.css | 51 ++++++++++++++++++++++---------
+ test/basic.result.css             | 21 +++++++++++++
+ 12 files changed, 219 insertions(+), 55 deletions(-)
+ create mode 100644 test/basic.preserve.expect.css
+
+diff --git a/.gitignore b/.gitignore
+index 6832ce8..de73e5a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,5 +1,5 @@
+ node_modules
+-index.bundle.js
++index.*.js
+ package-lock.json
+ *.log*
+ *.result.css
+diff --git a/.rollup.js b/.rollup.js
+index 7f4e231..0436758 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -2,7 +2,10 @@ import babel from 'rollup-plugin-babel';
+ 
+ export default {
+ 	input: 'index.js',
+-	output: { file: 'index.bundle.js', format: 'cjs' },
++	output: [
++		{ file: 'index.cjs.js', format: 'cjs' },
++		{ file: 'index.es.js', format: 'es' }
++	],
+ 	plugins: [
+ 		babel({
+ 			presets: [
+diff --git a/.tape.js b/.tape.js
+index b94e24d..7dc366f 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -4,9 +4,15 @@ module.exports = {
+ 			message: 'supports basic usage'
+ 		},
+ 		'basic:replacewith': {
+-			message: 'supports { replaceWith: "[data-focus-visible-added]" } usage',
++			message: 'supports { replaceWith: "[focus-visible]" } usage',
+ 			options: {
+-				replaceWith: '[data-focus-visible-added]'
++				replaceWith: '[focus-visible]'
++			}
++		},
++		'basic:preserve': {
++			message: 'supports { preserve: false } usage',
++			options: {
++				preserve: false
+ 			}
+ 		}
+ 	}
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 0aab1e9..aca919c 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Focus Visible
+ 
++### 3.0.0 (April 7, 2018)
++
++- Changed: default functionality to preserve the original rule
++- Added: `preserve` option to preserve the original rule using `:focus-visible`
++
+ ### 2.0.0 (February 17, 2018)
+ 
+ - Changed `:focus-ring` to `:focus-visible` per the specification
+diff --git a/README.md b/README.md
+index 81cc2f6..d27dc5f 100644
+--- a/README.md
++++ b/README.md
+@@ -5,9 +5,11 @@
+ [![Windows Build Status][win-img]][win-url]
+ [![Gitter Chat][git-img]][git-url]
+ 
+-[PostCSS Focus Visible] lets you use the `:focus-visible` pseudo-selector in
++[PostCSS Focus Visible] lets you use the `:focus-visible` pseudo-class in
+ CSS, following the [Selectors Level 4 specification].
+ 
++It is the companion to the [focus-visible polyfill].
++
+ ```css
+ :focus:not(:focus-visible) {
+   outline: none;
+@@ -18,12 +20,17 @@ CSS, following the [Selectors Level 4 specification].
+ :focus:not(.focus-visible) {
+   outline: none;
+ }
++
++:focus:not(:focus-visible) {
++  outline: none;
++}
+ ```
+ 
+-[PostCSS Focus Visible] replaces the `:focus-visible` pseudo-selector with a
+-`.focus-visible` class selector, the same selector used by the
+-[focus-visible polyfill]. The replacement selector can be changed using the
+-`replaceWith` option.
++[PostCSS Focus Visible] duplicates rules using the `:focus-visible` pseudo-class
++with a `.focus-visible` class selector, the same selector used by the
++[focus-visible polyfill]. This replacement selector can be changed using the
++`replaceWith` option. Also, the preservation of the original `:focus-visible`
++rule can be disabled using the `preserve` option.
+ 
+ ## Usage
+ 
+@@ -148,13 +155,34 @@ grunt.initConfig({
+ 
+ ## Options
+ 
++### preserve
++
++The `preserve` option defines whether the original selector should remain. By
++default, the original selector is preserved.
++
++```js
++focusVisible({ preserve: false });
++```
++
++```css
++:focus:not(:focus-visible) {
++  outline: none;
++}
++
++/* becomes */
++
++:focus:not(.focus-visible) {
++  outline: none;
++}
++```
++
+ ### replaceWith
+ 
+ The `replaceWith` option defines the selector to replace `:focus-visible`. By
+ default, the replacement selector is `.focus-visible`.
+ 
+ ```js
+-focusVisible({ replaceWith: '[data-focus-visible-added]' });
++focusVisible({ replaceWith: '[focus-visible]' });
+ ```
+ 
+ ```css
+@@ -164,7 +192,11 @@ focusVisible({ replaceWith: '[data-focus-visible-added]' });
+ 
+ /* becomes */
+ 
+-:focus:not([data-focus-visible-added]) {
++:focus:not([focus-visible]) {
++  outline: none;
++}
++
++:focus:not(:focus-visible) {
+   outline: none;
+ }
+ ```
+@@ -176,7 +208,7 @@ focusVisible({ replaceWith: '[data-focus-visible-added]' });
+ [win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-focus-visible
+ [win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-focus-visible.svg
+ [git-url]: https://gitter.im/postcss/postcss
+-[git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
++[git-img]: https://img.shields.io/badge/support-chat-blue.svg
+ 
+ [focus-visible polyfill]: https://github.com/WICG/focus-visible
+ [Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+diff --git a/index.js b/index.js
+index 03358ab..64486ad 100644
+--- a/index.js
++++ b/index.js
+@@ -1,15 +1,24 @@
+ import postcss from 'postcss';
+ 
+-const focusVisibleSelectorRegExp = /:focus-visible([^\w-]|$)/gi;
++const selectorRegExp = /:focus-visible([^\w-]|$)/gi;
+ 
+ export default postcss.plugin('postcss-focus-visible', opts => {
+ 	const replaceWith = String(Object(opts).replaceWith || '.focus-visible');
++	const preserve = Boolean('preserve' in Object(opts) ? opts.preserve : true);
+ 
+ 	return root => {
+-		root.walkRules(focusVisibleSelectorRegExp, rule => {
+-			rule.selector = rule.selector.replace(focusVisibleSelectorRegExp, ($0, $1) => {
++		root.walkRules(selectorRegExp, rule => {
++			const selector = rule.selector.replace(selectorRegExp, ($0, $1) => {
+ 				return `${replaceWith}${$1}`;
+ 			});
++
++			const clone = rule.clone({ selector });
++
++			if (preserve) {
++				rule.before(clone);
++			} else {
++				rule.replaceWith(clone);
++			}
+ 		});
+ 	};
+ });
+diff --git a/package.json b/package.json
+index e155e8b..f39687e 100644
+--- a/package.json
++++ b/package.json
+@@ -1,23 +1,22 @@
+ {
+   "name": "postcss-focus-visible",
+-  "version": "2.0.0",
++  "version": "3.0.0",
+   "description": "Use the :focus-visible pseudo-selector in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+   "repository": "jonathantneal/postcss-focus-visible",
+   "homepage": "https://github.com/jonathantneal/postcss-focus-visible#readme",
+   "bugs": "https://github.com/jonathantneal/postcss-focus-visible/issues",
+-  "main": "index.bundle.js",
+-  "module": "index.js",
++  "main": "index.cjs.js",
++  "module": "index.es.js",
+   "files": [
+-    "index.js",
+-    "index.bundle.js"
++    "index.cjs.js",
++    "index.es.js"
+   ],
+   "scripts": {
+     "prepublishOnly": "npm test",
+     "pretest": "rollup -c .rollup.js --silent",
+-    "test": "echo 'Running tests...'; npm run test:ec && npm run test:js && npm run test:tape",
+-    "test:ec": "echint --ignore index.bundle.js test",
++    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+     "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+@@ -31,12 +30,11 @@
+     "babel-core": "^6.26",
+     "babel-eslint": "^8.2",
+     "babel-preset-env": "^1.6",
+-    "echint": "^4.0",
+-    "eslint": "^4.18",
++    "eslint": "^4.19",
+     "eslint-config-dev": "2.0",
+     "postcss-tape": "2.2",
+     "pre-commit": "^1.2",
+-    "rollup": "^0.56",
++    "rollup": "^0.57",
+     "rollup-plugin-babel": "^3.0"
+   },
+   "eslintConfig": {
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 6a85671..0dfd32b 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -2,6 +2,10 @@
+ 	order: 1;
+ }
+ 
++:focus-visible {
++	order: 1;
++}
++
+ .focus-visible,
+ .focus-visible test,
+ test .focus-visible,
+@@ -19,6 +23,23 @@ test :matches(test .focus-visible .focus-visible test) test {
+ 	order: 2;
+ }
+ 
++:focus-visible,
++:focus-visible test,
++test :focus-visible,
++test test:focus-visible,
++test :focus-visible test,
++test test:focus-visible test,
++test :focus-visible :focus-visible test,
++test :matches(:focus-visible) test,
++test :matches(:focus-visible test) test,
++test :matches(test :focus-visible) test,
++test :matches(test test:focus-visible) test,
++test :matches(test :focus-visible test) test,
++test :matches(test test:focus-visible test) test,
++test :matches(test :focus-visible :focus-visible test) test {
++	order: 2;
++}
++
+ :ignore-focus-visible,
+ :focus-visible-ignore,
+ :ignorefocus-visible,
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+new file mode 100644
+index 0000000..6a85671
+--- /dev/null
++++ b/test/basic.preserve.expect.css
+@@ -0,0 +1,27 @@
++.focus-visible {
++	order: 1;
++}
++
++.focus-visible,
++.focus-visible test,
++test .focus-visible,
++test test.focus-visible,
++test .focus-visible test,
++test test.focus-visible test,
++test .focus-visible .focus-visible test,
++test :matches(.focus-visible) test,
++test :matches(.focus-visible test) test,
++test :matches(test .focus-visible) test,
++test :matches(test test.focus-visible) test,
++test :matches(test .focus-visible test) test,
++test :matches(test test.focus-visible test) test,
++test :matches(test .focus-visible .focus-visible test) test {
++	order: 2;
++}
++
++:ignore-focus-visible,
++:focus-visible-ignore,
++:ignorefocus-visible,
++:focus-visibleignore {
++	order: 3;
++}
+diff --git a/test/basic.replacewith.expect.css b/test/basic.replacewith.expect.css
+index a37c668..10a0675 100644
+--- a/test/basic.replacewith.expect.css
++++ b/test/basic.replacewith.expect.css
+@@ -1,21 +1,42 @@
+-[data-focus-visible-added] {
++[focus-visible] {
+ 	order: 1;
+ }
+ 
+-[data-focus-visible-added],
+-[data-focus-visible-added] test,
+-test [data-focus-visible-added],
+-test test[data-focus-visible-added],
+-test [data-focus-visible-added] test,
+-test test[data-focus-visible-added] test,
+-test [data-focus-visible-added] [data-focus-visible-added] test,
+-test :matches([data-focus-visible-added]) test,
+-test :matches([data-focus-visible-added] test) test,
+-test :matches(test [data-focus-visible-added]) test,
+-test :matches(test test[data-focus-visible-added]) test,
+-test :matches(test [data-focus-visible-added] test) test,
+-test :matches(test test[data-focus-visible-added] test) test,
+-test :matches(test [data-focus-visible-added] [data-focus-visible-added] test) test {
++:focus-visible {
++	order: 1;
++}
++
++[focus-visible],
++[focus-visible] test,
++test [focus-visible],
++test test[focus-visible],
++test [focus-visible] test,
++test test[focus-visible] test,
++test [focus-visible] [focus-visible] test,
++test :matches([focus-visible]) test,
++test :matches([focus-visible] test) test,
++test :matches(test [focus-visible]) test,
++test :matches(test test[focus-visible]) test,
++test :matches(test [focus-visible] test) test,
++test :matches(test test[focus-visible] test) test,
++test :matches(test [focus-visible] [focus-visible] test) test {
++	order: 2;
++}
++
++:focus-visible,
++:focus-visible test,
++test :focus-visible,
++test test:focus-visible,
++test :focus-visible test,
++test test:focus-visible test,
++test :focus-visible :focus-visible test,
++test :matches(:focus-visible) test,
++test :matches(:focus-visible test) test,
++test :matches(test :focus-visible) test,
++test :matches(test test:focus-visible) test,
++test :matches(test :focus-visible test) test,
++test :matches(test test:focus-visible test) test,
++test :matches(test :focus-visible :focus-visible test) test {
+ 	order: 2;
+ }
+ 
+diff --git a/test/basic.replacewith.result.css b/test/basic.replacewith.result.css
+index a37c668..10a0675 100644
+--- a/test/basic.replacewith.result.css
++++ b/test/basic.replacewith.result.css
+@@ -1,21 +1,42 @@
+-[data-focus-visible-added] {
++[focus-visible] {
+ 	order: 1;
+ }
+ 
+-[data-focus-visible-added],
+-[data-focus-visible-added] test,
+-test [data-focus-visible-added],
+-test test[data-focus-visible-added],
+-test [data-focus-visible-added] test,
+-test test[data-focus-visible-added] test,
+-test [data-focus-visible-added] [data-focus-visible-added] test,
+-test :matches([data-focus-visible-added]) test,
+-test :matches([data-focus-visible-added] test) test,
+-test :matches(test [data-focus-visible-added]) test,
+-test :matches(test test[data-focus-visible-added]) test,
+-test :matches(test [data-focus-visible-added] test) test,
+-test :matches(test test[data-focus-visible-added] test) test,
+-test :matches(test [data-focus-visible-added] [data-focus-visible-added] test) test {
++:focus-visible {
++	order: 1;
++}
++
++[focus-visible],
++[focus-visible] test,
++test [focus-visible],
++test test[focus-visible],
++test [focus-visible] test,
++test test[focus-visible] test,
++test [focus-visible] [focus-visible] test,
++test :matches([focus-visible]) test,
++test :matches([focus-visible] test) test,
++test :matches(test [focus-visible]) test,
++test :matches(test test[focus-visible]) test,
++test :matches(test [focus-visible] test) test,
++test :matches(test test[focus-visible] test) test,
++test :matches(test [focus-visible] [focus-visible] test) test {
++	order: 2;
++}
++
++:focus-visible,
++:focus-visible test,
++test :focus-visible,
++test test:focus-visible,
++test :focus-visible test,
++test test:focus-visible test,
++test :focus-visible :focus-visible test,
++test :matches(:focus-visible) test,
++test :matches(:focus-visible test) test,
++test :matches(test :focus-visible) test,
++test :matches(test test:focus-visible) test,
++test :matches(test :focus-visible test) test,
++test :matches(test test:focus-visible test) test,
++test :matches(test :focus-visible :focus-visible test) test {
+ 	order: 2;
+ }
+ 
+diff --git a/test/basic.result.css b/test/basic.result.css
+index 6a85671..0dfd32b 100644
+--- a/test/basic.result.css
++++ b/test/basic.result.css
+@@ -2,6 +2,10 @@
+ 	order: 1;
+ }
+ 
++:focus-visible {
++	order: 1;
++}
++
+ .focus-visible,
+ .focus-visible test,
+ test .focus-visible,
+@@ -19,6 +23,23 @@ test :matches(test .focus-visible .focus-visible test) test {
+ 	order: 2;
+ }
+ 
++:focus-visible,
++:focus-visible test,
++test :focus-visible,
++test test:focus-visible,
++test :focus-visible test,
++test test:focus-visible test,
++test :focus-visible :focus-visible test,
++test :matches(:focus-visible) test,
++test :matches(:focus-visible test) test,
++test :matches(test :focus-visible) test,
++test :matches(test test:focus-visible) test,
++test :matches(test :focus-visible test) test,
++test :matches(test test:focus-visible test) test,
++test :matches(test :focus-visible :focus-visible test) test {
++	order: 2;
++}
++
+ :ignore-focus-visible,
+ :focus-visible-ignore,
+ :ignorefocus-visible,
+-- 
+2.33.1
+

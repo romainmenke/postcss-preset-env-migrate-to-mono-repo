@@ -1,0 +1,27 @@
+From 76c1ff6dc2702f4d13a0fe659426cc810a4b8e35 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 22 May 2018 09:57:37 -0400
+Subject: [PATCH 27/34] Update README.md cssdb links
+
+---
+ README.md | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/README.md b/README.md
+index 4109695..a044cce 100644
+--- a/README.md
++++ b/README.md
+@@ -242,8 +242,8 @@ article h3:dir(ltr) {
+ 
+ [cli-img]: https://img.shields.io/travis/jonathantneal/postcss-dir-pseudo-class.svg
+ [cli-url]: https://travis-ci.org/jonathantneal/postcss-dir-pseudo-class
+-[css-img]: https://jonathantneal.github.io/cssdb/badge/dir-pseudo-class.svg
+-[css-url]: https://jonathantneal.github.io/cssdb/#dir-pseudo-class
++[css-img]: https://cssdb.org/badge/dir-pseudo-class.svg
++[css-url]: https://cssdb.org/#dir-pseudo-class
+ [git-img]: https://img.shields.io/badge/support-chat-blue.svg
+ [git-url]: https://gitter.im/postcss/postcss
+ [npm-img]: https://img.shields.io/npm/v/postcss-dir-pseudo-class.svg
+-- 
+2.33.1
+

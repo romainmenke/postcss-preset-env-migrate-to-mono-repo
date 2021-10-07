@@ -1,0 +1,288 @@
+From 9645af4169ef6933154e0591d042136fc254a5b0 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 4 Nov 2018 11:39:13 -0500
+Subject: [PATCH 03/12] 3.0.0
+
+---
+ CHANGELOG.md          |  5 +++++
+ README.md             | 42 +++++++++++++++++++++++++++++++++++++++++-
+ package.json          |  4 +++-
+ src/browser.js        | 39 ++++++++++++++++++++++++---------------
+ src/postcss.js        |  2 +-
+ test/basic.expect.css | 21 +++++++++++++++++++++
+ test/basic.result.css | 21 +++++++++++++++++++++
+ 7 files changed, 116 insertions(+), 18 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 9e83229..7d21e33 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to Prefers Color Scheme
+ 
++### 3.0.0 (November 4, 2018)
++
++- Preserve `prefers-color-scheme` queries by default for non-JS environments
++- Remove `prefers-color-scheme` queries on the frontend for JS environments
++
+ ### 2.0.0 (November 3, 2018)
+ 
+ - The client library now returns an object with various features, including:
+diff --git a/README.md b/README.md
+index c35ba8c..14065a1 100644
+--- a/README.md
++++ b/README.md
+@@ -44,6 +44,13 @@ body {
+   }
+ }
+ 
++@media (prefers-color-scheme: dark) {
++  :root {
++    --site-bgcolor: #1b1b1b;
++    --site-color: #fff;
++  }
++}
++
+ body {
+   background-color: var(--site-bgcolor, #f9f9f9);
+   color: var(--site-color, #111);
+@@ -91,6 +98,11 @@ initPrefersColorScheme()
+ Internet Explorer 9+ without any polyfills.
+ [See it for yourself.](https://app.crossbrowsertesting.com/public/i76b092cd2b52b86/screenshots/z25c0ccdfcc9c9b8956f?size=medium&type=windowed)
+ 
++To maintain compatibility with browsers supporting `prefers-color-scheme`, the
++library will remove `prefers-color-scheme` media queries in favor of the
++cross-browser compatible `color-index` media queries. This ensures a seemless
++experience when JavaScript is unable to run.
++
+ ---
+ 
+ ## Browser Usage
+@@ -172,6 +184,34 @@ instructions for:
+ | [Node](INSTALL.md#node) | [Webpack](INSTALL.md#webpack) | [Create React App](INSTALL.md#create-react-app) | [Gulp](INSTALL.md#gulp) | [Grunt](INSTALL.md#grunt) |
+ | --- | --- | --- | --- | --- |
+ 
++### Options
++
++#### preserve
++
++The `preserve` option determines whether the original `prefers-color-scheme`
++query will be preserved or removed. By default, it is preserved.
++
++
++```js
++require('css-prefers-color-scheme/postcss')({ preserve: false });
++```
++
++```css
++@media (prefers-color-scheme: dark) {
++  body {
++    background-color: black;
++  }
++}
++
++/* becomes */
++
++@media (color-index: 48) {
++  body {
++    background-color: black;
++  }
++}
++```
++
+ ---
+ 
+ ## How does it work?
+@@ -201,7 +241,7 @@ to activate “light mode” specific CSS.
+ ```
+ 
+ These valid queries are accessible to `document.styleSheet`, so no css parsing
+-is required to use this library, which is how the script is only 482 bytes.
++is required to use this library, which is how the script is only 539 bytes.
+ 
+ ## Why does the fallback work this way?
+ 
+diff --git a/package.json b/package.json
+index 070beba..93d27e7 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "css-prefers-color-scheme",
+-  "version": "2.0.0",
++  "version": "3.0.0",
+   "description": "Use light and dark color schemes in all browsers",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -14,7 +14,9 @@
+     "browser.js.map",
+     "browser.min.js",
+     "index.mjs",
++    "index.mjs.map",
+     "index.js",
++    "index.js.map",
+     "postcss.js",
+     "postcss.mjs"
+   ],
+diff --git a/src/browser.js b/src/browser.js
+index dba0990..337f2b4 100644
+--- a/src/browser.js
++++ b/src/browser.js
+@@ -1,4 +1,5 @@
+-const colorIndexRegExp = /((?:not )?all and )?(\(color-index:\s*(22|48|70)\))/i;
++const colorIndexRegExp = /((?:not )?all and )?(\(color-index: *(22|48|70)\))/i;
++const prefersColorSchemeRegExp = /prefers-color-scheme:/i;
+ 
+ const prefersColorSchemeInit = initialColorScheme => {
+ 	const mediaQueryString = '(prefers-color-scheme: dark)';
+@@ -21,20 +22,28 @@ const prefersColorSchemeInit = initialColorScheme => {
+ 			}
+ 		}
+ 
+-		[].forEach.call(document.styleSheets, styleSheet => {
+-			[].forEach.call(styleSheet.cssRules, cssRule => {
+-				const mediaMatch = (Object(cssRule.media).mediaText || '').match(colorIndexRegExp);
+-
+-				if (mediaMatch) {
+-					cssRule.media.mediaText = (
+-						(/^dark$/i.test(colorScheme)
+-							? mediaMatch[3] === '48'
+-						: /^light$/i.test(colorScheme)
+-							? mediaMatch[3] === '70'
+-						: mediaMatch[3] === '22')
+-							? 'not all and '
+-						: ''
+-					) + cssRule.media.mediaText.replace(colorIndexRegExp, '$2');
++		[].forEach.call(document.styleSheets || [], styleSheet => {
++			[].forEach.call(styleSheet.cssRules || [], cssRule => {
++				const colorSchemeMatch = prefersColorSchemeRegExp.test(Object(cssRule.media).mediaText);
++
++				if (colorSchemeMatch) {
++					const index = [].indexOf.call(cssRule.parentStyleSheet.cssRules, cssRule);
++
++					cssRule.parentStyleSheet.deleteRule(index);
++				} else {
++					const colorIndexMatch = (Object(cssRule.media).mediaText || '').match(colorIndexRegExp);
++
++					if (colorIndexMatch) {
++						cssRule.media.mediaText = (
++							(/^dark$/i.test(colorScheme)
++								? colorIndexMatch[3] === '48'
++							: /^light$/i.test(colorScheme)
++								? colorIndexMatch[3] === '70'
++							: colorIndexMatch[3] === '22')
++								? 'not all and '
++							: ''
++						) + cssRule.media.mediaText.replace(colorIndexRegExp, '$2');
++					}
+ 				}
+ 			});
+ 		});
+diff --git a/src/postcss.js b/src/postcss.js
+index cf92ab1..8038d0f 100644
+--- a/src/postcss.js
++++ b/src/postcss.js
+@@ -6,7 +6,7 @@ const colorIndexByStyle = { dark: 48, light: 70, 'no-preference': 22 };
+ const prefersInterfaceReplacer = ($0, style) => `(color-index: ${colorIndexByStyle[style.toLowerCase()]})`;
+ 
+ export default postcss.plugin('postcss-prefers-color-scheme', opts => {
+-	const preserve = 'preserve' in Object(opts) ? opts.preserve : false;
++	const preserve = 'preserve' in Object(opts) ? opts.preserve : true;
+ 
+ 	return root => {
+ 		root.walkAtRules(mediaRegExp, atRule => {
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 4915583..cd2d47a 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -5,6 +5,13 @@
+ 	}
+ }
+ 
++@media (prefers-color-scheme: no-preference) {
++	:root {
++		--site-bgcolor: #f9f9f9;
++		--site-color: #111;
++	}
++}
++
+ @media (color-index: 48) {
+ 	:root {
+ 		--site-bgcolor: #1b1b1b;
+@@ -12,6 +19,13 @@
+ 	}
+ }
+ 
++@media (prefers-color-scheme: dark) {
++	:root {
++		--site-bgcolor: #1b1b1b;
++		--site-color: #fff;
++	}
++}
++
+ @media (color-index: 70) {
+ 	:root {
+ 		--site-bgcolor: #fff;
+@@ -19,6 +33,13 @@
+ 	}
+ }
+ 
++@media (prefers-color-scheme: light) {
++	:root {
++		--site-bgcolor: #fff;
++		--site-color: #222;
++	}
++}
++
+ body {
+ 	background-color: var(--site-bgcolor, #f9f9f9);
+ 	color: var(--site-color, #111);
+diff --git a/test/basic.result.css b/test/basic.result.css
+index 4915583..cd2d47a 100644
+--- a/test/basic.result.css
++++ b/test/basic.result.css
+@@ -5,6 +5,13 @@
+ 	}
+ }
+ 
++@media (prefers-color-scheme: no-preference) {
++	:root {
++		--site-bgcolor: #f9f9f9;
++		--site-color: #111;
++	}
++}
++
+ @media (color-index: 48) {
+ 	:root {
+ 		--site-bgcolor: #1b1b1b;
+@@ -12,6 +19,13 @@
+ 	}
+ }
+ 
++@media (prefers-color-scheme: dark) {
++	:root {
++		--site-bgcolor: #1b1b1b;
++		--site-color: #fff;
++	}
++}
++
+ @media (color-index: 70) {
+ 	:root {
+ 		--site-bgcolor: #fff;
+@@ -19,6 +33,13 @@
+ 	}
+ }
+ 
++@media (prefers-color-scheme: light) {
++	:root {
++		--site-bgcolor: #fff;
++		--site-color: #222;
++	}
++}
++
+ body {
+ 	background-color: var(--site-bgcolor, #f9f9f9);
+ 	color: var(--site-color, #111);
+-- 
+2.33.1
+

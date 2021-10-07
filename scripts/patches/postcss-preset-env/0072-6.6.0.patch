@@ -1,0 +1,161 @@
+From 55f118a75e642dd233f35eabf42f4ec22fa2595b Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 28 Feb 2019 10:41:14 -0500
+Subject: [PATCH 72/84] 6.6.0
+
+---
+ .travis.yml    |  1 -
+ CHANGELOG.md   | 15 +++++++++++++++
+ package.json   | 29 +++++++++++++++--------------
+ src/postcss.js | 27 ++++++++++++---------------
+ 4 files changed, 42 insertions(+), 30 deletions(-)
+
+diff --git a/.travis.yml b/.travis.yml
+index 2a28c6c..08a68cc 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -8,7 +8,6 @@ os:
+   - osx
+ 
+ node_js:
+-  - node
+   - 10
+   - 8
+   - 6
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 5a56eb5..f7b3147 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,20 @@
+ # Changes to PostCSS Preset Env
+ 
++### 6.6.0 (February 28, 2019)
++
++- Moved browserslist detection from using each input file per process to using
++  the working directory on intialization, as was implied by the documentation.
++  If fixing this previously undocumented behavior causes any harm to existing
++  projects, it can be easily rolled back in a subsequent patch. For the
++  majority of projects — those with a singular browserslist configuration and
++  potentially many individually processed CSS files — we should expect reported
++  build times around 35 seconds to drop to less than 2 seconds.
++- Updated `browserslist` to 4.4.2 (minor)
++- Updated `autoprefixer` to 9.4.9 (patch)
++- Updated `caniuse-lite` to 1.0.30000939 (patch)
++- Updated `postcss` to 7.0.14 (patch)
++- Updated `postcss-attribute-case-insensitive` to 4.0.1 (patch)
++
+ ### 6.5.0 (December 12, 2018)
+ 
+ - Added `css-blank-pseudo` polyfill
+diff --git a/package.json b/package.json
+index 6f0337f..3ffdb6c 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-preset-env",
+-  "version": "6.5.0",
++  "version": "6.6.0",
+   "description": "Convert modern CSS into something browsers understand",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -16,8 +16,9 @@
+     "index.mjs.map"
+   ],
+   "scripts": {
++    "build": "rollup -c .rollup.js --silent",
+     "prepublishOnly": "npm test",
+-    "pretest": "rollup -c .rollup.js --silent",
++    "pretest:tape": "npm run build",
+     "test": "npm run test:js && npm run test:tape",
+     "test:js": "eslint src/*.js src/lib/*.js src/patch/*.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+@@ -26,15 +27,15 @@
+     "node": ">=6.0.0"
+   },
+   "dependencies": {
+-    "autoprefixer": "^9.4.2",
+-    "browserslist": "^4.3.5",
+-    "caniuse-lite": "^1.0.30000918",
++    "autoprefixer": "^9.4.9",
++    "browserslist": "^4.4.2",
++    "caniuse-lite": "^1.0.30000939",
+     "css-blank-pseudo": "^0.1.4",
+     "css-has-pseudo": "^0.10.0",
+     "css-prefers-color-scheme": "^3.1.1",
+     "cssdb": "^4.3.0",
+-    "postcss": "^7.0.6",
+-    "postcss-attribute-case-insensitive": "^4.0.0",
++    "postcss": "^7.0.14",
++    "postcss-attribute-case-insensitive": "^4.0.1",
+     "postcss-color-functional-notation": "^2.0.1",
+     "postcss-color-gray": "^5.0.0",
+     "postcss-color-hex-alpha": "^5.0.2",
+@@ -65,16 +66,16 @@
+     "postcss-selector-not": "^4.0.0"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.2.0",
+-    "@babel/preset-env": "^7.2.0",
++    "@babel/core": "^7.3.4",
++    "@babel/preset-env": "^7.3.4",
+     "babel-eslint": "^10.0.1",
+-    "eslint": "^5.10.0",
++    "eslint": "^5.14.1",
+     "eslint-config-dev": "^2.0.0",
+-    "postcss-simple-vars": "^5.0.1",
+-    "postcss-tape": "^3.0.0-rc.2",
++    "postcss-simple-vars": "^5.0.2",
++    "postcss-tape": "^4.0.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.67.4",
+-    "rollup-plugin-babel": "^4.1.0"
++    "rollup": "^1.3.2",
++    "rollup-plugin-babel": "^4.3.2"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+diff --git a/src/postcss.js b/src/postcss.js
+index 671854c..39d22b2 100644
+--- a/src/postcss.js
++++ b/src/postcss.js
+@@ -83,24 +83,21 @@ export default postcss.plugin('postcss-preset-env', opts => {
+ 		})
+ 	);
+ 
+-	return (root, result) => {
+-		// browsers supported by the configuration
+-		const supportedBrowsers = browserslist(browsers, {
+-			path: result.root.source && result.root.source.input && result.root.source.input.file,
+-			ignoreUnknownVersions: true
+-		});
++	// browsers supported by the configuration
++	const supportedBrowsers = browserslist(browsers, { ignoreUnknownVersions: true });
+ 
+-		// features supported by the stage and browsers
+-		const supportedFeatures = stagedFeatures.filter(
+-			feature => supportedBrowsers.some(
+-				supportedBrowser => browserslist(feature.browsers, {
+-					ignoreUnknownVersions: true
+-				}).some(
+-					polyfillBrowser => polyfillBrowser === supportedBrowser
+-				)
++	// features supported by the stage and browsers
++	const supportedFeatures = stagedFeatures.filter(
++		feature => supportedBrowsers.some(
++			supportedBrowser => browserslist(feature.browsers, {
++				ignoreUnknownVersions: true
++			}).some(
++				polyfillBrowser => polyfillBrowser === supportedBrowser
+ 			)
+-		);
++		)
++	);
+ 
++	return (root, result) => {
+ 		// polyfills run in execution order
+ 		const polyfills = supportedFeatures.reduce(
+ 			(promise, feature) => promise.then(
+-- 
+2.33.1
+

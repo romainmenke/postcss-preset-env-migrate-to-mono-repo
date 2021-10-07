@@ -1,0 +1,60 @@
+From c02b74e2ce0c9f3610d1f41f96217dfdca42d299 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 17 Nov 2018 09:00:42 -0500
+Subject: [PATCH 02/13] 0.1.1
+
+---
+ CHANGELOG.md |  6 +++++-
+ package.json | 13 +++++++------
+ 2 files changed, 12 insertions(+), 7 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index dced96e..c8588fb 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to CSS Blank Pseudo
+ 
+-### 1.0.0 (November 17, 2018)
++### 0.1.1 (November 17, 2018)
++
++- Update documentation
++
++### 0.1.0 (November 17, 2018)
+ 
+ - Initial version
+diff --git a/package.json b/package.json
+index 09fc443..5de3613 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "css-blank-pseudo",
+-  "version": "0.1.0",
++  "version": "0.1.1",
+   "description": "Style form elements when they are empty",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -67,13 +67,14 @@
+     "javascript",
+     "js",
+     "polyfill",
+-    "focus",
+-    "within",
+-    "pseudos",
++    "blank",
++    "empty",
++    "pseudo",
+     "selectors",
+     "accessibility",
+     "a11y",
+-    "descendants",
+-    "ancestors"
++    "input",
++    "select",
++    "textarea"
+   ]
+ }
+-- 
+2.33.1
+

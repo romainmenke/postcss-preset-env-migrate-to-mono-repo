@@ -1,0 +1,22 @@
+From 2a12ff48652b0515ebe4f293b2c30062d0205a64 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 14 Jun 2015 20:34:28 -0400
+Subject: [PATCH 06/30] Update CHANGELOG.md
+
+---
+ CHANGELOG.md | 3 +++
+ 1 file changed, 3 insertions(+)
+ create mode 100644 CHANGELOG.md
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100644
+index 0000000..abaa1d5
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,3 @@
++## 0.1.1 (2015-06-14)
++
++Initial release
+-- 
+2.33.1
+

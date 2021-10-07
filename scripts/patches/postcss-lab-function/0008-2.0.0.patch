@@ -1,0 +1,500 @@
+From 5a6e848a8fe735820efd1299a74d990900ca5ba3 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 18 Sep 2018 00:31:26 -0400
+Subject: [PATCH 08/19] 2.0.0
+
+---
+ .appveyor.yml |  18 ------
+ .gitignore    |   3 +-
+ .rollup.js    |   6 +-
+ CHANGELOG.md  |   5 ++
+ INSTALL.md    | 172 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ README.md     | 117 ++++------------------------------
+ package.json  |  22 ++++---
+ 7 files changed, 205 insertions(+), 138 deletions(-)
+ delete mode 100644 .appveyor.yml
+ create mode 100644 INSTALL.md
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+deleted file mode 100644
+index 73f0d8f..0000000
+--- a/.appveyor.yml
++++ /dev/null
+@@ -1,18 +0,0 @@
+-# https://www.appveyor.com/docs/appveyor-yml
+-
+-environment:
+-  matrix:
+-    - nodejs_version: 6
+-
+-version: "{build}"
+-build: off
+-deploy: off
+-
+-install:
+-  - ps: Install-Product node $env:nodejs_version
+-  - npm install --ignore-scripts
+-
+-test_script:
+-  - node --version
+-  - npm --version
+-  - cmd: "npm test"
+diff --git a/.gitignore b/.gitignore
+index de73e5a..d920b78 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,10 +1,9 @@
+ node_modules
+-index.*.js
++index.*.*
+ package-lock.json
+ *.log*
+ *.result.css
+ .*
+-!.appveyor.yml
+ !.editorconfig
+ !.gitignore
+ !.rollup.js
+diff --git a/.rollup.js b/.rollup.js
+index 0436758..ebe39f9 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -3,13 +3,13 @@ import babel from 'rollup-plugin-babel';
+ export default {
+ 	input: 'index.js',
+ 	output: [
+-		{ file: 'index.cjs.js', format: 'cjs' },
+-		{ file: 'index.es.js', format: 'es' }
++		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
++		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
+ 	],
+ 	plugins: [
+ 		babel({
+ 			presets: [
+-				['env', { modules: false, targets: { node: 4 } }]
++				['@babel/env', { modules: false, targets: { node: 6 } }]
+ 			]
+ 		})
+ 	]
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 1b5f64c..98fa943 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Lab Function
+ 
++### 2.0.0 (September 17, 2018)
++
++- Updated: Support for PostCSS v7+
++- Updated: Support for Node v6+
++
+ ### 1.1.0 (July 24, 2018)
+ 
+ - Added: Support for `gray(a / b)` as `lab(a 0 0 / b)`
+diff --git a/INSTALL.md b/INSTALL.md
+new file mode 100644
+index 0000000..74a3344
+--- /dev/null
++++ b/INSTALL.md
+@@ -0,0 +1,172 @@
++# Installing PostCSS
++
++[PostCSS Lab Function] runs in all Node environments, with special
++instructions for:
++
++| [Node](#node) | [PostCSS CLI](#postcss-cli) | [Webpack](#webpack) | [Create React App](#create-react-app) | [Gulp](#gulp) | [Grunt](#grunt) |
++| --- | --- | --- | --- | --- | --- |
++
++## Node
++
++Add [PostCSS Lab Function] to your project:
++
++```bash
++npm install postcss-lab-function --save-dev
++```
++
++Use [PostCSS Lab Function] to process your CSS:
++
++```js
++const postcssLabFunction = require('postcss-lab-function');
++
++postcssLabFunction.process(YOUR_CSS /*, processOptions, pluginOptions */);
++```
++
++Or use it as a [PostCSS] plugin:
++
++```js
++const postcss = require('postcss');
++const postcssLabFunction = require('postcss-lab-function');
++
++postcss([
++  postcssLabFunction(/* pluginOptions */)
++]).process(YOUR_CSS /*, processOptions */);
++```
++
++## PostCSS CLI
++
++Add [PostCSS CLI] to your project:
++
++```bash
++npm install postcss-cli --save-dev
++```
++
++Use [PostCSS Lab Function] in your `postcss.config.js` configuration
++file:
++
++```js
++const postcssLabFunction = require('postcss-lab-function');
++
++module.exports = {
++  plugins: [
++    postcssLabFunction(/* pluginOptions */)
++  ]
++}
++```
++
++## Webpack
++
++Add [PostCSS Loader] to your project:
++
++```bash
++npm install postcss-loader --save-dev
++```
++
++Use [PostCSS Lab Function] in your Webpack configuration:
++
++```js
++const postcssLabFunction = require('postcss-lab-function');
++
++module.exports = {
++  module: {
++    rules: [
++      {
++        test: /\.css$/,
++        use: [
++          'style-loader',
++          { loader: 'css-loader', options: { importLoaders: 1 } },
++          { loader: 'postcss-loader', options: {
++            ident: 'postcss',
++            plugins: () => [
++              postcssLabFunction(/* pluginOptions */)
++            ]
++          } }
++        ]
++      }
++    ]
++  }
++}
++```
++
++## Create React App
++
++Add [React App Rewired] and [React App Rewire PostCSS] to your project:
++
++```bash
++npm install react-app-rewired react-app-rewire-postcss --save-dev
++```
++
++Use [React App Rewire PostCSS] and [PostCSS Lab Function] in your
++`config-overrides.js` file:
++
++```js
++const reactAppRewirePostcss = require('react-app-rewire-postcss');
++const postcssLabFunction = require('postcss-lab-function');
++
++module.exports = config => reactAppRewirePostcss(config, {
++  plugins: () => [
++    postcssLabFunction(/* pluginOptions */)
++  ]
++});
++```
++
++## Gulp
++
++Add [Gulp PostCSS] to your project:
++
++```bash
++npm install gulp-postcss --save-dev
++```
++
++Use [PostCSS Lab Function] in your Gulpfile:
++
++```js
++const postcss = require('gulp-postcss');
++const postcssLabFunction = require('postcss-lab-function');
++
++gulp.task('css', () => gulp.src('./src/*.css').pipe(
++  postcss([
++    postcssLabFunction(/* pluginOptions */)
++  ])
++).pipe(
++  gulp.dest('.')
++));
++```
++
++## Grunt
++
++Add [Grunt PostCSS] to your project:
++
++```bash
++npm install grunt-postcss --save-dev
++```
++
++Use [PostCSS Lab Function] in your Gruntfile:
++
++```js
++const postcssLabFunction = require('postcss-lab-function');
++
++grunt.loadNpmTasks('grunt-postcss');
++
++grunt.initConfig({
++  postcss: {
++    options: {
++      use: [
++       postcssLabFunction(/* pluginOptions */)
++      ]
++    },
++    dist: {
++      src: '*.css'
++    }
++  }
++});
++```
++
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
++[PostCSS]: https://github.com/postcss/postcss
++[PostCSS CLI]: https://github.com/postcss/postcss-cli
++[PostCSS Loader]: https://github.com/postcss/postcss-loader
++[PostCSS Lab Function]: https://github.com/jonathantneal/postcss-lab-function
++[React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
++[React App Rewired]: https://github.com/timarney/react-app-rewired
+diff --git a/README.md b/README.md
+index eb7cce7..79cd580 100644
+--- a/README.md
++++ b/README.md
+@@ -3,7 +3,6 @@
+ [![NPM Version][npm-img]][npm-url]
+ [![CSS Standard Status][css-img]][css-url]
+ [![Build Status][cli-img]][cli-url]
+-[![Windows Build Status][win-img]][win-url]
+ [![Support Chat][git-img]][git-url]
+ 
+ [PostCSS Lab Function] lets you use `lab`, `lch`, and `gray` color functions in
+@@ -29,126 +28,36 @@ CSS, following the [CSS Color] specification.
+ 
+ ## Usage
+ 
+-Add [PostCSS Lab Function] to your build tool:
++Add [PostCSS Lab Function] to your project:
+ 
+ ```bash
+ npm install postcss-lab-function --save-dev
+ ```
+ 
+-#### Node
+-
+ Use [PostCSS Lab Function] to process your CSS:
+ 
+ ```js
+-import postcssLabFunction from 'postcss-lab-function';
+-
+-postcssLabFunction.process(YOUR_CSS, /* processOptions */, /* pluginOptions */);
+-```
+-
+-#### PostCSS
++const postcssLabFunction = require('postcss-lab-function');
+ 
+-Add [PostCSS] to your build tool:
+-
+-```bash
+-npm install postcss --save-dev
++postcssLabFunction.process(YOUR_CSS /*, processOptions, pluginOptions */);
+ ```
+ 
+-Use [PostCSS Lab Function] as a plugin:
++Or use it as a [PostCSS] plugin:
+ 
+ ```js
+-import postcss from 'gulp-postcss';
+-import postcssLabFunction from 'postcss-lab-function';
++const postcss = require('postcss');
++const postcssLabFunction = require('postcss-lab-function');
+ 
+ postcss([
+   postcssLabFunction(/* pluginOptions */)
+-]).process(YOUR_CSS);
+-```
+-
+-#### Webpack
+-
+-Add [PostCSS Loader] to your build tool:
+-
+-```bash
+-npm install postcss-loader --save-dev
+-```
+-
+-Use [PostCSS Lab Function] in your Webpack configuration:
+-
+-```js
+-import postcssLabFunction from 'postcss-lab-function';
+-
+-module.exports = {
+-  module: {
+-    rules: [
+-      {
+-        test: /\.css$/,
+-        use: [
+-          'style-loader',
+-          { loader: 'css-loader', options: { importLoaders: 1 } },
+-          { loader: 'postcss-loader', options: {
+-            ident: 'postcss',
+-            plugins: () => [
+-              postcssLabFunction(/* pluginOptions */)
+-            ]
+-          } }
+-        ]
+-      }
+-    ]
+-  }
+-}
++]).process(YOUR_CSS /*, processOptions */);
+ ```
+ 
+-#### Gulp
++[PostCSS Lab Function] runs in all Node environments, with special
++instructions for:
+ 
+-Add [Gulp PostCSS] to your build tool:
+-
+-```bash
+-npm install gulp-postcss --save-dev
+-```
+-
+-Use [PostCSS Lab Function] in your Gulpfile:
+-
+-```js
+-import postcss from 'gulp-postcss';
+-import postcssLabFunction from 'postcss-lab-function';
+-
+-gulp.task('css', () => gulp.src('./src/*.css').pipe(
+-  postcss([
+-    postcssLabFunction(/* pluginOptions */)
+-  ])
+-).pipe(
+-  gulp.dest('.')
+-));
+-```
+-
+-#### Grunt
+-
+-Add [Grunt PostCSS] to your build tool:
+-
+-```bash
+-npm install grunt-postcss --save-dev
+-```
+-
+-Use [PostCSS Lab Function] in your Gruntfile:
+-
+-```js
+-import postcssLabFunction from 'postcss-lab-function';
+-
+-grunt.loadNpmTasks('grunt-postcss');
+-
+-grunt.initConfig({
+-  postcss: {
+-    options: {
+-      use: [
+-       postcssLabFunction(/* pluginOptions */)
+-      ]
+-    },
+-    dist: {
+-      src: '*.css'
+-    }
+-  }
+-});
+-```
++| [Node](INSTALL.md#node) | [PostCSS CLI](INSTALL.md#postcss-cli) | [Webpack](INSTALL.md#webpack) | [Create React App](INSTALL.md#create-react-app) | [Gulp](INSTALL.md#gulp) | [Grunt](INSTALL.md#grunt) |
++| --- | --- | --- | --- | --- | --- |
+ 
+ ## Options
+ 
+@@ -158,7 +67,7 @@ The `preserve` option determines whether the original functional color notation
+ is preserved. By default, it is not preserved.
+ 
+ ```js
+-postcssImageSetFunction({ preserve: true })
++postcssLabFunction({ preserve: true })
+ ```
+ 
+ ```pcss
+@@ -185,8 +94,6 @@ postcssImageSetFunction({ preserve: true })
+ [git-url]: https://gitter.im/postcss/postcss
+ [npm-img]: https://img.shields.io/npm/v/postcss-lab-function.svg
+ [npm-url]: https://www.npmjs.com/package/postcss-lab-function
+-[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-lab-function.svg
+-[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-lab-function
+ 
+ [CSS Color]: https://drafts.csswg.org/css-color/#specifying-lab-lch
+ [Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+diff --git a/package.json b/package.json
+index 5bbd02c..77db803 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-lab-function",
+-  "version": "1.1.0",
++  "version": "2.0.0",
+   "description": "Use lab() and lch() color functions in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -8,10 +8,12 @@
+   "homepage": "https://github.com/jonathantneal/postcss-lab-function#readme",
+   "bugs": "https://github.com/jonathantneal/postcss-lab-function/issues",
+   "main": "index.cjs.js",
+-  "module": "index.es.js",
++  "module": "index.es.mjs",
+   "files": [
+     "index.cjs.js",
+-    "index.es.js"
++    "index.cjs.js.map",
++    "index.es.mjs",
++    "index.es.mjs.map"
+   ],
+   "scripts": {
+     "prepublishOnly": "npm test",
+@@ -22,7 +24,7 @@
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+-    "node": ">=4.0.0"
++    "node": ">=6.0.0"
+   },
+   "dependencies": {
+     "@csstools/convert-colors": "^1.4.0",
+@@ -30,15 +32,15 @@
+     "postcss-values-parser": "^1.5.0"
+   },
+   "devDependencies": {
+-    "babel-core": "^6.26.3",
+-    "babel-eslint": "^8.2.6",
+-    "babel-preset-env": "^1.7.0",
+-    "eslint": "^5.2.0",
++    "@babel/core": "^7.0.0",
++    "@babel/preset-env": "^7.0.0",
++    "babel-eslint": "^9.0.0",
++    "eslint": "^5.6.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.63.4",
+-    "rollup-plugin-babel": "^3.0.7"
++    "rollup": "^0.66.0",
++    "rollup-plugin-babel": "^4.0.1"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+-- 
+2.33.1
+

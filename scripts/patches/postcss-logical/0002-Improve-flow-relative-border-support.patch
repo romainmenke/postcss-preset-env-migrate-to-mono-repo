@@ -1,0 +1,226 @@
+From a58332990506d6016154498f7016043f8bd64662 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 13 Aug 2017 15:03:29 -0400
+Subject: [PATCH 02/43] Improve flow-relative border support
+
+---
+ dependent-js/transform-border.js | 45 ++++++++++++++++----------------
+ index.js                         |  2 +-
+ test/border.expect.css           | 16 ++++++------
+ 3 files changed, 32 insertions(+), 31 deletions(-)
+
+diff --git a/dependent-js/transform-border.js b/dependent-js/transform-border.js
+index b2d7530..74ec630 100644
+--- a/dependent-js/transform-border.js
++++ b/dependent-js/transform-border.js
+@@ -2,7 +2,7 @@ const cloneRule = require('./clone-rule');
+ 
+ const matchLogical = /^\s*logical\s+/i;
+ const matchLogicalBorder = /^border(-width|-style|-color)?$/i;
+-const matchLogicalBorderSide = /^border-(?:(width|style|color)-)?(block|block-start|block-end|inline|inline-start|inline-end|start|end)/i;
++const matchLogicalBorderSide = /^border-(block|block-start|block-end|inline|inline-start|inline-end|start|end)(-(width|style|color))?$/i;
+ 
+ // border
+ module.exports['border'] = (decl, values) => {
+@@ -80,11 +80,11 @@ module.exports['border'] = (decl, values) => {
+ // border-block
+ module.exports['border-block'] = (decl, values) => [
+ 	decl.clone({
+-		prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++		prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 		value: values[0]
+ 	}),
+ 	decl.clone({
+-		prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++		prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 		value: values[0]
+ 	})
+ ];
+@@ -103,32 +103,32 @@ module.exports['border-block-end'] = (decl) => {
+ module.exports['border-inline'] = (decl, values) => 1 === values.length || 2 === values.length && values[0] === values[1]
+ ? [
+ 	decl.clone({
+-		prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++		prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 		value: values[0]
+ 	}),
+ 	decl.clone({
+-		prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++		prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 		value: values[1] || values[0]
+ 	})
+ ]
+ : [
+ 	cloneRule(decl, 'ltr').append([
+ 		decl.clone({
+-			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[0]
+ 		}),
+ 		decl.clone({
+-			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[1] || values[0]
+ 		})
+ 	]),
+ 	cloneRule(decl, 'rtl').append([
+ 		decl.clone({
+-			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[0]
+ 		}),
+ 		decl.clone({
+-			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[1] || values[0]
+ 		})
+ 	])
+@@ -138,12 +138,12 @@ module.exports['border-inline'] = (decl, values) => 1 === values.length || 2 ===
+ module.exports['border-inline-start'] = (decl) => [
+ 	cloneRule(decl, 'ltr').append(
+ 		decl.clone({
+-			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$1')}`
++			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`
+ 		})
+ 	),
+ 	cloneRule(decl, 'rtl').append(
+ 		decl.clone({
+-			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$1')}`
++			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`
+ 		})
+ 	)
+ ];
+@@ -152,12 +152,12 @@ module.exports['border-inline-start'] = (decl) => [
+ module.exports['border-inline-end'] = (decl) => [
+ 	cloneRule(decl, 'ltr').append(
+ 		decl.clone({
+-			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$1')}`
++			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`
+ 		})
+ 	),
+ 	cloneRule(decl, 'rtl').append(
+ 		decl.clone({
+-			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$1')}`
++			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`
+ 		})
+ 	)
+ ];
+@@ -166,21 +166,21 @@ module.exports['border-inline-end'] = (decl) => [
+ module.exports['border-start'] = (decl, values) => [
+ 	cloneRule(decl, 'ltr').append([
+ 		decl.clone({
+-			prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[0]
+ 		}),
+ 		decl.clone({
+-			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[1] || values[0]
+ 		})
+ 	]),
+ 	cloneRule(decl, 'rtl').append([
+ 		decl.clone({
+-			prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[0]
+ 		}),
+ 		decl.clone({
+-			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[1] || values[0]
+ 		})
+ 	])
+@@ -188,22 +188,23 @@ module.exports['border-start'] = (decl, values) => [
+ 
+ // border-end
+ module.exports['border-end'] = (decl, values) => [
+-	cloneRule(decl, 'ltr').append([decl.clone({
+-			prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++	cloneRule(decl, 'ltr').append([
++		decl.clone({
++			prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[0]
+ 		}),
+ 		decl.clone({
+-			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[1] || values[0]
+ 		})
+ 	]),
+ 	cloneRule(decl, 'rtl').append([
+ 		decl.clone({
+-			prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[0]
+ 		}),
+ 		decl.clone({
+-			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$1')}`,
++			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[1] || values[0]
+ 		})
+ 	])
+diff --git a/index.js b/index.js
+index de65b86..1cbe746 100644
+--- a/index.js
++++ b/index.js
+@@ -43,7 +43,7 @@ const transforms = {
+ // plugin
+ module.exports = postcss.plugin('postcss-logical-properties', () => (root) => {
+ 	root.walkDecls((decl) => {
+-		const values = postcss.list.split(decl.value, /^border/i.test(decl.prop) ? '/' : ' ');
++		const values = postcss.list.split(decl.value, /^border(-block|-inline|-start|-end)?(-width|-style|-color)?$/i.test(decl.prop) ? '/' : ' ');
+ 		const prop = decl.prop.replace(matchSupportedProperties, '$2$5').toLowerCase();
+ 
+ 		if (prop in transforms) {
+diff --git a/test/border.expect.css b/test/border.expect.css
+index 0d9d5c0..6d670f7 100644
+--- a/test/border.expect.css
++++ b/test/border.expect.css
+@@ -49,17 +49,17 @@ test-flowing-border {
+ 	}
+ 	border: inherit;
+ 	&:dir(ltr) {
+-	border-left-start: 7px solid black;
++	border-left: 7px solid black;
+ 	}
+ 	&:dir(rtl) {
+-	border-right-start: 7px solid black;
++	border-right: 7px solid black;
+ 	}
+ 	border: inherit;
+ 	&:dir(ltr) {
+-	border-right-end: 8px solid black;
++	border-right: 8px solid black;
+ 	}
+ 	&:dir(rtl) {
+-	border-left-end: 8px solid black;
++	border-left: 8px solid black;
+ 	}
+ 	border: inherit;
+ 	&:dir(ltr) {
+@@ -125,17 +125,17 @@ test-flowing-border-color {
+ 	}
+ 	border-color: inherit;
+ 	&:dir(ltr) {
+-	border-left-start-color: 7px solid black;
++	border-left-color: 7px solid black;
+ 	}
+ 	&:dir(rtl) {
+-	border-right-start-color: 7px solid black;
++	border-right-color: 7px solid black;
+ 	}
+ 	border-color: inherit;
+ 	&:dir(ltr) {
+-	border-right-end-color: 8px solid black;
++	border-right-color: 8px solid black;
+ 	}
+ 	&:dir(rtl) {
+-	border-left-end-color: 8px solid black;
++	border-left-color: 8px solid black;
+ 	}
+ 	border-color: inherit;
+ 	&:dir(ltr) {
+-- 
+2.33.1
+

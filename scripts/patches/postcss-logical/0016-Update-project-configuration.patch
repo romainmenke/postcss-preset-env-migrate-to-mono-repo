@@ -1,0 +1,991 @@
+From a50f2f7384b9f025de27c77bfd9cb95192a4d044 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 20 Mar 2018 23:02:00 -0400
+Subject: [PATCH 16/43] Update project configuration
+
+---
+ .appveyor.yml                              |   2 +-
+ .gitignore                                 |   6 +-
+ .rollup.js                                 |  16 +
+ dependent-js/clone-decl.js                 |   6 +-
+ dependent-js/clone-rule.js                 |   4 +-
+ dependent-js/match-inset-prefix.js         |   2 +-
+ dependent-js/match-side.js                 |   2 +-
+ dependent-js/match-size.js                 |   2 +-
+ dependent-js/match-supported-properties.js |   2 +-
+ dependent-js/transform-border.js           | 429 +++++++++++----------
+ dependent-js/transform-float.js            |   4 +-
+ dependent-js/transform-inset.js            |   4 +-
+ dependent-js/transform-resize.js           |   2 +-
+ dependent-js/transform-side.js             | 194 +++++-----
+ dependent-js/transform-size.js             |   4 +-
+ dependent-js/transform-spacing.js          |   4 +-
+ dependent-js/transform-text-align.js       |   4 +-
+ index.js                                   |  44 ++-
+ package.json                               |  35 +-
+ 19 files changed, 399 insertions(+), 367 deletions(-)
+ create mode 100644 .rollup.js
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+index d6b511f..acbf8a5 100644
+--- a/.appveyor.yml
++++ b/.appveyor.yml
+@@ -2,7 +2,7 @@
+ 
+ environment:
+   matrix:
+-    - nodejs_version: 4.0
++    - nodejs_version: 4
+ 
+ version: "{build}"
+ build: off
+diff --git a/.gitignore b/.gitignore
+index 995098a..de73e5a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,10 +1,12 @@
+ node_modules
++index.*.js
+ package-lock.json
++*.log*
++*.result.css
+ .*
+ !.appveyor.yml
+ !.editorconfig
+ !.gitignore
++!.rollup.js
+ !.tape.js
+ !.travis.yml
+-*.log*
+-*.result.css
+diff --git a/.rollup.js b/.rollup.js
+new file mode 100644
+index 0000000..0436758
+--- /dev/null
++++ b/.rollup.js
+@@ -0,0 +1,16 @@
++import babel from 'rollup-plugin-babel';
++
++export default {
++	input: 'index.js',
++	output: [
++		{ file: 'index.cjs.js', format: 'cjs' },
++		{ file: 'index.es.js', format: 'es' }
++	],
++	plugins: [
++		babel({
++			presets: [
++				['env', { modules: false, targets: { node: 4 } }]
++			]
++		})
++	]
++};
+diff --git a/dependent-js/clone-decl.js b/dependent-js/clone-decl.js
+index 06e2a12..69c124b 100644
+--- a/dependent-js/clone-decl.js
++++ b/dependent-js/clone-decl.js
+@@ -1,7 +1,7 @@
+-const matchSide = require('./match-side');
+-const matchInsetPrefix = require('./match-inset-prefix');
++import matchSide from './match-side';
++import matchInsetPrefix from './match-inset-prefix';
+ 
+-module.exports = (decl, suffix, value) => decl.clone({
++export default (decl, suffix, value) => decl.clone({
+ 	prop: `${decl.prop.replace(matchSide, '$1')}${suffix}`.replace(matchInsetPrefix, ''),
+ 	value
+ });
+diff --git a/dependent-js/clone-rule.js b/dependent-js/clone-rule.js
+index 032213b..91039ef 100644
+--- a/dependent-js/clone-rule.js
++++ b/dependent-js/clone-rule.js
+@@ -1,8 +1,8 @@
+ 'use strict';
+ 
+-const postcss = require('postcss');
++import postcss from 'postcss';
+ 
+-module.exports = (decl, dir) => {
++export default (decl, dir) => {
+ 	let node = decl.parent;
+ 
+ 	while (node && 'rule' !== node.type) {
+diff --git a/dependent-js/match-inset-prefix.js b/dependent-js/match-inset-prefix.js
+index 0a6c302..f0449be 100644
+--- a/dependent-js/match-inset-prefix.js
++++ b/dependent-js/match-inset-prefix.js
+@@ -1 +1 @@
+-module.exports = /^inset-/i;
++export default /^inset-/i;
+diff --git a/dependent-js/match-side.js b/dependent-js/match-side.js
+index 285a554..19b557e 100644
+--- a/dependent-js/match-side.js
++++ b/dependent-js/match-side.js
+@@ -1 +1 @@
+-module.exports = /^(inset|margin|padding)(?:-(block|block-start|block-end|inline|inline-start|inline-end|start|end))$/i;
++export default /^(inset|margin|padding)(?:-(block|block-start|block-end|inline|inline-start|inline-end|start|end))$/i;
+diff --git a/dependent-js/match-size.js b/dependent-js/match-size.js
+index 1514b4c..f53000b 100644
+--- a/dependent-js/match-size.js
++++ b/dependent-js/match-size.js
+@@ -1 +1 @@
+-module.exports = /^(min-|max-)?(block|inline)-(size)$/i;
++export default /^(min-|max-)?(block|inline)-(size)$/i;
+diff --git a/dependent-js/match-supported-properties.js b/dependent-js/match-supported-properties.js
+index 8c9eeb8..8697638 100644
+--- a/dependent-js/match-supported-properties.js
++++ b/dependent-js/match-supported-properties.js
+@@ -1 +1 @@
+-module.exports = /^(?:(inset|margin|padding)(?:-(block|block-start|block-end|inline|inline-start|inline-end|start|end))|(min-|max-)?(block|inline)-(size))$/i;
++export default /^(?:(inset|margin|padding)(?:-(block|block-start|block-end|inline|inline-start|inline-end|start|end))|(min-|max-)?(block|inline)-(size))$/i;
+diff --git a/dependent-js/transform-border.js b/dependent-js/transform-border.js
+index 274b329..25d6a6f 100644
+--- a/dependent-js/transform-border.js
++++ b/dependent-js/transform-border.js
+@@ -1,228 +1,229 @@
+-const cloneRule = require('./clone-rule');
++import cloneRule from './clone-rule';
+ 
+ const matchLogical = /^\s*logical\s+/i;
+ const matchLogicalBorder = /^border(-width|-style|-color)?$/i;
+ const matchLogicalBorderSide = /^border-(block|block-start|block-end|inline|inline-start|inline-end|start|end)(-(width|style|color))?$/i;
+ 
+-// border
+-module.exports['border'] = (decl, values, dir) => {
+-	const isLogical = matchLogical.test(values[0]);
+-
+-	if (isLogical) {
+-		values[0] = values[0].replace(matchLogical, '');
+-	}
+-
+-	const ltrDecls = [
+-		decl.clone({
+-			prop: `border-top${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-			value: values[0]
+-		}),
+-		decl.clone({
+-			prop: `border-left${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-			value: values[1] || values[0]
+-		}),
+-		decl.clone({
+-			prop: `border-bottom${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-			value: values[2] || values[0]
+-		}),
+-		decl.clone({
+-			prop: `border-right${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-			value: values[3] || values[1] || values[0]
+-		})
+-	];
+-
+-	const rtlDecls = [
+-		decl.clone({
+-			prop: `border-top${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-			value: values[0]
+-		}),
+-		decl.clone({
+-			prop: `border-right${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-			value: values[1] || values[0]
+-		}),
+-		decl.clone({
+-			prop: `border-bottom${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-			value: values[2] || values[0]
+-		}),
+-		decl.clone({
+-			prop: `border-left${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-			value: values[3] || values[1] || values[0]
+-		})
+-	];
+-
+-	return isLogical ? 1 === values.length
+-		? decl.clone({
+-			value: decl.value.replace(matchLogical, '')
+-		})
+-		: !values[3] || values[3] === values[1]
+-			? [
+-				decl.clone({
+-					prop: `border-top${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-					value: values[0]
+-				}),
+-				decl.clone({
+-					prop: `border-right${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-					value: values[3] || values[1] || values[0]
+-				}),
+-				decl.clone({
+-					prop: `border-bottom${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-					value: values[2] || values[0]
+-				}),
+-				decl.clone({
+-					prop: `border-left${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-					value: values[1] || values[0]
+-				})
+-			]
+-			: 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
+-				cloneRule(decl, 'ltr').append(ltrDecls),
+-				cloneRule(decl, 'rtl').append(rtlDecls)
+-			]
+-		: null;
+-};
+-
+-
+-// border-block
+-module.exports['border-block'] = (decl, values) => [
+-	decl.clone({
+-		prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-		value: values[0]
+-	}),
+-	decl.clone({
+-		prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-		value: values[0]
+-	})
+-];
+-
+-// border-block-start
+-module.exports['border-block-start'] = (decl) => {
+-	decl.prop = 'border-top';
+-};
+-
+-// border-block-end
+-module.exports['border-block-end'] = (decl) => {
+-	decl.prop = 'border-bottom';
+-};
+-
+-// border-inline
+-module.exports['border-inline'] = (decl, values, dir) => {
+-	const ltrDecls = [
+-		decl.clone({
+-			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-			value: values[0]
+-		}),
+-		decl.clone({
+-			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-			value: values[1] || values[0]
+-		})
+-	];
+-
+-	const rtlDecls = [
+-		decl.clone({
+-			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-			value: values[0]
+-		}),
+-		decl.clone({
+-			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-			value: values[1] || values[0]
+-		})
+-	];
+-
+-	const isLTR = 1 === values.length || 2 === values.length && values[0] === values[1];
+-
+-	return isLTR ? ltrDecls : 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
+-		cloneRule(decl, 'ltr').append(ltrDecls),
+-		cloneRule(decl, 'rtl').append(rtlDecls)
+-	];
+-};
+-
+-// border-inline-start
+-module.exports['border-inline-start'] = (decl, values, dir) => {
+-	const ltrDecl = decl.clone({
+-		prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`
+-	});
+-
+-	const rtlDecl = decl.clone({
+-		prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`
+-	});
+-
+-	return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
+-		cloneRule(decl, 'ltr').append(ltrDecl),
+-		cloneRule(decl, 'rtl').append(rtlDecl)
+-	];
+-};
+-
+-// border-inline-end
+-module.exports['border-inline-end'] = (decl, values, dir) => {
+-	const ltrDecl = decl.clone({
+-		prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`
+-	});
+-
+-	const rtlDecl = decl.clone({
+-		prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`
+-	});
+-
+-	return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
+-		cloneRule(decl, 'ltr').append(ltrDecl),
+-		cloneRule(decl, 'rtl').append(rtlDecl)
+-	];
+-};
+-
+-// border-start
+-module.exports['border-start'] = (decl, values, dir) => {
+-	const ltrDecls = [
+-		decl.clone({
+-			prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-			value: values[0]
+-		}),
+-		decl.clone({
+-			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-			value: values[1] || values[0]
+-		})
+-	];
+-
+-	const rtlDecls = [
++export default {
++	// border
++	'border': (decl, values, dir) => {
++		const isLogical = matchLogical.test(values[0]);
++
++		if (isLogical) {
++			values[0] = values[0].replace(matchLogical, '');
++		}
++
++		const ltrDecls = [
++			decl.clone({
++				prop: `border-top${decl.prop.replace(matchLogicalBorder, '$1')}`,
++				value: values[0]
++			}),
++			decl.clone({
++				prop: `border-left${decl.prop.replace(matchLogicalBorder, '$1')}`,
++				value: values[1] || values[0]
++			}),
++			decl.clone({
++				prop: `border-bottom${decl.prop.replace(matchLogicalBorder, '$1')}`,
++				value: values[2] || values[0]
++			}),
++			decl.clone({
++				prop: `border-right${decl.prop.replace(matchLogicalBorder, '$1')}`,
++				value: values[3] || values[1] || values[0]
++			})
++		];
++
++		const rtlDecls = [
++			decl.clone({
++				prop: `border-top${decl.prop.replace(matchLogicalBorder, '$1')}`,
++				value: values[0]
++			}),
++			decl.clone({
++				prop: `border-right${decl.prop.replace(matchLogicalBorder, '$1')}`,
++				value: values[1] || values[0]
++			}),
++			decl.clone({
++				prop: `border-bottom${decl.prop.replace(matchLogicalBorder, '$1')}`,
++				value: values[2] || values[0]
++			}),
++			decl.clone({
++				prop: `border-left${decl.prop.replace(matchLogicalBorder, '$1')}`,
++				value: values[3] || values[1] || values[0]
++			})
++		];
++
++		return isLogical ? 1 === values.length
++			? decl.clone({
++				value: decl.value.replace(matchLogical, '')
++			})
++			: !values[3] || values[3] === values[1]
++				? [
++					decl.clone({
++						prop: `border-top${decl.prop.replace(matchLogicalBorder, '$1')}`,
++						value: values[0]
++					}),
++					decl.clone({
++						prop: `border-right${decl.prop.replace(matchLogicalBorder, '$1')}`,
++						value: values[3] || values[1] || values[0]
++					}),
++					decl.clone({
++						prop: `border-bottom${decl.prop.replace(matchLogicalBorder, '$1')}`,
++						value: values[2] || values[0]
++					}),
++					decl.clone({
++						prop: `border-left${decl.prop.replace(matchLogicalBorder, '$1')}`,
++						value: values[1] || values[0]
++					})
++				]
++				: 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++					cloneRule(decl, 'ltr').append(ltrDecls),
++					cloneRule(decl, 'rtl').append(rtlDecls)
++				]
++			: null;
++	},
++
++	// border-block
++	'border-block': (decl, values) => [
+ 		decl.clone({
+ 			prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[0]
+ 		}),
+-		decl.clone({
+-			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-			value: values[1] || values[0]
+-		})
+-	];
+-
+-	return 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
+-		cloneRule(decl, 'ltr').append(ltrDecls),
+-		cloneRule(decl, 'rtl').append(rtlDecls)
+-	];
+-};
+-
+-// border-end
+-module.exports['border-end'] = (decl, values, dir) => {
+-	const ltrDecls = [
+ 		decl.clone({
+ 			prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[0]
+-		}),
+-		decl.clone({
+-			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-			value: values[1] || values[0]
+ 		})
+-	];
+-
+-	const rtlDecls = [
+-		decl.clone({
+-			prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-			value: values[0]
+-		}),
+-		decl.clone({
+-			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-			value: values[1] || values[0]
+-		})
+-	];
+-
+-	return 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
+-		cloneRule(decl, 'ltr').append(ltrDecls),
+-		cloneRule(decl, 'rtl').append(rtlDecls)
+-	];
++	],
++
++	// border-block-start
++	'border-block-start': decl => {
++		decl.prop = 'border-top';
++	},
++
++	// border-block-end
++	'border-block-end': decl => {
++		decl.prop = 'border-bottom';
++	},
++
++	// border-inline
++	'border-inline': (decl, values, dir) => {
++		const ltrDecls = [
++			decl.clone({
++				prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
++				value: values[0]
++			}),
++			decl.clone({
++				prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
++				value: values[1] || values[0]
++			})
++		];
++
++		const rtlDecls = [
++			decl.clone({
++				prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
++				value: values[0]
++			}),
++			decl.clone({
++				prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
++				value: values[1] || values[0]
++			})
++		];
++
++		const isLTR = 1 === values.length || 2 === values.length && values[0] === values[1];
++
++		return isLTR ? ltrDecls : 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++			cloneRule(decl, 'ltr').append(ltrDecls),
++			cloneRule(decl, 'rtl').append(rtlDecls)
++		];
++	},
++
++	// border-inline-start
++	'border-inline-start': (decl, values, dir) => {
++		const ltrDecl = decl.clone({
++			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`
++		});
++
++		const rtlDecl = decl.clone({
++			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`
++		});
++
++		return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
++			cloneRule(decl, 'ltr').append(ltrDecl),
++			cloneRule(decl, 'rtl').append(rtlDecl)
++		];
++	},
++
++	// border-inline-end
++	'border-inline-end': (decl, values, dir) => {
++		const ltrDecl = decl.clone({
++			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`
++		});
++
++		const rtlDecl = decl.clone({
++			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`
++		});
++
++		return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
++			cloneRule(decl, 'ltr').append(ltrDecl),
++			cloneRule(decl, 'rtl').append(rtlDecl)
++		];
++	},
++
++	// border-start
++	'border-start': (decl, values, dir) => {
++		const ltrDecls = [
++			decl.clone({
++				prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
++				value: values[0]
++			}),
++			decl.clone({
++				prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
++				value: values[1] || values[0]
++			})
++		];
++
++		const rtlDecls = [
++			decl.clone({
++				prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
++				value: values[0]
++			}),
++			decl.clone({
++				prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
++				value: values[1] || values[0]
++			})
++		];
++
++		return 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++			cloneRule(decl, 'ltr').append(ltrDecls),
++			cloneRule(decl, 'rtl').append(rtlDecls)
++		];
++	},
++
++	// border-end
++	'border-end': (decl, values, dir) => {
++		const ltrDecls = [
++			decl.clone({
++				prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
++				value: values[0]
++			}),
++			decl.clone({
++				prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
++				value: values[1] || values[0]
++			})
++		];
++
++		const rtlDecls = [
++			decl.clone({
++				prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
++				value: values[0]
++			}),
++			decl.clone({
++				prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
++				value: values[1] || values[0]
++			})
++		];
++
++		return 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++			cloneRule(decl, 'ltr').append(ltrDecls),
++			cloneRule(decl, 'rtl').append(rtlDecls)
++		];
++	}
+ };
+diff --git a/dependent-js/transform-float.js b/dependent-js/transform-float.js
+index eedab0a..c8e734a 100644
+--- a/dependent-js/transform-float.js
++++ b/dependent-js/transform-float.js
+@@ -1,6 +1,6 @@
+-const cloneRule = require('./clone-rule');
++import cloneRule from './clone-rule';
+ 
+-module.exports = (decl, values, dir) => {
++export default (decl, values, dir) => {
+ 	const lDecl = decl.clone({ value: 'left' });
+ 	const rDecl = decl.clone({ value: 'right' });
+ 
+diff --git a/dependent-js/transform-inset.js b/dependent-js/transform-inset.js
+index b072ec4..5f7251d 100644
+--- a/dependent-js/transform-inset.js
++++ b/dependent-js/transform-inset.js
+@@ -1,6 +1,6 @@
+-const cloneRule = require('./clone-rule');
++import cloneRule from './clone-rule';
+ 
+-module.exports = (decl, values, dir) => {
++export default (decl, values, dir) => {
+ 	if ('logical' !== values[0]) {
+ 		return [
+ 			decl.clone({ prop: 'top', value: values[0] }),
+diff --git a/dependent-js/transform-resize.js b/dependent-js/transform-resize.js
+index d48aa04..6b71037 100644
+--- a/dependent-js/transform-resize.js
++++ b/dependent-js/transform-resize.js
+@@ -1,4 +1,4 @@
+-module.exports = (decl) => /^block$/i.test(decl.value)
++export default decl => /^block$/i.test(decl.value)
+ 	? decl.clone({ value: 'vertical' })
+ 	: /^inline$/i.test(decl.value)
+ 		? decl.clone({ value: 'horizontal' })
+diff --git a/dependent-js/transform-side.js b/dependent-js/transform-side.js
+index 8bde3fa..a826e6a 100644
+--- a/dependent-js/transform-side.js
++++ b/dependent-js/transform-side.js
+@@ -1,99 +1,101 @@
+-const cloneDecl = require('./clone-decl');
+-const cloneRule = require('./clone-rule');
+-const matchSide = require('./match-side');
+-
+-const matchInsetPrefix = require('./match-inset-prefix');
+-
+-// inset-block, margin-block, padding-block
+-module.exports['block'] = (decl, values) => [
+-	cloneDecl(decl, '-top', values[0]),
+-	cloneDecl(decl, '-bottom', values[1] || values[0])
+-];
+-
+-// inset-block-start, margin-block-start, padding-block-start
+-module.exports['block-start'] = (decl) => {
+-	decl.prop = decl.prop.replace(matchSide, '$1-top').replace(matchInsetPrefix, '');
+-};
+-
+-// inset-block-end, margin-block-end, padding-block-end
+-module.exports['block-end'] = (decl) => {
+-	decl.prop = decl.prop.replace(matchSide, '$1-bottom').replace(matchInsetPrefix, '');
+-};
+-
+-// inset-inline, margin-inline, padding-inline
+-module.exports['inline'] = (decl, values, dir) => {
+-	const ltrDecls = [
+-		cloneDecl(decl, '-left', values[0]),
+-		cloneDecl(decl, '-right', values[1] || values[0])
+-	];
+-
+-	const rtlDecls = [
+-		cloneDecl(decl, '-right', values[0]),
+-		cloneDecl(decl, '-left', values[1] || values[0])
+-	];
+-
+-	const isLTR = 1 === values.length || 2 === values.length && values[0] === values[1];
+-
+-	return isLTR ? ltrDecls : 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
+-		cloneRule(decl, 'ltr').append(ltrDecls),
+-		cloneRule(decl, 'rtl').append(rtlDecls),
+-	];
+-}
++import cloneDecl from './clone-decl';
++import cloneRule from './clone-rule';
++import matchSide from './match-side';
+ 
+-// inset-inline-start, margin-inline-start, padding-inline-start
+-module.exports['inline-start'] = (decl, values, dir) => {
+-	const ltrDecl = cloneDecl(decl, '-left', decl.value);
+-	const rtlDecl = cloneDecl(decl, '-right', decl.value);
+-
+-	return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
+-		cloneRule(decl, 'ltr').append(ltrDecl),
+-		cloneRule(decl, 'rtl').append(rtlDecl)
+-	];
+-};
+-
+-// inset-inline-end, margin-inline-end, padding-inline-end
+-module.exports['inline-end'] = (decl, values, dir) => {
+-	const ltrDecl = cloneDecl(decl, '-right', decl.value);
+-	const rtlDecl = cloneDecl(decl, '-left', decl.value);
+-
+-	return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
+-		cloneRule(decl, 'ltr').append(ltrDecl),
+-		cloneRule(decl, 'rtl').append(rtlDecl)
+-	];
+-};
+-
+-// inset-start, margin-start, padding-start
+-module.exports['start'] = (decl, values, dir) => {
+-	const ltrDecls = [
+-		cloneDecl(decl, '-top', values[0]),
+-		cloneDecl(decl, '-left', values[1] || values[0])
+-	];
++import matchInsetPrefix from './match-inset-prefix';
+ 
+-	const rtlDecls = [
++export default {
++	// inset-block, margin-block, padding-block
++	'block': (decl, values) => [
+ 		cloneDecl(decl, '-top', values[0]),
+-		cloneDecl(decl, '-right', values[1] || values[0])
+-	];
+-
+-	return 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
+-		cloneRule(decl, 'ltr').append(ltrDecls),
+-		cloneRule(decl, 'rtl').append(rtlDecls)
+-	];
+-};
+-
+-// inset-end, margin-end, padding-end
+-module.exports['end'] = (decl, values, dir) => {
+-	const ltrDecls = [
+-		cloneDecl(decl, '-bottom', values[0]),
+-		cloneDecl(decl, '-right', values[1] || values[0])
+-	];
+-
+-	const rtlDecls = [
+-		cloneDecl(decl, '-bottom', values[0]),
+-		cloneDecl(decl, '-left', values[1] || values[0])
+-	];
+-
+-	return 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
+-		cloneRule(decl, 'ltr').append(ltrDecls),
+-		cloneRule(decl, 'rtl').append(rtlDecls)
+-	];
+-};
++		cloneDecl(decl, '-bottom', values[1] || values[0])
++	],
++
++	// inset-block-start, margin-block-start, padding-block-start
++	'block-start': decl => {
++		decl.prop = decl.prop.replace(matchSide, '$1-top').replace(matchInsetPrefix, '');
++	},
++
++	// inset-block-end, margin-block-end, padding-block-end
++	'block-end': decl => {
++		decl.prop = decl.prop.replace(matchSide, '$1-bottom').replace(matchInsetPrefix, '');
++	},
++
++	// inset-inline, margin-inline, padding-inline
++	'inline': (decl, values, dir) => {
++		const ltrDecls = [
++			cloneDecl(decl, '-left', values[0]),
++			cloneDecl(decl, '-right', values[1] || values[0])
++		];
++
++		const rtlDecls = [
++			cloneDecl(decl, '-right', values[0]),
++			cloneDecl(decl, '-left', values[1] || values[0])
++		];
++
++		const isLTR = 1 === values.length || 2 === values.length && values[0] === values[1];
++
++		return isLTR ? ltrDecls : 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++			cloneRule(decl, 'ltr').append(ltrDecls),
++			cloneRule(decl, 'rtl').append(rtlDecls),
++		];
++	},
++
++	// inset-inline-start, margin-inline-start, padding-inline-start
++	'inline-start': (decl, values, dir) => {
++		const ltrDecl = cloneDecl(decl, '-left', decl.value);
++		const rtlDecl = cloneDecl(decl, '-right', decl.value);
++
++		return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
++			cloneRule(decl, 'ltr').append(ltrDecl),
++			cloneRule(decl, 'rtl').append(rtlDecl)
++		];
++	},
++
++	// inset-inline-end, margin-inline-end, padding-inline-end
++	'inline-end': (decl, values, dir) => {
++		const ltrDecl = cloneDecl(decl, '-right', decl.value);
++		const rtlDecl = cloneDecl(decl, '-left', decl.value);
++
++		return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
++			cloneRule(decl, 'ltr').append(ltrDecl),
++			cloneRule(decl, 'rtl').append(rtlDecl)
++		];
++	},
++
++	// inset-start, margin-start, padding-start
++	'start': (decl, values, dir) => {
++		const ltrDecls = [
++			cloneDecl(decl, '-top', values[0]),
++			cloneDecl(decl, '-left', values[1] || values[0])
++		];
++
++		const rtlDecls = [
++			cloneDecl(decl, '-top', values[0]),
++			cloneDecl(decl, '-right', values[1] || values[0])
++		];
++
++		return 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++			cloneRule(decl, 'ltr').append(ltrDecls),
++			cloneRule(decl, 'rtl').append(rtlDecls)
++		];
++	},
++
++	// inset-end, margin-end, padding-end
++	'end': (decl, values, dir) => {
++		const ltrDecls = [
++			cloneDecl(decl, '-bottom', values[0]),
++			cloneDecl(decl, '-right', values[1] || values[0])
++		];
++
++		const rtlDecls = [
++			cloneDecl(decl, '-bottom', values[0]),
++			cloneDecl(decl, '-left', values[1] || values[0])
++		];
++
++		return 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++			cloneRule(decl, 'ltr').append(ltrDecls),
++			cloneRule(decl, 'rtl').append(rtlDecls)
++		];
++	}
++}
+diff --git a/dependent-js/transform-size.js b/dependent-js/transform-size.js
+index 17c89b3..c8f2c42 100644
+--- a/dependent-js/transform-size.js
++++ b/dependent-js/transform-size.js
+@@ -1,6 +1,6 @@
+-const matchSize = require('./match-size');
++import matchSize from './match-size';
+ 
+-module.exports = (decl) => {
++export default decl => {
+ 	decl.prop = decl.prop.replace(
+ 		matchSize,
+ 		($0, minmax, flow) => `${minmax||''}${'block' === flow ? 'height' : 'width'}`
+diff --git a/dependent-js/transform-spacing.js b/dependent-js/transform-spacing.js
+index 537afc7..8ab2a1e 100644
+--- a/dependent-js/transform-spacing.js
++++ b/dependent-js/transform-spacing.js
+@@ -1,6 +1,6 @@
+-const cloneRule = require('./clone-rule');
++import cloneRule from './clone-rule';
+ 
+-module.exports = (decl, values, dir) => {
++export default (decl, values, dir) => {
+ 	if ('logical' !== values[0]) {
+ 		return null;
+ 	}
+diff --git a/dependent-js/transform-text-align.js b/dependent-js/transform-text-align.js
+index 9b74e03..ed09f55 100644
+--- a/dependent-js/transform-text-align.js
++++ b/dependent-js/transform-text-align.js
+@@ -1,6 +1,6 @@
+-const cloneRule = require('./clone-rule');
++import cloneRule from './clone-rule';
+ 
+-module.exports = (decl, values, dir) => {
++export default (decl, values, dir) => {
+ 	const lDecl = decl.clone({ value: 'left' });
+ 	const rDecl = decl.clone({ value: 'right' });
+ 
+diff --git a/index.js b/index.js
+index 63dc709..f95ccdc 100644
+--- a/index.js
++++ b/index.js
+@@ -1,16 +1,16 @@
+ // tooling
+-const postcss = require('postcss');
++import postcss from 'postcss';
+ 
+ // internal tooling
+-const transformBorder = require('./dependent-js/transform-border');
+-const transformFloat = require('./dependent-js/transform-float');
+-const transformInset = require('./dependent-js/transform-inset');
+-const transformResize = require('./dependent-js/transform-resize');
+-const transformSide = require('./dependent-js/transform-side');
+-const transformSize = require('./dependent-js/transform-size');
+-const transformSpacing = require('./dependent-js/transform-spacing');
+-const transformTextAlign = require('./dependent-js/transform-text-align');
+-const matchSupportedProperties = require('./dependent-js/match-supported-properties');
++import transformBorder from './dependent-js/transform-border';
++import transformFloat from './dependent-js/transform-float';
++import transformInset from './dependent-js/transform-inset';
++import transformResize from './dependent-js/transform-resize';
++import transformSide from './dependent-js/transform-side';
++import transformSize from './dependent-js/transform-size';
++import transformSpacing from './dependent-js/transform-spacing';
++import transformTextAlign from './dependent-js/transform-text-align';
++import matchSupportedProperties from './dependent-js/match-supported-properties';
+ 
+ // supported transforms
+ const transforms = {
+@@ -42,19 +42,21 @@ const transforms = {
+ };
+ 
+ // plugin
+-module.exports = postcss.plugin('postcss-logical-properties', (opts) => (root) => {
+-	const dir = Object(opts) === opts ? /^rtl$/i.test(opts.dir) ? 'rtl' : 'ltr' : false;
++export default postcss.plugin('postcss-logical-properties', opts => {
++	const dir = 'dir' in Object(opts) ? /^rtl$/i.test(Object(opts).dir) ? 'rtl' : 'ltr' : false;
+ 
+-	root.walkDecls((decl) => {
+-		const values = postcss.list.split(decl.value, /^border(-block|-inline|-start|-end)?(-width|-style|-color)?$/i.test(decl.prop) ? '/' : ' ');
+-		const prop = decl.prop.replace(matchSupportedProperties, '$2$5').toLowerCase();
++	return root => {
++		root.walkDecls(decl => {
++			const values = postcss.list.split(decl.value, /^border(-block|-inline|-start|-end)?(-width|-style|-color)?$/i.test(decl.prop) ? '/' : ' ');
++			const prop = decl.prop.replace(matchSupportedProperties, '$2$5').toLowerCase();
+ 
+-		if (prop in transforms) {
+-			const replacer = transforms[prop](decl, values, dir);
++			if (prop in transforms) {
++				const replacer = transforms[prop](decl, values, dir);
+ 
+-			if (replacer) {
+-				decl.replaceWith(replacer);
++				if (replacer) {
++					decl.replaceWith(replacer);
++				}
+ 			}
+-		}
+-	});
++		});
++	};
+ });
+diff --git a/package.json b/package.json
+index 3becbfa..3e85503 100644
+--- a/package.json
++++ b/package.json
+@@ -7,32 +7,41 @@
+   "repository": "jonathantneal/postcss-logical-properties",
+   "homepage": "https://github.com/jonathantneal/postcss-logical-properties#readme",
+   "bugs": "https://github.com/jonathantneal/postcss-logical-properties/issues",
+-  "main": "index.js",
++  "main": "index.cjs.js",
++  "module": "index.es.js",
+   "files": [
+-    "index.js",
+-    "dependent-js"
++    "index.cjs.js",
++    "index.es.js"
+   ],
+   "scripts": {
+-    "clean": "git clean -X -d -f",
+-    "prepublish": "npm test",
+-    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+-    "test:js": "eslint *.js --cache --ignore-pattern .gitignore",
++    "prepublishOnly": "npm test",
++    "pretest": "rollup -c .rollup.js --silent",
++    "test": "echo 'Running tests...'; npm run test:ec && npm run test:js && npm run test:tape",
++    "test:ec": "echint --ignore index.*.js test",
++    "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+     "node": ">=4.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^6.0.11"
++    "postcss": "^6.0.20"
+   },
+   "devDependencies": {
+-    "eslint": "^4.6.1",
+-    "eslint-config-dev": "2.0.0",
+-    "postcss-tape": "2.0.1",
+-    "pre-commit": "^1.2.2"
++    "babel-core": "^6.26.0",
++    "babel-eslint": "^8.2.2",
++    "babel-preset-env": "^1.6.1",
++    "echint": "^4.0.1",
++    "eslint": "^4.19.0",
++    "eslint-config-dev": "^2.0.0",
++    "postcss-tape": "^2.2.0",
++    "pre-commit": "^1.2.2",
++    "rollup": "^0.57.1",
++    "rollup-plugin-babel": "^3.0.3"
+   },
+   "eslintConfig": {
+-    "extends": "dev"
++    "extends": "dev",
++    "parser": "babel-eslint"
+   },
+   "keywords": [
+     "postcss",
+-- 
+2.33.1
+

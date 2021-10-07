@@ -1,0 +1,154 @@
+From 6958cade16e3b022a953aa5ae2e230561e5a4734 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 2 Jun 2017 12:48:10 -0400
+Subject: [PATCH 05/34] Update Tests
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Test for “dir” and “browsers” options
+---
+ .tape.js                        | 23 +++++++++++++++++++++++
+ test/basic.css                  |  4 ++++
+ test/basic.dir.expect.css       | 31 +++++++++++++++++++++++++++++++
+ test/basic.expect.css           |  4 ++++
+ test/basic.supported.expect.css | 31 +++++++++++++++++++++++++++++++
+ 5 files changed, 93 insertions(+)
+ create mode 100644 test/basic.dir.expect.css
+ create mode 100644 test/basic.supported.expect.css
+
+diff --git a/.tape.js b/.tape.js
+index f1e2881..6570b96 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -2,6 +2,29 @@ module.exports = {
+ 	'postcss-dir-pseudo-class': {
+ 		'basic': {
+ 			message: 'supports basic usage'
++		},
++		'basic:dir': {
++			message: 'supports { dir: "ltr" } usage',
++			source: 'basic.css',
++			options: {
++				dir: 'ltr'
++			}
++		},
++		'basic:browsers': {
++			message: 'supports { browsers: "last 2 versions" } usage',
++			source: 'basic.css',
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			options: {
++				browsers: 'last 2 versions'
++			}
++		},
++		'basic:supported': {
++			message: 'ignores supported { ff >= 49 } usage',
++			source: 'basic.css',
++			options: {
++				browsers: 'ff >= 49'
++			}
+ 		}
+ 	}
+ };
+diff --git a/test/basic.css b/test/basic.css
+index b9410af..be2282f 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -25,3 +25,7 @@ test:dir(ltr) test {
+ test test:dir(ltr) {
+ 	order: 6;
+ }
++
++:root :dir(ltr) {
++	order: 7
++}
+diff --git a/test/basic.dir.expect.css b/test/basic.dir.expect.css
+new file mode 100644
+index 0000000..4a11562
+--- /dev/null
++++ b/test/basic.dir.expect.css
+@@ -0,0 +1,31 @@
++:root {
++	order: 0;
++}
++
++:root test {
++	order: 1;
++}
++
++:root test * {
++	order: 2;
++}
++
++:root test * test {
++	order: 3;
++}
++
++:root test {
++	order: 4;
++}
++
++:root test test {
++	order: 5;
++}
++
++:root test test {
++	order: 6;
++}
++
++:root:root * {
++	order: 7
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index ef80f2d..7dae80c 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -25,3 +25,7 @@
+ [dir="ltr"] test test {
+ 	order: 6;
+ }
++
++[dir="ltr"]:root * {
++	order: 7
++}
+diff --git a/test/basic.supported.expect.css b/test/basic.supported.expect.css
+new file mode 100644
+index 0000000..be2282f
+--- /dev/null
++++ b/test/basic.supported.expect.css
+@@ -0,0 +1,31 @@
++:dir(ltr) {
++	order: 0;
++}
++
++:dir(ltr) test {
++	order: 1;
++}
++
++test :dir(ltr) {
++	order: 2;
++}
++
++test :dir(ltr) test {
++	order: 3;
++}
++
++test:dir(ltr) {
++	order: 4;
++}
++
++test:dir(ltr) test {
++	order: 5;
++}
++
++test test:dir(ltr) {
++	order: 6;
++}
++
++:root :dir(ltr) {
++	order: 7
++}
+-- 
+2.33.1
+

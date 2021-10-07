@@ -1,0 +1,1207 @@
+From 4e4de6e9904d61d6ae85372164f27a46325b3674 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 17 Jan 2018 18:48:43 -0500
+Subject: [PATCH 04/29] Add various improvements
+
+- Use 0 - 100 for color and alpha channels instead of 0 to 1
+- Restrict colors to 0 - 100 for color channels
+- Restrict hue by a 360 modulus
+- Reverse blend/blenda percentage calculations (the spec has this reversed)
+- Stringify to 10 digits of precision for percentages and alpha values (like Sass 3.5.0)
+- Use big.js for more precise calculatons
+---
+ lib/color.js                 | 330 ++++++++++++++++++++---------------
+ lib/transform.js             | 120 +++++++------
+ package.json                 |   1 +
+ test/basic.colors.expect.css |  76 +++++---
+ test/basic.css               |  56 ++++--
+ test/basic.expect.css        |  70 +++++---
+ 6 files changed, 391 insertions(+), 262 deletions(-)
+
+diff --git a/lib/color.js b/lib/color.js
+index 587ab0d..d77de6e 100644
+--- a/lib/color.js
++++ b/lib/color.js
+@@ -1,3 +1,5 @@
++import number from 'big.js';
++
+ export default class Color {
+ 	constructor(color) {
+ 		this.color = Object(Object(color).color || color);
+@@ -97,8 +99,8 @@ export default class Color {
+ 
+ 	shade(percentage) {
+ 		const hwb = color2hwb(this.color);
+-		const shade = { hue: 0, whiteness: 1, blackness: 0, colorspace: 'hwb' };
+-		const colorspace = 'hwb';
++		const shade = { hue: 0, whiteness: 0, blackness: 100, colorspace: 'hwb' };
++		const colorspace = 'rgb';
+ 
+ 		return percentage === undefined
+ 			? hwb.blackness
+@@ -107,8 +109,8 @@ export default class Color {
+ 
+ 	tint(percentage) {
+ 		const hwb = color2hwb(this.color);
+-		const tint = { hue: 0, whiteness: 0, blackness: 1, colorspace: 'hwb' };
+-		const colorspace = 'hwb';
++		const tint = { hue: 0, whiteness: 100, blackness: 0, colorspace: 'hwb' };
++		const colorspace = 'rgb';
+ 
+ 		return percentage === undefined
+ 			? hwb.blackness
+@@ -124,68 +126,23 @@ export default class Color {
+ 	}
+ 
+ 	toHSL() {
+-		const color      = color2hsl(this.color);
+-		const isOpaque   = color.alpha === 1;
+-		const hue        = color.hue;
+-		const saturation = round(color.saturation * 100, 4);
+-		const lightness  = round(color.lightness * 100, 4);
+-		const alpha      = round(color.alpha * 100, 4);
+-
+-		return `hsl(${hue} ${saturation}% ${lightness}%${isOpaque
+-			? ''
+-		: ` / ${alpha}%`})`;
++		return color2hslString(this.color);
+ 	}
+ 
+ 	toHWB() {
+-		const color     = color2hwb(this.color);
+-		const isOpaque  = color.alpha === 1;
+-		const hue       = color.hue;
+-		const whiteness = round(color.whiteness * 100, 4);
+-		const blackness = round(color.blackness * 100, 4);
+-		const alpha     = round(color.alpha * 100, 4);
+-
+-		return `hwb(${hue} ${whiteness}% ${blackness}%${isOpaque
+-			? ''
+-		: ` / ${alpha}%`})`;
++		return color2hwbString(this.color);
+ 	}
+ 
+ 	toRGB() {
+-		const color    = color2rgb(this.color);
+-		const isOpaque = color.alpha === 1;
+-		const red      = round(color.red * 100, 4);
+-		const green    = round(color.green * 100, 4);
+-		const blue     = round(color.blue * 100, 4);
+-		const alpha    = round(color.alpha * 100, 4);
+-
+-		return `rgb(${red}% ${green}% ${blue}%${isOpaque
+-			? ''
+-		: ` / ${alpha}%`})`;
++		return color2rgbString(this.color);
+ 	}
+ 
+ 	toRGBLegacy() {
+-		const color    = color2rgb(this.color);
+-		const isOpaque = color.alpha === 1;
+-		const name     = isOpaque ? 'rgb' : 'rgba';
+-		const red      = round(color.red * 255, 0);
+-		const green    = round(color.green * 255, 0);
+-		const blue     = round(color.blue * 255, 0);
+-		const alpha    = round(color.alpha, 4);
+-
+-		return `${name}(${red}, ${green}, ${blue}${isOpaque
+-			? ''
+-		: `, ${alpha}`})`;
++		return color2rgbLegacyString(this.color);
+ 	}
+ 
+-	toString(rawcolorspace) {
+-		const colorspace = rawcolorspace || this.color.colorspace;
+-
+-		const color = colorspace === 'hsl'
+-			? this.toHSL()
+-		: colorspace === 'hwb'
+-			? this.toHWB()
+-		: this.toRGB();
+-
+-		return color;
++	toString() {
++		return color2string(this.color);
+ 	}
+ }
+ 
+@@ -193,17 +150,20 @@ export default class Color {
+ /* ========================================================================== */
+ 
+ function blend(base, color, percentage, colorspace, isBlendingAlpha) { // eslint-disable-line max-params
+-	const subtraction = 1 - percentage;
++	const addition    = number(percentage).div(100);
++	const subtraction = number(1).minus(addition);
+ 
+ 	if (colorspace === 'hsl') {
+ 		const { hue: h1, saturation: s1, lightness: l1, alpha: a1 } = color2hsl(base);
+ 		const { hue: h2, saturation: s2, lightness: l2, alpha: a2 } = color2hsl(color);
+ 
+ 		const [hue, saturation, lightness, alpha] = [
+-			h1 * percentage + h2 * subtraction,
+-			s1 * percentage + s2 * subtraction,
+-			l1 * percentage + l2 * subtraction,
+-			isBlendingAlpha ? a1 * percentage + a2 * subtraction : a1
++			Number(number(h1).times(subtraction).plus(number(h2).times(addition))),
++			Number(number(s1).times(subtraction).plus(number(s2).times(addition))),
++			Number(number(l1).times(subtraction).plus(number(l2).times(addition))),
++			isBlendingAlpha
++				? Number(number(a1).times(subtraction).plus(number(a2).times(addition)))
++			: a1
+ 		];
+ 
+ 		return { hue, saturation, lightness, alpha, colorspace: 'hsl' };
+@@ -212,10 +172,10 @@ function blend(base, color, percentage, colorspace, isBlendingAlpha) { // eslint
+ 		const { hue: h2, whiteness: w2, blackness: b2, alpha: a2 } = color2hwb(color);
+ 
+ 		const [hue, whiteness, blackness, alpha] = [
+-			h1 * percentage + h2 * subtraction,
+-			w1 * percentage + w2 * subtraction,
+-			b1 * percentage + b2 * subtraction,
+-			isBlendingAlpha ? a1 * percentage + a2 * subtraction : a1
++			Number(number(h1).times(subtraction).plus(number(h2).times(addition))),
++			Number(number(w1).times(subtraction).plus(number(w2).times(addition))),
++			Number(number(b1).times(subtraction).plus(number(b2).times(addition))),
++			isBlendingAlpha ? Number(number(a1).times(subtraction).plus(number(a2).times(addition))) : a1
+ 		];
+ 
+ 		return { hue, whiteness, blackness, alpha, colorspace: 'hwb' };
+@@ -224,10 +184,10 @@ function blend(base, color, percentage, colorspace, isBlendingAlpha) { // eslint
+ 		const { red: r2, green: g2, blue: b2, alpha: a2 } = color2rgb(color);
+ 
+ 		const [red, green, blue, alpha] = [
+-			r1 * percentage + r2 * subtraction,
+-			g1 * percentage + g2 * subtraction,
+-			b1 * percentage + b2 * subtraction,
+-			isBlendingAlpha ? a1 * percentage + a2 * subtraction : a1
++			Number(number(r1).times(subtraction).plus(number(r2).times(addition))),
++			Number(number(g1).times(subtraction).plus(number(g2).times(addition))),
++			Number(number(b1).times(subtraction).plus(number(b2).times(addition))),
++			isBlendingAlpha ? Number(number(a1).times(subtraction).plus(number(a2).times(addition))) : a1
+ 		];
+ 
+ 		return { red, green, blue, alpha, colorspace: 'rgb' };
+@@ -246,25 +206,15 @@ function assign(base, channels) {
+ 			const isHue = channel === 'hue';
+ 			const isRGB = !isHue && blueGreenRedMatch.test(channel);
+ 
+-			// value of the channel
+-			const adjustment = channels[channel];
+-
+-			// value limitations
+-			const min = 0;
+-			const max = isHue ? 360 : 1;
+-
+-			// updated value
+-			const value = Math.min(Math.max(parseFloat(adjustment), min), max);
++			// normalized value of the channel
++			const value = normalize(channels[channel], channel);
+ 
+ 			// assign channel to new object
+-			if (isHue) {
+-				color.hue = value;
+-			} else {
+-				color[channel] = value;
+-
+-				color.hue = isRGB
+-					? rgb2hue(color.red, color.green, color.blue, base.hue || 0)
+-				: base.hue;
++			color[channel] = value;
++
++			if (isRGB) {
++				// conditionally preserve the hue
++				color.hue = rgb2hue(color.red, color.green, color.blue, base.hue || 0);
+ 			}
+ 		}
+ 	);
+@@ -272,6 +222,21 @@ function assign(base, channels) {
+ 	return color;
+ }
+ 
++function normalize(value, channel) {
++	// detect channel
++	const isHue = channel === 'hue';
++
++	// value limitations
++	const min = 0;
++	const max = isHue ? 360 : 100;
++
++	const modifiedValue = Math.min(Math.max(isHue
++		? number(value).mod(360)
++	: value, min), max);
++
++	return modifiedValue
++}
++
+ /* Convert colors
+ /* ========================================================================== */
+ 
+@@ -302,16 +267,28 @@ function color2rgb(color) {
+ /* Convert HSL to RGB
+ /* ========================================================================== */
+ 
+-function hsl2rgb({ hue, saturation, lightness, alpha = 1 }) {
+-	const t2 = lightness <= 0.5
+-		? lightness * (saturation + 1)
+-	: lightness + saturation - lightness * saturation;
++function hsl2rgb({ hue, saturation, lightness, alpha = 100 }) {
++	const t2 = lightness <= 50
++		? Number(
++			number(lightness).div(100).times(
++				number(saturation).div(100).plus(1)
++			)
++		)
++	: Number(
++		number(lightness).div(100).plus(
++			number(saturation).div(100)
++		).minus(
++			number(lightness).div(100).times(
++				number(saturation).div(100)
++			)
++		)
++	);
+ 
+-	const t1 = lightness * 2 - t2;
++	const t1 = Number(number(lightness).div(100).times(2).minus(t2));
+ 
+-	const red   = hue2rgb(t1, t2, hue / 60 + 2);
+-	const green = hue2rgb(t1, t2, hue / 60);
+-	const blue  = hue2rgb(t1, t2, hue / 60 - 2);
++	const red   = hue2channel(t1, t2, Number(number(hue).div(60).plus(2)));
++	const green = hue2channel(t1, t2, Number(number(hue).div(60)));
++	const blue  = hue2channel(t1, t2, Number(number(hue).div(60).minus(2)));
+ 
+ 	return { hue, red, green, blue, alpha, colorspace: 'rgb' };
+ }
+@@ -319,16 +296,26 @@ function hsl2rgb({ hue, saturation, lightness, alpha = 1 }) {
+ /* Convert HWB to RGB
+ /* ========================================================================== */
+ 
+-function hwb2rgb({ hue, whiteness, blackness, alpha = 1 }) {
+-	const ratio = whiteness + blackness;
+-	const rwhiteness = ratio > 1 ? whiteness / ratio : whiteness;
+-	const rblackness = ratio > 1 ? blackness / ratio : blackness;
++function hwb2rgb({ hue, whiteness, blackness, alpha = 100 }) {
++	const ratio = Number(number(whiteness).plus(blackness));
++	const rwhiteness = ratio > 100 ? Number(number(whiteness).div(ratio)) : whiteness;
++	const rblackness = ratio > 100 ? Number(number(blackness).div(ratio)) : blackness;
++	const value = Number(number(100).minus(rblackness));
++	const hexagon = number(6).times(hue).div(360);
+ 
+-	const value = 1 - rblackness;
+-	const hexagon = 6 * hue / 360;
+ 	const hexagonFloor = Math.floor(hexagon);
+-	const hexagonF = hexagonFloor % 6 ? 1 - (hexagon - hexagonFloor) : hexagon - hexagonFloor;
+-	const interpolation = rwhiteness + hexagonF * (value - rwhiteness);
++
++	const hexagonF = hexagonFloor % 6
++		? number(1).minus(
++			hexagon.minus(hexagonFloor)
++		)
++	: hexagon.minus(hexagonFloor);
++
++	const interpolation = Number(number(rwhiteness).plus(
++		hexagonF.times(
++			number(value).minus(rwhiteness)
++		)
++	));
+ 
+ 	const [red, green, blue] = hexagonFloor % 6 === 5
+ 		? [value, rwhiteness, interpolation]
+@@ -348,11 +335,11 @@ function hwb2rgb({ hue, whiteness, blackness, alpha = 1 }) {
+ /* Convert RGB to HSL
+ /* ========================================================================== */
+ 
+-function rgb2hsl({ red, green, blue, alpha = 1 }, fallback = 0) { // eslint-disable-line max-params
++function rgb2hsl({ red, green, blue, alpha = 100 }, fallback = 0) { // eslint-disable-line max-params
+ 	const hue        = rgb2hue(red, green, blue, fallback);
+ 	const whiteness  = rgb2whiteness(red, green, blue);
+ 	const value      = rgb2value(red, green, blue);
+-	const lightness   = wv2lightness(whiteness, value);
++	const lightness  = wv2lightness(whiteness, value);
+ 	const saturation = lvw2saturation(lightness, value, whiteness);
+ 
+ 	return { hue, saturation, lightness, alpha, colorspace: 'hsl' };
+@@ -361,11 +348,11 @@ function rgb2hsl({ red, green, blue, alpha = 1 }, fallback = 0) { // eslint-disa
+ /* Convert RGB to HWB
+ /* ========================================================================== */
+ 
+-function rgb2hwb({ red, green, blue, alpha = 1 }, fallback = 0) { // eslint-disable-line max-params
++function rgb2hwb({ red, green, blue, alpha = 100 }, fallback = 0) { // eslint-disable-line max-params
+ 	const hue       = rgb2hue(red, green, blue, fallback);
+ 	const whiteness = rgb2whiteness(red, green, blue);
+ 	const value     = rgb2value(red, green, blue);
+-	const blackness = 1 - value;
++	const blackness = Number(number(100).minus(value));
+ 
+ 	return { hue, whiteness, blackness, alpha, colorspace: 'hwb' };
+ }
+@@ -373,18 +360,22 @@ function rgb2hwb({ red, green, blue, alpha = 1 }, fallback = 0) { // eslint-disa
+ /* Convert Hue to RGB
+ /* ========================================================================== */
+ 
+-function hue2rgb(t1, t2, hue) {
+-	const huerange = hue < 0 ? hue + 6 : hue >= 6 ? hue - 6 : hue;
++function hue2channel(t1, t2, hue) {
++	const huerange = hue < 0
++		? number(hue).plus(6)
++	: hue >= 6
++		? number(hue).minus(6)
++	: number(hue);
+ 
+ 	const rgb = huerange < 1
+-		? (t2 - t1) * hue + t1
++		? Number(number(number(t2).minus(t1)).times(hue).plus(t1))
+ 	: hue < 3
+ 		? t2
+ 	: hue < 4
+-		? (t2 - t1) * (4 - hue) + t1
++		? Number(number(number(t2).minus(t1)).times(number(4).minus(hue)).plus(t1))
+ 	: t1;
+ 
+-	return rgb;
++	return Number(number(rgb).times(100));
+ }
+ 
+ /* Convert RGB to Hue
+@@ -399,10 +390,10 @@ function rgb2hue(red, green, blue, fallback) { // eslint-disable-line max-params
+ 		return fallback;
+ 	} else {
+ 		const segment = value === red
+-			? (green - blue) / chroma
++			? number(green).minus(blue).div(chroma)
+ 		: value === green
+-			? (blue - red) / chroma
+-		: (red - green) / chroma;
++			? number(blue).minus(red).div(chroma)
++		: number(red).minus(green).div(chroma);
+ 
+ 		const shift = value === red
+ 			? segment < 0
+@@ -412,7 +403,7 @@ function rgb2hue(red, green, blue, fallback) { // eslint-disable-line max-params
+ 			? 120 / 60
+ 		: 240 / 60;
+ 
+-		const hue = (segment + shift) * 60;
++		const hue = Number(number(segment).plus(shift).times(60));
+ 
+ 		return hue;
+ 	}
+@@ -433,7 +424,7 @@ function contrast(color, percentage) {
+ 		// hwb(X, 100%, 0%), where X is the hue angle of the color
+ 		? { hue: hwb.hue, whiteness: 100, blackness: 0, alpha: hwb.alpha, colorspace: 'hwb' }
+ 	// otherwise, hwb(X, 0%, 100%), where X is the hue angle of the color
+-	: { hue: hwb.hue, whiteness: 0, blackness: 1, alpha: hwb.alpha, colorspace: 'hwb' };
++	: { hue: hwb.hue, whiteness: 0, blackness: 100, alpha: hwb.alpha, colorspace: 'hwb' };
+ 
+ 	// contrast ratio
+ 	const contrastRatio = colors2contrast(color, maxContrastColor);
+@@ -457,9 +448,9 @@ function colors2contrast(color1, color2) {
+ 
+ 	return l1 > l2
+ 		// if l1 is the relative luminance of the lighter of the colors
+-		? (l1 + 0.05) / (l2 + 0.05)
++		? Number(number(l1).plus(0.05).div(number(l2).plus(0.05)))
+ 	// otherwise, if l2 is the relative luminance of the lighter of the colors
+-	: (l2 + 0.05) / (l2 + 0.05);
++	: Number(number(l2).plus(0.05).div(number(l2).plus(0.05)));
+ }
+ 
+ function rgb2luminance(red, green, blue) {
+@@ -470,12 +461,16 @@ function rgb2luminance(red, green, blue) {
+ 	];
+ 
+ 	// https://drafts.csswg.org/css-color/#luminance
+-	return 0.2126 * redLuminance + 0.7152 * greenLuminance + 0.0722 * blueLuminance;
++	const luminance = Number(number(0.2126).times(redLuminance).plus(number(0.7152).times(greenLuminance)).plus(number(0.0722).times(blueLuminance)));
++
++	return luminance;
+ }
+ 
+ function channel2luminance(value) {
+ 	// https://drafts.csswg.org/css-color/#luminance
+-	return value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
++	const luminance = value <= 0.03928 ? Number(number(value).div(12.92)) : Math.pow(number(value).plus(0.055).div(1.055), 2.4);
++
++	return luminance;
+ }
+ 
+ // return the smallest contrast ratio from a color and a maximum contrast (credit: @thetalecrafter)
+@@ -483,18 +478,18 @@ function colors2contrastRatioColor(hwb, maxHWB) {
+ 	const modifiedHWB = Object.assign({}, hwb);
+ 
+ 	// values to be used for linear interpolations in HWB space
+-	let minW = hwb.whiteness;
+-	let minB = hwb.blackness;
+-	let maxW = maxHWB.whiteness;
+-	let maxB = maxHWB.blackness;
++	let minW = number(hwb.whiteness);
++	let minB = number(hwb.blackness);
++	let maxW = number(maxHWB.whiteness);
++	let maxB = number(maxHWB.blackness);
+ 
+ 	// find the color with the smallest contrast ratio with the base color that is greater than 4.5
+-	while (Math.abs(minW - maxW) > 1 || Math.abs(minB - maxB) > 1) {
+-		const midW = Math.round((maxW + minW) / 2);
+-		const midB = Math.round((maxB + minB) / 2);
++	while (Number(minW.minus(maxW).abs()) > 100 || Number(minB.minus(maxB).abs()) > 100) {
++		const midW = maxW.plus(minW).div(2).round();
++		const midB = maxB.plus(minB).div(2).round();
+ 
+-		modifiedHWB.whiteness = midW;
+-		modifiedHWB.blackness = midB;
++		modifiedHWB.whiteness = Number(midW);
++		modifiedHWB.blackness = Number(midB);
+ 
+ 		if (colors2contrast(modifiedHWB, hwb) > 4.5) {
+ 			maxW = midW;
+@@ -526,14 +521,14 @@ function rgb2value(red, green, blue) {
+ /* ========================================================================== */
+ 
+ function wv2lightness(whiteness, value) {
+-	return (whiteness + value) / 2;
++	return Number(number(whiteness).plus(value).div(2));
+ }
+ 
+ /* Convert Value and Whiteness to Chroma
+ /* ========================================================================== */
+ 
+ function vw2chroma(value, whiteness) {
+-	return value - whiteness;
++	return Number(number(value).minus(whiteness));
+ }
+ 
+ /* Convert Lightness, Value, and Whiteness to Saturation
+@@ -542,19 +537,76 @@ function vw2chroma(value, whiteness) {
+ function lvw2saturation(lightness, value, whiteness) {
+ 	return whiteness === value
+ 		? 0
+-	: lightness < 0.5
+-		? (value - whiteness) / (value + whiteness)
+-	: (value - whiteness) / (2 - value - whiteness);
++	: lightness < 50
++		? Number(number(value).minus(whiteness).div(number(value).plus(whiteness)).times(100))
++	: Number(number(value).minus(whiteness).div(number(200).minus(value).minus(whiteness)).times(100));
+ }
+ 
+-/* Round to decimal place
++/* Match
+ /* ========================================================================== */
+ 
+-function round(value, decimals) {
+-	return Number(`${Math.round(`${value}e${decimals}`)}e-${decimals}`);
+-}
++const blueGreenRedMatch = /^(blue|green|red)$/i;
+ 
+-/* Match
++/* Stringifiers
+ /* ========================================================================== */
+ 
+-const blueGreenRedMatch = /^(blue|green|red)$/i;
++function color2string(color) {
++	return color.colorspace === 'hsl'
++		? color2hslString(color)
++	: color.colorspace === 'hwb'
++		? color2hwbString(color)
++	: color2rgbString(color);
++}
++
++function color2hslString(color) {
++	const hsl        = color2hsl(color);
++	const isOpaque   = hsl.alpha === 100;
++	const hue        = hsl.hue;
++	const saturation = number(hsl.saturation).round(10);
++	const lightness  = number(hsl.lightness).round(10);
++	const alpha      = number(hsl.alpha).round(10);
++
++	return `hsl(${hue} ${saturation}% ${lightness}%${isOpaque
++		? ''
++	: ` / ${alpha}%`})`;
++}
++
++function color2hwbString(color) {
++	const hwb       = color2hwb(color);
++	const isOpaque  = hwb.alpha === 100;
++	const hue       = hwb.hue;
++	const whiteness = number(hwb.whiteness).round(10);
++	const blackness = number(hwb.blackness).round(10);
++	const alpha     = number(hwb.alpha).round(10);
++
++	return `hwb(${hue} ${whiteness}% ${blackness}%${isOpaque
++		? ''
++	: ` / ${alpha}%`})`;
++}
++
++function color2rgbString(color) {
++	const rgb      = color2rgb(color);
++	const isOpaque = rgb.alpha === 100;
++	const red      = number(rgb.red).round(10);
++	const green    = number(rgb.green).round(10);
++	const blue     = number(rgb.blue).round(10);
++	const alpha    = number(rgb.alpha).round(10);
++
++	return `rgb(${red}% ${green}% ${blue}%${isOpaque
++		? ''
++	: ` / ${alpha}%`})`;
++}
++
++function color2rgbLegacyString(color) {
++	const rgb      = color2rgb(color);
++	const isOpaque = rgb.alpha === 100;
++	const name     = isOpaque ? 'rgb' : 'rgba';
++	const red      = number(rgb.red).times(2.55).round(0);
++	const green    = number(rgb.green).times(2.55).round(0);
++	const blue     = number(rgb.blue).times(2.55).round(0);
++	const alpha    = number(rgb.alpha).div(100).round(10);
++
++	return `${name}(${red}, ${green}, ${blue}${isOpaque
++		? ''
++	: `, ${alpha}`})`;
++}
+diff --git a/lib/transform.js b/lib/transform.js
+index 00782a8..64c2e79 100644
+--- a/lib/transform.js
++++ b/lib/transform.js
+@@ -2,6 +2,7 @@
+ import Color from './color';
+ import manageUnresolved from './manage-unresolved';
+ import names from 'color-name';
++import number from 'big.js';
+ import parser from 'postcss-values-parser';
+ 
+ /* Transform AST
+@@ -50,7 +51,7 @@ function transformColor(node, opts) {
+ 
+ // return a transformed rgb/rgba color function
+ function transformRGBFunction(node, opts) {
+-	const [red, green, blue, alpha = 1] = transformArgsByParams(node, [
++	const [red, green, blue, alpha = 100] = transformArgsByParams(node, [
+ 		// [ <percentage>{3} | <rgb-value>{3} ] [ / <alpha-value> ]?
+ 		[transformRGBValue, transformRGBValue, transformRGBValue, isSlash, transformAlpha],
+ 		// <number>#{3} [ , <alpha-value> ]? ]
+@@ -68,7 +69,7 @@ function transformRGBFunction(node, opts) {
+ 
+ // return a transformed hsl/hsla color function
+ function transformHSLFunction(node, opts) {
+-	const [hue, saturation, lightness, alpha = 1] = transformArgsByParams(node, [
++	const [hue, saturation, lightness, alpha = 100] = transformArgsByParams(node, [
+ 		// <hue> <percentage>{2} [ / <alpha-value> ]?
+ 		[transformHue, transformPercentage, transformPercentage, isSlash, transformAlpha],
+ 		// hue, <percentage>#{2} [ , <alpha-value> ]? ]
+@@ -86,7 +87,7 @@ function transformHSLFunction(node, opts) {
+ 
+ // return a transformed hwb color function
+ function transformHWBFunction(node, opts) {
+-	const [hue, whiteness, blackness, alpha = 1] = transformArgsByParams(node, [
++	const [hue, whiteness, blackness, alpha = 100] = transformArgsByParams(node, [
+ 		// <hue> <percentage> <percentage> [ / <alpha-value> ]?
+ 		[transformHue, transformPercentage, transformPercentage, isSlash, transformAlpha]
+ 	]);
+@@ -107,7 +108,13 @@ function transformColorModFunction(node, opts) {
+ 
+ 	if (colorOrHueNode !== undefined) {
+ 		const color = isHue(colorOrHueNode)
+-			? new Color({ hue: transformHue(colorOrHueNode, opts), saturation: 1, lightness: 0.5, alpha: 1, colorspace: 'hsl' })
++			? new Color({
++				hue: transformHue(colorOrHueNode, opts),
++				saturation: 100,
++				lightness: 50,
++				alpha: 100,
++				colorspace: 'hsl'
++			})
+ 		: transformColor(colorOrHueNode, opts);
+ 
+ 		if (color) {
+@@ -129,10 +136,10 @@ function transformHexColor(node, opts) {
+ 		const [r, g, b, a, rr, gg, bb, aa] = (node.value.match(hexColorMatch) || []).slice(1);
+ 
+ 		const color = new Color({
+-			red:   rr !== undefined ? parseInt(rr, 16) / 255 : r !== undefined ? parseInt(r + r, 16) / 255 : 0,
+-			green: gg !== undefined ? parseInt(gg, 16) / 255 : g !== undefined ? parseInt(g + g, 16) / 255 : 0,
+-			blue:  bb !== undefined ? parseInt(bb, 16) / 255 : b !== undefined ? parseInt(b + b, 16) / 255 : 0,
+-			alpha: aa !== undefined ? parseInt(aa, 16) / 255 : a !== undefined ? parseInt(a + a, 16) / 255 : 1
++			red:   rr !== undefined ? Number(number(parseInt(rr, 16)).div(2.55)) : r !== undefined ? Number(number(parseInt(r + r, 16)).div(2.55)) : 0,
++			green: gg !== undefined ? Number(number(parseInt(gg, 16)).div(2.55)) : g !== undefined ? Number(number(parseInt(g + g, 16)).div(2.55)) : 0,
++			blue:  bb !== undefined ? Number(number(parseInt(bb, 16)).div(2.55)) : b !== undefined ? Number(number(parseInt(b + b, 16)).div(2.55)) : 0,
++			alpha: aa !== undefined ? Number(number(parseInt(aa, 16)).div(2.55)) : a !== undefined ? Number(number(parseInt(a + a, 16)).div(2.55)) : 100
+ 		});
+ 
+ 		return color;
+@@ -147,7 +154,13 @@ function transformNamedColor(node, opts) {
+ 		// <named-color>
+ 		const [red, green, blue] = names[node.value];
+ 
+-		const color = new Color({ red: red / 255, green: green / 255, blue: blue / 255, alpha: 1, colorspace: 'rgb' });
++		const color = new Color({
++			red: Number(number(red).div(2.55)),
++			green: Number(number(green).div(2.55)),
++			blue: Number(number(blue).div(2.55)),
++			alpha: 100,
++			colorspace: 'rgb'
++		});
+ 
+ 		return color;
+ 	} else {
+@@ -210,19 +223,19 @@ function transformAlphaBlueGreenRedAdjuster(base, node, opts) {
+ 		// normalized channel name
+ 		const channel = node.value.toLowerCase().replace(alphaMatch, 'alpha');
+ 
+-		const existingValue = base[channel]();
++		const existingValue = number(base[channel]());
+ 
+-		const modifiedValue = adjustment
++		const modifiedValue = adjustment !== undefined
+ 			? operatorOrValue === '+'
+-				? existingValue + adjustment
++				? existingValue.plus(adjustment)
+ 			: operatorOrValue === '-'
+-				? existingValue - adjustment
++				? existingValue.minus(adjustment)
+ 			: operatorOrValue === '*'
+-				? existingValue * adjustment
++				? existingValue.times(adjustment)
+ 			: adjustment
+ 		: operatorOrValue;
+ 
+-		const modifiedColor = base[channel](modifiedValue);
++		const modifiedColor = base[channel](Number(modifiedValue));
+ 
+ 		return modifiedColor;
+ 	} else {
+@@ -247,41 +260,41 @@ function transformRGBAdjuster(base, node, opts) {
+ 	if (arg2 !== undefined && arg2.color) {
+ 		const modifiedColor = base.rgb(
+ 			arg1 === '+'
+-				? base.red() + arg2.red()
+-			: base.red() - arg2.red(),
++				? Number(number(base.red()).plus(arg2.red()))
++			: Number(number(base.red()).minus(arg2.red())),
+ 			arg1 === '+'
+-				? base.green() + arg2.green()
+-			: base.green() - arg2.green(),
++				? Number(number(base.green()).plus(arg2.green()))
++			: Number(number(base.green()).minus(arg2.green())),
+ 			arg1 === '+'
+-				? base.blue() + arg2.blue()
+-			: base.blue() - arg2.blue()
++				? Number(number(base.blue()).plus(arg2.blue()))
++			: Number(number(base.blue()).minus(arg2.blue()))
+ 		);
+ 
+ 		return modifiedColor;
+ 	} else if (arg1 !== undefined && minusPlusMatch.test(arg1)) {
+ 		const modifiedColor = base.rgb(
+ 			arg1 === '+'
+-				? base.red() + arg2
+-			: base.red() - arg2,
++				? Number(number(base.red()).plus(arg2))
++			: Number(number(base.red()).minus(arg2)),
+ 			arg1 === '+'
+-				? base.green() + arg3
+-			: base.green() - arg3,
++				? Number(number(base.green()).plus(arg3))
++			: Number(number(base.green()).minus(arg3)),
+ 			arg1 === '+'
+-				? base.blue() + arg4
+-			: base.blue() - arg4
++				? Number(number(base.blue()).plus(arg4))
++			: Number(number(base.blue()).minus(arg4))
+ 		);
+ 
+ 		return modifiedColor;
+ 	} else if (arg1 !== undefined && arg2 !== undefined) {
+ 		const modifiedColor = base.rgb(
+-			base.red() * arg2,
+-			base.green() * arg2,
+-			base.blue() * arg2
++			Number(number(base.red()).times(arg2)),
++			Number(number(base.green()).times(arg2)),
++			Number(number(base.blue()).times(arg2))
+ 		);
+ 
+ 		return modifiedColor;
+ 	} else {
+-		return manageUnresolved(node, opts, node.value, `Expected a valid rgb() adjuster)`);
++		return manageUnresolved(node, opts, node.value, `Expected a valid rgb() adjuster`);
+ 	}
+ }
+ 
+@@ -320,7 +333,7 @@ function transformContrastAdjuster(base, node, opts) {
+ 
+ // return a transformed color using a hue adjustment
+ function transformHueAdjuster(base, node, opts) {
+-	const [operatorOrHue, rawAdjustment] = transformArgsByParams(node, [
++	const [operatorOrHue, adjustment] = transformArgsByParams(node, [
+ 		// [ + | - | * ] <angle>
+ 		[transformMinusPlusTimesOperator, transformHue],
+ 		// <angle>
+@@ -329,23 +342,18 @@ function transformHueAdjuster(base, node, opts) {
+ 
+ 	if (operatorOrHue !== undefined) {
+ 		const existingHue = base.hue();
+-		const adjustment = parseFloat(rawAdjustment);
+ 
+-		const rawModifiedValue = adjustment
++		const modifiedValue = adjustment !== undefined
+ 			? operatorOrHue === '+'
+-				? existingHue + adjustment
++				? number(existingHue).plus(adjustment)
+ 			: operatorOrHue === '-'
+-				? existingHue - adjustment
++				? number(existingHue).minus(adjustment)
+ 			: operatorOrHue === '*'
+-				? existingHue * adjustment
+-			: adjustment
+-		: parseFloat(operatorOrHue);
++				? number(existingHue).times(adjustment)
++			: number(adjustment)
++		: number(operatorOrHue);
+ 
+-		const modifiedValue = rawModifiedValue < 0
+-			? 360 + rawModifiedValue % 360
+-		: rawModifiedValue % 360;
+-
+-		return base.hue(modifiedValue);
++		return base.hue(Number(modifiedValue));
+ 	} else {
+ 		return manageUnresolved(node, opts, node.value, `Expected a valid hue() function)`);
+ 	}
+@@ -360,18 +368,20 @@ function transformBlacknessLightnessSaturationWhitenessAdjuster(base, node, opts
+ 	]);
+ 
+ 	if (operatorOrValue !== undefined) {
+-		const existingValue = base[channel]();
++		const existingValue = number(base[channel]());
+ 		const adjustment = parseFloat(rawAdjustment);
+ 
+-		const modifiedValue = adjustment
++		const rawModifiedValue = !isNaN(adjustment)
+ 			? operatorOrValue === '+'
+-				? existingValue + adjustment
++				? existingValue.plus(adjustment)
+ 			: operatorOrValue === '-'
+-				? existingValue - adjustment
++				? existingValue.minus(adjustment)
+ 			: operatorOrValue === '*'
+-				? existingValue * adjustment
+-			: adjustment
+-		: parseFloat(operatorOrValue);
++				? existingValue.times(adjustment)
++			: number(adjustment)
++		: number(operatorOrValue);
++
++		const modifiedValue = Number(rawModifiedValue);
+ 
+ 		return base[channel](modifiedValue);
+ 	} else {
+@@ -413,7 +423,7 @@ function transformColorSpace(node, opts) {
+ function transformAlpha(node, opts) {
+ 	if (isNumber(node)) {
+ 		// <number>
+-		return parseFloat(node.value);
++		return Number(number(node.value).times(100));
+ 	} else if (isPercentage(node)) {
+ 		// <percentage>
+ 		return transformPercentage(node, opts);
+@@ -439,7 +449,7 @@ function transformRGBValue(node, opts) {
+ function transformRGBNumber(node, opts) {
+ 	if (isNumber(node)) {
+ 		// <rgba-number>
+-		return parseFloat(node.value) / 255;
++		return Number(number(node.value).div(2.55));
+ 	} else {
+ 		return manageUnresolved(node, opts, node.value, `Expected a valid RGB value)`);
+ 	}
+@@ -459,7 +469,7 @@ function transformHue(node, opts) {
+ function transformPercentage(node, opts) {
+ 	if (isPercentage(node)) {
+ 		// <percentage>
+-		return parseFloat(node.value) / 100;
++		return Number(number(node.value));
+ 	} else {
+ 		return manageUnresolved(node, opts, node.value, `Expected a valid hue`);
+ 	}
+@@ -638,7 +648,7 @@ function isTimesOperator(node) {
+ 
+ // return whether the percentage is valid
+ function isPercentage(node) {
+-	return Object(node).type === 'number' && node.unit === '%';
++	return Object(node).type === 'number' && (node.unit === '%' || node.value === '0');
+ }
+ 
+ /* Matchers
+diff --git a/package.json b/package.json
+index 13b5902..57a3148 100644
+--- a/package.json
++++ b/package.json
+@@ -26,6 +26,7 @@
+     "node": ">=4.0.0"
+   },
+   "dependencies": {
++    "big.js": "^5.0.3",
+     "color-name": "^1.1.3",
+     "postcss": "^6.0",
+     "postcss-values-parser": "^1.3.1"
+diff --git a/test/basic.colors.expect.css b/test/basic.colors.expect.css
+index 7b05a17..c6698e8 100644
+--- a/test/basic.colors.expect.css
++++ b/test/basic.colors.expect.css
+@@ -18,26 +18,29 @@ test-color-mod {
+ 	color: hsl(0 100% 50%);
+ 	color: hwb(0 0% 0%);
+ 	color: hwb(0 0% 0%);
++	color: hwb(0 0% 0%);
+ 	color: hsl(0 100% 50%);
+ 	color: hsl(0 100% 50%);
+ }
+ 
+ test-red-green-blue-alpha-adjuster {
+-	color: rgb(100% 0% 7.8431%);
++	color: rgb(100% 0% 7.8431372549%);
+ 	color: rgb(100% 0% 20%);
+-	color: rgb(100% 7.8431% 0%);
++	color: rgb(100% 7.8431372549% 0%);
+ 	color: rgb(100% 20% 0%);
+-	color: rgb(92.1569% 0% 0%);
++	color: rgb(92.1568627451% 0% 0%);
+ 	color: rgb(80% 0% 0%);
+-	color: rgb(100% 0% 0% / 20%);
++	color: rgb(49.8039215686% 0% 0%);
++	color: rgb(100% 0% 0% / 50%);
++	color: rgb(100% 0% 0% / 25%);
+ }
+ 
+ test-rgb-adjuster {
+ 	color: rgb(100% 100% 0%);
+ 	color: rgb(100% 100% 0%);
+-	color: rgb(0% 0% 0%);
+-	color: rgb(0% 0% 0%);
+-	color: rgb(50% 0% 0%);
++	color: rgb(40% 0% 0%);
++	color: rgb(40% 0% 0%);
++	color: rgb(40% 20% 60%);
+ }
+ 
+ test-hue-adjuster {
+@@ -45,37 +48,43 @@ test-hue-adjuster {
+ 	color: hsl(20 100% 50%);
+ 	color: hsl(20 100% 50%);
+ 	color: hsl(20 100% 50%);
+-	color: hsl(340 100% 50%);
+-	color: hsl(340 100% 50%);
++	color: hsl(0 100% 50%);
++	color: hsl(0 100% 50%);
+ 	color: hsl(0 100% 50%);
+ 	color: hsl(0 100% 50%);
+ }
+ 
+ test-lightness-saturation-adjuster {
++	color: hsl(0 100% 50%);
+ 	color: hsl(0 100% 20%);
+ 	color: hsl(0 100% 70%);
+ 	color: hsl(0 100% 30%);
+-	color: hsl(0 100% 10%);
+-	color: hsl(0 20% 50%);
+-	color: hsl(0 100% 50%);
+-	color: hsl(0 80% 50%);
+-	color: hsl(0 20% 50%);
++	color: hsl(0 100% 75%);
++	color: hsl(60 20% 91.1764705882%);
++	color: hsl(60 75.5555555556% 91.1764705882%);
++	color: hsl(60 35.5555555556% 91.1764705882%);
++	color: hsl(60 83.3333333333% 91.1764705882%);
+ }
+ 
+ test-blackness-whiteness-adjuster {
+-	color: hwb(0 0% 20%);
+-	color: hwb(0 0% 20%);
+-	color: hwb(0 0% 0%);
+-	color: hwb(0 0% 0%);
+-	color: hwb(0 20% 0%);
+-	color: hwb(0 20% 0%);
+-	color: hwb(0 0% 0%);
+-	color: hwb(0 0% 0%);
++	color: hwb(60 86.2745098039% 20%);
++	color: hwb(60 86.2745098039% 23.9215686275%);
++	color: hwb(60 86.2745098039% 2.9215686275%);
++	color: hwb(60 86.2745098039% 78.431372549%);
++	color: hwb(60 20% 3.9215686275%);
++	color: hwb(60 87.2745098039% 3.9215686275%);
++	color: hwb(60 66.2745098039% 3.9215686275%);
++	color: hwb(60 43.137254902% 3.9215686275%);
+ }
+ 
+ test-tint-shade-adjuster {
+-	color: hwb(0 0% 80%);
+-	color: hwb(0 80% 0%);
++	color: rgb(100% 0% 0%);
++	color: rgb(100% 0% 0%);
++	color: rgb(100% 0% 0%);
++	color: rgb(100% 100% 100%);
++	color: rgb(0% 0% 0%);
++	color: rgb(100% 20% 20%);
++	color: rgb(80% 0% 0%);
+ }
+ 
+ test-blend-adjuster {
+@@ -86,11 +95,24 @@ test-blend-adjuster {
+ }
+ 
+ test-contrast-adjuster {
+-	color: hwb(60 0% 25%);
+-	color: hwb(60 0% 50%);
++	color: hwb(60 0% 100%);
+ 	color: hwb(60 0% 75%);
++	color: hwb(60 0% 50%);
++	color: hwb(60 0% 25%);
++	color: hwb(60 0% 0%);
+ }
+ 
+ test-combination-adjuster {
+-	color: rgb(34.5676% 17.8464% 44.5676%);
++	color: rgb(41.2352941176% 31.2352941176% 80%);
++}
++
++test-sameness {
++	color: rgb(96.0784313725% 96.0784313725% 86.2745098039%);
++	color: hsl(60 55.5555555556% 91.1764705882%);
++	color: hsl(60 55.5555555556% 91.1764705882%);
++	color: hsl(60 55.5555555556% 91.1764705882%);
++	color: rgb(96.0784313725% 96.0784313725% 86.2745098039%);
++	color: rgb(96.0784313725% 96.0784313725% 86.2745098039%);
++	color: rgb(96.0784313725% 96.0784313725% 86.2745098039%);
++	color: hsl(60 55.5555555556% 91.1764705882%);
+ }
+diff --git a/test/basic.css b/test/basic.css
+index eb60051..d6ebe6e 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -16,6 +16,7 @@ test-color-mod {
+ 	color: color-mod(hsl(0, 100%, 50%));
+ 	color: color-mod(hsl(0, 100%, 50%, 1));
+ 	color: color-mod(hsla(0, 100%, 50%, 1));
++	color: color-mod(hwb(0 0 0));
+ 	color: color-mod(hwb(0 0% 0%));
+ 	color: color-mod(hwb(0 0% 0% / 100%));
+ 	color: color-mod(0);
+@@ -29,15 +30,17 @@ test-red-green-blue-alpha-adjuster {
+ 	color: color-mod(red green(+ 20%));
+ 	color: color-mod(red red(- 20));
+ 	color: color-mod(red red(- 20%));
+-	color: color-mod(red alpha(* 20%));
++	color: color-mod(red red(- 128));
++	color: color-mod(red alpha(- 50%));
++	color: color-mod(red alpha(- .75));
+ }
+ 
+ test-rgb-adjuster {
+ 	color: color-mod(red rgb(+ 0 255 0));
+ 	color: color-mod(red rgb(+ #0f0));
+-	color: color-mod(red rgb(- 255 0 0));
+-	color: color-mod(red rgb(- #f00));
+-	color: color-mod(red rgb(* 50%));
++	color: color-mod(red rgb(- 60% 0 0));
++	color: color-mod(red rgb(- #900));
++	color: color-mod(rebeccapurple rgb(* 1%));
+ }
+ 
+ test-hue-adjuster {
+@@ -52,28 +55,34 @@ test-hue-adjuster {
+ }
+ 
+ test-lightness-saturation-adjuster {
++	color: color-mod(red lightness(50%));
+ 	color: color-mod(red lightness(20%));
+ 	color: color-mod(red lightness(+ 20%));
+ 	color: color-mod(red lightness(- 20%));
+-	color: color-mod(red lightness(* 20%));
+-	color: color-mod(red saturation(20%));
+-	color: color-mod(red saturation(+ 20%));
+-	color: color-mod(red saturation(- 20%));
+-	color: color-mod(red saturation(* 20%));
++	color: color-mod(red lightness(* 1.5%));
++	color: color-mod(beige saturation(20%));
++	color: color-mod(beige saturation(+ 20%));
++	color: color-mod(beige saturation(- 20%));
++	color: color-mod(beige saturation(* 1.5%));
+ }
+ 
+ test-blackness-whiteness-adjuster {
+-	color: color-mod(red blackness(20%));
+-	color: color-mod(red blackness(+ 20%));
+-	color: color-mod(red blackness(- 20%));
+-	color: color-mod(red blackness(* 20%));
+-	color: color-mod(red whiteness(20%));
+-	color: color-mod(red whiteness(+ 20%));
+-	color: color-mod(red whiteness(- 20%));
+-	color: color-mod(red whiteness(* 20%));
++	color: color-mod(beige blackness(20%));
++	color: color-mod(beige blackness(+ 20%));
++	color: color-mod(beige blackness(- 1%));
++	color: color-mod(beige blackness(* 20%));
++	color: color-mod(beige whiteness(20%));
++	color: color-mod(beige whiteness(+ 1%));
++	color: color-mod(beige whiteness(- 20%));
++	color: color-mod(beige whiteness(* .5%));
+ }
+ 
+ test-tint-shade-adjuster {
++	color: color-mod(red);
++	color: color-mod(red tint(0%));
++	color: color-mod(red shade(0%));
++	color: color-mod(red tint(100%));
++	color: color-mod(red shade(100%));
+ 	color: color-mod(red tint(20%));
+ 	color: color-mod(red shade(20%));
+ }
+@@ -86,11 +95,24 @@ test-blend-adjuster {
+ }
+ 
+ test-contrast-adjuster {
++	color: color-mod(yellow contrast(0%));
+ 	color: color-mod(yellow contrast(25%));
+ 	color: color-mod(yellow contrast(50%));
+ 	color: color-mod(yellow contrast(75%));
++	color: color-mod(yellow contrast(100%));
+ }
+ 
+ test-combination-adjuster {
+ 	color: color-mod(color-mod(0deg blue(10%)) rgb(+ 0 10 0) hue(+ 10deg) tint(10%) lightness(+ 10%) saturation(+ 10%) blend(rebeccapurple 50%));
+ }
++
++test-sameness {
++	color: color-mod(beige);
++	color: color-mod(beige hue(+ 0deg));
++	color: color-mod(beige saturation(+ 0%));
++	color: color-mod(beige lightness(+ 0%));
++	color: color-mod(beige alpha(1));
++	color: color-mod(beige alpha(+ 0));
++	color: color-mod(beige alpha(+ 0%));
++	color: color-mod(beige blend(beige 0% hsl));
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 84fe437..9049a4b 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -18,6 +18,7 @@ test-color-mod {
+ 	color: rgb(255, 0, 255);
+ 	color: rgb(255, 0, 0);
+ 	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
+ 	color: rgb(255, 0, 255);
+ 	color: rgb(255, 0, 255);
+ }
+@@ -29,15 +30,17 @@ test-red-green-blue-alpha-adjuster {
+ 	color: rgb(255, 51, 0);
+ 	color: rgb(235, 0, 0);
+ 	color: rgb(204, 0, 0);
+-	color: rgba(255, 0, 0, 0.2);
++	color: rgb(127, 0, 0);
++	color: rgba(255, 0, 0, 0.5);
++	color: rgba(255, 0, 0, 0.25);
+ }
+ 
+ test-rgb-adjuster {
+ 	color: rgb(255, 255, 0);
+ 	color: rgb(255, 255, 0);
+-	color: rgb(0, 0, 0);
+-	color: rgb(0, 0, 0);
+-	color: rgb(128, 0, 0);
++	color: rgb(102, 0, 0);
++	color: rgb(102, 0, 0);
++	color: rgb(102, 51, 153);
+ }
+ 
+ test-hue-adjuster {
+@@ -45,37 +48,43 @@ test-hue-adjuster {
+ 	color: rgb(255, 85, 255);
+ 	color: rgb(255, 85, 255);
+ 	color: rgb(255, 85, 255);
+-	color: rgb(0, 0, 85);
+-	color: rgb(0, 0, 85);
++	color: rgb(255, 0, 255);
++	color: rgb(255, 0, 255);
+ 	color: rgb(255, 0, 255);
+ 	color: rgb(255, 0, 255);
+ }
+ 
+ test-lightness-saturation-adjuster {
++	color: rgb(255, 0, 255);
+ 	color: rgb(102, 0, 102);
+ 	color: rgb(255, 102, 255);
+ 	color: rgb(153, 0, 153);
+-	color: rgb(51, 0, 51);
+-	color: rgb(153, 102, 153);
+-	color: rgb(255, 0, 255);
+-	color: rgb(230, 25, 230);
+-	color: rgb(153, 102, 153);
++	color: rgb(255, 128, 255);
++	color: rgb(237, 237, 237);
++	color: rgb(249, 249, 249);
++	color: rgb(241, 241, 241);
++	color: rgb(251, 251, 251);
+ }
+ 
+ test-blackness-whiteness-adjuster {
+-	color: rgb(204, 0, 0);
+-	color: rgb(204, 0, 0);
+-	color: rgb(255, 0, 0);
+-	color: rgb(255, 0, 0);
+-	color: rgb(255, 51, 51);
+-	color: rgb(255, 51, 51);
+-	color: rgb(255, 0, 0);
+-	color: rgb(255, 0, 0);
++	color: rgb(255, 255, 2);
++	color: rgb(254, 254, 2);
++	color: rgb(248, 248, 220);
++	color: rgb(254, 254, 1);
++	color: rgb(245, 245, 51);
++	color: rgb(245, 245, 223);
++	color: rgb(245, 245, 169);
++	color: rgb(245, 245, 110);
+ }
+ 
+ test-tint-shade-adjuster {
+-	color: rgb(51, 0, 0);
+-	color: rgb(255, 204, 204);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0);
++	color: rgb(255, 255, 255);
++	color: rgb(0, 0, 0);
++	color: rgb(255, 51, 51);
++	color: rgb(204, 0, 0);
+ }
+ 
+ test-blend-adjuster {
+@@ -86,11 +95,24 @@ test-blend-adjuster {
+ }
+ 
+ test-contrast-adjuster {
+-	color: rgb(191, 191, 0);
+-	color: rgb(128, 128, 0);
++	color: rgb(0, 0, 0);
+ 	color: rgb(64, 64, 0);
++	color: rgb(128, 128, 0);
++	color: rgb(191, 191, 0);
++	color: rgb(255, 255, 0);
+ }
+ 
+ test-combination-adjuster {
+-	color: rgb(88, 46, 114);
++	color: rgb(105, 80, 204);
++}
++
++test-sameness {
++	color: rgb(245, 245, 220);
++	color: rgb(245, 245, 245);
++	color: rgb(245, 245, 245);
++	color: rgb(245, 245, 245);
++	color: rgb(245, 245, 220);
++	color: rgb(245, 245, 220);
++	color: rgb(245, 245, 220);
++	color: rgb(245, 245, 245);
+ }
+-- 
+2.33.1
+

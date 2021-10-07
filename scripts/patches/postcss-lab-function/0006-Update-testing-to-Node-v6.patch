@@ -1,0 +1,39 @@
+From c0c9622daca64d36b5f696e610f6802a6fc09f9d Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 24 Jul 2018 20:59:04 -0400
+Subject: [PATCH 06/19] Update testing to Node v6
+
+---
+ .appveyor.yml | 2 +-
+ .travis.yml   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+index acbf8a5..73f0d8f 100644
+--- a/.appveyor.yml
++++ b/.appveyor.yml
+@@ -2,7 +2,7 @@
+ 
+ environment:
+   matrix:
+-    - nodejs_version: 4
++    - nodejs_version: 6
+ 
+ version: "{build}"
+ build: off
+diff --git a/.travis.yml b/.travis.yml
+index c564664..e1f11a5 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 4
++  - 6
+ 
+ install:
+   - npm install --ignore-scripts
+-- 
+2.33.1
+

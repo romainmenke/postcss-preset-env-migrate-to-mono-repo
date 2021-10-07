@@ -1,0 +1,37 @@
+From 06c910d58fa6f3a1d0fd44e14a48f0488f39fb8a Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 18 Sep 2017 18:48:39 -0400
+Subject: [PATCH 18/34] Remove .appveyor.yml
+
+---
+ .appveyor.yml | 18 ------------------
+ 1 file changed, 18 deletions(-)
+ delete mode 100644 .appveyor.yml
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+deleted file mode 100644
+index d6b511f..0000000
+--- a/.appveyor.yml
++++ /dev/null
+@@ -1,18 +0,0 @@
+-# https://www.appveyor.com/docs/appveyor-yml
+-
+-environment:
+-  matrix:
+-    - nodejs_version: 4.0
+-
+-version: "{build}"
+-build: off
+-deploy: off
+-
+-install:
+-  - ps: Install-Product node $env:nodejs_version
+-  - npm install --ignore-scripts
+-
+-test_script:
+-  - node --version
+-  - npm --version
+-  - cmd: "npm test"
+-- 
+2.33.1
+

@@ -1,0 +1,179 @@
+From 2015bafced1d169966db58461e15fd503436a85c Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 14 Feb 2018 10:09:56 -0500
+Subject: [PATCH 04/84] 2.2.0
+
+---
+ .tape.js                                   | 15 +++++++++++++++
+ CHANGELOG.md                               |  6 ++++++
+ index.js                                   |  7 +++++--
+ lib/get-unsupported-browsers-by-feature.js |  2 +-
+ package.json                               | 10 +++++-----
+ test/css-variables.css                     |  7 +++++++
+ test/css-variables.disabled.expect.css     |  7 +++++++
+ test/css-variables.expect.css              |  3 +++
+ 8 files changed, 49 insertions(+), 8 deletions(-)
+ create mode 100644 test/css-variables.css
+ create mode 100644 test/css-variables.disabled.expect.css
+ create mode 100644 test/css-variables.expect.css
+
+diff --git a/.tape.js b/.tape.js
+index 373438d..49cc26d 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -37,6 +37,21 @@ module.exports = {
+ 				}
+ 			}
+ 		},
++		'css-variables': {
++			message: 'supports { browsers: "ie >= 10" } usage',
++			options: {
++				browsers: 'ie >= 10'
++			}
++		},
++		'css-variables:disabled': {
++			message: 'supports { browsers: "ie >= 10", features: { "css-variables": false } } usage',
++			options: {
++				browsers: 'ie >= 10',
++				features: {
++					'css-variables': false
++				}
++			}
++		},
+ 		'insert:before': {
+ 			message: 'supports { stage: 2, before: { "css-color-modifying-colors": [ require("postcss-simple-vars") ] } } usage',
+ 			options: {
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 2e826bc..8063008 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,11 @@
+ # Changes to PostCSS Preset Env
+ 
++### 2.2.0 (February 14, 2018)
++
++- Updated: `browserslist` to v3.1 (major update)
++- Updated: `postcss-color-mod-function` to v2.3 (minor update)
++- Improved: cleaned up one reusable variable and added a few tests
++
+ ### 2.1.0 (January 22, 2018)
+ 
+ - Updated: `cssdb` to v1.5 (minor update)
+diff --git a/index.js b/index.js
+index 7a4f54b..294e7a8 100644
+--- a/index.js
++++ b/index.js
+@@ -72,13 +72,16 @@ export default postcss.plugin('postcss-preset-env', opts => {
+ 	return (root, result) => {
+ 		// browsers supported by the configuration
+ 		const supportedBrowsers = browserslist(browsers, {
+-			path: result.root.source && result.root.source.input && result.root.source.input.file
++			path: result.root.source && result.root.source.input && result.root.source.input.file,
++			ignoreUnknownVersions: true
+ 		});
+ 
+ 		// features supported by the stage and browsers
+ 		const supportedFeatures = stagedFeatures.filter(
+ 			feature => supportedBrowsers.some(
+-				supportedBrowser => browserslist(feature.browsers).some(
++				supportedBrowser => browserslist(feature.browsers, {
++					ignoreUnknownVersions: true
++				}).some(
+ 					polyfillBrowser => polyfillBrowser === supportedBrowser
+ 				)
+ 			)
+diff --git a/lib/get-unsupported-browsers-by-feature.js b/lib/get-unsupported-browsers-by-feature.js
+index cbd40c8..3c063ae 100644
+--- a/lib/get-unsupported-browsers-by-feature.js
++++ b/lib/get-unsupported-browsers-by-feature.js
+@@ -7,7 +7,7 @@ export default function getUnsupportedBrowsersByFeature(feature) {
+ 
+ 	// if feature support can be determined
+ 	if (caniuseFeature) {
+-		const stats = caniuse.feature(caniuse.features[feature]).stats;
++		const stats = caniuse.feature(caniuseFeature).stats;
+ 
+ 		// return an array of browsers and versions that do not support the feature
+ 		const results = Object.keys(stats).reduce(
+diff --git a/package.json b/package.json
+index e84abaa..06a67c2 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-preset-env",
+-  "version": "2.1.0",
++  "version": "2.2.0",
+   "description": "Convert modern CSS into something browsers understand",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -26,14 +26,14 @@
+     "node": ">=4.0.0"
+   },
+   "dependencies": {
+-    "browserslist": "^2.11",
++    "browserslist": "^3.1",
+     "caniuse-lite": "^1.0",
+     "cssdb": "^1.5",
+     "postcss": "^6.0",
+     "postcss-apply": "^0.8",
+     "postcss-attribute-case-insensitive": "^2.0",
+     "postcss-color-hex-alpha": "^3.0",
+-    "postcss-color-mod-function": "^2.2",
++    "postcss-color-mod-function": "^2.3",
+     "postcss-color-rebeccapurple": "^3.0",
+     "postcss-color-rgb": "^2.0.0",
+     "postcss-custom-media": "^6.0",
+@@ -57,12 +57,12 @@
+     "babel-eslint": "^8.2",
+     "babel-preset-env": "^1.6",
+     "echint": "^4.0",
+-    "eslint": "^4.16",
++    "eslint": "^4.17",
+     "eslint-config-dev": "2.0",
+     "postcss-simple-vars": "^4.1",
+     "postcss-tape": "2.2",
+     "pre-commit": "^1.2",
+-    "rollup": "^0.54",
++    "rollup": "^0.55",
+     "rollup-plugin-babel": "^3.0"
+   },
+   "eslintConfig": {
+diff --git a/test/css-variables.css b/test/css-variables.css
+new file mode 100644
+index 0000000..6bdaaf8
+--- /dev/null
++++ b/test/css-variables.css
+@@ -0,0 +1,7 @@
++:root {
++	--black: black;
++}
++
++test-css-variables {
++	color: var(--black);
++}
+diff --git a/test/css-variables.disabled.expect.css b/test/css-variables.disabled.expect.css
+new file mode 100644
+index 0000000..6bdaaf8
+--- /dev/null
++++ b/test/css-variables.disabled.expect.css
+@@ -0,0 +1,7 @@
++:root {
++	--black: black;
++}
++
++test-css-variables {
++	color: var(--black);
++}
+diff --git a/test/css-variables.expect.css b/test/css-variables.expect.css
+new file mode 100644
+index 0000000..f555c42
+--- /dev/null
++++ b/test/css-variables.expect.css
+@@ -0,0 +1,3 @@
++test-css-variables {
++	color: black;
++}
+-- 
+2.33.1
+

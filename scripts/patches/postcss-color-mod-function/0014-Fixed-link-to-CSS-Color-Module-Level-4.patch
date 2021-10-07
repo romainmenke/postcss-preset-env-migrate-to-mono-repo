@@ -1,0 +1,25 @@
+From 6460130771211ec01254b9be0c6c3fab4d77bb00 Mon Sep 17 00:00:00 2001
+From: Evgeny Petukhov <petukhov.yevgeny@gmail.com>
+Date: Mon, 26 Feb 2018 01:38:10 +0300
+Subject: [PATCH 14/29] Fixed link to CSS Color Module Level 4
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 91b7698..b2829b4 100644
+--- a/README.md
++++ b/README.md
+@@ -205,7 +205,7 @@ knowledge of the living DOM tree.
+ [git-url]: https://gitter.im/postcss/postcss
+ [git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
+ 
+-[CSS Color Module Level 4]: https://drafts.csswg.org/css-color/#modifying-colors
++[CSS Color Module Level 4]: https://www.w3.org/TR/css-color-4/#funcdef-color-mod
+ [Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+ [Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
+-- 
+2.33.1
+

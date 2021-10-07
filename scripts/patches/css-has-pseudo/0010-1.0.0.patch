@@ -1,0 +1,344 @@
+From 45aff94f47a14f09b131e6d48f24290b7233dbb4 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 10 Jun 2019 08:13:35 -0400
+Subject: [PATCH 10/17] 1.0.0
+
+---
+ .gitignore     | 11 ++++-------
+ .rollup.js     | 14 ++++++-------
+ .tape.js       | 16 +++++++--------
+ .travis.yml    |  2 +-
+ CHANGELOG.md   |  6 ++++++
+ package.json   | 53 +++++++++++++++++++++++++++++---------------------
+ src/browser.js |  8 ++++----
+ src/cli.js     | 12 +++++++-----
+ src/postcss.js |  4 ++--
+ 9 files changed, 69 insertions(+), 57 deletions(-)
+
+diff --git a/.gitignore b/.gitignore
+index 1d65a2d..38193b1 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,15 +1,12 @@
+ node_modules
+-/browser.js*
+-/cli.js*
+-/index.js*
+-/index.mjs*
+-/postcss.js*
+-/postcss.mjs*
++/browser.*
++/cli.*
++/index.*
++/postcss.*
+ package-lock.json
+ *.log*
+ *.result.css
+ .*
+-!.appveyor.yml
+ !.editorconfig
+ !.gitignore
+ !.rollup.js
+diff --git a/.rollup.js b/.rollup.js
+index dc9bbe8..53e4f8b 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -8,19 +8,19 @@ const isBrowser = String(process.env.NODE_ENV).includes('browser');
+ const input = `src/${isCLI ? 'cli' : isPostCSS ? 'postcss' : 'browser'}.js`;
+ 
+ const output = isCLI
+-	? { file: 'cli.js', format: 'cjs' }
++	? { file: 'cli.js', format: 'cjs', sourcemap: true, strict: false }
+ : isPostCSS
+ 	? [
+ 	{ file: 'postcss.js', format: 'cjs', sourcemap: true },
+ 	{ file: 'postcss.mjs', format: 'esm', sourcemap: true }
+ ] : isBrowser
+-	? { file: 'browser.js', format: 'cjs' }
++	? { file: 'browser.js', format: 'cjs', sourcemap: true, strict: false }
+ : [
+ 	{ file: 'index.js', format: 'cjs', sourcemap: true },
+ 	{ file: 'index.mjs', format: 'esm', sourcemap: true }
+ ];
+ 
+-const targets = isCLI || isPostCSS || !isBrowser ? { node: 6 } : 'last 2 versions, not dead';
++const targets = isCLI || isPostCSS || !isBrowser ? { node: 8 } : 'last 2 versions, not dead';
+ const plugins = [
+ 	babel({
+ 		presets: [
+@@ -47,10 +47,10 @@ const plugins = [
+ 
+ export default { input, output, plugins };
+ 
+-function addHashBang() {
++function addHashBang () {
+ 	return {
+ 		name: 'add-hash-bang',
+-		renderChunk(code) {
++		renderChunk (code) {
+ 			const updatedCode = `#!/usr/bin/env node\n\n${code}`;
+ 
+ 			return updatedCode;
+@@ -58,10 +58,10 @@ function addHashBang() {
+ 	};
+ }
+ 
+-function trimContentForBrowser() {
++function trimContentForBrowser () {
+ 	return {
+ 		name: 'trim-content-for-browser',
+-		renderChunk(code) {
++		renderChunk (code) {
+ 			const updatedCode = code
+ 				.replace(/'use strict';\n*/, '')
+ 				.replace(/\n*module\.exports = cssHasPseudo;/, '');
+diff --git a/.tape.js b/.tape.js
+index 56e927b..bb0efca 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,13 +1,11 @@
+ module.exports = {
+-	'css-has-pseudo': {
+-		'basic': {
+-			message: 'supports basic usage'
+-		},
+-		'basic:preserve': {
+-			message: 'supports { preserve: false } usage',
+-			options: {
+-				preserve: false
+-			}
++	'basic': {
++		message: 'supports basic usage'
++	},
++	'basic:preserve': {
++		message: 'supports { preserve: false } usage',
++		options: {
++			preserve: false
+ 		}
+ 	}
+ };
+diff --git a/.travis.yml b/.travis.yml
+index e1f11a5..6ebed1d 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 6
++  - 8
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 2da2eb0..9bc1a6d 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,11 @@
+ # Changes to CSS Has Pseudo
+ 
++### 1.0.0 (June 10, 2019)
++
++- Updated: `postcss-selector-parser` to 6.0.2 (major)
++- Updated: `postcss` to 7.0.16 (patch)
++- Updated: Node 8+ compatibility (major)
++
+ ### 0.10.0 (December 11, 2018)
+ 
+ - Fixed an issue where inaccessible rules would crash the library
+diff --git a/package.json b/package.json
+index d1bad47..3fb1c12 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "css-has-pseudo",
+-  "version": "0.10.0",
++  "version": "1.0.0",
+   "description": "Style elements relative to other elements in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -26,40 +26,49 @@
+   ],
+   "scripts": {
+     "build": "npm run build:browser && npm run build:cli && npm run build:node && npm run build:postcss",
+-    "build:browser": "cross-env NODE_ENV=browser rollup -c .rollup.js --silent",
+-    "build:cli": "cross-env NODE_ENV=cli rollup -c .rollup.js --silent",
+-    "build:postcss": "cross-env NODE_ENV=postcss rollup -c .rollup.js --silent",
+-    "build:node": "rollup -c .rollup.js --silent",
+-    "prepublishOnly": "npm run build && npm test",
+-    "pretest": "npm run build:postcss",
++    "build:browser": "cross-env NODE_ENV=browser rollup --config .rollup.js --silent",
++    "build:cli": "cross-env NODE_ENV=cli rollup --config .rollup.js --silent",
++    "build:postcss": "cross-env NODE_ENV=postcss rollup --config .rollup.js --silent",
++    "build:node": "rollup --config .rollup.js --silent",
++    "prepublishOnly": "npm test && npm run build",
+     "pretest:postcss": "npm run build:postcss",
+     "test": "npm run test:js && npm run test:postcss",
+-    "test:js": "eslint src/*.js --cache --ignore-path .gitignore --quiet",
+-    "test:postcss": "postcss-tape --plugin=postcss.js"
++    "test:js": "eslint src/{*,**/*}.js --cache --ignore-path .gitignore --quiet",
++    "test:postcss": "postcss-tape --plugin postcss.js"
+   },
+   "engines": {
+-    "node": ">=6.0.0"
++    "node": ">=8.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.6",
+-    "postcss-selector-parser": "^5.0.0-rc.4"
++    "postcss": "^7.0.17",
++    "postcss-selector-parser": "^6.0.2"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.1.6",
+-    "@babel/preset-env": "^7.1.6",
++    "@babel/core": "^7.4.5",
++    "@babel/preset-env": "^7.4.5",
+     "babel-eslint": "^10.0.1",
+     "cross-env": "^5.2.0",
+-    "eslint": "^5.9.0",
+-    "eslint-config-dev": "2.0.0",
+-    "postcss-tape": "^2.2.0",
++    "eslint": "^5.16.0",
++    "postcss-tape": "^5.0.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.67.3",
+-    "rollup-plugin-babel": "^4.0.3",
+-    "rollup-plugin-terser": "^3.0.0"
++    "rollup": "^1.14.6",
++    "rollup-plugin-babel": "^4.3.2",
++    "rollup-plugin-terser": "^5.0.0"
+   },
+   "eslintConfig": {
+-    "extends": "dev",
+-    "parser": "babel-eslint"
++    "env": {
++      "browser": true,
++      "es6": true,
++      "node": true
++    },
++    "extends": "eslint:recommended",
++    "parser": "babel-eslint",
++    "parserOptions": {
++      "ecmaVersion": 2018,
++      "impliedStrict": true,
++      "sourceType": "module"
++    },
++    "root": true
+   },
+   "keywords": [
+     "postcss",
+diff --git a/src/browser.js b/src/browser.js
+index dac0ebc..31e1921 100644
+--- a/src/browser.js
++++ b/src/browser.js
+@@ -1,4 +1,4 @@
+-export default function cssHasPseudo(document) {
++export default function cssHasPseudo (document) {
+ 	const observedItems = [];
+ 
+ 	// document.createAttribute() doesn't support `:` in the name. innerHTML does
+@@ -32,7 +32,7 @@ export default function cssHasPseudo(document) {
+ 	document.addEventListener('input', transformObservedItems);
+ 
+ 	// transform observed css rules
+-	function transformObservedItems() {
++	function transformObservedItems () {
+ 		requestAnimationFrame(() => {
+ 			observedItems.forEach(
+ 				item => {
+@@ -85,7 +85,7 @@ export default function cssHasPseudo(document) {
+ 	}
+ 
+ 	// remove any observed cssrules that no longer apply
+-	function cleanupObservedCssRules() {
++	function cleanupObservedCssRules () {
+ 		[].push.apply(
+ 			observedItems,
+ 			observedItems.splice(0).filter(
+@@ -97,7 +97,7 @@ export default function cssHasPseudo(document) {
+ 	}
+ 
+ 	// walk a stylesheet to collect observed css rules
+-	function walkStyleSheet(styleSheet) {
++	function walkStyleSheet (styleSheet) {
+ 		try {
+ 			// walk a css rule to collect observed css rules
+ 			[].forEach.call(styleSheet.cssRules || [], rule => {
+diff --git a/src/cli.js b/src/cli.js
+index 392fbd9..7fbe108 100644
+--- a/src/cli.js
++++ b/src/cli.js
+@@ -1,8 +1,10 @@
++/* eslint no-console: 0 */
++
+ import fs from 'fs';
+ import plugin from './postcss';
+ 
+ // get process and plugin options from the command line
+-const fileRegExp = /^[\w\/.]+$/;
++const fileRegExp = /^[\w/.]+$/;
+ const argRegExp = /^--(\w+)=("|')?(.+)\2$/;
+ const relaxedJsonPropRegExp = /(['"])?([a-z0-9A-Z_]+)(['"])?:/g;
+ const relaxedJsonValueRegExp = /("[a-z0-9A-Z_]+":\s*)(?!true|false|null|\d+)'?([A-z0-9]+)'?([,}])/g;
+@@ -83,7 +85,7 @@ const argo = process.argv.slice(2).reduce(
+ 	}
+ );
+ 
+-function readFile(pathname) {
++function readFile (pathname) {
+ 	return new Promise((resolve, reject) => {
+ 		fs.readFile(pathname, 'utf8', (error, data) => {
+ 			if (error) {
+@@ -95,7 +97,7 @@ function readFile(pathname) {
+ 	});
+ }
+ 
+-function writeFile(pathname, data) {
++function writeFile (pathname, data) {
+ 	return new Promise((resolve, reject) => {
+ 		fs.writeFile(pathname, data, (error, content) => {
+ 			if (error) {
+@@ -107,7 +109,7 @@ function writeFile(pathname, data) {
+ 	});
+ }
+ 
+-function getStdin() {
++function getStdin () {
+ 	return new Promise(resolve => {
+ 		let data = '';
+ 
+@@ -119,7 +121,7 @@ function getStdin() {
+ 			process.stdin.on('readable', () => {
+ 				let chunk;
+ 
+-				while (chunk = process.stdin.read()) {
++				while ((chunk = process.stdin.read())) {
+ 					data += chunk;
+ 				}
+ 			});
+diff --git a/src/postcss.js b/src/postcss.js
+index 95619b7..899bd91 100644
+--- a/src/postcss.js
++++ b/src/postcss.js
+@@ -20,7 +20,7 @@ export default postcss.plugin('css-has-pseudo', opts => {
+ 							.replace(/%5B/g, '[')
+ 							.replace(/%5D/g, ']')
+ 							.replace(/%2C/g, ',')
+-							.replace(/[():%\[\],]/g, '\\$&')
++							.replace(/[():%[\],]/g, '\\$&')
+ 						});
+ 
+ 						if (isNotHas) {
+@@ -43,6 +43,6 @@ export default postcss.plugin('css-has-pseudo', opts => {
+ 	};
+ });
+ 
+-function checkIfParentIsNot(selector) {
++function checkIfParentIsNot (selector) {
+ 	return Object(Object(selector.parent).parent).type === 'pseudo' && selector.parent.parent.value === ':not';
+ }
+-- 
+2.33.1
+

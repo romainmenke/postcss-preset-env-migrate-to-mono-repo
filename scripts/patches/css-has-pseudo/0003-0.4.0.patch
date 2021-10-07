@@ -1,0 +1,76 @@
+From e9a742cb3726e9659ef39f683d81fb8f0f0c150f Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 21 Nov 2018 11:37:45 -0500
+Subject: [PATCH 03/17] 0.4.0
+
+---
+ .rollup.js   | 4 ++--
+ CHANGELOG.md | 4 ++++
+ README.md    | 2 +-
+ package.json | 2 +-
+ 4 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/.rollup.js b/.rollup.js
+index cc561fe..b129c2e 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -33,7 +33,7 @@ const plugins = [
+ 		terser({
+ 			mangle: {
+ 				properties: {
+-					reserved: ['addEventListener', 'attributes', 'childList', 'children', 'cloneNode', 'contains', 'createElement', 'cssRules', 'documentElement', 'firstChild', 'innerHTML', 'nodeType', 'observe', 'ownerNode', 'parentNode', 'parentStyleSheet', 'querySelector', 'querySelectorAll', 'removeAttribute', 'selectorText', 'setNamedItem', 'sheet', 'style', 'styleSheets', 'subtree', 'zoom']
++					reserved: ['addEventListener', 'addedNodes', 'attributes', 'childList', 'children', 'cloneNode', 'contains', 'createElement', 'cssRules', 'documentElement', 'firstChild', 'innerHTML', 'nodeType', 'observe', 'ownerNode', 'parentNode', 'parentStyleSheet', 'querySelector', 'querySelectorAll', 'removeAttribute', 'selectorText', 'setNamedItem', 'sheet', 'style', 'styleSheets', 'subtree', 'zoom']
+ 				}
+ 			}
+ 		})
+@@ -64,7 +64,7 @@ function trimContentForBrowser() {
+ 		renderChunk(code) {
+ 			const updatedCode = code
+ 				.replace(/'use strict';\n*/, '')
+-				.replace(/\n*module\.exports = cssHas;/, '');
++				.replace(/\n*module\.exports = cssHasPseudo;/, '');
+ 
+ 			return updatedCode;
+ 		}
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index a3ba3a5..e79172a 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to CSS Has Pseudo
+ 
++### 0.4.0 (November 21, 2018)
++
++- Fixed an issue with the browser script not picking up added nodes
++
+ ### 0.3.0 (November 21, 2018)
+ 
+ - Fixed the misnamed function name for the browser-ready script
+diff --git a/README.md b/README.md
+index 8d6f883..a3b1b0f 100644
+--- a/README.md
++++ b/README.md
+@@ -41,7 +41,7 @@ Next, use your transformed CSS with this script:
+ <script>cssHasPseudo(document)</script>
+ ```
+ 
+-That’s it. The script is 775 bytes and works in all browsers, including
++That’s it. The script is 768 bytes and works in all browsers, including
+ Internet Explorer 11. With a [Mutation Observer polyfill], the script will work
+ down to Internet Explorer 9.
+ 
+diff --git a/package.json b/package.json
+index e0101a5..3acbc49 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "css-has-pseudo",
+-  "version": "0.3.0",
++  "version": "0.4.0",
+   "description": "Style elements relative to other elements in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

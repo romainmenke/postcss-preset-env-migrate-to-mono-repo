@@ -1,0 +1,38 @@
+From af777c4bfe262b4b86a2cdf696cdbb63ff4bdcba Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 10 Jun 2019 11:11:33 -0400
+Subject: [PATCH 08/12] Update dependencies
+
+---
+ package.json | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/package.json b/package.json
+index 151501a..911a0e0 100644
+--- a/package.json
++++ b/package.json
+@@ -41,7 +41,7 @@
+     "node": ">=8.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.16"
++    "postcss": "^7.0.17"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.4.5",
+@@ -52,10 +52,9 @@
+     "get-stdin": "^7.0.0",
+     "postcss-tape": "^5.0.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^1.12.3",
++    "rollup": "^1.14.6",
+     "rollup-plugin-babel": "^4.3.2",
+-    "rollup-plugin-terser": "^5.0.0",
+-    "uglify-js": "^3.5.15"
++    "rollup-plugin-terser": "^5.0.0"
+   },
+   "eslintConfig": {
+     "env": {
+-- 
+2.33.1
+

@@ -1,0 +1,398 @@
+From ec00e0f3609c78ef9c57156a24aa0ea84920941f Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 19 Aug 2017 20:52:52 -0400
+Subject: [PATCH 10/43] Add "dir" tests
+
+---
+ .tape.js                       | 42 ++++++++++++++++++
+ test/border.ltr.expect.css     | 81 ++++++++++++++++++++++++++++++++++
+ test/clear.ltr.expect.css      |  7 +++
+ test/float.ltr.expect.css      |  6 +++
+ test/inset.ltr.expect.css      | 73 ++++++++++++++++++++++++++++++
+ test/margin.ltr.expect.css     | 41 +++++++++++++++++
+ test/padding.ltr.expect.css    | 41 +++++++++++++++++
+ test/text-align.ltr.expect.css |  6 +++
+ 8 files changed, 297 insertions(+)
+ create mode 100644 test/border.ltr.expect.css
+ create mode 100644 test/clear.ltr.expect.css
+ create mode 100644 test/float.ltr.expect.css
+ create mode 100644 test/inset.ltr.expect.css
+ create mode 100644 test/margin.ltr.expect.css
+ create mode 100644 test/padding.ltr.expect.css
+ create mode 100644 test/text-align.ltr.expect.css
+
+diff --git a/.tape.js b/.tape.js
+index 05cce54..3591521 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -3,21 +3,57 @@ module.exports = {
+ 		'border': {
+ 			message: 'supports logical "border" property values'
+ 		},
++		'border:ltr': {
++			message: 'supports logical "border" property values with { dir: "ltr" }',
++			options: {
++				dir: 'ltr'
++			}
++		},
+ 		'clear': {
+ 			message: 'supports logical "clear" property values'
+ 		},
++		'clear:ltr': {
++			message: 'supports logical "clear" property values with { dir: "ltr" }',
++			options: {
++				dir: 'ltr'
++			}
++		},
+ 		'float': {
+ 			message: 'supports logical "float" property values'
+ 		},
++		'float:ltr': {
++			message: 'supports logical "float" property values with { dir: "ltr" }',
++			options: {
++				dir: 'ltr'
++			}
++		},
+ 		'inset': {
+ 			message: 'supports logical "inset" properties'
+ 		},
++		'inset:ltr': {
++			message: 'supports logical "inset" properties with { dir: "ltr" }',
++			options: {
++				dir: 'ltr'
++			}
++		},
+ 		'margin': {
+ 			message: 'supports logical "margin" properties'
+ 		},
++		'margin:ltr': {
++			message: 'supports logical "margin" properties with { dir: "ltr" }',
++			options: {
++				dir: 'ltr'
++			}
++		},
+ 		'padding': {
+ 			message: 'supports logical "padding" properties'
+ 		},
++		'padding:ltr': {
++			message: 'supports logical "padding" properties with { dir: "ltr" }',
++			options: {
++				dir: 'ltr'
++			}
++		},
+ 		'resize': {
+ 			message: 'supports logical "resize" properties'
+ 		},
+@@ -26,6 +62,12 @@ module.exports = {
+ 		},
+ 		'text-align': {
+ 			message: 'supports logical "text-align" properties'
++		},
++		'text-align:ltr': {
++			message: 'supports logical "text-align" properties with { dir: "ltr" }',
++			options: {
++				dir: 'ltr'
++			}
+ 		}
+ 	}
+ };
+diff --git a/test/border.ltr.expect.css b/test/border.ltr.expect.css
+new file mode 100644
+index 0000000..330fe8b
+--- /dev/null
++++ b/test/border.ltr.expect.css
+@@ -0,0 +1,81 @@
++test-border {
++	border: 1px solid black;
++	border-top: 2px solid black;
++	border-right: 3px solid black;
++	border-bottom: 2px solid black;
++	border-left: 3px solid black;
++	border-top: 4px solid black;
++	border-right: 5px solid black;
++	border-bottom: 6px solid black;
++	border-left: 5px solid black;
++	border-top: 7px solid black;
++	border-right: 8px solid black;
++	border-bottom: 9px solid black;
++	border-left: 8px solid black;
++	border-left: 10px solid black;
++	border-right: 10px solid black;
++	border-left: 11px solid black;
++	border-right: 11px solid black;
++	border-top: 12px solid black;
++	border-bottom: 12px solid black;
++	border-top: 13px solid black;
++	border-bottom: 13px solid black;
++	border-top: 15px solid black;
++	border-bottom: 16px solid black;
++}
++
++test-flowing-border {
++	border: inherit;
++	border-top: 1px solid black;
++	border-left: 2px solid black;
++	border-bottom: 3px solid black;
++	border-right: 4px solid black;
++	border: inherit;
++	border-left: 5px solid black;
++	border-right: 6px solid black;
++	border: inherit;
++	border-left: 7px solid black;
++	border: inherit;
++	border-right: 8px solid black;
++	border: inherit;
++	border-top: 9px solid black;
++	border-left: 9px solid black;
++	border: inherit;
++	border-top: 10px solid black;
++	border-left: 11px solid black;
++	border: inherit;
++	border-bottom: 12px solid black;
++	border-right: 12px solid black;
++	border: inherit;
++	border-bottom: 13px solid black;
++	border-right: 14px solid black;
++	border: inherit;
++}
++
++test-flowing-border-color {
++	border-color: inherit;
++	border-top-color: 1px solid black;
++	border-left-color: 2px solid black;
++	border-bottom-color: 3px solid black;
++	border-right-color: 4px solid black;
++	border-color: inherit;
++	border-left-color: 5px solid black;
++	border-right-color: 6px solid black;
++	border-color: inherit;
++	border-left-color: 7px solid black;
++	border-color: inherit;
++	border-right-color: 8px solid black;
++	border-color: inherit;
++	border-top-color: 9px solid black;
++	border-left-color: 9px solid black;
++	border-color: inherit;
++	border-top-color: 10px solid black;
++	border-left-color: 11px solid black;
++	border-color: inherit;
++	border-bottom-color: 12px solid black;
++	border-right-color: 12px solid black;
++	border-color: inherit;
++	border-bottom-color: 13px solid black;
++	border-right-color: 14px solid black;
++	border-color: inherit;
++}
+diff --git a/test/clear.ltr.expect.css b/test/clear.ltr.expect.css
+new file mode 100644
+index 0000000..d05d241
+--- /dev/null
++++ b/test/clear.ltr.expect.css
+@@ -0,0 +1,7 @@
++test-clear {
++	clear: both;
++	clear: left;
++	clear: left;
++	clear: right;
++	clear: right;
++}
+diff --git a/test/float.ltr.expect.css b/test/float.ltr.expect.css
+new file mode 100644
+index 0000000..590760e
+--- /dev/null
++++ b/test/float.ltr.expect.css
+@@ -0,0 +1,6 @@
++test-float {
++	float: left;
++	float: left;
++	float: right;
++	float: right;
++}
+diff --git a/test/inset.ltr.expect.css b/test/inset.ltr.expect.css
+new file mode 100644
+index 0000000..352f602
+--- /dev/null
++++ b/test/inset.ltr.expect.css
+@@ -0,0 +1,73 @@
++test-inset {
++	top: 1px;
++	left: 1px;
++	bottom: 1px;
++	right: 1px;
++	top: 2px;
++	left: 3px;
++	bottom: 2px;
++	right: 3px;
++	top: 4px;
++	left: 5px;
++	bottom: 6px;
++	right: 5px;
++	top: 7px;
++	left: 8px;
++	bottom: 9px;
++	right: 8px;
++}
++
++test-flowing-inset {
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	top: 1px;
++	left: 2px;
++	bottom: 3px;
++	right: 4px;
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	left: 5px;
++	right: 6px;
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	left: 7px;
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	right: 8px;
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	top: 9px;
++	left: 9px;
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	top: 10px;
++	left: 11px;
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	bottom: 12px;
++	right: 12px;
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	bottom: 13px;
++	right: 14px;
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++}
+diff --git a/test/margin.ltr.expect.css b/test/margin.ltr.expect.css
+new file mode 100644
+index 0000000..9d7d5b1
+--- /dev/null
++++ b/test/margin.ltr.expect.css
+@@ -0,0 +1,41 @@
++test-margin {
++	margin: 1px;
++	margin: 2px 3px;
++	margin: 4px 5px 6px;
++	margin: 7px 8px 9px 8px;
++	margin-left: 10px;
++	margin-right: 10px;
++	margin-left: 11px;
++	margin-right: 11px;
++	margin-top: 12px;
++	margin-bottom: 12px;
++	margin-top: 13px;
++	margin-bottom: 14px;
++	margin-top: 15px;
++	margin-bottom: 16px;
++}
++
++test-flowing-margin {
++	margin: auto;
++	margin: 1px 4px 3px 2px;
++	margin: auto;
++	margin-left: 5px;
++	margin-right: 6px;
++	margin: auto;
++	margin-left: 7px;
++	margin: auto;
++	margin-right: 8px;
++	margin: auto;
++	margin-top: 9px;
++	margin-left: 9px;
++	margin: auto;
++	margin-top: 10px;
++	margin-left: 11px;
++	margin: auto;
++	margin-bottom: 12px;
++	margin-right: 12px;
++	margin: auto;
++	margin-bottom: 13px;
++	margin-right: 14px;
++	margin: auto;
++}
+diff --git a/test/padding.ltr.expect.css b/test/padding.ltr.expect.css
+new file mode 100644
+index 0000000..1ccece6
+--- /dev/null
++++ b/test/padding.ltr.expect.css
+@@ -0,0 +1,41 @@
++test-padding {
++	padding: 1px;
++	padding: 2px 3px;
++	padding: 4px 5px 6px;
++	padding: 7px 8px 9px 8px;
++	padding-left: 10px;
++	padding-right: 10px;
++	padding-left: 11px;
++	padding-right: 11px;
++	padding-top: 12px;
++	padding-bottom: 12px;
++	padding-top: 13px;
++	padding-bottom: 14px;
++	padding-top: 15px;
++	padding-bottom: 16px;
++}
++
++test-flowing-padding {
++	padding: auto;
++	padding: 1px 4px 3px 2px;
++	padding: auto;
++	padding-left: 5px;
++	padding-right: 6px;
++	padding: auto;
++	padding-left: 7px;
++	padding: auto;
++	padding-right: 8px;
++	padding: auto;
++	padding-top: 9px;
++	padding-left: 9px;
++	padding: auto;
++	padding-top: 10px;
++	padding-left: 11px;
++	padding: auto;
++	padding-bottom: 12px;
++	padding-right: 12px;
++	padding: auto;
++	padding-bottom: 13px;
++	padding-right: 14px;
++	padding: auto;
++}
+diff --git a/test/text-align.ltr.expect.css b/test/text-align.ltr.expect.css
+new file mode 100644
+index 0000000..7318c05
+--- /dev/null
++++ b/test/text-align.ltr.expect.css
+@@ -0,0 +1,6 @@
++test-text-align {
++	text-align: left;
++	text-align: left;
++	text-align: right;
++	text-align: right;
++}
+-- 
+2.33.1
+

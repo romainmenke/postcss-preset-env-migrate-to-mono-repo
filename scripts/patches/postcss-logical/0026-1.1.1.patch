@@ -1,0 +1,39 @@
+From ba0dd1ca31d4066265770d0fd279f5e55ec37744 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 21 Mar 2018 01:35:36 -0400
+Subject: [PATCH 26/43] 1.1.1
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 2 +-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 3865802..c8e30c2 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Logical Properties
+ 
++### 1.1.1 (March 21, 2017)
++
++- Fix `dir` option to allow falsey value
++
+ ### 1.1.0 (March 20, 2017)
+ 
+ - Add `preserve` option to preserve logical properties and values
+diff --git a/package.json b/package.json
+index 1b0978f..a8225c8 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-logical",
+-  "version": "1.1.0",
++  "version": "1.1.1",
+   "description": "Use logical properties and values in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

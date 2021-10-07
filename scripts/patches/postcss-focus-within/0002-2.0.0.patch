@@ -1,0 +1,371 @@
+From 1596182fbd0d23a936bcd6389b360f4e0afd5cef Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 7 Apr 2018 21:52:33 -0400
+Subject: [PATCH 02/15] 2.0.0
+
+---
+ .gitignore                        |  2 +-
+ .rollup.js                        |  5 +++-
+ .tape.js                          |  6 ++++
+ CHANGELOG.md                      |  5 ++++
+ README.md                         | 46 ++++++++++++++++++++++++++-----
+ index.js                          | 11 +++++++-
+ package.json                      | 36 ++++++++++++------------
+ test/basic.expect.css             | 21 ++++++++++++++
+ test/basic.preserve.expect.css    | 27 ++++++++++++++++++
+ test/basic.replacewith.expect.css | 21 ++++++++++++++
+ 10 files changed, 151 insertions(+), 29 deletions(-)
+ create mode 100644 test/basic.preserve.expect.css
+
+diff --git a/.gitignore b/.gitignore
+index 6832ce8..de73e5a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,5 +1,5 @@
+ node_modules
+-index.bundle.js
++index.*.js
+ package-lock.json
+ *.log*
+ *.result.css
+diff --git a/.rollup.js b/.rollup.js
+index 7f4e231..0436758 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -2,7 +2,10 @@ import babel from 'rollup-plugin-babel';
+ 
+ export default {
+ 	input: 'index.js',
+-	output: { file: 'index.bundle.js', format: 'cjs' },
++	output: [
++		{ file: 'index.cjs.js', format: 'cjs' },
++		{ file: 'index.es.js', format: 'es' }
++	],
+ 	plugins: [
+ 		babel({
+ 			presets: [
+diff --git a/.tape.js b/.tape.js
+index 826394f..85f8fe9 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -8,6 +8,12 @@ module.exports = {
+ 			options: {
+ 				replaceWith: '.focus-within'
+ 			}
++		},
++		'basic:preserve': {
++			message: 'supports { preserve: false } usage',
++			options: {
++				preserve: false
++			}
+ 		}
+ 	}
+ };
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 7b2f126..b018586 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Focus Within
+ 
++### 2.0.0 (April 7, 2018)
++
++- Changed: default functionality to preserve the original rule
++- Added: `preserve` option to preserve the original rule using `:focus-within`
++
+ ### 1.0.0 (February 17, 2018)
+ 
+ - Initial version
+diff --git a/README.md b/README.md
+index 991ee7f..d0965b8 100644
+--- a/README.md
++++ b/README.md
+@@ -5,8 +5,10 @@
+ [![Windows Build Status][win-img]][win-url]
+ [![Gitter Chat][git-img]][git-url]
+ 
+-[PostCSS Focus Within] lets you use the `:focus-within` pseudo-selector in
+-CSS, following the [Selectors Level 4 specification].
++[PostCSS Focus Within] lets you use the `:focus-within` pseudo-class in CSS,
++following the [Selectors Level 4 specification].
++
++It is the companion to the [focus-within polyfill].
+ 
+ ```css
+ .my-form-field:focus-within label {
+@@ -18,12 +20,17 @@ CSS, following the [Selectors Level 4 specification].
+ .my-form-field[focus-within] label {
+   background-color: yellow;
+ }
++
++.my-form-field:focus-within label {
++  background-color: yellow;
++}
+ ```
+ 
+-[PostCSS Focus Within] replaces the `:focus-within` pseudo-selector with a
+-`.focus-within` class selector, the same selector used by the
+-[focus-within polyfill]. The replacement selector can be changed using the
+-`replaceWith` option.
++[PostCSS Focus Within] duplicates rules using the `:focus-within` pseudo-class
++with a `[focus-within]` attribute selector, the same selector used by the
++[focus-within polyfill]. This replacement selector can be changed using the
++`replaceWith` option. Also, the preservation of the original `:focus-within`
++rule can be disabled using the `preserve` option. 
+ 
+ ## Usage
+ 
+@@ -148,6 +155,27 @@ grunt.initConfig({
+ 
+ ## Options
+ 
++### preserve
++
++The `preserve` option defines whether the original selector should remain. By
++default, the original selector is preserved.
++
++```js
++focusWithin({ preserve: false });
++```
++
++```css
++.my-form-field:focus-within label {
++  background-color: yellow;
++}
++
++/* becomes */
++
++.my-form-field[focus-within] label {
++  background-color: yellow;
++}
++```
++
+ ### replaceWith
+ 
+ The `replaceWith` option defines the selector to replace `:focus-within`. By
+@@ -167,6 +195,10 @@ focusWithin({ replaceWith: '.focus-within' });
+ .my-form-field.focus-within label {
+   background-color: yellow;
+ }
++
++.my-form-field:focus-within label {
++  background-color: yellow;
++}
+ ```
+ 
+ [npm-url]: https://www.npmjs.com/package/postcss-focus-within
+@@ -176,7 +208,7 @@ focusWithin({ replaceWith: '.focus-within' });
+ [win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-focus-within
+ [win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-focus-within.svg
+ [git-url]: https://gitter.im/postcss/postcss
+-[git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
++[git-img]: https://img.shields.io/badge/support-chat-blue.svg
+ 
+ [focus-within polyfill]: https://github.com/jonathantneal/focus-within
+ [Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+diff --git a/index.js b/index.js
+index dbaff97..d82d2e0 100644
+--- a/index.js
++++ b/index.js
+@@ -4,12 +4,21 @@ const selectorRegExp = /:focus-within([^\w-]|$)/gi;
+ 
+ export default postcss.plugin('postcss-focus-within', opts => {
+ 	const replaceWith = String(Object(opts).replaceWith || '[focus-within]');
++	const preserve = Boolean('preserve' in Object(opts) ? opts.preserve : true);
+ 
+ 	return root => {
+ 		root.walkRules(selectorRegExp, rule => {
+-			rule.selector = rule.selector.replace(selectorRegExp, ($0, $1) => {
++			const selector = rule.selector.replace(selectorRegExp, ($0, $1) => {
+ 				return `${replaceWith}${$1}`;
+ 			});
++
++			const clone = rule.clone({ selector });
++
++			if (preserve) {
++				rule.before(clone);
++			} else {
++				rule.replaceWith(clone);
++			}
+ 		});
+ 	};
+ });
+diff --git a/package.json b/package.json
+index 72568f7..afd7ec1 100644
+--- a/package.json
++++ b/package.json
+@@ -1,23 +1,22 @@
+ {
+   "name": "postcss-focus-within",
+-  "version": "1.0.0",
+-  "description": "",
++  "version": "2.0.0",
++  "description": "Ise the :focus-within pseudo-selector in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+   "repository": "jonathantneal/postcss-focus-within",
+   "homepage": "https://github.com/jonathantneal/postcss-focus-within#readme",
+   "bugs": "https://github.com/jonathantneal/postcss-focus-within/issues",
+-  "main": "index.bundle.js",
+-  "module": "index.js",
++  "main": "index.cjs.js",
++  "module": "index.es.js",
+   "files": [
+-    "index.js",
+-    "index.bundle.js"
++    "index.cjs.js",
++    "index.es.js"
+   ],
+   "scripts": {
+     "prepublishOnly": "npm test",
+     "pretest": "rollup -c .rollup.js --silent",
+-    "test": "echo 'Running tests...'; npm run test:ec && npm run test:js && npm run test:tape",
+-    "test:ec": "echint --ignore index.bundle.js test",
++    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+     "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+@@ -25,19 +24,18 @@
+     "node": ">=4.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^6.0"
++    "postcss": "^6.0.21"
+   },
+   "devDependencies": {
+-    "babel-core": "^6.26",
+-    "babel-eslint": "^8.2",
+-    "babel-preset-env": "^1.6",
+-    "echint": "^4.0",
+-    "eslint": "^4.18",
+-    "eslint-config-dev": "2.0",
+-    "postcss-tape": "2.2",
+-    "pre-commit": "^1.2",
+-    "rollup": "^0.56",
+-    "rollup-plugin-babel": "^3.0"
++    "babel-core": "^6.26.0",
++    "babel-eslint": "^8.2.2",
++    "babel-preset-env": "^1.6.1",
++    "eslint": "^4.19.1",
++    "eslint-config-dev": "2.0.0",
++    "postcss-tape": "2.2.0",
++    "pre-commit": "^1.2.2",
++    "rollup": "^0.57.1",
++    "rollup-plugin-babel": "^3.0.3"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 7691c5e..b83063a 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -2,6 +2,10 @@
+ 	order: 1;
+ }
+ 
++:focus-within {
++	order: 1;
++}
++
+ [focus-within],
+ [focus-within] test,
+ test [focus-within],
+@@ -19,6 +23,23 @@ test :matches(test [focus-within] [focus-within] test) test {
+ 	order: 2;
+ }
+ 
++:focus-within,
++:focus-within test,
++test :focus-within,
++test test:focus-within,
++test :focus-within test,
++test test:focus-within test,
++test :focus-within :focus-within test,
++test :matches(:focus-within) test,
++test :matches(:focus-within test) test,
++test :matches(test :focus-within) test,
++test :matches(test test:focus-within) test,
++test :matches(test :focus-within test) test,
++test :matches(test test:focus-within test) test,
++test :matches(test :focus-within :focus-within test) test {
++	order: 2;
++}
++
+ :ignore-focus-within,
+ :focus-within-ignore,
+ :ignorefocus-within,
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+new file mode 100644
+index 0000000..7691c5e
+--- /dev/null
++++ b/test/basic.preserve.expect.css
+@@ -0,0 +1,27 @@
++[focus-within] {
++	order: 1;
++}
++
++[focus-within],
++[focus-within] test,
++test [focus-within],
++test test[focus-within],
++test [focus-within] test,
++test test[focus-within] test,
++test [focus-within] [focus-within] test,
++test :matches([focus-within]) test,
++test :matches([focus-within] test) test,
++test :matches(test [focus-within]) test,
++test :matches(test test[focus-within]) test,
++test :matches(test [focus-within] test) test,
++test :matches(test test[focus-within] test) test,
++test :matches(test [focus-within] [focus-within] test) test {
++	order: 2;
++}
++
++:ignore-focus-within,
++:focus-within-ignore,
++:ignorefocus-within,
++:focus-withinignore {
++	order: 3;
++}
+diff --git a/test/basic.replacewith.expect.css b/test/basic.replacewith.expect.css
+index 407dc26..b8fe632 100644
+--- a/test/basic.replacewith.expect.css
++++ b/test/basic.replacewith.expect.css
+@@ -2,6 +2,10 @@
+ 	order: 1;
+ }
+ 
++:focus-within {
++	order: 1;
++}
++
+ .focus-within,
+ .focus-within test,
+ test .focus-within,
+@@ -19,6 +23,23 @@ test :matches(test .focus-within .focus-within test) test {
+ 	order: 2;
+ }
+ 
++:focus-within,
++:focus-within test,
++test :focus-within,
++test test:focus-within,
++test :focus-within test,
++test test:focus-within test,
++test :focus-within :focus-within test,
++test :matches(:focus-within) test,
++test :matches(:focus-within test) test,
++test :matches(test :focus-within) test,
++test :matches(test test:focus-within) test,
++test :matches(test :focus-within test) test,
++test :matches(test test:focus-within test) test,
++test :matches(test :focus-within :focus-within test) test {
++	order: 2;
++}
++
+ :ignore-focus-within,
+ :focus-within-ignore,
+ :ignorefocus-within,
+-- 
+2.33.1
+

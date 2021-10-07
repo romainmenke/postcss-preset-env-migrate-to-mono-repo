@@ -1,0 +1,390 @@
+From 733da49e5502a6523b14185356eacb821b19cdd9 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 25 Nov 2018 15:16:37 -0500
+Subject: [PATCH 69/84] Update PostCSS Tape
+
+---
+ .tape.js     | 322 +++++++++++++++++++++++++--------------------------
+ .travis.yml  |   2 +
+ package.json |   2 +-
+ 3 files changed, 163 insertions(+), 163 deletions(-)
+
+diff --git a/.tape.js b/.tape.js
+index f330885..4c3d459 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,187 +1,185 @@
+ module.exports = {
+-	'postcss-preset-env': {
+-		'basic': {
+-			message: 'supports basic usage'
+-		},
+-		'basic:ff49': {
+-			message: 'supports { browsers: "ff >= 49" } usage',
+-			options: {
+-				browsers: 'ff >= 49'
+-			}
+-		},
+-		'basic:ch38': {
+-			message: 'supports { browsers: "chrome >= 38" } usage',
+-			options: {
+-				browsers: 'chrome >= 38'
++	'basic': {
++		message: 'supports basic usage'
++	},
++	'basic:ff49': {
++		message: 'supports { browsers: "ff >= 49" } usage',
++		options: {
++			browsers: 'ff >= 49'
++		}
++	},
++	'basic:ch38': {
++		message: 'supports { browsers: "chrome >= 38" } usage',
++		options: {
++			browsers: 'chrome >= 38'
++		}
++	},
++	'basic:stage0': {
++		message: 'supports { stage: 0 } usage',
++		options: {
++			stage: 0
++		}
++	},
++	'basic:stage0-ff49': {
++		message: 'supports { browsers: "ff >= 49", stage: 0 } usage',
++		options: {
++			browsers: 'ff >= 49',
++			stage: 0
++		}
++	},
++	'basic:nesting': {
++		message: 'supports { stage: false, features: { "nesting-rules": true } } usage',
++		options: {
++			stage: false,
++			features: {
++				'nesting-rules': true
+ 			}
+-		},
+-		'basic:stage0': {
+-			message: 'supports { stage: 0 } usage',
+-			options: {
+-				stage: 0
++		}
++	},
++	'basic:autoprefixer': {
++		message: 'supports { autoprefixer: { add: false } } usage',
++		options: {
++			autoprefixer: {
++				add: false
+ 			}
+-		},
+-		'basic:stage0-ff49': {
+-			message: 'supports { browsers: "ff >= 49", stage: 0 } usage',
+-			options: {
+-				browsers: 'ff >= 49',
+-				stage: 0
++		}
++	},
++	'basic:autoprefixer:false': {
++		message: 'supports { autoprefixer: false } usage',
++		options: {
++			autoprefixer: false
++		}
++	},
++	'custom-properties': {
++		message: 'supports { browsers: "ie >= 10" } usage',
++		options: {
++			browsers: 'ie >= 10'
++		}
++	},
++	'custom-properties:disabled': {
++		message: 'supports { browsers: "ie >= 10", features: { "custom-properties": false } } usage',
++		options: {
++			browsers: 'ie >= 10',
++			features: {
++				'custom-properties': false
+ 			}
+-		},
+-		'basic:nesting': {
+-			message: 'supports { stage: false, features: { "nesting-rules": true } } usage',
+-			options: {
+-				stage: false,
+-				features: {
+-					'nesting-rules': true
+-				}
++		}
++	},
++	'insert:before': {
++		message: 'supports { stage: 1, features: { "color-mod-function": true }, insertBefore: { "color-mod-function": [ require("postcss-simple-vars") ] } } usage',
++		options: {
++			stage: 1,
++			features: {
++				'color-mod-function': true
++			},
++			insertBefore: {
++				'color-mod-function': [
++					require('postcss-simple-vars')
++				]
+ 			}
+-		},
+-		'basic:autoprefixer': {
+-			message: 'supports { autoprefixer: { add: false } } usage',
+-			options: {
+-				autoprefixer: {
+-					add: false
++		}
++	},
++	'insert:after': {
++		message: 'supports { stage: 1, features: { "color-mod-function": { unresolved: "warn" } }, insertAfter: { "color-mod-function": [ require("postcss-simple-vars")() ] } } usage',
++		options: {
++			stage: 1,
++			features: {
++				'color-mod-function': {
++					unresolved: 'warn'
+ 				}
++			},
++			insertAfter: {
++				'color-mod-function': require('postcss-simple-vars')
+ 			}
+ 		},
+-		'basic:autoprefixer:false': {
+-			message: 'supports { autoprefixer: false } usage',
+-			options: {
+-				autoprefixer: false
+-			}
+-		},
+-		'custom-properties': {
+-			message: 'supports { browsers: "ie >= 10" } usage',
+-			options: {
+-				browsers: 'ie >= 10'
+-			}
+-		},
+-		'custom-properties:disabled': {
+-			message: 'supports { browsers: "ie >= 10", features: { "custom-properties": false } } usage',
+-			options: {
+-				browsers: 'ie >= 10',
+-				features: {
+-					'custom-properties': false
++		warnings: 2
++	},
++	'insert:after:exec': {
++		message: 'supports { stage: 2, features: { "color-mod-function": { unresolved: "ignore" } }, insertAfter: { "color-mod-function": require("postcss-simple-vars")() } } usage',
++		options: {
++			stage: 2,
++			features: {
++				'color-mod-function': {
++					unresolved: 'ignore'
+ 				}
++			},
++			insertAfter: {
++				'color-mod-function': require('postcss-simple-vars')()
+ 			}
+ 		},
+-		'insert:before': {
+-			message: 'supports { stage: 1, features: { "color-mod-function": true }, insertBefore: { "color-mod-function": [ require("postcss-simple-vars") ] } } usage',
+-			options: {
+-				stage: 1,
+-				features: {
+-					'color-mod-function': true
+-				},
+-				insertBefore: {
+-					'color-mod-function': [
+-						require('postcss-simple-vars')
+-					]
++		expect: 'insert.after.expect.css'
++	},
++	'insert:after:array': {
++		message: 'supports { stage: 1, after: { "color-mod-function": [ require("postcss-simple-vars") ] } } usage',
++		options: {
++			stage: 1,
++			insertAfter: {
++				'color-mod-function': [
++					require('postcss-simple-vars')
++				]
++			},
++			features: {
++				'color-mod-function': {
++					unresolved: 'ignore'
+ 				}
+ 			}
+ 		},
+-		'insert:after': {
+-			message: 'supports { stage: 1, features: { "color-mod-function": { unresolved: "warn" } }, insertAfter: { "color-mod-function": [ require("postcss-simple-vars")() ] } } usage',
+-			options: {
+-				stage: 1,
+-				features: {
+-					'color-mod-function': {
+-						unresolved: 'warn'
+-					}
++		expect: 'insert.after.expect.css'
++	},
++	'import': {
++		message: 'supports { importFrom: { customMedia, customProperties, customSelectors, environmentVariables } } usage',
++		options: {
++			importFrom: {
++				customMedia: {
++					'--narrow-window': '(max-width: env(--sm))'
+ 				},
+-				insertAfter: {
+-					'color-mod-function': require('postcss-simple-vars')
+-				}
+-			},
+-			warning: 2
+-		},
+-		'insert:after:exec': {
+-			message: 'supports { stage: 2, features: { "color-mod-function": { unresolved: "ignore" } }, insertAfter: { "color-mod-function": require("postcss-simple-vars")() } } usage',
+-			options: {
+-				stage: 2,
+-				features: {
+-					'color-mod-function': {
+-						unresolved: 'ignore'
+-					}
++				customProperties: {
++					'--order': '1'
+ 				},
+-				insertAfter: {
+-					'color-mod-function': require('postcss-simple-vars')()
+-				}
+-			},
+-			expect: 'insert.after.expect.css'
+-		},
+-		'insert:after:array': {
+-			message: 'supports { stage: 1, after: { "color-mod-function": [ require("postcss-simple-vars") ] } } usage',
+-			options: {
+-				stage: 1,
+-				insertAfter: {
+-					'color-mod-function': [
+-						require('postcss-simple-vars')
+-					]
++				customSelectors: {
++					':--heading': 'h1, h2, h3, h4, h5, h6'
+ 				},
+-				features: {
+-					'color-mod-function': {
+-						unresolved: 'ignore'
+-					}
++				environmentVariables: {
++					'--sm': '40rem'
+ 				}
+ 			},
+-			expect: 'insert.after.expect.css'
++			stage: 0
++		}
++	},
++	'basic:export': {
++		message: 'supports { stage: 0 } usage',
++		options: {
++			stage: 0,
++			exportTo: [
++				'test/generated-custom-exports.css',
++				'test/generated-custom-exports.js',
++				'test/generated-custom-exports.json',
++				'test/generated-custom-exports.mjs'
++			]
+ 		},
+-		'import': {
+-			message: 'supports { importFrom: { customMedia, customProperties, customSelectors, environmentVariables } } usage',
+-			options: {
+-				importFrom: {
+-					customMedia: {
+-						'--narrow-window': '(max-width: env(--sm))'
+-					},
+-					customProperties: {
+-						'--order': '1'
+-					},
+-					customSelectors: {
+-						':--heading': 'h1, h2, h3, h4, h5, h6'
+-					},
+-					environmentVariables: {
+-						'--sm': '40rem'
+-					}
+-				},
+-				stage: 0
+-			}
++		expect: 'basic.stage0.expect.css',
++		result: 'basic.stage0.result.css',
++		before() {
++			global.__exportTo = {
++				css: require('fs').readFileSync('test/generated-custom-exports.css', 'utf8'),
++				js: require('fs').readFileSync('test/generated-custom-exports.js', 'utf8'),
++				json: require('fs').readFileSync('test/generated-custom-exports.json', 'utf8'),
++				mjs: require('fs').readFileSync('test/generated-custom-exports.mjs', 'utf8')
++			};
+ 		},
+-		'basic:export': {
+-			message: 'supports { stage: 0 } usage',
+-			options: {
+-				stage: 0,
+-				exportTo: [
+-					'test/generated-custom-exports.css',
+-					'test/generated-custom-exports.js',
+-					'test/generated-custom-exports.json',
+-					'test/generated-custom-exports.mjs'
+-				]
+-			},
+-			expect: 'basic.stage0.expect.css',
+-			result: 'basic.stage0.result.css',
+-			before() {
+-				global.__exportTo = {
+-					css: require('fs').readFileSync('test/generated-custom-exports.css', 'utf8'),
+-					js: require('fs').readFileSync('test/generated-custom-exports.js', 'utf8'),
+-					json: require('fs').readFileSync('test/generated-custom-exports.json', 'utf8'),
+-					mjs: require('fs').readFileSync('test/generated-custom-exports.mjs', 'utf8')
+-				};
+-			},
+-			after() {
+-				global.__exportAs = {
+-					css: require('fs').readFileSync('test/generated-custom-exports.css', 'utf8'),
+-					js: require('fs').readFileSync('test/generated-custom-exports.js', 'utf8'),
+-					json: require('fs').readFileSync('test/generated-custom-exports.json', 'utf8'),
+-					mjs: require('fs').readFileSync('test/generated-custom-exports.mjs', 'utf8')
+-				};
++		after() {
++			global.__exportAs = {
++				css: require('fs').readFileSync('test/generated-custom-exports.css', 'utf8'),
++				js: require('fs').readFileSync('test/generated-custom-exports.js', 'utf8'),
++				json: require('fs').readFileSync('test/generated-custom-exports.json', 'utf8'),
++				mjs: require('fs').readFileSync('test/generated-custom-exports.mjs', 'utf8')
++			};
+ 
+-				Object.keys(global.__exportTo).forEach(key => {
+-					if (global.__exportTo[key] !== global.__exportAs[key]) {
+-						throw new Error(`The original ${key} file did not match the freshly exported copy`);
+-					}
+-				});
+-			}
++			Object.keys(global.__exportTo).forEach(key => {
++				if (global.__exportTo[key] !== global.__exportAs[key]) {
++					throw new Error(`The original ${key} file did not match the freshly exported copy`);
++				}
++			});
+ 		}
+ 	}
+ };
+diff --git a/.travis.yml b/.travis.yml
+index 6a81966..2a28c6c 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -14,4 +14,6 @@ node_js:
+   - 6
+ 
+ install:
++  - git config --global core.autocrlf false
++  - git checkout -qf ${TRAVIS_COMMIT}
+   - npm install --ignore-scripts
+diff --git a/package.json b/package.json
+index 6971d85..800dc6f 100644
+--- a/package.json
++++ b/package.json
+@@ -69,7 +69,7 @@
+     "eslint": "^5.9.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-simple-vars": "^5.0.1",
+-    "postcss-tape": "^2.2.0",
++    "postcss-tape": "^3.0.0",
+     "pre-commit": "^1.2.2",
+     "rollup": "^0.67.3",
+     "rollup-plugin-babel": "^4.0.3"
+-- 
+2.33.1
+

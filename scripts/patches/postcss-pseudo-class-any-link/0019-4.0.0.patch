@@ -1,0 +1,492 @@
+From 877bfc48f6b7ab46f76cc8dd92476585f6ee6287 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 10 May 2017 17:35:18 -0400
+Subject: [PATCH 19/30] 4.0.0
+
+- Added: Support for PostCSS v6
+- Added: Support for Node v4
+- Removed: `prefix` option, as that would be non-spec
+---
+ .gitignore                      |   8 ++-
+ .tape.js                        |  15 -----
+ .travis.yml                     |   2 +-
+ CHANGELOG.md                    |   6 ++
+ README.md                       |  51 ++++++---------
+ index.js                        | 112 ++++++++++++++------------------
+ package.json                    |  32 ++++-----
+ test/basic.w-prefix.expect.css  |  12 ----
+ test/prefix.css                 |  12 ----
+ test/prefix.expect.css          |  12 ----
+ test/prefix.w-prefix.expect.css |  13 ----
+ 11 files changed, 92 insertions(+), 183 deletions(-)
+ delete mode 100644 test/basic.w-prefix.expect.css
+ delete mode 100644 test/prefix.css
+ delete mode 100644 test/prefix.expect.css
+ delete mode 100644 test/prefix.w-prefix.expect.css
+
+diff --git a/.gitignore b/.gitignore
+index 091413e..0de7b9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,3 +1,7 @@
+ node_modules
+-npm-debug.log
+-test/*.result.css
++.*
++!.gitignore
++!.tape.js
++!.travis.yml
++*.log*
++*.result.css
+diff --git a/.tape.js b/.tape.js
+index a3959ee..15007b9 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -2,21 +2,6 @@ module.exports = {
+ 	'postcss-pseudo-class-any-link': {
+ 		'basic': {
+ 			message: 'supports basic usage'
+-		},
+-		'basic:w-prefix': {
+-			message: 'ignores basic usage when { prefix: "x" }',
+-			options: {
+-				prefix: 'x'
+-			}
+-		},
+-		'prefix': {
+-			message: 'supports prefix usage'
+-		},
+-		'prefix:w-prefix': {
+-			message: 'supports prefix usage when { prefix: "x" }',
+-			options: {
+-				prefix: 'x'
+-			}
+ 		}
+ 	}
+ };
+diff --git a/.travis.yml b/.travis.yml
+index 833d09d..8524235 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -1,3 +1,3 @@
+ language: node_js
+ node_js:
+-  - stable
++  - 4
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index b8c6669..24f5a6d 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,11 @@
+ # Changes to :any-link
+ 
++### 4.0.0 (May 10, 2017)
++
++- Added: Support for PostCSS v6
++- Added: Support for Node v4
++- Removed: `prefix` option, as that would be non-spec
++
+ ### 3.0.1 (December 8, 2016)
+ 
+ - Updated: Use destructing assignment on plugin options
+diff --git a/README.md b/README.md
+index 8b06851..aaea603 100644
+--- a/README.md
++++ b/README.md
+@@ -1,26 +1,23 @@
+-# :any-link <a href="https://github.com/postcss/postcss"><img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right"></a>
++# :any-link [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
+ 
+ [![NPM Version][npm-img]][npm-url]
+ [![Build Status][cli-img]][cli-url]
+-[![Licensing][lic-image]][lic-url]
+-[![Changelog][log-image]][log-url]
+-[![Gitter Chat][git-image]][git-url]
++[![Licensing][lic-img]][lic-url]
++[![Changelog][log-img]][log-url]
++[![Gitter Chat][git-img]][git-url]
+ 
+ [:any-link] lets you to use the proposed [`:any-link`] pseudo-class in CSS.
+ 
+ `:any-link` simplifies selectors targeting links, as the naming of `:link` is misleading; it specifically means unvisited links only, rather than all links.
+ 
+ ```css
+-/* before */
+-
+ nav :any-link > span {
+ 	background-color: yellow;
+ }
+ 
+-/* after */
++/* becomes */
+ 
+-nav :link > span,
+-nav :visited > span {
++nav :link > span, nav :visited > span {
+ 	background-color: yellow;
+ }
+ ```
+@@ -29,28 +26,20 @@ From the [proposal]:
+ 
+ > The [`:any-link`] pseudo-class represents an element that acts as the source anchor of a hyperlink. It matches an element if the element would match [`:link`] or [`:visited`].
+ 
+-## Options
+-
+-**prefix** (string): prepends a prefix (surrounded by dashes) to the pseudo-class, preventing any clash with native syntax.
+-
+-```js
+-{
+-	prefix: 'foo' // pseudo-class becomes :-foo-any-link
+-}
+-```
+-
+ ## Usage
+ 
+ Add [:any-link] to your build tool:
+ 
+ ```bash
+-npm install :any-link --save-dev
++npm install postcss-pseudo-class-any-link --save-dev
+ ```
+ 
+ #### Node
+ 
++Use [:any-link] to process your CSS:
++
+ ```js
+-require(':any-link').process(YOUR_CSS, { /* options */ });
++require('postcss-pseudo-class-any-link').process(YOUR_CSS);
+ ```
+ 
+ #### PostCSS
+@@ -61,12 +50,12 @@ Add [PostCSS] to your build tool:
+ npm install postcss --save-dev
+ ```
+ 
+-Load [:any-link] as a PostCSS plugin:
++Use [:any-link] as a plugin:
+ 
+ ```js
+ postcss([
+-	require(':any-link')({ /* options */ })
+-]).process(YOUR_CSS, /* options */);
++	require('postcss-pseudo-class-any-link')()
++]).process(YOUR_CSS);
+ ```
+ 
+ #### Gulp
+@@ -77,7 +66,7 @@ Add [Gulp PostCSS] to your build tool:
+ npm install gulp-postcss --save-dev
+ ```
+ 
+-Enable [:any-link] within your Gulpfile:
++Use [:any-link] in your Gulpfile:
+ 
+ ```js
+ var postcss = require('gulp-postcss');
+@@ -85,7 +74,7 @@ var postcss = require('gulp-postcss');
+ gulp.task('css', function () {
+ 	return gulp.src('./src/*.css').pipe(
+ 		postcss([
+-			require(':any-link')({ /* options */ })
++			require('postcss-pseudo-class-any-link')()
+ 		])
+ 	).pipe(
+ 		gulp.dest('.')
+@@ -101,7 +90,7 @@ Add [Grunt PostCSS] to your build tool:
+ npm install grunt-postcss --save-dev
+ ```
+ 
+-Enable [:any-link] within your Gruntfile:
++Use [:any-link] in your Gruntfile:
+ 
+ ```js
+ grunt.loadNpmTasks('grunt-postcss');
+@@ -110,7 +99,7 @@ grunt.initConfig({
+ 	postcss: {
+ 		options: {
+ 			use: [
+-				require(':any-link')({ /* options */ })
++				require('postcss-pseudo-class-any-link')()
+ 			]
+ 		},
+ 		dist: {
+@@ -145,11 +134,11 @@ Here are a few other ways to simulate the effect of [PostCSS Pseudo-Class Any-Li
+ [cli-url]: https://travis-ci.org/jonathantneal/postcss-pseudo-class-any-link
+ [cli-img]: https://img.shields.io/travis/jonathantneal/postcss-pseudo-class-any-link.svg
+ [lic-url]: LICENSE.md
+-[lic-image]: https://img.shields.io/npm/l/postcss-pseudo-class-any-link.svg
++[lic-img]: https://img.shields.io/npm/l/postcss-pseudo-class-any-link.svg
+ [log-url]: CHANGELOG.md
+-[log-image]: https://img.shields.io/badge/changelog-md-blue.svg
++[log-img]: https://img.shields.io/badge/changelog-md-blue.svg
+ [git-url]: https://gitter.im/postcss/postcss
+-[git-image]: https://img.shields.io/badge/chat-gitter-blue.svg
++[git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
+ 
+ [:any-link]: https://github.com/jonathantneal/postcss-pseudo-class-any-link
+ [`:any-link`]: http://dev.w3.org/csswg/selectors/#any-link-pseudo
+diff --git a/index.js b/index.js
+index 27df8f2..94d3f59 100644
+--- a/index.js
++++ b/index.js
+@@ -1,73 +1,55 @@
++'use strict';
++
+ // tooling
+ const postcss = require('postcss');
+ const parser = require('postcss-selector-parser');
+ 
+ // plugin
+-module.exports = postcss.plugin('postcss-pseudo-class-any-link', ({
+-	prefix = ''
+-} = {}) => {
+-	// dashed prefix
+-	const dashedPrefix = prefix ? `-${ prefix }-` : '';
+-
+-	// any-link value
+-	const anyLinkValue = `:${ dashedPrefix }any-link`;
+-
+-	// selector matcher
+-	const selectorMatch = new RegExp(`${ dashedPrefix }any-link`);
+-
+-	return (css) => {
+-		// walk each matching rule
+-		css.walkRules(selectorMatch, (rule) => {
+-			const rawSelector = rule.raws.selector && rule.raws.selector.raw || rule.selector;
+-
+-			// workaround for https://github.com/postcss/postcss-selector-parser/issues/28#issuecomment-171910556
+-			if (rawSelector[rawSelector.length - 1] !== ':') {
+-				// update the selector
+-				rule.selector = parser((selectors) => {
+-					// cache variables
+-					let node;
+-					let nodeIndex;
+-					let selector;
+-					let selectorLink;
+-					let selectorVisited;
+-
+-					// cache the selector index
+-					let selectorIndex = -1;
+-
+-					// for each selector
+-					while (selector = selectors.nodes[++selectorIndex]) {
+-						// reset the node index
+-						nodeIndex = -1;
+-
+-						// for each node
+-						while (node = selector.nodes[++nodeIndex]) {
+-							// if the node value matches the any-link value
+-							if (node.value === anyLinkValue) {
+-								// clone the selector
+-								selectorLink = selector.clone();
+-								selectorVisited = selector.clone();
+-
+-								// update the matching clone values
+-								selectorLink.nodes[nodeIndex].value = ':link';
+-								selectorVisited.nodes[nodeIndex].value = ':visited';
+-
+-								// replace the selector with the clones and roll back the selector index
+-								selectors.nodes.splice(selectorIndex--, 1, selectorLink, selectorVisited);
+-
+-								// stop updating the selector
+-								break;
+-							}
++module.exports = postcss.plugin('postcss-pseudo-class-any-link', () => (css) => {
++	// walk each matching rule
++	css.walkRules(/:any-link/, (rule) => {
++		const rawSelector = rule.raws.selector && rule.raws.selector.raw || rule.selector;
++
++		// workaround for https://github.com/postcss/postcss-selector-parser/issues/28#issuecomment-171910556
++		if (rawSelector[rawSelector.length - 1] !== ':') {
++			// update the selector
++			rule.selector = parser((selectors) => {
++				// cache variables
++				let node;
++				let nodeIndex;
++				let selector;
++				let selectorLink;
++				let selectorVisited;
++
++				// cache the selector index
++				let selectorIndex = -1;
++
++				// for each selector
++				while (selector = selectors.nodes[++selectorIndex]) {
++					// reset the node index
++					nodeIndex = -1;
++
++					// for each node
++					while (node = selector.nodes[++nodeIndex]) {
++						// if the node value matches the any-link value
++						if (node.value === ':any-link') {
++							// clone the selector
++							selectorLink = selector.clone();
++							selectorVisited = selector.clone();
++
++							// update the matching clone values
++							selectorLink.nodes[nodeIndex].value = ':link';
++							selectorVisited.nodes[nodeIndex].value = ':visited';
++
++							// replace the selector with the clones and roll back the selector index
++							selectors.nodes.splice(selectorIndex--, 1, selectorLink, selectorVisited);
++
++							// stop updating the selector
++							break;
+ 						}
+ 					}
+-				}).process(rawSelector).result;
+-			}
+-		});
+-	};
++				}
++			}).process(rawSelector).result;
++		}
++	});
+ });
+-
+-// override plugin#process
+-module.exports.process = function (cssString, pluginOptions, processOptions) {
+-	return postcss([
+-		1 in arguments ? module.exports(pluginOptions) : module.exports()
+-	]).process(cssString, processOptions);
+-};
+diff --git a/package.json b/package.json
+index 8db6dae..9a1778c 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-pseudo-class-any-link",
+-  "version": "3.0.1",
++  "version": "4.0.0",
+   "description": "Use the proposed :any-link pseudo-class in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -12,29 +12,24 @@
+     "index.js"
+   ],
+   "scripts": {
+-    "lint": "echint && eslint index.js && jscs index.js",
++    "clean": "git clean -X -d -f",
+     "prepublish": "npm test",
+-    "tape": "postcss-tape",
+-    "test": "npm run lint && postcss-tape"
++    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
++    "test:js": "eslint *.js --cache --ignore-pattern .gitignore",
++    "test:tape": "postcss-tape"
+   },
+   "engines": {
+-    "node": ">=6.9.1"
++    "node": ">=4.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^5.2.6",
+-    "postcss-selector-parser": "^2.2.2"
++    "postcss": "^6.0.1",
++    "postcss-selector-parser": "^2.2.3"
+   },
+   "devDependencies": {
+-    "echint": "^2.1.0",
+-    "echint-config-dev": "1.0.0",
+-    "eslint": "^3.12.1",
+-    "eslint-config-dev": "1.0.0",
+-    "jscs": "^3.0.7",
+-    "jscs-config-dev": "1.0.1",
+-    "postcss-tape": "1.3.0"
+-  },
+-  "echint": {
+-    "extends": "dev"
++    "eslint": "^3.19.0",
++    "eslint-config-dev": "2.0.0",
++    "postcss-tape": "2.0.1",
++    "pre-commit": "^1.2.2"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+@@ -42,9 +37,6 @@
+       "sourceType": "module"
+     }
+   },
+-  "jscsConfig": {
+-    "preset": "dev"
+-  },
+   "keywords": [
+     "postcss",
+     "css",
+diff --git a/test/basic.w-prefix.expect.css b/test/basic.w-prefix.expect.css
+deleted file mode 100644
+index e0ca560..0000000
+--- a/test/basic.w-prefix.expect.css
++++ /dev/null
+@@ -1,12 +0,0 @@
+-:any-link {
+-	background: blue;
+-}
+-
+-:any-link,
+-ul a:any-link > span {
+-	background: blue;
+-}
+-
+-:any-link :any-link {
+-	background: blue;
+-}
+diff --git a/test/prefix.css b/test/prefix.css
+deleted file mode 100644
+index d8c7ac8..0000000
+--- a/test/prefix.css
++++ /dev/null
+@@ -1,12 +0,0 @@
+-:-x-any-link {
+-	background: blue;
+-}
+-
+-:-x-any-link,
+-ul a:-x-any-link > span {
+-	background: blue;
+-}
+-
+-:-x-any-link :-x-any-link {
+-	background: blue;
+-}
+diff --git a/test/prefix.expect.css b/test/prefix.expect.css
+deleted file mode 100644
+index d8c7ac8..0000000
+--- a/test/prefix.expect.css
++++ /dev/null
+@@ -1,12 +0,0 @@
+-:-x-any-link {
+-	background: blue;
+-}
+-
+-:-x-any-link,
+-ul a:-x-any-link > span {
+-	background: blue;
+-}
+-
+-:-x-any-link :-x-any-link {
+-	background: blue;
+-}
+diff --git a/test/prefix.w-prefix.expect.css b/test/prefix.w-prefix.expect.css
+deleted file mode 100644
+index 806a50e..0000000
+--- a/test/prefix.w-prefix.expect.css
++++ /dev/null
+@@ -1,13 +0,0 @@
+-:link,:visited {
+-	background: blue;
+-}
+-
+-:link,:visited,
+-ul a:link > span,
+-ul a:visited > span {
+-	background: blue;
+-}
+-
+-:link :link,:link :visited,:visited :link,:visited :visited {
+-	background: blue;
+-}
+-- 
+2.33.1
+

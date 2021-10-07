@@ -1,0 +1,44 @@
+From 2298d55059b94ec7704eba83bb4861079352c907 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 1 Jun 2018 00:28:53 -0400
+Subject: [PATCH 36/84] Update README.md to fix feature example
+
+---
+ README.md | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/README.md b/README.md
+index 1d8ed7f..bfc0576 100644
+--- a/README.md
++++ b/README.md
+@@ -240,8 +240,11 @@ disable it.
+ 
+ ```js
+ postcssPresetEnv({
++  /* use stage 3 features + css nesting rules */
+   stage: 3,
+-  features: [ 'nesting-rules' ]
++  features: {
++    'nesting-rules': true
++  }
+ })
+ ```
+ 
+@@ -250,8 +253,12 @@ configure it.
+ 
+ ```js
+ postcssPresetEnv({
+-  'color-mod-function': {
+-    unresolved: 'warn'
++  /* use stage 3 features + css color-mod (warning on unresolved) */
++  stage: 3,
++  features: {
++    'color-mod-function': {
++      unresolved: 'warn'
++    }
+   }
+ })
+ ```
+-- 
+2.33.1
+

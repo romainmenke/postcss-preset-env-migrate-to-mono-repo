@@ -1,0 +1,104 @@
+From bca18612b3846714916626cf49abb334d0cf1557 Mon Sep 17 00:00:00 2001
+From: Yvain Liechti <yvain_liechti@ultimatesoftware.com>
+Date: Mon, 5 Jul 2021 16:05:57 +0200
+Subject: [PATCH 12/15] update to postCSS 8 (#13)
+
+---
+ INSTALL.md    |  2 +-
+ package.json  |  9 +++++----
+ src/index.js  | 19 +++++++++++++------
+ src/onRule.js |  4 ++++
+ 4 files changed, 23 insertions(+), 11 deletions(-)
+
+diff --git a/INSTALL.md b/INSTALL.md
+index 1dc53d4..8b0ae3c 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -10,7 +10,7 @@
+ Add [PostCSS Focus Visible] to your project:
+ 
+ ```bash
+-npm install postcss-focus-visible --save-dev
++npm install postcss postcss-focus-visible --save-dev
+ ```
+ 
+ Use [PostCSS Focus Visible] to process your CSS:
+diff --git a/package.json b/package.json
+index affafcb..5478eac 100644
+--- a/package.json
++++ b/package.json
+@@ -24,16 +24,17 @@
+   "engines": {
+     "node": ">=10.0.0"
+   },
+-  "dependencies": {
+-    "postcss": "^7.0.27"
++  "peerDependencies": {
++    "postcss": "^8.0.0"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.9.0",
+     "@babel/preset-env": "^7.9.5",
+     "babel-eslint": "^10.1.0",
+-    "eslint": "^6.8.0",
++    "eslint": "^7.11.0",
+     "eslint-config-dev": "2.0.0",
+-    "postcss-tape": "5.0.2",
++    "postcss": "^8.1.1",
++    "postcss-tape": "^6.0.0",
+     "pre-commit": "^1.2.2",
+     "rollup": "^2.6.1",
+     "rollup-plugin-babel": "^4.4.0"
+diff --git a/src/index.js b/src/index.js
+index 58dd4e4..5952c3a 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -1,17 +1,24 @@
+-import postcss from 'postcss'
++
+ import options from './options'
+ import onRule, { selectorRegExp } from './onRule'
+ 
+-/** @type {CSSPlugin} */ 
+-const plugin = postcss.plugin('postcss-focus-visible', opts => {
++/** @type {CSSPlugin} */
++const plugin = opts => {
+ 	opts = Object(opts)
+ 	options.replaceWith = String(opts.replaceWith || '.focus-visible')
+ 	options.preserve = Boolean('preserve' in opts ? opts.preserve : true)
+ 
+-	return root => {
+-		root.walkRules(selectorRegExp, onRule)
++	return {
++		postcssPlugin: 'postcss-focus-visible',
++		Rule (rule) {
++			if (selectorRegExp.test(rule.selector)) {
++				onRule(rule)
++			}
++		}
+ 	}
+-})
++}
++
++plugin.postcss = true
+ 
+ export default plugin
+ 
+diff --git a/src/onRule.js b/src/onRule.js
+index 16126a6..76621f5 100644
+--- a/src/onRule.js
++++ b/src/onRule.js
+@@ -3,6 +3,10 @@ import options from './options'
+ /** @type {(rule: CSSRule) => void} */
+ const onRule = rule => {
+ 	const selector = rule.selector.replace(selectorRegExp, ($0, $1) => `${options.replaceWith}${$1}`)
++
++	// check if it was processed yet
++	if (options.preserve && rule.prev()?.selector === selector) return
++
+ 	const clone = rule.clone({ selector })
+ 
+ 	if (options.preserve) rule.before(clone)
+-- 
+2.33.1
+

@@ -1,0 +1,1066 @@
+From ba81d33008f6601bf199d682754080efcbf9fb39 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 21 Mar 2018 02:31:07 -0400
+Subject: [PATCH 24/34] 3.0.0
+
+---
+ .appveyor.yml                   |  18 ++++
+ .gitignore                      |   6 +-
+ .rollup.js                      |  16 +++
+ .tape.js                        |  15 +--
+ CHANGELOG.md                    |   9 +-
+ CONTRIBUTING.md                 |   2 +-
+ LICENSE.md                      | 140 ++++++++++++-------------
+ README.md                       | 165 +++++++++++++++---------------
+ index.js                        | 175 +++++++++++++++-----------------
+ package.json                    |  47 ++++++---
+ test/basic.preserve.expect.css  | 143 ++++++++++++++++++++++++++
+ test/basic.supported.expect.css |  71 -------------
+ 12 files changed, 463 insertions(+), 344 deletions(-)
+ create mode 100644 .appveyor.yml
+ create mode 100644 .rollup.js
+ create mode 100644 test/basic.preserve.expect.css
+ delete mode 100644 test/basic.supported.expect.css
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+new file mode 100644
+index 0000000..acbf8a5
+--- /dev/null
++++ b/.appveyor.yml
+@@ -0,0 +1,18 @@
++# https://www.appveyor.com/docs/appveyor-yml
++
++environment:
++  matrix:
++    - nodejs_version: 4
++
++version: "{build}"
++build: off
++deploy: off
++
++install:
++  - ps: Install-Product node $env:nodejs_version
++  - npm install --ignore-scripts
++
++test_script:
++  - node --version
++  - npm --version
++  - cmd: "npm test"
+diff --git a/.gitignore b/.gitignore
+index 995098a..de73e5a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,10 +1,12 @@
+ node_modules
++index.*.js
+ package-lock.json
++*.log*
++*.result.css
+ .*
+ !.appveyor.yml
+ !.editorconfig
+ !.gitignore
++!.rollup.js
+ !.tape.js
+ !.travis.yml
+-*.log*
+-*.result.css
+diff --git a/.rollup.js b/.rollup.js
+new file mode 100644
+index 0000000..0436758
+--- /dev/null
++++ b/.rollup.js
+@@ -0,0 +1,16 @@
++import babel from 'rollup-plugin-babel';
++
++export default {
++	input: 'index.js',
++	output: [
++		{ file: 'index.cjs.js', format: 'cjs' },
++		{ file: 'index.es.js', format: 'es' }
++	],
++	plugins: [
++		babel({
++			presets: [
++				['env', { modules: false, targets: { node: 4 } }]
++			]
++		})
++	]
++};
+diff --git a/.tape.js b/.tape.js
+index 6570b96..a86a6be 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -10,20 +10,11 @@ module.exports = {
+ 				dir: 'ltr'
+ 			}
+ 		},
+-		'basic:browsers': {
+-			message: 'supports { browsers: "last 2 versions" } usage',
++		'basic:preserve': {
++			message: 'supports { preserve: true } usage',
+ 			source: 'basic.css',
+-			expect: 'basic.expect.css',
+-			result: 'basic.result.css',
+ 			options: {
+-				browsers: 'last 2 versions'
+-			}
+-		},
+-		'basic:supported': {
+-			message: 'ignores supported { ff >= 49 } usage',
+-			source: 'basic.css',
+-			options: {
+-				browsers: 'ff >= 49'
++				preserve: true
+ 			}
+ 		}
+ 	}
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 173fb62..3190505 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,4 +1,11 @@
+-# Changes to PostCSS :dir()
++# Changes to PostCSS Dir Pseudo Class
++
++### 3.0.0 (March 21, 2018)
++
++- Added: `preserve` option to preserve the original `:dir()` rule
++- Updated: `postcss-selector-parser` to v3 (major)
++- Removed: `browsers` option which is better covered by
++  [PostCSS Preset Env](https://github.com/jonathantneal/postcss-preset-env/)
+ 
+ ### 2.1.0 (September 19, 2017)
+ 
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+index f58b57f..76d75aa 100644
+--- a/CONTRIBUTING.md
++++ b/CONTRIBUTING.md
+@@ -1,4 +1,4 @@
+-# Contributing to PostCSS :dir()
++# Contributing to PostCSS Dir Pseudo Class
+ 
+ You want to help? You rock! Now, take a moment to be sure your contributions
+ make sense to everyone else.
+diff --git a/LICENSE.md b/LICENSE.md
+index b5bc55c..0bc1fa7 100644
+--- a/LICENSE.md
++++ b/LICENSE.md
+@@ -27,80 +27,82 @@ Copyright and Related Rights in the Work and the meaning and intended legal
+ effect of CC0 on those rights.
+ 
+ 1. Copyright and Related Rights. A Work made available under CC0 may be
+-	 protected by copyright and related or neighboring rights (“Copyright and
+-	 Related Rights”). Copyright and Related Rights include, but are not limited
+-	 to, the following:
+-	1. the right to reproduce, adapt, distribute, perform, display,
+-		 communicate, and translate a Work;
+-	2. moral rights retained by the original author(s) and/or performer(s);
+-	3. publicity and privacy rights pertaining to a person’s image or likeness
+-		 depicted in a Work;
+-	4. rights protecting against unfair competition in regards to a Work,
+-		 subject to the limitations in paragraph 4(i), below;
+-	5. rights protecting the extraction, dissemination, use and reuse of data
+-		 in a Work;
+-	6. database rights (such as those arising under Directive 96/9/EC of the
+-		 European Parliament and of the Council of 11 March 1996 on the legal
+-		 protection of databases, and under any national implementation thereof,
+-		 including any amended or successor version of such directive); and
+-	7. other similar, equivalent or corresponding rights throughout the world
+-		 based on applicable law or treaty, and any national implementations
+-		 thereof.
++   protected by copyright and related or neighboring rights (“Copyright and
++   Related Rights”). Copyright and Related Rights include, but are not limited
++   to, the following:
++   1. the right to reproduce, adapt, distribute, perform, display, communicate,
++      and translate a Work;
++   2. moral rights retained by the original author(s) and/or performer(s);
++   3. publicity and privacy rights pertaining to a person’s image or likeness
++      depicted in a Work;
++   4. rights protecting against unfair competition in regards to a Work,
++      subject to the limitations in paragraph 4(i), below;
++   5. rights protecting the extraction, dissemination, use and reuse of data in
++      a Work;
++   6. database rights (such as those arising under Directive 96/9/EC of the
++      European Parliament and of the Council of 11 March 1996 on the legal
++      protection of databases, and under any national implementation thereof,
++      including any amended or successor version of such directive); and
++   7. other similar, equivalent or corresponding rights throughout the world
++      based on applicable law or treaty, and any national implementations
++      thereof.
+ 
+ 2. Waiver. To the greatest extent permitted by, but not in contravention of,
+-applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
+-unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
+-and Related Rights and associated claims and causes of action, whether now
+-known or unknown (including existing as well as future claims and causes of
+-action), in the Work (i) in all territories worldwide, (ii) for the maximum
+-duration provided by applicable law or treaty (including future time
+-extensions), (iii) in any current or future medium and for any number of
+-copies, and (iv) for any purpose whatsoever, including without limitation
+-commercial, advertising or promotional purposes (the “Waiver”). Affirmer makes
+-the Waiver for the benefit of each member of the public at large and to the
+-detriment of Affirmer’s heirs and successors, fully intending that such Waiver
+-shall not be subject to revocation, rescission, cancellation, termination, or
+-any other legal or equitable action to disrupt the quiet enjoyment of the Work
+-by the public as contemplated by Affirmer’s express Statement of Purpose.
++   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++   and Related Rights and associated claims and causes of action, whether now
++   known or unknown (including existing as well as future claims and causes of
++   action), in the Work (i) in all territories worldwide, (ii) for the maximum
++   duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
++   makes the Waiver for the benefit of each member of the public at large and
++   to the detriment of Affirmer’s heirs and successors, fully intending that
++   such Waiver shall not be subject to revocation, rescission, cancellation,
++   termination, or any other legal or equitable action to disrupt the quiet
++   enjoyment of the Work by the public as contemplated by Affirmer’s express
++   Statement of Purpose.
+ 
+ 3. Public License Fallback. Should any part of the Waiver for any reason be
+-judged legally invalid or ineffective under applicable law, then the Waiver
+-shall be preserved to the maximum extent permitted taking into account
+-Affirmer’s express Statement of Purpose. In addition, to the extent the Waiver
+-is so judged Affirmer hereby grants to each affected person a royalty-free, non
+-transferable, non sublicensable, non exclusive, irrevocable and unconditional
+-license to exercise Affirmer’s Copyright and Related Rights in the Work (i) in
+-all territories worldwide, (ii) for the maximum duration provided by applicable
+-law or treaty (including future time extensions), (iii) in any current or
+-future medium and for any number of copies, and (iv) for any purpose
+-whatsoever, including without limitation commercial, advertising or promotional
+-purposes (the “License”). The License shall be deemed effective as of the date
+-CC0 was applied by Affirmer to the Work. Should any part of the License for any
+-reason be judged legally invalid or ineffective under applicable law, such
+-partial invalidity or ineffectiveness shall not invalidate the remainder of the
+-License, and in such case Affirmer hereby affirms that he or she will not (i)
+-exercise any of his or her remaining Copyright and Related Rights in the Work
+-or (ii) assert any associated claims and causes of action with respect to the
+-Work, in either case contrary to Affirmer’s express Statement of Purpose.
++   judged legally invalid or ineffective under applicable law, then the Waiver
++   shall be preserved to the maximum extent permitted taking into account
++   Affirmer’s express Statement of Purpose. In addition, to the extent the
++   Waiver is so judged Affirmer hereby grants to each affected person a
++   royalty-free, non transferable, non sublicensable, non exclusive,
++   irrevocable and unconditional license to exercise Affirmer’s Copyright and
++   Related Rights in the Work (i) in all territories worldwide, (ii) for the
++   maximum duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “License”). The License
++   shall be deemed effective as of the date CC0 was applied by Affirmer to the
++   Work. Should any part of the License for any reason be judged legally
++   invalid or ineffective under applicable law, such partial invalidity or
++   ineffectiveness shall not invalidate the remainder of the License, and in
++   such case Affirmer hereby affirms that he or she will not (i) exercise any
++   of his or her remaining Copyright and Related Rights in the Work or (ii)
++   assert any associated claims and causes of action with respect to the Work,
++   in either case contrary to Affirmer’s express Statement of Purpose.
+ 
+ 4. Limitations and Disclaimers.
+-		1. No trademark or patent rights held by Affirmer are waived, abandoned,
+-			 surrendered, licensed or otherwise affected by this document.
+-		2. Affirmer offers the Work as-is and makes no representations or
+-			 warranties of any kind concerning the Work, express, implied, statutory
+-			 or otherwise, including without limitation warranties of title,
+-			 merchantability, fitness for a particular purpose, non infringement, or
+-			 the absence of latent or other defects, accuracy, or the present or
+-			 absence of errors, whether or not discoverable, all to the greatest
+-			 extent permissible under applicable law.
+-		3. Affirmer disclaims responsibility for clearing rights of other persons
+-			 that may apply to the Work or any use thereof, including without
+-			 limitation any person’s Copyright and Related Rights in the Work.
+-			 Further, Affirmer disclaims responsibility for obtaining any necessary
+-			 consents, permissions or other rights required for any use of the Work.
+-		4. Affirmer understands and acknowledges that Creative Commons is not a
+-			 party to this document and has no duty or obligation with respect to
+-			 this CC0 or use of the Work.
++   1. No trademark or patent rights held by Affirmer are waived, abandoned,
++      surrendered, licensed or otherwise affected by this document.
++   2. Affirmer offers the Work as-is and makes no representations or warranties
++      of any kind concerning the Work, express, implied, statutory or
++      otherwise, including without limitation warranties of title,
++      merchantability, fitness for a particular purpose, non infringement, or
++      the absence of latent or other defects, accuracy, or the present or
++      absence of errors, whether or not discoverable, all to the greatest
++      extent permissible under applicable law.
++   3. Affirmer disclaims responsibility for clearing rights of other persons
++      that may apply to the Work or any use thereof, including without
++      limitation any person’s Copyright and Related Rights in the Work.
++      Further, Affirmer disclaims responsibility for obtaining any necessary
++      consents, permissions or other rights required for any use of the Work.
++   4. Affirmer understands and acknowledges that Creative Commons is not a
++      party to this document and has no duty or obligation with respect to this
++      CC0 or use of the Work.
+ 
+ For more information, please see
+-https://creativecommons.org/publicdomain/zero/1.0/.
++http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/README.md b/README.md
+index c94b1b6..a76d11d 100644
+--- a/README.md
++++ b/README.md
+@@ -1,13 +1,13 @@
+-# PostCSS :dir() Pseudo [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
++# PostCSS Dir Pseudo Class [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
+ 
+ [![CSS Standard Status][css-img]][css-url]
+ [![NPM Version][npm-img]][npm-url]
+ [![Build Status][cli-img]][cli-url]
+-[![Licensing][lic-img]][lic-url]
++[![Windows Build Status][win-img]][win-url]
+ [![Gitter Chat][git-img]][git-url]
+ 
+-[PostCSS :dir() Pseudo] lets you use the `:dir()` pseudo-class to style by
+-directionality in CSS, following the [Selectors] specification.
++[PostCSS Dir Pseudo Class] lets you use the `:dir()` pseudo-class to style by
++directionality in CSS, following the [Selectors Level 4] specification.
+ 
+ ```css
+ article h3:dir(rtl) {
+@@ -29,15 +29,9 @@ article h3:dir(ltr) {
+ }
+ ```
+ 
+-### Future-proof your CSS
+-
+-If your [browserslist] already supports the `:dir()` pseudo-class, this plugin
+-will not change your CSS. Learn more about this feature in the
+-[`browsers`](#browsers-option) section.
+-
+ ### Maintain Specificity
+ 
+-Using [PostCSS :dir() Pseudo] will not impact selector weight, but it will
++Using [PostCSS Dir Pseudo Class] will not impact selector weight, but it will
+ require having at least one `[dir]` attribute in your HTML. If you don’t have
+ _any_ `[dir]` attributes, consider using the following JavaScript:
+ 
+@@ -53,7 +47,7 @@ sometimes increase selector weight by one element (`html`).
+ 
+ ## Usage
+ 
+-Add [PostCSS :dir() Pseudo] to your build tool:
++Add [PostCSS Dir Pseudo Class] to your build tool:
+ 
+ ```bash
+ npm install postcss-dir-pseudo-class --save-dev
+@@ -61,10 +55,12 @@ npm install postcss-dir-pseudo-class --save-dev
+ 
+ #### Node
+ 
+-Use [PostCSS :dir() Pseudo] to process your CSS:
++Use [PostCSS Dir Pseudo Class] to process your CSS:
+ 
+ ```js
+-require('postcss-dir-pseudo-class').process(YOUR_CSS /*, processConfig, options */);
++import postcssDirPseudoClass from 'postcss-dir-pseudo-class';
++
++postcssDirPseudoClass.process(YOUR_CSS);
+ ```
+ 
+ #### PostCSS
+@@ -75,14 +71,51 @@ Add [PostCSS] to your build tool:
+ npm install postcss --save-dev
+ ```
+ 
+-Use [PostCSS :dir() Pseudo] as a plugin:
++Use [PostCSS Dir Pseudo Class] as a plugin:
+ 
+ ```js
++import postcss from 'gulp-postcss';
++import postcssDirPseudoClass from 'postcss-dir-pseudo-class';
++
+ postcss([
+-  require('postcss-dir-pseudo-class')(/* Options */)
++  postcssDirPseudoClass()
+ ]).process(YOUR_CSS);
+ ```
+ 
++#### Webpack
++
++Add [PostCSS Loader] to your build tool:
++
++```bash
++npm install postcss-loader --save-dev
++```
++
++Use [PostCSS Dir Pseudo Class] in your Webpack configuration:
++
++```js
++import postcssDirPseudoClass from 'postcss-dir-pseudo-class';
++
++module.exports = {
++  module: {
++    rules: [
++      {
++        test: /\.css$/,
++        use: [
++          'style-loader',
++          { loader: 'css-loader', options: { importLoaders: 1 } },
++          { loader: 'postcss-loader', options: {
++            ident: 'postcss',
++            plugins: () => [
++              postcssDirPseudoClass(/* options */)
++            ]
++          } }
++        ]
++      }
++    ]
++  }
++}
++```
++
+ #### Gulp
+ 
+ Add [Gulp PostCSS] to your build tool:
+@@ -91,20 +124,19 @@ Add [Gulp PostCSS] to your build tool:
+ npm install gulp-postcss --save-dev
+ ```
+ 
+-Use [PostCSS :dir() Pseudo] in your Gulpfile:
++Use [PostCSS Dir Pseudo Class] in your Gulpfile:
+ 
+ ```js
+-var postcss = require('gulp-postcss');
+-
+-gulp.task('css', function () {
+-  return gulp.src('./src/*.css').pipe(
+-    postcss([
+-      require('postcss-dir-pseudo-class')(/* Options */)
+-    ])
+-  ).pipe(
+-    gulp.dest('.')
+-  );
+-});
++import postcss from 'gulp-postcss';
++import postcssDirPseudoClass from 'postcss-dir-pseudo-class';
++
++gulp.task('css', () => gulp.src('./src/*.css').pipe(
++  postcss([
++    postcssDirPseudoClass(/* options */)
++  ])
++).pipe(
++  gulp.dest('.')
++));
+ ```
+ 
+ #### Grunt
+@@ -115,16 +147,18 @@ Add [Grunt PostCSS] to your build tool:
+ npm install grunt-postcss --save-dev
+ ```
+ 
+-Use [PostCSS :dir() Pseudo] in your Gruntfile:
++Use [PostCSS Dir Pseudo Class] in your Gruntfile:
+ 
+ ```js
++import postcssDirPseudoClass from 'postcss-dir-pseudo-class';
++
+ grunt.loadNpmTasks('grunt-postcss');
+ 
+ grunt.initConfig({
+   postcss: {
+     options: {
+       use: [
+-        require('postcss-dir-pseudo-class')(/* Options */)
++       postcssDirPseudoClass(/* options */)
+       ]
+     },
+     dist: {
+@@ -134,51 +168,13 @@ grunt.initConfig({
+ });
+ ```
+ 
+----
+-
+-## Browsers Option
+-
+-If your [browserslist] already supports the `:dir` pseudo-class, this plugin
+-will not change your CSS. While only Firefox currently supports `:dir`, this
+-will surely improve over time.
+-
+-Here’s an example of a `package.json` using a browserslist that would fully
+-support the `:dir` pseudo-class:
+-
+-```json
+-{
+-  "browserslist": "firefox >= 49"
+-}
+-```
+-
+-And here’s an example of using the `browsers` option to accomplish the same
+-thing:
+-
+-```js
+-require('postcss-dir-pseudo-class')({
+-  browsers: 'firefox >= 49'
+-});
+-```
+-
+-In both of these examples, the CSS would remain unchanged.
+-
+-```css
+-.example:dir(rtl) {
+-  margin-right: 10px;
+-}
+-
+-/* becomes */
+-
+-.example:dir(rtl) {
+-  margin-right: 10px;
+-}
+-```
++## Options
+ 
+-## Dir Option
++### dir
+ 
+-By default, this plugin requires you to include a direction `[dir]` attribute
+-in your HTML, preferably on the `html` element. If you prefer not to, you
+-can presume a direction in your CSS using the `dir` option.
++The `dir` option allows you presume a direction in your CSS. By default, this
++is not specified and you are required to include a direction `[dir]` attribute
++somewhere in your HTML, preferably on the `html` element.
+ 
+ Here’s an example of using the `dir` option to presume a left-to-right
+ direction:
+@@ -209,20 +205,25 @@ html:not([dir="rtl"]) .example {
+ }
+ ```
+ 
++### preserve
++
++The `preserve` option determines whether the original `:dir()` rule should
++remain in the CSS. By default, the rule is replaced by the fallback.
++
++[css-img]: https://jonathantneal.github.io/css-db/badge/selectors-dir-pseudo.svg
++[css-url]: https://jonathantneal.github.io/css-db/#selectors-dir-pseudo
++[npm-url]: https://www.npmjs.com/package/postcss-dir-pseudo-class
++[npm-img]: https://img.shields.io/npm/v/postcss-dir-pseudo-class.svg
+ [cli-url]: https://travis-ci.org/jonathantneal/postcss-dir-pseudo-class
+ [cli-img]: https://img.shields.io/travis/jonathantneal/postcss-dir-pseudo-class.svg
+-[css-img]: https://jonathantneal.github.io/css-db/badge/selectors-the-dir-pseudo.svg
+-[css-url]: https://jonathantneal.github.io/css-db/#selectors-the-dir-pseudo
++[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-dir-pseudo-class
++[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-dir-pseudo-class.svg
+ [git-url]: https://gitter.im/postcss/postcss
+ [git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
+-[lic-url]: LICENSE.md
+-[lic-img]: https://img.shields.io/npm/l/postcss-dir-pseudo-class.svg
+-[npm-url]: https://www.npmjs.com/package/postcss-dir-pseudo-class
+-[npm-img]: https://img.shields.io/npm/v/postcss-dir-pseudo-class.svg
+ 
+-[browserslist]: https://github.com/ai/browserslist
+ [Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+ [Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
+-[PostCSS :dir() Pseudo]: https://github.com/jonathantneal/postcss-dir-pseudo-class
+-[Selectors]: https://drafts.csswg.org/selectors-4/#the-dir-pseudo
++[PostCSS Dir Pseudo Class]: https://github.com/jonathantneal/postcss-dir-pseudo-class
++[PostCSS Loader]: https://github.com/postcss/postcss-loader
++[Selectors Level 4]: https://www.w3.org/TR/selectors-4/
+diff --git a/index.js b/index.js
+index 337dae3..347992f 100644
+--- a/index.js
++++ b/index.js
+@@ -1,110 +1,103 @@
+-// tooling
+-const browserslist   = require('browserslist');
+-const postcss        = require('postcss');
+-const selectorParser = require('postcss-selector-parser');
++import postcss from 'postcss';
++import selectorParser from 'postcss-selector-parser';
+ 
+-// plugin
+-module.exports = postcss.plugin('postcss-dir-pseudo-class', (opts) => (root) => {
+-	// client browser list
+-	const clientBrowserList = browserslist(Object(opts).browsers, {
+-		path: root.source && root.source.input && root.source.input.file
+-	});
++export default postcss.plugin('postcss-dir-pseudo-class', opts => {
++	const dir = Object(opts).dir;
++	const preserve = Boolean(Object(opts).preserve);
+ 
+-	// whether this library is needed
+-	const requiresPolyfill = clientBrowserList.some(
+-		(clientBrowser) => browserslist('chrome > 0, edge > 0, firefox <= 48, ie > 0, safari > 0').some(
+-			(polyfillBrowser) => polyfillBrowser === clientBrowser
+-		)
+-	);
++	return root => {
++		// walk rules using the :dir pseudo-class
++		root.walkRules(/:dir\([^\)]*\)/, rule => {
++			let currentRule = rule
+ 
+-	if (!requiresPolyfill) {
+-		return;
+-	}
++			// conditionally preserve the original rule
++			if (preserve) {
++				currentRule = rule.cloneBefore();
++			}
+ 
+-	// walk rules using the :dir pseudo-class
+-	root.walkRules(/:dir\([^\)]*\)/, (rule) => {
+-		// update the rule selector
+-		rule.selector = selectorParser((selectors) => {
+-			// for each (comma separated) selector
+-			selectors.nodes.forEach((selector) => {
+-				// walk all selector nodes that are :dir pseudo-classes
+-				selector.walk((node) => {
+-					if ('pseudo' === node.type && ':dir' === node.value) {
+-						// previous and next selector nodes
+-						const prev = node.prev();
+-						const next = node.next();
++			// update the rule selector
++			currentRule.selector = selectorParser(selectors => {
++				// for each (comma separated) selector
++				selectors.nodes.forEach(selector => {
++					// walk all selector nodes that are :dir pseudo-classes
++					selector.walk(node => {
++						if ('pseudo' === node.type && ':dir' === node.value) {
++							// previous and next selector nodes
++							const prev = node.prev();
++							const next = node.next();
+ 
+-						const prevIsSpaceCombinator = prev && prev.type && 'combinator' === prev.type && ' ' === prev.value;
+-						const nextIsSpaceCombinator = next && next.type && 'combinator' === next.type && ' ' === next.value;
++							const prevIsSpaceCombinator = prev && prev.type && 'combinator' === prev.type && ' ' === prev.value;
++							const nextIsSpaceCombinator = next && next.type && 'combinator' === next.type && ' ' === next.value;
+ 
+-						// preserve the selector tree
+-						if (prevIsSpaceCombinator && (nextIsSpaceCombinator || !next)) {
+-							node.replaceWith(
+-								selectorParser.universal()
+-							);
+-						} else {
+-							node.remove();
+-						}
+-
+-						// conditionally prepend a combinator before inserting the [dir] attribute
+-						const first = selector.nodes[0];
+-						const firstIsSpaceCombinator = first && 'combinator' === first.type && ' ' === first.value;
+-						const firstIsHtml = first && 'tag' === first.type && 'html' === first.value;
+-						const firstIsRoot = first && 'pseudo' === first.type && ':root' === first.value;
+-
+-						if (first && !firstIsHtml && !firstIsRoot && !firstIsSpaceCombinator) {
+-							selector.prepend(
+-								selectorParser.combinator({
+-									value: ' '
+-								})
+-							);
+-						}
++							// preserve the selector tree
++							if (prevIsSpaceCombinator && (nextIsSpaceCombinator || !next)) {
++								node.replaceWith(
++									selectorParser.universal()
++								);
++							} else {
++								node.remove();
++							}
+ 
+-						// value of the :dir pseudo-class
+-						const value = node.nodes.toString();
++							// conditionally prepend a combinator before inserting the [dir] attribute
++							const first = selector.nodes[0];
++							const firstIsSpaceCombinator = first && 'combinator' === first.type && ' ' === first.value;
++							const firstIsHtml = first && 'tag' === first.type && 'html' === first.value;
++							const firstIsRoot = first && 'pseudo' === first.type && ':root' === first.value;
+ 
+-						// whether :dir matches the presumed direction
+-						const isdir = Object(opts).dir === value;
++							if (first && !firstIsHtml && !firstIsRoot && !firstIsSpaceCombinator) {
++								selector.prepend(
++									selectorParser.combinator({
++										value: ' '
++									})
++								);
++							}
+ 
+-						// [dir] attribute
+-						const dirAttr = selectorParser.attribute({
+-							attribute: 'dir',
+-							operator:  '=',
+-							value:     `"${ value }"`
+-						});
++							// value of the :dir pseudo-class
++							const value = node.nodes.toString();
+ 
+-						// not[dir] attribute
+-						const notDirAttr = selectorParser.pseudo({
+-							value: `${firstIsHtml || firstIsRoot ? '' : 'html'}:not`
+-						});
++							// whether :dir matches the presumed direction
++							const isdir = dir === value;
+ 
+-						notDirAttr.append(
+-							selectorParser.attribute({
++							// [dir] attribute
++							const dirAttr = selectorParser.attribute({
+ 								attribute: 'dir',
+ 								operator:  '=',
+-								value:     `"${ 'ltr' === value ? 'rtl' : 'ltr' }"`
+-							})
+-						);
++								value:     `"${ value }"`
++							});
++
++							// not[dir] attribute
++							const notDirAttr = selectorParser.pseudo({
++								value: `${firstIsHtml || firstIsRoot ? '' : 'html'}:not`
++							});
++
++							notDirAttr.append(
++								selectorParser.attribute({
++									attribute: 'dir',
++									operator:  '=',
++									value:     `"${ 'ltr' === value ? 'rtl' : 'ltr' }"`
++								})
++							);
+ 
+-						if (isdir) {
+-							// if the direction is presumed
+-							if (firstIsHtml) {
+-								// insert :root after html tag
+-								selector.insertAfter(first, notDirAttr);
++							if (isdir) {
++								// if the direction is presumed
++								if (firstIsHtml) {
++									// insert :root after html tag
++									selector.insertAfter(first, notDirAttr);
++								} else {
++									// prepend :root
++									selector.prepend(notDirAttr);
++								}
++							} else if (firstIsHtml) {
++								// otherwise, insert dir attribute after html tag
++								selector.insertAfter(first, dirAttr);
+ 							} else {
+-								// prepend :root
+-								selector.prepend(notDirAttr);
++								// otherwise, prepend the dir attribute
++								selector.prepend(dirAttr);
+ 							}
+-						} else if (firstIsHtml) {
+-							// otherwise, insert dir attribute after html tag
+-							selector.insertAfter(first, dirAttr);
+-						} else {
+-							// otherwise, prepend the dir attribute
+-							selector.prepend(dirAttr);
+ 						}
+-					}
++					});
+ 				});
+-			});
+-		}).process(rule.selector).result;
+-	});
++			}).processSync(currentRule.selector);
++		});
++	};
+ });
+diff --git a/package.json b/package.json
+index 63ea33d..13b26a3 100644
+--- a/package.json
++++ b/package.json
+@@ -1,39 +1,56 @@
+ {
+   "name": "postcss-dir-pseudo-class",
+-  "version": "2.1.0",
++  "version": "3.0.0",
+   "description": "Use the :dir pseudo-class in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+   "repository": "jonathantneal/postcss-dir-pseudo-class",
+   "homepage": "https://github.com/jonathantneal/postcss-dir-pseudo-class#readme",
+   "bugs": "https://github.com/jonathantneal/postcss-dir-pseudo-class/issues",
+-  "main": "index.js",
++  "main": "index.cjs.js",
++  "module": "index.es.js",
+   "files": [
+-    "index.js"
++    "index.cjs.js",
++    "index.es.js"
+   ],
+   "scripts": {
+-    "clean": "git clean -X -d -f",
+-    "prepublish": "npm test",
+-    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+-    "test:js": "eslint *.js --cache --ignore-pattern .gitignore",
++    "prepublishOnly": "npm test",
++    "pretest": "rollup -c .rollup.js --silent",
++    "test": "echo 'Running tests...'; npm run test:ec && npm run test:js && npm run test:tape",
++    "test:ec": "echint --ignore index.*.js test",
++    "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+     "node": ">=4.0.0"
+   },
+   "dependencies": {
+-    "browserslist": "^2.4.0",
+-    "postcss": "^6.0.11",
+-    "postcss-selector-parser": "^2.2.3"
++    "postcss": "^6.0.20",
++    "postcss-selector-parser": "^3.1.1"
+   },
+   "devDependencies": {
+-    "eslint": "^4.7.1",
+-    "eslint-config-dev": "2.0.0",
+-    "postcss-tape": "2.1.0",
+-    "pre-commit": "^1.2.2"
++    "babel-core": "^6.26.0",
++    "babel-eslint": "^8.2.2",
++    "babel-preset-env": "^1.6.1",
++    "echint": "^4.0.1",
++    "eslint": "^4.19.0",
++    "eslint-config-dev": "^2.0.0",
++    "postcss-tape": "^2.2.0",
++    "pre-commit": "^1.2.2",
++    "rollup": "^0.57.1",
++    "rollup-plugin-babel": "^3.0.3"
+   },
+   "eslintConfig": {
+-    "extends": "dev"
++    "extends": "dev",
++    "parser": "babel-eslint",
++    "rules": {
++      "complexity": [
++        "error",
++        {
++          "max": 30
++        }
++      ]
++    }
+   },
+   "keywords": [
+     "postcss",
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+new file mode 100644
+index 0000000..95fcf5b
+--- /dev/null
++++ b/test/basic.preserve.expect.css
+@@ -0,0 +1,143 @@
++[dir="ltr"] {
++	order: 0;
++}
++
++:dir(ltr) {
++	order: 0;
++}
++
++[dir="ltr"] test {
++	order: 1;
++}
++
++:dir(ltr) test {
++	order: 1;
++}
++
++[dir="ltr"] test * {
++	order: 2;
++}
++
++test :dir(ltr) {
++	order: 2;
++}
++
++[dir="ltr"] test * test {
++	order: 3;
++}
++
++test :dir(ltr) test {
++	order: 3;
++}
++
++[dir="ltr"] test {
++	order: 4;
++}
++
++test:dir(ltr) {
++	order: 4;
++}
++
++[dir="ltr"] test test {
++	order: 5;
++}
++
++test:dir(ltr) test {
++	order: 5;
++}
++
++[dir="ltr"] test test {
++	order: 6;
++}
++
++test test:dir(ltr) {
++	order: 6;
++}
++
++[dir="ltr"]:root * {
++	order: 7;
++}
++
++:root :dir(ltr) {
++	order: 7;
++}
++
++html[dir="ltr"] * {
++	order: 8;
++}
++
++html :dir(ltr) {
++	order: 8;
++}
++
++[dir="rtl"] {
++	order: 9;
++}
++
++:dir(rtl) {
++	order: 9;
++}
++
++[dir="rtl"] test {
++	order: 10;
++}
++
++:dir(rtl) test {
++	order: 10;
++}
++
++[dir="rtl"] test * {
++	order: 11;
++}
++
++test :dir(rtl) {
++	order: 11;
++}
++
++[dir="rtl"] test * test {
++	order: 12;
++}
++
++test :dir(rtl) test {
++	order: 12;
++}
++
++[dir="rtl"] test {
++	order: 13;
++}
++
++test:dir(rtl) {
++	order: 13;
++}
++
++[dir="rtl"] test test {
++	order: 14;
++}
++
++test:dir(rtl) test {
++	order: 14;
++}
++
++[dir="rtl"] test test {
++	order: 15;
++}
++
++test test:dir(rtl) {
++	order: 15;
++}
++
++[dir="rtl"]:root * {
++	order: 16;
++}
++
++:root :dir(rtl) {
++	order: 16;
++}
++
++html[dir="rtl"] * {
++	order: 17;
++}
++
++html :dir(rtl) {
++	order: 17;
++}
+diff --git a/test/basic.supported.expect.css b/test/basic.supported.expect.css
+deleted file mode 100644
+index 0037e7d..0000000
+--- a/test/basic.supported.expect.css
++++ /dev/null
+@@ -1,71 +0,0 @@
+-:dir(ltr) {
+-	order: 0;
+-}
+-
+-:dir(ltr) test {
+-	order: 1;
+-}
+-
+-test :dir(ltr) {
+-	order: 2;
+-}
+-
+-test :dir(ltr) test {
+-	order: 3;
+-}
+-
+-test:dir(ltr) {
+-	order: 4;
+-}
+-
+-test:dir(ltr) test {
+-	order: 5;
+-}
+-
+-test test:dir(ltr) {
+-	order: 6;
+-}
+-
+-:root :dir(ltr) {
+-	order: 7;
+-}
+-
+-html :dir(ltr) {
+-	order: 8;
+-}
+-
+-:dir(rtl) {
+-	order: 9;
+-}
+-
+-:dir(rtl) test {
+-	order: 10;
+-}
+-
+-test :dir(rtl) {
+-	order: 11;
+-}
+-
+-test :dir(rtl) test {
+-	order: 12;
+-}
+-
+-test:dir(rtl) {
+-	order: 13;
+-}
+-
+-test:dir(rtl) test {
+-	order: 14;
+-}
+-
+-test test:dir(rtl) {
+-	order: 15;
+-}
+-
+-:root :dir(rtl) {
+-	order: 16;
+-}
+-
+-html :dir(rtl) {
+-	order: 17;
+-}
+-- 
+2.33.1
+

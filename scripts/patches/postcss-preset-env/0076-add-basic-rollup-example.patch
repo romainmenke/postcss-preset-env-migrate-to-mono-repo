@@ -1,0 +1,63 @@
+From cada82cc2114024b25b6dca9731eacf4545acb78 Mon Sep 17 00:00:00 2001
+From: Adam Argyle <argyle@google.com>
+Date: Wed, 6 Nov 2019 21:48:56 -0800
+Subject: [PATCH 76/84] add basic rollup example
+
+---
+ INSTALL.md | 29 +++++++++++++++++++++++++++--
+ 1 file changed, 27 insertions(+), 2 deletions(-)
+
+diff --git a/INSTALL.md b/INSTALL.md
+index 23ac7c8..0977111 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -2,8 +2,8 @@
+ 
+ [PostCSS Preset Env] runs in all Node environments, with special instructions for:
+ 
+-| [Node](#node) | [PostCSS CLI](#postcss-cli) | [Webpack](#webpack) | [Create React App](#create-react-app) | [Gulp](#gulp) | [Grunt](#grunt) |
+-| --- | --- | --- | --- | --- | --- |
++| [Node](#node) | [PostCSS CLI](#postcss-cli) | [Webpack](#webpack) | [Create React App](#create-react-app) | [Gulp](#gulp) | [Grunt](#grunt) | [Rollup](#rollup) |
++| --- | --- | --- | --- | --- | --- | --- |
+ 
+ ## Node
+ 
+@@ -163,6 +163,30 @@ grunt.initConfig({
+ });
+ ```
+ 
++## Rollup
++
++Complete [PostCSS CLI](#postcss-cli) setup.
++
++Add [Rollup Plugin PostCSS] to your project:
++
++```bash
++npm install rollup-plugin-postcss --save-dev
++```
++
++Use [Rollup Plugin PostCSS] in your rollup.config.js:
++
++```js
++import postcss from 'rollup-plugin-postcss';
++
++module.exports = {
++  input: '...',
++  output: {...},
++  plugins: [
++    postcss({/* options */ })
++  ]
++};
++```
++
+ [Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+ [Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
+@@ -171,3 +195,4 @@ grunt.initConfig({
+ [PostCSS Preset Env]: https://github.com/csstools/postcss-preset-env
+ [React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
+ [React App Rewired]: https://github.com/timarney/react-app-rewired
++[Rollup Plugin PostCSS]: https://github.com/egoist/rollup-plugin-postcss
+-- 
+2.33.1
+

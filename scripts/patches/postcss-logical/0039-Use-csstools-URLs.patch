@@ -1,0 +1,38 @@
+From c77dd9e3483453937f5ed2bf543572058e65fb39 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 7 Sep 2020 12:11:17 -0400
+Subject: [PATCH 39/43] Use csstools URLs
+
+---
+ CONTRIBUTING.md | 2 +-
+ INSTALL.md      | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+index ccd6aea..fc6eb66 100644
+--- a/CONTRIBUTING.md
++++ b/CONTRIBUTING.md
+@@ -26,7 +26,7 @@ scope and avoid unrelated commits.
+    cd postcss-logical-properties
+ 
+    # Assign the original repo to a remote called "upstream"
+-   git remote add upstream git@github.com:jonathantneal/postcss-logical-properties.git
++   git remote add upstream git@github.com:csstools/postcss-logical-properties.git
+ 
+    # Install the tools necessary for testing
+    npm install
+diff --git a/INSTALL.md b/INSTALL.md
+index b5b01ef..885d362 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -167,6 +167,6 @@ grunt.initConfig({
+ [PostCSS]: https://github.com/postcss/postcss
+ [PostCSS CLI]: https://github.com/postcss/postcss-cli
+ [PostCSS Loader]: https://github.com/postcss/postcss-loader
+-[PostCSS Logical Properties and Values]: https://github.com/jonathantneal/postcss-logical
++[PostCSS Logical Properties and Values]: https://github.com/csstools/postcss-logical
+ [React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
+ [React App Rewired]: https://github.com/timarney/react-app-rewired
+-- 
+2.33.1
+

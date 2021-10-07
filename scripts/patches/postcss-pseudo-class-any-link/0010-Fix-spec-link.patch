@@ -1,0 +1,25 @@
+From a398e0d39ece7b34df96ab7ceecaf0f2d693e4cd Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 16 Jun 2015 00:12:24 +0200
+Subject: [PATCH 10/30] Fix spec link
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index bd5f97b..1c1b68d 100644
+--- a/README.md
++++ b/README.md
+@@ -99,7 +99,7 @@ Here are a few other ways to simulate the effect of [PostCSS Pseudo-Class Any-Li
+ :link, :visited { /* ... */ }
+ ```
+ 
+-[`:any-link`]: http://http://dev.w3.org/csswg/selectors/#any-link-pseudo
++[`:any-link`]: http://dev.w3.org/csswg/selectors/#any-link-pseudo
+ [`:link`]: http://dev.w3.org/csswg/selectors/#link-pseudo
+ [`:visited`]: http://dev.w3.org/csswg/selectors/#visited-pseudo
+ [ci]: https://travis-ci.org/jonathantneal/postcss-pseudo-class-any-link
+-- 
+2.33.1
+

@@ -1,0 +1,382 @@
+From e8472d1bd7828ed5e0c548de34dd5b8cc57d796d Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 14 Apr 2020 00:43:50 -0400
+Subject: [PATCH 11/15] 5.0.0
+
+---
+ .rollup.js      | 21 +++++--------
+ .tape.js        | 28 ++++++++---------
+ .travis.yml     |  2 +-
+ CHANGELOG.md    |  5 +++
+ CONTRIBUTING.md |  2 +-
+ INSTALL.md      |  2 +-
+ README.md       | 16 ++++------
+ index.js        | 24 --------------
+ package.json    | 83 +++++++++++++++++++++++++++++++++----------------
+ src/index.js    | 18 +++++++++++
+ src/onRule.js   | 16 ++++++++++
+ src/options.js  |  6 ++++
+ 12 files changed, 130 insertions(+), 93 deletions(-)
+ delete mode 100644 index.js
+ create mode 100644 src/index.js
+ create mode 100644 src/onRule.js
+ create mode 100644 src/options.js
+
+diff --git a/.rollup.js b/.rollup.js
+index ebe39f9..1fb0d87 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -1,16 +1,9 @@
+-import babel from 'rollup-plugin-babel';
++import pkg from './package.json'
+ 
+ export default {
+-	input: 'index.js',
+-	output: [
+-		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
+-		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
+-	],
+-	plugins: [
+-		babel({
+-			presets: [
+-				['@babel/env', { modules: false, targets: { node: 6 } }]
+-			]
+-		})
+-	]
+-};
++	...pkg.rollup,
++	plugins: pkg.rollup.plugins.map(plugin => require(plugin)()),
++	onwarn(warning, warn) {
++		if (warning.code !== 'UNRESOLVED_IMPORT') warn(warning)
++	}
++}
+diff --git a/.tape.js b/.tape.js
+index 7dc366f..8775470 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,19 +1,17 @@
+ module.exports = {
+-	'postcss-focus-visible': {
+-		'basic': {
+-			message: 'supports basic usage'
+-		},
+-		'basic:replacewith': {
+-			message: 'supports { replaceWith: "[focus-visible]" } usage',
+-			options: {
+-				replaceWith: '[focus-visible]'
+-			}
+-		},
+-		'basic:preserve': {
+-			message: 'supports { preserve: false } usage',
+-			options: {
+-				preserve: false
+-			}
++	'basic': {
++		message: 'supports basic usage'
++	},
++	'basic:replacewith': {
++		message: 'supports { replaceWith: "[focus-visible]" } usage',
++		options: {
++			replaceWith: '[focus-visible]'
++		}
++	},
++	'basic:preserve': {
++		message: 'supports { preserve: false } usage',
++		options: {
++			preserve: false
+ 		}
+ 	}
+ };
+diff --git a/.travis.yml b/.travis.yml
+index e1f11a5..a9e32cd 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 6
++  - 10
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 96386b2..d40cf2a 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Focus Visible
+ 
++### 5.0.0 (April 14, 2020)
++
++- Updated: `:focus-visible` can appear escaped in a selector
++- Updated: Support for Node v10+
++
+ ### 4.0.0 (September 17, 2018)
+ 
+ - Updated: Support for PostCSS v7+
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+index 56e94d0..67d3748 100644
+--- a/CONTRIBUTING.md
++++ b/CONTRIBUTING.md
+@@ -26,7 +26,7 @@ scope and avoid unrelated commits.
+    cd postcss-focus-visible
+ 
+    # Assign the original repo to a remote called "upstream"
+-   git remote add upstream git@github.com:jonathantneal/postcss-focus-visible.git
++   git remote add upstream git@github.com:csstools/postcss-focus-visible.git
+ 
+    # Install the tools necessary for testing
+    npm install
+diff --git a/INSTALL.md b/INSTALL.md
+index 5e1e490..1dc53d4 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -165,6 +165,6 @@ grunt.initConfig({
+ [PostCSS]: https://github.com/postcss/postcss
+ [PostCSS CLI]: https://github.com/postcss/postcss-cli
+ [PostCSS Loader]: https://github.com/postcss/postcss-loader
+-[PostCSS Focus Visible]: https://github.com/jonathantneal/postcss-focus-visible
++[PostCSS Focus Visible]: https://github.com/csstools/postcss-focus-visible
+ [React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
+ [React App Rewired]: https://github.com/timarney/react-app-rewired
+diff --git a/README.md b/README.md
+index 02452ef..ddbe4ea 100644
+--- a/README.md
++++ b/README.md
+@@ -1,9 +1,9 @@
+ # PostCSS Focus Visible [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
+ 
+-[![NPM Version][npm-img]][npm-url]
+-[![CSS Standard Status][css-img]][css-url]
+-[![Build Status][cli-img]][cli-url]
+-[![Support Chat][git-img]][git-url]
++[<img alt="npm version" src="https://img.shields.io/npm/v/postcss-focus-visible.svg" height="20">][npm-url]
++[<img alt="CSS Standard Status" src="https://cssdb.org/badge/focus-within-pseudo-class.svg" height="20">][css-url]
++[<img alt="build status" src="https://img.shields.io/travis/csstools/postcss-focus-visible/master.svg" height="20">][cli-url]
++[<img alt="support chat" src="https://img.shields.io/badge/support-chat-blue.svg" height="20">][git-url]
+ 
+ [PostCSS Focus Visible] lets you use the `:focus-visible` pseudo-class in
+ CSS, following the [Selectors Level 4 specification].
+@@ -115,19 +115,15 @@ focusVisible({ replaceWith: '[focus-visible]' });
+ }
+ ```
+ 
+-[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-focus-visible.svg
+-[cli-url]: https://travis-ci.org/jonathantneal/postcss-focus-visible
+-[css-img]: https://cssdb.org/badge/focus-within-pseudo-class.svg
++[cli-url]: https://travis-ci.org/csstools/postcss-focus-visible
+ [css-url]: https://cssdb.org/#focus-visible-pseudo-class
+-[git-img]: https://img.shields.io/badge/support-chat-blue.svg
+ [git-url]: https://gitter.im/postcss/postcss
+-[npm-img]: https://img.shields.io/npm/v/postcss-focus-visible.svg
+ [npm-url]: https://www.npmjs.com/package/postcss-focus-visible
+ 
+ [focus-visible polyfill]: https://github.com/WICG/focus-visible
+ [Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+ [Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
+-[PostCSS Focus Visible]: https://github.com/jonathantneal/postcss-focus-visible
++[PostCSS Focus Visible]: https://github.com/csstools/postcss-focus-visible
+ [PostCSS Loader]: https://github.com/postcss/postcss-loader
+ [Selectors Level 4 specification]: https://www.w3.org/TR/selectors-4/#the-focus-visible-pseudo
+diff --git a/index.js b/index.js
+deleted file mode 100644
+index 2c5cb7d..0000000
+--- a/index.js
++++ /dev/null
+@@ -1,24 +0,0 @@
+-import postcss from 'postcss';
+-
+-const selectorRegExp = /(?<!\\):focus-visible([^\w-]|$)/gi;
+-
+-export default postcss.plugin('postcss-focus-visible', opts => {
+-	const replaceWith = String(Object(opts).replaceWith || '.focus-visible');
+-	const preserve = Boolean('preserve' in Object(opts) ? opts.preserve : true);
+-
+-	return root => {
+-		root.walkRules(selectorRegExp, rule => {
+-			const selector = rule.selector.replace(selectorRegExp, ($0, $1) => {
+-				return `${replaceWith}${$1}`;
+-			});
+-
+-			const clone = rule.clone({ selector });
+-
+-			if (preserve) {
+-				rule.before(clone);
+-			} else {
+-				rule.replaceWith(clone);
+-			}
+-		});
+-	};
+-});
+diff --git a/package.json b/package.json
+index ea6794c..affafcb 100644
+--- a/package.json
++++ b/package.json
+@@ -1,48 +1,77 @@
+ {
+   "name": "postcss-focus-visible",
+-  "version": "4.0.0",
++  "version": "5.0.0",
+   "description": "Use the :focus-visible pseudo-selector in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-  "repository": "jonathantneal/postcss-focus-visible",
+-  "homepage": "https://github.com/jonathantneal/postcss-focus-visible#readme",
+-  "bugs": "https://github.com/jonathantneal/postcss-focus-visible/issues",
+-  "main": "index.cjs.js",
+-  "module": "index.es.mjs",
++  "repository": "csstools/postcss-focus-visible",
++  "homepage": "https://github.com/csstools/postcss-focus-visible#readme",
++  "bugs": "https://github.com/csstools/postcss-focus-visible/issues",
++  "main": "dist/index.cjs.js",
++  "module": "dist/index.esm.mjs",
+   "files": [
+-    "index.cjs.js",
+-    "index.cjs.js.map",
+-    "index.es.mjs",
+-    "index.es.mjs.map"
++    "dist"
+   ],
+   "scripts": {
+-    "prepublishOnly": "npm test",
+-    "pretest": "rollup -c .rollup.js --silent",
+-    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+-    "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+-    "test:tape": "postcss-tape"
++    "build": "npx rollup -c .rollup.js",
++    "build:watch": "npx rollup -c .rollup.js --watch",
++    "lint": "npx eslint --cache src",
++    "lint:fix": "npx eslint --cache --fix",
++    "pretest": "npm install && npm run build",
++    "test": "npm run lint && npm run tape",
++    "tape": "npx postcss-tape"
+   },
+   "engines": {
+-    "node": ">=6.0.0"
++    "node": ">=10.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.2"
++    "postcss": "^7.0.27"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.0.0",
+-    "@babel/preset-env": "^7.0.0",
+-    "babel-eslint": "^9.0",
+-    "eslint": "^5.6",
+-    "eslint-config-dev": "2.0",
+-    "postcss-tape": "2.2",
+-    "pre-commit": "^1.2",
+-    "rollup": "^0.66",
+-    "rollup-plugin-babel": "^4.0.1"
++    "@babel/core": "^7.9.0",
++    "@babel/preset-env": "^7.9.5",
++    "babel-eslint": "^10.1.0",
++    "eslint": "^6.8.0",
++    "eslint-config-dev": "2.0.0",
++    "postcss-tape": "5.0.2",
++    "pre-commit": "^1.2.2",
++    "rollup": "^2.6.1",
++    "rollup-plugin-babel": "^4.4.0"
++  },
++  "babel": {
++    "presets": [
++      [
++        "@babel/env",
++        {
++          "targets": "maintained node versions"
++        }
++      ]
++    ]
+   },
+   "eslintConfig": {
+-    "extends": "dev",
++    "env": {
++      "es6": true,
++      "node": true
++    },
++    "extends": "eslint:recommended",
+     "parser": "babel-eslint"
+   },
++  "rollup": {
++    "input": "src/index.js",
++    "plugins": [
++      "rollup-plugin-babel"
++    ],
++    "output": [
++      {
++        "file": "dist/index.cjs.js",
++        "format": "cjs"
++      },
++      {
++        "file": "dist/index.esm.js",
++        "format": "esm"
++      }
++    ]
++  },
+   "keywords": [
+     "postcss",
+     "css",
+diff --git a/src/index.js b/src/index.js
+new file mode 100644
+index 0000000..58dd4e4
+--- /dev/null
++++ b/src/index.js
+@@ -0,0 +1,18 @@
++import postcss from 'postcss'
++import options from './options'
++import onRule, { selectorRegExp } from './onRule'
++
++/** @type {CSSPlugin} */ 
++const plugin = postcss.plugin('postcss-focus-visible', opts => {
++	opts = Object(opts)
++	options.replaceWith = String(opts.replaceWith || '.focus-visible')
++	options.preserve = Boolean('preserve' in opts ? opts.preserve : true)
++
++	return root => {
++		root.walkRules(selectorRegExp, onRule)
++	}
++})
++
++export default plugin
++
++/** @typedef {import('postcss').Plugin<options>} CSSPlugin */
+diff --git a/src/onRule.js b/src/onRule.js
+new file mode 100644
+index 0000000..16126a6
+--- /dev/null
++++ b/src/onRule.js
+@@ -0,0 +1,16 @@
++import options from './options'
++
++/** @type {(rule: CSSRule) => void} */
++const onRule = rule => {
++	const selector = rule.selector.replace(selectorRegExp, ($0, $1) => `${options.replaceWith}${$1}`)
++	const clone = rule.clone({ selector })
++
++	if (options.preserve) rule.before(clone)
++	else rule.replaceWith(clone)
++}
++
++export const selectorRegExp = /(?<!\\):focus-visible([^\w-]|$)/gi
++
++export default onRule
++
++/** @typedef {import('postcss').Rule} CSSRule */
+diff --git a/src/options.js b/src/options.js
+new file mode 100644
+index 0000000..34d5b1f
+--- /dev/null
++++ b/src/options.js
+@@ -0,0 +1,6 @@
++const options = {
++	preserve: true,
++	replaceWith: '.focus-visible'
++}
++
++export default options
+-- 
+2.33.1
+

@@ -1,0 +1,449 @@
+From 36bf8a1ff3833bde08dad2c3402a45168063e83b Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 16 Mar 2016 15:20:16 -0400
+Subject: [PATCH 45/89] 2.3.1
+
+---
+ .eslintrc              | 39 +++++++++++++++----------------------
+ .gitignore             |  2 +-
+ .npmignore             |  2 +-
+ CHANGELOG.md           |  8 ++++++++
+ index.js               |  2 +-
+ package.json           | 10 +++++-----
+ test/direct.css        | 42 ++++++++++++++++++++--------------------
+ test/direct.expect.css | 44 +++++++++++++++++++++---------------------
+ 8 files changed, 75 insertions(+), 74 deletions(-)
+
+diff --git a/.eslintrc b/.eslintrc
+index 33ed8c1..ee0ecdd 100644
+--- a/.eslintrc
++++ b/.eslintrc
+@@ -1,5 +1,8 @@
+ {
++	"root": true,
+ 	"env": {
++		"browser": true,
++		"es6": true,
+ 		"node": true
+ 	},
+ 	"rules": {
+@@ -12,27 +15,26 @@
+ 		"constructor-super": [2],
+ 		"default-case": [2],
+ 		"eqeqeq": [2],
+-		"func-style": [0],
+ 		"global-require": [2],
+ 		"guard-for-in": [0],
+ 		"handle-callback-err": [2, "^err(or)?$"],
+ 		"id-length": [0],
+-		"id-match": [0],
+-		"init-declarations": [0],
++		"init-declarations": [2, "always"],
+ 		"max-depth": [2, 6],
+ 		"max-nested-callbacks": [0],
+ 		"max-params": [2, 3],
+ 		"max-statements": [0],
+-		"new-parens": [0],
++		"new-cap": [2],
++		"new-parens": [2],
+ 		"no-alert": [2],
+-		"no-array-constructor": [0],
++		"no-array-constructor": [2],
+ 		"no-bitwise": [0],
+ 		"no-caller": [2],
+ 		"no-case-declarations": [2],
+ 		"no-catch-shadow": [2],
+ 		"no-class-assign": [2],
+ 		"no-cond-assign": [2],
+-		"no-console": [0],
++		"no-console": [2],
+ 		"no-const-assign": [2],
+ 		"no-constant-condition": [0],
+ 		"no-continue": [0],
+@@ -46,7 +48,6 @@
+ 		"no-duplicate-case": [2],
+ 		"no-else-return": [0],
+ 		"no-empty-character-class": [2],
+-		"no-empty-label": [2],
+ 		"no-empty-pattern": [2],
+ 		"no-empty": [2],
+ 		"no-eq-null": [2],
+@@ -80,7 +81,7 @@
+ 		"no-native-reassign": [2],
+ 		"no-negated-condition": [0],
+ 		"no-negated-in-lhs": [2],
+-		"no-nested-ternary": [0],
++		"no-nested-ternary": [2],
+ 		"no-new-func": [0],
+ 		"no-new-object": [2],
+ 		"no-new-require": [0],
+@@ -89,18 +90,18 @@
+ 		"no-obj-calls": [2],
+ 		"no-octal-escape": [2],
+ 		"no-octal": [2],
+-		"no-param-reassign": [2],
++		"no-param-reassign": [0],
+ 		"no-path-concat": [2],
+ 		"no-plusplus": [0],
+ 		"no-process-env": [2],
+ 		"no-process-exit": [0],
+ 		"no-proto": [2],
+ 		"no-redeclare": [2],
+-		"no-regex-spaces": [0],
++		"no-regex-spaces": [2],
+ 		"no-restricted-imports": [0],
+ 		"no-restricted-syntax": [0],
+ 		"no-return-assign": [2],
+-		"no-script-url": [0],
++		"no-script-url": [2],
+ 		"no-self-compare": [2],
+ 		"no-sequences": [2],
+ 		"no-shadow-restricted-names": [2],
+@@ -110,7 +111,7 @@
+ 		"no-ternary": [0],
+ 		"no-this-before-super": [2],
+ 		"no-throw-literal": [2],
+-		"no-undef-init": [0],
++		"no-undef-init": [2],
+ 		"no-undef": [2],
+ 		"no-undefined": [0],
+ 		"no-unneeded-ternary": [2],
+@@ -132,22 +133,14 @@
+ 		"prefer-rest-params": [0],
+ 		"prefer-spread": [0],
+ 		"prefer-template": [0],
+-		"quotes": [0],
+ 		"radix": [2, "as-needed"],
+ 		"require-yield": [0],
+-		"sort-imports": [0],
+-		"sort-vars": [0],
+ 		"strict": [0],
+ 		"use-isnan": [2],
+ 		"valid-typeof": [2],
+ 		"vars-on-top": [0],
+-		"wrap-iife": [2, "inside"],
+-		"wrap-regex": [0],
+-		"yoda": [0],
+-
+-		"camelcase": [0],
+-		"key-spacing": [0],
+-		"quote-props": [0],
+-		"spaced-comment": [0]
++		"wrap-iife": [2, "any"],
++		"wrap-regex": [2],
++		"yoda": [0]
+ 	}
+ }
+diff --git a/.gitignore b/.gitignore
+index ca9ef40..ef0a70e 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,3 +1,3 @@
+-node_modules/
++node_modules
+ npm-debug.log
+ test/*.actual.css
+diff --git a/.npmignore b/.npmignore
+index 1ca9571..93f1361 100644
+--- a/.npmignore
++++ b/.npmignore
+@@ -1,2 +1,2 @@
+-node_modules/
++node_modules
+ npm-debug.log
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 6cefb3f..438eca3 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,11 @@
++## 2.3.1 (2016-03-16)
++
++- Updated: Allow any direct nesting that follows the syntactic constraints
++- Updated: PostCSS 5.0.6
++- Updated: Tests
++- Updated: Dependencies
++- Updated: Project configuration
++
+ ## 2.3.0 (2016-02-20)
+ 
+ - Updated: JavaScript formatting, linting, tests, and documentation
+diff --git a/index.js b/index.js
+index 12b0b55..eef9b5a 100644
+--- a/index.js
++++ b/index.js
+@@ -27,7 +27,7 @@ module.exports = postcss.plugin('postcss-nesting', function (opts) {
+ 				});
+ 
+ 				if (isRule && target.selectors.every(function (selector) {
+-					return selector.lastIndexOf('&') === 0;
++					return selector.indexOf('&') === 0;
+ 				})) {
+ 					target.remove();
+ 
+diff --git a/package.json b/package.json
+index 014ba86..d928739 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-nesting",
+-  "version": "2.3.0",
++  "version": "2.3.1",
+   "description": "Transpiles nested rules according to CSS Nesting Module Level 3",
+   "keywords": [
+     "postcss",
+@@ -24,13 +24,13 @@
+   "bugs": "https://github.com/jonathantneal/postcss-nesting/issues",
+   "homepage": "https://github.com/jonathantneal/postcss-nesting",
+   "dependencies": {
+-    "postcss": "^5.0.16"
++    "postcss": "^5.0.19"
+   },
+   "devDependencies": {
+-    "eslint": "^1.10.3",
+-    "jscs": "^2.10.1",
++    "eslint": "^2.4.0",
++    "jscs": "^2.11.0",
+     "tap-spec": "^4.1.1",
+-    "tape": "^4.4.0"
++    "tape": "^4.5.1"
+   },
+   "scripts": {
+     "lint": "eslint *.js --ignore-path .gitignore && jscs *.js",
+diff --git a/test/direct.css b/test/direct.css
+index b59eea3..2591c0b 100644
+--- a/test/direct.css
++++ b/test/direct.css
+@@ -1,87 +1,87 @@
+ a, b {
+-	color: white;
++	color: blue;
+ 
+ 	& c, & d {
+-		color: blue
++		color: blue;
+ 	}
+ }
+ 
+ a, b {
+-	color: white;
++	color: blue;
+ 
+ 	& c, & d {
+ 		color: blue;
+ 
+ 		& e, & f {
+-			color: black
++			color: blue;
+ 		}
+ 	}
+ }
+ 
+ a, b {
+-	color: red;
++	color: blue;
+ 
+ 	& & {
+-		color: white;
++		color: blue;
+ 	}
+ 
+ 	c & {
+-		color: blue;
++		color: red;
+ 	}
+ 
+ 	& c, c & {
+-		color: black;
++		color: red;
+ 	}
+ }
+ 
+ a {
+-	color: red;
++	color: blue;
+ 
+ 	@media {
+-		color: white
++		color: blue;
+ 	}
+ }
+ 
+ a {
+-	color: red;
++	color: blue;
+ 
+ 	& b {
+-		color: white;
++		color: blue;
+ 
+ 		@media {
+-			color: blue
++			color: blue;
+ 		}
+ 	}
+ 
+ 	@media {
+-		color: black;
++		color: blue;
+ 
+ 		& c {
+-			color: yellow
++			color: blue;
+ 		}
+ 	}
+ }
+ 
+ a {
+-	color: red;
++	color: blue;
+ 
+ 	@unknown test {
+-		color: white
++		color: red;
+ 	}
+ }
+ 
+ b {
+-	color: white;
++	color: blue;
+ 
+ 	@phone {
+-		color: blue
++		color: red;
+ 	}
+ 
+ 	@media {
+-		color: black;
++		color: blue;
+ 
+ 		& c {
+-			color: yellow
++			color: blue;
+ 		}
+ 	}
+ }
+diff --git a/test/direct.expect.css b/test/direct.expect.css
+index 4bd6a50..2054a81 100644
+--- a/test/direct.expect.css
++++ b/test/direct.expect.css
+@@ -1,5 +1,5 @@
+ a, b {
+-	color: white
++	color: blue
+ }
+ 
+ a c, a d, b c, b d {
+@@ -7,7 +7,7 @@ a c, a d, b c, b d {
+ }
+ 
+ a, b {
+-	color: white
++	color: blue
+ }
+ 
+ a c, a d, b c, b d {
+@@ -15,42 +15,42 @@ a c, a d, b c, b d {
+ }
+ 
+ a c e, a c f, a d e, a d f, b c e, b c f, b d e, b d f {
+-	color: black
++	color: blue
+ }
+ 
+ a, b {
+-	color: red;
+-
+-	& & {
+-		color: white;
+-	}
++	color: blue;
+ 
+ 	c & {
+-		color: blue;
++		color: red;
+ 	}
+ 
+ 	& c, c & {
+-		color: black;
++		color: red;
+ 	}
+ }
+ 
++a a, b b {
++	color: blue
++}
++
+ a {
+-	color: red
++	color: blue
+ }
+ 
+ @media {
+ 
+ 	a {
+-		color: white
++		color: blue
+ 	}
+ 	}
+ 
+ a {
+-	color: red
++	color: blue
+ }
+ 
+ a b {
+-	color: white
++	color: blue
+ }
+ 
+ @media {
+@@ -63,37 +63,37 @@ a b {
+ @media {
+ 
+ 	a {
+-		color: black
++		color: blue
+ 	}
+ 
+ 	a c {
+-		color: yellow
++		color: blue
+ 	}
+ 	}
+ 
+ a {
+-	color: red;
++	color: blue;
+ 
+ 	@unknown test {
+-		color: white
++		color: red;
+ 	}
+ }
+ 
+ b {
+-	color: white;
++	color: blue;
+ 
+ 	@phone {
+-		color: blue
++		color: red;
+ 	}
+ }
+ 
+ @media {
+ 
+ 	b {
+-		color: black
++		color: blue
+ 	}
+ 
+ 	b c {
+-		color: yellow
++		color: blue
+ 	}
+ 	}
+-- 
+2.33.1
+

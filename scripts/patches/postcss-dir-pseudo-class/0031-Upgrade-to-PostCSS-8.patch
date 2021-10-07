@@ -1,0 +1,209 @@
+From 06f4e56848b5a8171935f1952b82595c229f099f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?St=C3=A9phane=20Goetz?= <onigoetz@onigoetz.ch>
+Date: Sat, 26 Sep 2020 09:38:31 +0200
+Subject: [PATCH 31/34] Upgrade to PostCSS 8
+
+---
+ .rollup.js   | 16 ----------------
+ .tape.js     | 32 +++++++++++++++-----------------
+ .travis.yml  |  3 ++-
+ INSTALL.md   |  2 +-
+ index.js     | 27 ++++++++++++++++++---------
+ package.json | 29 ++++++++++-------------------
+ 6 files changed, 46 insertions(+), 63 deletions(-)
+ delete mode 100644 .rollup.js
+
+diff --git a/.rollup.js b/.rollup.js
+deleted file mode 100644
+index ebe39f9..0000000
+--- a/.rollup.js
++++ /dev/null
+@@ -1,16 +0,0 @@
+-import babel from 'rollup-plugin-babel';
+-
+-export default {
+-	input: 'index.js',
+-	output: [
+-		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
+-		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
+-	],
+-	plugins: [
+-		babel({
+-			presets: [
+-				['@babel/env', { modules: false, targets: { node: 6 } }]
+-			]
+-		})
+-	]
+-};
+diff --git a/.tape.js b/.tape.js
+index a86a6be..61ed099 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,21 +1,19 @@
+ module.exports = {
+-	'postcss-dir-pseudo-class': {
+-		'basic': {
+-			message: 'supports basic usage'
++	basic: {
++		message: "supports basic usage",
++	},
++	"basic:dir": {
++		message: 'supports { dir: "ltr" } usage',
++		source: "basic.css",
++		options: {
++			dir: "ltr",
+ 		},
+-		'basic:dir': {
+-			message: 'supports { dir: "ltr" } usage',
+-			source: 'basic.css',
+-			options: {
+-				dir: 'ltr'
+-			}
++	},
++	"basic:preserve": {
++		message: "supports { preserve: true } usage",
++		source: "basic.css",
++		options: {
++			preserve: true,
+ 		},
+-		'basic:preserve': {
+-			message: 'supports { preserve: true } usage',
+-			source: 'basic.css',
+-			options: {
+-				preserve: true
+-			}
+-		}
+-	}
++	},
+ };
+diff --git a/.travis.yml b/.travis.yml
+index e1f11a5..6b7feec 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,8 @@
+ language: node_js
+ 
+ node_js:
+-  - 6
++  - 10
++  - 12
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/INSTALL.md b/INSTALL.md
+index 8777745..347921e 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -10,7 +10,7 @@
+ Add [PostCSS Dir Pseudo Class] to your project:
+ 
+ ```bash
+-npm install postcss-dir-pseudo-class --save-dev
++npm install postcss postcss-dir-pseudo-class --save-dev
+ ```
+ 
+ Use [PostCSS Dir Pseudo Class] to process your CSS:
+diff --git a/index.js b/index.js
+index 8e1e132..395bf82 100644
+--- a/index.js
++++ b/index.js
+@@ -1,13 +1,20 @@
+-import postcss from 'postcss';
+-import selectorParser from 'postcss-selector-parser';
++const selectorParser = require('postcss-selector-parser');
+ 
+-export default postcss.plugin('postcss-dir-pseudo-class', opts => {
++const dirRegex = /:dir\([^\)]*\)/;
++
++module.exports = function creator(opts) {
+ 	const dir = Object(opts).dir;
+ 	const preserve = Boolean(Object(opts).preserve);
+ 
+-	return root => {
+-		// walk rules using the :dir pseudo-class
+-		root.walkRules(/:dir\([^\)]*\)/, rule => {
++	return {
++		postcssPlugin: 'postcss-dir-pseudo-class',
++		Rule(rule) {
++
++			// walk rules using the :dir pseudo-class
++			if (!dirRegex.test(rule.selector)) {
++				return;
++			}
++
+ 			let currentRule = rule
+ 
+ 			// conditionally preserve the original rule
+@@ -100,6 +107,8 @@ export default postcss.plugin('postcss-dir-pseudo-class', opts => {
+ 					});
+ 				});
+ 			}).processSync(currentRule.selector);
+-		});
+-	};
+-});
++		}
++	}
++}
++
++module.exports.postcss = true;
+diff --git a/package.json b/package.json
+index 5a34c45..64d151b 100644
+--- a/package.json
++++ b/package.json
+@@ -7,43 +7,34 @@
+   "repository": "jonathantneal/postcss-dir-pseudo-class",
+   "homepage": "https://github.com/jonathantneal/postcss-dir-pseudo-class#readme",
+   "bugs": "https://github.com/jonathantneal/postcss-dir-pseudo-class/issues",
+-  "main": "index.cjs.js",
+-  "module": "index.es.mjs",
+   "files": [
+-    "index.cjs.js",
+-    "index.cjs.js.map",
+-    "index.es.mjs",
+-    "index.es.mjs.map"
++    "index.js"
+   ],
+   "scripts": {
+     "prepublishOnly": "npm test",
+-    "pretest": "rollup -c .rollup.js --silent",
+     "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+     "test:ec": "echint --ignore index.*.js test",
+     "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+-    "node": ">=4.0.0"
++    "node": "^10 || ^12 || >=14"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.2",
+-    "postcss-selector-parser": "^5.0.0-rc.3"
++    "postcss-selector-parser": "^6.0.4"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.0.0",
+-    "@babel/preset-env": "^7.0.0",
+-    "babel-eslint": "^9.0.0",
+-    "eslint": "^5.6.0",
++    "eslint": "^7.9.0",
+     "eslint-config-dev": "^2.0.0",
+-    "postcss-tape": "^2.2.0",
+-    "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.0",
+-    "rollup-plugin-babel": "^4.0.1"
++    "postcss": "^8.0.0",
++    "postcss-tape": "^6.0.0",
++    "pre-commit": "^1.2.2"
++  },
++  "peerDependencies": {
++    "postcss": "^8.0.0"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+-    "parser": "babel-eslint",
+     "rules": {
+       "complexity": [
+         "error",
+-- 
+2.33.1
+

@@ -1,0 +1,148 @@
+From fa64e7204ba374d4be89aae11b968907b1657fa1 Mon Sep 17 00:00:00 2001
+From: Daniel Weidner <d.weidner@hks-agentur.de>
+Date: Wed, 10 Feb 2021 12:33:56 +0100
+Subject: [PATCH 06/10] feat: ignore flexbox and multicolumn declarations
+
+---
+ .tape.js                             |  6 ++++++
+ index.js                             | 19 ++++++++++++-------
+ test/basic.css                       |  1 +
+ test/basic.expect.css                |  1 +
+ test/basic.preserve-false.expect.css |  1 +
+ test/ignore-flexbox.css              |  4 ++++
+ test/ignore-flexbox.expect.css       |  4 ++++
+ test/ignore-multicolumn.css          |  4 ++++
+ test/ignore-multicolumn.expect.css   |  4 ++++
+ 9 files changed, 37 insertions(+), 7 deletions(-)
+ create mode 100644 test/ignore-flexbox.css
+ create mode 100644 test/ignore-flexbox.expect.css
+ create mode 100644 test/ignore-multicolumn.css
+ create mode 100644 test/ignore-multicolumn.expect.css
+
+diff --git a/.tape.js b/.tape.js
+index 96c94d1..31fec61 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -8,6 +8,12 @@ module.exports = {
+ 			options: {
+ 				preserve: false
+ 			}
++		},
++		'ignore-flexbox': {
++			message: 'ignore flexbox declarations'
++		},
++		'ignore-multicolumn': {
++			message: 'ignore multi column declarations'
+ 		}
+ 	}
+ };
+diff --git a/index.js b/index.js
+index b8ce092..b462cf0 100644
+--- a/index.js
++++ b/index.js
+@@ -3,20 +3,25 @@ import postcss from 'postcss';
+ // gap shorthand property matcher
+ const gapPropertyRegExp = /^(column-gap|gap|row-gap)$/i;
+ 
++// filter `display: grid` declarations
++const isDisplayGrid = (node) => node.prop === 'display' && node.value === 'grid';
++
+ export default postcss.plugin('postcss-gap-properties', opts => {
+ 	const preserve = 'preserve' in Object(opts) ? Boolean(opts.preserve) : true;
+ 
+ 	return root => {
+ 		// for each shorthand gap, column-gap, or row-gap declaration
+ 		root.walkDecls(gapPropertyRegExp, decl => {
+-			// insert a grid-* fallback declaration
+-			decl.cloneBefore({
+-				prop: `grid-${decl.prop}`
+-			});
++			if (decl.parent.some(isDisplayGrid)) {
++				// insert a grid-* fallback declaration
++				decl.cloneBefore({
++					prop: `grid-${decl.prop}`
++				});
+ 
+-			// conditionally remove the original declaration
+-			if (!preserve) {
+-				decl.remove();
++				// conditionally remove the original declaration
++				if (!preserve) {
++					decl.remove();
++				}
+ 			}
+ 		})
+ 	};
+diff --git a/test/basic.css b/test/basic.css
+index 933c877..c2b5106 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -1,4 +1,5 @@
+ test {
++	display: grid;
+ 	order: 1;
+ 	gap: 20px;
+ 	order: 2;
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index af061fb..aee9103 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -1,4 +1,5 @@
+ test {
++	display: grid;
+ 	order: 1;
+ 	grid-gap: 20px;
+ 	gap: 20px;
+diff --git a/test/basic.preserve-false.expect.css b/test/basic.preserve-false.expect.css
+index 8c0fb78..ecbb3ac 100644
+--- a/test/basic.preserve-false.expect.css
++++ b/test/basic.preserve-false.expect.css
+@@ -1,4 +1,5 @@
+ test {
++	display: grid;
+ 	order: 1;
+ 	grid-gap: 20px;
+ 	order: 2;
+diff --git a/test/ignore-flexbox.css b/test/ignore-flexbox.css
+new file mode 100644
+index 0000000..e8e34f4
+--- /dev/null
++++ b/test/ignore-flexbox.css
+@@ -0,0 +1,4 @@
++test {
++	display: flex;
++	gap: 20px;
++}
+diff --git a/test/ignore-flexbox.expect.css b/test/ignore-flexbox.expect.css
+new file mode 100644
+index 0000000..e8e34f4
+--- /dev/null
++++ b/test/ignore-flexbox.expect.css
+@@ -0,0 +1,4 @@
++test {
++	display: flex;
++	gap: 20px;
++}
+diff --git a/test/ignore-multicolumn.css b/test/ignore-multicolumn.css
+new file mode 100644
+index 0000000..ce0a5ce
+--- /dev/null
++++ b/test/ignore-multicolumn.css
+@@ -0,0 +1,4 @@
++test {
++	columns: 3;
++	gap: 20px;
++}
+diff --git a/test/ignore-multicolumn.expect.css b/test/ignore-multicolumn.expect.css
+new file mode 100644
+index 0000000..ce0a5ce
+--- /dev/null
++++ b/test/ignore-multicolumn.expect.css
+@@ -0,0 +1,4 @@
++test {
++	columns: 3;
++	gap: 20px;
++}
+-- 
+2.33.1
+

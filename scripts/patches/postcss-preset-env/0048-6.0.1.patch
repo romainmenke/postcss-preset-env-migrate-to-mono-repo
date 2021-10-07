@@ -1,0 +1,177 @@
+From 5ba7cdbde2ec69a23bd5ee4858d48dc023a9ac6c Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 20 Sep 2018 15:19:33 -0400
+Subject: [PATCH 48/84] 6.0.1
+
+---
+ CHANGELOG.md                           |  6 ++++++
+ lib/plugins-by-id.js                   |  2 +-
+ package.json                           |  3 +--
+ patch/postcss-system-ui-font-family.js | 22 ++++++++++++++++++++++
+ test/basic.autoprefixer.expect.css     |  2 +-
+ test/basic.ch38.expect.css             |  2 +-
+ test/basic.expect.css                  |  2 +-
+ test/basic.ff49.expect.css             |  2 +-
+ test/basic.stage0-ff49.expect.css      |  2 +-
+ test/basic.stage0.expect.css           |  2 +-
+ 10 files changed, 36 insertions(+), 9 deletions(-)
+ create mode 100644 patch/postcss-system-ui-font-family.js
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 5019db2..421d9bc 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,11 @@
+ # Changes to PostCSS Preset Env
+ 
++### 6.0.1 (September 20, 2018)
++
++- Fixed: Issue with the `system-ui` font family polyfill by replacing
++  `postcss-font-family-system-ui` with an internal polyfill, at least until the
++  problem with the original plugin is resolved.
++
+ ### 6.0.0 (September 20, 2018)
+ 
+ - Added: Support for PostCSS 7+
+diff --git a/lib/plugins-by-id.js b/lib/plugins-by-id.js
+index 6c28cd5..fef0ca1 100644
+--- a/lib/plugins-by-id.js
++++ b/lib/plugins-by-id.js
+@@ -10,7 +10,7 @@ import postcssDirPseudoClass from 'postcss-dir-pseudo-class';
+ import postcssFocusVisible from 'postcss-focus-visible';
+ import postcssFocusWithin from 'postcss-focus-within';
+ import postcssFontVariant from 'postcss-font-variant';
+-import postcssFontFamilySystemUi from 'postcss-font-family-system-ui';
++import postcssFontFamilySystemUi from '../patch/postcss-system-ui-font-family';
+ import postcssGapProperties from 'postcss-gap-properties';
+ import postcssImageSetPolyfill from 'postcss-image-set-function';
+ import postcssInitial from 'postcss-initial';
+diff --git a/package.json b/package.json
+index 660e225..fdb799d 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-preset-env",
+-  "version": "6.0.0",
++  "version": "6.0.1",
+   "description": "Convert modern CSS into something browsers understand",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -43,7 +43,6 @@
+     "postcss-env-function": "^2.0.1",
+     "postcss-focus-visible": "^4.0.0",
+     "postcss-focus-within": "^3.0.0",
+-    "postcss-font-family-system-ui": "^4.1.0",
+     "postcss-font-variant": "^4.0.0",
+     "postcss-gap-properties": "^2.0.0",
+     "postcss-image-set-function": "^3.0.1",
+diff --git a/patch/postcss-system-ui-font-family.js b/patch/postcss-system-ui-font-family.js
+new file mode 100644
+index 0000000..02d983e
+--- /dev/null
++++ b/patch/postcss-system-ui-font-family.js
+@@ -0,0 +1,22 @@
++import postcss from 'postcss';
++
++export default postcss.plugin('postcss-system-ui-font', () => root => {
++	root.walkDecls(propertyRegExp, decl => {
++		decl.value = decl.value.replace(systemUiMatch, systemUiReplace);
++	});
++});
++
++const propertyRegExp = /(?:^(?:-|\\002d){2})|(?:^font(?:-family)?$)/i;
++const whitespace = '[\\f\\n\\r\\x09\\x20]';
++const systemUiFamily = [
++	'system-ui',
++	/* macOS 10.11-10.12 */ '-apple-system',
++	/* Windows 6+ */ 'Segoe UI',
++	/* Android 4+ */ 'Roboto',
++	/* Ubuntu 10.10+ */ 'Ubuntu',
++	/* Gnome 3+ */ 'Cantarell',
++	/* KDE Plasma 5+ */ 'Noto Sans',
++	/* fallback */ 'sans-serif'
++];
++const systemUiMatch = new RegExp(`(^|,|${whitespace}+)(?:system-ui${whitespace}*)(?:,${whitespace}*(?:${systemUiFamily.join('|')})${whitespace}*)?(,|$)`, 'i');
++const systemUiReplace = `$1${systemUiFamily.join(', ')}$2`;
+diff --git a/test/basic.autoprefixer.expect.css b/test/basic.autoprefixer.expect.css
+index bd711da..e938d55 100644
+--- a/test/basic.autoprefixer.expect.css
++++ b/test/basic.autoprefixer.expect.css
+@@ -94,7 +94,7 @@
+ }
+ 
+ .test-system-ui-font-family {
+-	font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue;
++	font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+ 	order: 15;
+ }
+ 
+diff --git a/test/basic.ch38.expect.css b/test/basic.ch38.expect.css
+index a7e8b4d..5d99489 100644
+--- a/test/basic.ch38.expect.css
++++ b/test/basic.ch38.expect.css
+@@ -84,7 +84,7 @@
+ }
+ 
+ .test-system-ui-font-family {
+-	font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue;
++	font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+ 	order: 15;
+ }
+ 
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 0e935b4..62ccb96 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -95,7 +95,7 @@
+ }
+ 
+ .test-system-ui-font-family {
+-	font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue;
++	font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+ 	order: 15;
+ }
+ 
+diff --git a/test/basic.ff49.expect.css b/test/basic.ff49.expect.css
+index 97877ed..5074a1c 100644
+--- a/test/basic.ff49.expect.css
++++ b/test/basic.ff49.expect.css
+@@ -85,7 +85,7 @@
+ }
+ 
+ .test-system-ui-font-family {
+-	font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue;
++	font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+ 	order: 15;
+ }
+ 
+diff --git a/test/basic.stage0-ff49.expect.css b/test/basic.stage0-ff49.expect.css
+index 8f43f8c..820b79d 100644
+--- a/test/basic.stage0-ff49.expect.css
++++ b/test/basic.stage0-ff49.expect.css
+@@ -84,7 +84,7 @@ h1.test-custom-selectors,h2.test-custom-selectors,h3.test-custom-selectors,h4.te
+ }
+ 
+ .test-system-ui-font-family {
+-	font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue;
++	font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+ 	order: 15;
+ }
+ 
+diff --git a/test/basic.stage0.expect.css b/test/basic.stage0.expect.css
+index d2d8cae..b3ba0c9 100644
+--- a/test/basic.stage0.expect.css
++++ b/test/basic.stage0.expect.css
+@@ -94,7 +94,7 @@ h1.test-custom-selectors,h2.test-custom-selectors,h3.test-custom-selectors,h4.te
+ }
+ 
+ .test-system-ui-font-family {
+-	font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue;
++	font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+ 	order: 15;
+ }
+ 
+-- 
+2.33.1
+

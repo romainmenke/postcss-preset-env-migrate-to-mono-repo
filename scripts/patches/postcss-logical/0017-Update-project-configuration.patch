@@ -1,0 +1,134 @@
+From 0d087f00c9e728a94f5ae46e187b28aea07e714a Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 20 Mar 2018 23:04:43 -0400
+Subject: [PATCH 17/43] Update project configuration
+
+---
+ index.js                                      | 20 +++++++++----------
+ {dependent-js => lib}/clone-decl.js           |  0
+ {dependent-js => lib}/clone-rule.js           |  0
+ {dependent-js => lib}/match-inset-prefix.js   |  0
+ {dependent-js => lib}/match-side.js           |  0
+ {dependent-js => lib}/match-size.js           |  0
+ .../match-supported-properties.js             |  0
+ {dependent-js => lib}/transform-border.js     |  0
+ {dependent-js => lib}/transform-float.js      |  0
+ {dependent-js => lib}/transform-inset.js      |  0
+ {dependent-js => lib}/transform-resize.js     |  0
+ {dependent-js => lib}/transform-side.js       |  0
+ {dependent-js => lib}/transform-size.js       |  0
+ {dependent-js => lib}/transform-spacing.js    |  0
+ {dependent-js => lib}/transform-text-align.js |  0
+ 15 files changed, 10 insertions(+), 10 deletions(-)
+ rename {dependent-js => lib}/clone-decl.js (100%)
+ rename {dependent-js => lib}/clone-rule.js (100%)
+ rename {dependent-js => lib}/match-inset-prefix.js (100%)
+ rename {dependent-js => lib}/match-side.js (100%)
+ rename {dependent-js => lib}/match-size.js (100%)
+ rename {dependent-js => lib}/match-supported-properties.js (100%)
+ rename {dependent-js => lib}/transform-border.js (100%)
+ rename {dependent-js => lib}/transform-float.js (100%)
+ rename {dependent-js => lib}/transform-inset.js (100%)
+ rename {dependent-js => lib}/transform-resize.js (100%)
+ rename {dependent-js => lib}/transform-side.js (100%)
+ rename {dependent-js => lib}/transform-size.js (100%)
+ rename {dependent-js => lib}/transform-spacing.js (100%)
+ rename {dependent-js => lib}/transform-text-align.js (100%)
+
+diff --git a/index.js b/index.js
+index f95ccdc..67152fa 100644
+--- a/index.js
++++ b/index.js
+@@ -2,15 +2,15 @@
+ import postcss from 'postcss';
+ 
+ // internal tooling
+-import transformBorder from './dependent-js/transform-border';
+-import transformFloat from './dependent-js/transform-float';
+-import transformInset from './dependent-js/transform-inset';
+-import transformResize from './dependent-js/transform-resize';
+-import transformSide from './dependent-js/transform-side';
+-import transformSize from './dependent-js/transform-size';
+-import transformSpacing from './dependent-js/transform-spacing';
+-import transformTextAlign from './dependent-js/transform-text-align';
+-import matchSupportedProperties from './dependent-js/match-supported-properties';
++import transformBorder from './lib/transform-border';
++import transformFloat from './lib/transform-float';
++import transformInset from './lib/transform-inset';
++import transformResize from './lib/transform-resize';
++import transformSide from './lib/transform-side';
++import transformSize from './lib/transform-size';
++import transformSpacing from './lib/transform-spacing';
++import transformTextAlign from './lib/transform-text-align';
++import matchSupportedProperties from './lib/match-supported-properties';
+ 
+ // supported transforms
+ const transforms = {
+@@ -43,7 +43,7 @@ const transforms = {
+ 
+ // plugin
+ export default postcss.plugin('postcss-logical-properties', opts => {
+-	const dir = 'dir' in Object(opts) ? /^rtl$/i.test(Object(opts).dir) ? 'rtl' : 'ltr' : false;
++	const dir = Object(opts) === opts ? /^rtl$/i.test(opts.dir) ? 'rtl' : 'ltr' : false;
+ 
+ 	return root => {
+ 		root.walkDecls(decl => {
+diff --git a/dependent-js/clone-decl.js b/lib/clone-decl.js
+similarity index 100%
+rename from dependent-js/clone-decl.js
+rename to lib/clone-decl.js
+diff --git a/dependent-js/clone-rule.js b/lib/clone-rule.js
+similarity index 100%
+rename from dependent-js/clone-rule.js
+rename to lib/clone-rule.js
+diff --git a/dependent-js/match-inset-prefix.js b/lib/match-inset-prefix.js
+similarity index 100%
+rename from dependent-js/match-inset-prefix.js
+rename to lib/match-inset-prefix.js
+diff --git a/dependent-js/match-side.js b/lib/match-side.js
+similarity index 100%
+rename from dependent-js/match-side.js
+rename to lib/match-side.js
+diff --git a/dependent-js/match-size.js b/lib/match-size.js
+similarity index 100%
+rename from dependent-js/match-size.js
+rename to lib/match-size.js
+diff --git a/dependent-js/match-supported-properties.js b/lib/match-supported-properties.js
+similarity index 100%
+rename from dependent-js/match-supported-properties.js
+rename to lib/match-supported-properties.js
+diff --git a/dependent-js/transform-border.js b/lib/transform-border.js
+similarity index 100%
+rename from dependent-js/transform-border.js
+rename to lib/transform-border.js
+diff --git a/dependent-js/transform-float.js b/lib/transform-float.js
+similarity index 100%
+rename from dependent-js/transform-float.js
+rename to lib/transform-float.js
+diff --git a/dependent-js/transform-inset.js b/lib/transform-inset.js
+similarity index 100%
+rename from dependent-js/transform-inset.js
+rename to lib/transform-inset.js
+diff --git a/dependent-js/transform-resize.js b/lib/transform-resize.js
+similarity index 100%
+rename from dependent-js/transform-resize.js
+rename to lib/transform-resize.js
+diff --git a/dependent-js/transform-side.js b/lib/transform-side.js
+similarity index 100%
+rename from dependent-js/transform-side.js
+rename to lib/transform-side.js
+diff --git a/dependent-js/transform-size.js b/lib/transform-size.js
+similarity index 100%
+rename from dependent-js/transform-size.js
+rename to lib/transform-size.js
+diff --git a/dependent-js/transform-spacing.js b/lib/transform-spacing.js
+similarity index 100%
+rename from dependent-js/transform-spacing.js
+rename to lib/transform-spacing.js
+diff --git a/dependent-js/transform-text-align.js b/lib/transform-text-align.js
+similarity index 100%
+rename from dependent-js/transform-text-align.js
+rename to lib/transform-text-align.js
+-- 
+2.33.1
+

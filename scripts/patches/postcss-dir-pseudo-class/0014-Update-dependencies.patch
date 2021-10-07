@@ -1,0 +1,32 @@
+From 44f347a4a1581e40a5bc2023c8ca39e8e3ad69ca Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 9 Sep 2017 21:31:15 -0400
+Subject: [PATCH 14/34] Update dependencies
+
+---
+ package.json | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/package.json b/package.json
+index ad76e1e..258b47a 100644
+--- a/package.json
++++ b/package.json
+@@ -22,12 +22,12 @@
+     "node": ">=4.0.0"
+   },
+   "dependencies": {
+-    "browserslist": "^2.2.2",
+-    "postcss": "^6.0.8",
++    "browserslist": "^2.4.0",
++    "postcss": "^6.0.11",
+     "postcss-selector-parser": "^2.2.3"
+   },
+   "devDependencies": {
+-    "eslint": "^4.3.0",
++    "eslint": "^4.6.1",
+     "eslint-config-dev": "2.0.0",
+     "postcss-tape": "2.0.1",
+     "pre-commit": "^1.2.2"
+-- 
+2.33.1
+

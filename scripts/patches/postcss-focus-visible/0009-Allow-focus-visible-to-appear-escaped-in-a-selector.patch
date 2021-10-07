@@ -1,0 +1,148 @@
+From 85e8fb5a05fbedd6ca629d853f49c76d050695ec Mon Sep 17 00:00:00 2001
+From: Jordan Pittman <jordan@cryptica.me>
+Date: Sat, 7 Mar 2020 08:36:33 -0500
+Subject: [PATCH 09/15] Allow :focus-visible to appear escaped in a selector
+
+---
+ index.js                          |  2 +-
+ test/basic.css                    |  7 +++++++
+ test/basic.expect.css             | 14 ++++++++++++++
+ test/basic.preserve.expect.css    |  7 +++++++
+ test/basic.replacewith.expect.css | 14 ++++++++++++++
+ test/basic.replacewith.result.css | 14 ++++++++++++++
+ test/basic.result.css             | 14 ++++++++++++++
+ 7 files changed, 71 insertions(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index 64486ad..2c5cb7d 100644
+--- a/index.js
++++ b/index.js
+@@ -1,6 +1,6 @@
+ import postcss from 'postcss';
+ 
+-const selectorRegExp = /:focus-visible([^\w-]|$)/gi;
++const selectorRegExp = /(?<!\\):focus-visible([^\w-]|$)/gi;
+ 
+ export default postcss.plugin('postcss-focus-visible', opts => {
+ 	const replaceWith = String(Object(opts).replaceWith || '.focus-visible');
+diff --git a/test/basic.css b/test/basic.css
+index f6628e4..9ba49ea 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -25,3 +25,10 @@ test :matches(test :focus-visible :focus-visible test) test {
+ :focus-visibleignore {
+ 	order: 3;
+ }
++
++.escaped\:focus-visible,
++.escaped\:times\:two\:focus-visible,
++.escaped\:focus-visible:focus-visible,
++.escaped\:times\:two:focus-visible {
++	order: 4;
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 0dfd32b..0ea8da9 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -46,3 +46,17 @@ test :matches(test :focus-visible :focus-visible test) test {
+ :focus-visibleignore {
+ 	order: 3;
+ }
++
++.escaped\:focus-visible,
++.escaped\:times\:two\:focus-visible,
++.escaped\:focus-visible.focus-visible,
++.escaped\:times\:two.focus-visible {
++	order: 4;
++}
++
++.escaped\:focus-visible,
++.escaped\:times\:two\:focus-visible,
++.escaped\:focus-visible:focus-visible,
++.escaped\:times\:two:focus-visible {
++	order: 4;
++}
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index 6a85671..349de9d 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -25,3 +25,10 @@ test :matches(test .focus-visible .focus-visible test) test {
+ :focus-visibleignore {
+ 	order: 3;
+ }
++
++.escaped\:focus-visible,
++.escaped\:times\:two\:focus-visible,
++.escaped\:focus-visible.focus-visible,
++.escaped\:times\:two.focus-visible {
++	order: 4;
++}
+diff --git a/test/basic.replacewith.expect.css b/test/basic.replacewith.expect.css
+index 10a0675..894e1e1 100644
+--- a/test/basic.replacewith.expect.css
++++ b/test/basic.replacewith.expect.css
+@@ -46,3 +46,17 @@ test :matches(test :focus-visible :focus-visible test) test {
+ :focus-visibleignore {
+ 	order: 3;
+ }
++
++.escaped\:focus-visible,
++.escaped\:times\:two\:focus-visible,
++.escaped\:focus-visible[focus-visible],
++.escaped\:times\:two[focus-visible] {
++	order: 4;
++}
++
++.escaped\:focus-visible,
++.escaped\:times\:two\:focus-visible,
++.escaped\:focus-visible:focus-visible,
++.escaped\:times\:two:focus-visible {
++	order: 4;
++}
+diff --git a/test/basic.replacewith.result.css b/test/basic.replacewith.result.css
+index 10a0675..894e1e1 100644
+--- a/test/basic.replacewith.result.css
++++ b/test/basic.replacewith.result.css
+@@ -46,3 +46,17 @@ test :matches(test :focus-visible :focus-visible test) test {
+ :focus-visibleignore {
+ 	order: 3;
+ }
++
++.escaped\:focus-visible,
++.escaped\:times\:two\:focus-visible,
++.escaped\:focus-visible[focus-visible],
++.escaped\:times\:two[focus-visible] {
++	order: 4;
++}
++
++.escaped\:focus-visible,
++.escaped\:times\:two\:focus-visible,
++.escaped\:focus-visible:focus-visible,
++.escaped\:times\:two:focus-visible {
++	order: 4;
++}
+diff --git a/test/basic.result.css b/test/basic.result.css
+index 0dfd32b..0ea8da9 100644
+--- a/test/basic.result.css
++++ b/test/basic.result.css
+@@ -46,3 +46,17 @@ test :matches(test :focus-visible :focus-visible test) test {
+ :focus-visibleignore {
+ 	order: 3;
+ }
++
++.escaped\:focus-visible,
++.escaped\:times\:two\:focus-visible,
++.escaped\:focus-visible.focus-visible,
++.escaped\:times\:two.focus-visible {
++	order: 4;
++}
++
++.escaped\:focus-visible,
++.escaped\:times\:two\:focus-visible,
++.escaped\:focus-visible:focus-visible,
++.escaped\:times\:two:focus-visible {
++	order: 4;
++}
+-- 
+2.33.1
+

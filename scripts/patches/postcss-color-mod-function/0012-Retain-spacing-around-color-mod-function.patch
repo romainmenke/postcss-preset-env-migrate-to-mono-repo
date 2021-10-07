@@ -1,0 +1,63 @@
+From 792c86b5708dd2d98629d5ccc8bbb7b68a0d9d31 Mon Sep 17 00:00:00 2001
+From: Lee Symes <2038057+leesdolphin@users.noreply.github.com>
+Date: Thu, 22 Feb 2018 04:21:31 +1300
+Subject: [PATCH 12/29] Retain spacing around color-mod function
+
+---
+ lib/transform.js             | 1 +
+ test/basic.colors.expect.css | 4 ++++
+ test/basic.css               | 4 ++++
+ test/basic.expect.css        | 4 ++++
+ 4 files changed, 13 insertions(+)
+
+diff --git a/lib/transform.js b/lib/transform.js
+index a50382c..866940a 100644
+--- a/lib/transform.js
++++ b/lib/transform.js
+@@ -22,6 +22,7 @@ export default function transformAST(node, opts) {
+ 				// update the color-mod() function with the transformed value
+ 				child.replaceWith(
+ 					parser.word({
++						raws: child.raws,
+ 						value: opts.stringifier(color)
+ 					})
+ 				);
+diff --git a/test/basic.colors.expect.css b/test/basic.colors.expect.css
+index 91744a0..d758803 100644
+--- a/test/basic.colors.expect.css
++++ b/test/basic.colors.expect.css
+@@ -127,3 +127,7 @@ test-sameness {
+ test-var {
+ 	color: rgb(0% 0% 100%);
+ }
++
++test-multiple-value-items {
++	border: 1px solid rgb(100% 0% 0%);
++}
+diff --git a/test/basic.css b/test/basic.css
+index 2ae92a4..58f6efc 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -127,3 +127,7 @@ test-sameness {
+ test-var {
+ 	color: color-mod(var(--color));
+ }
++
++test-multiple-value-items {
++	border: 1px solid color-mod(red);
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 9557922..ec89f8b 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -127,3 +127,7 @@ test-sameness {
+ test-var {
+ 	color: rgb(0, 0, 255);
+ }
++
++test-multiple-value-items {
++	border: 1px solid rgb(255, 0, 0);
++}
+-- 
+2.33.1
+

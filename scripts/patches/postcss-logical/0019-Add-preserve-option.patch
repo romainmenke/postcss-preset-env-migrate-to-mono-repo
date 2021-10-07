@@ -1,0 +1,43 @@
+From 68522071d28b7f3b2bf050fdc53e22bb700047ff Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 20 Mar 2018 23:43:51 -0400
+Subject: [PATCH 19/43] Add preserve option
+
+---
+ index.js | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/index.js b/index.js
+index 67152fa..6185c96 100644
+--- a/index.js
++++ b/index.js
+@@ -43,7 +43,12 @@ const transforms = {
+ 
+ // plugin
+ export default postcss.plugin('postcss-logical-properties', opts => {
+-	const dir = Object(opts) === opts ? /^rtl$/i.test(opts.dir) ? 'rtl' : 'ltr' : false;
++	const preserve = Boolean(Object(opts).preserve);
++	const dir = !preserve && 'dir' in Object(opts)
++		? /^rtl$/i.test(Object(opts).dir)
++			? 'rtl'
++		: 'ltr'
++	: false;
+ 
+ 	return root => {
+ 		root.walkDecls(decl => {
+@@ -54,7 +59,11 @@ export default postcss.plugin('postcss-logical-properties', opts => {
+ 				const replacer = transforms[prop](decl, values, dir);
+ 
+ 				if (replacer) {
+-					decl.replaceWith(replacer);
++					if (preserve) {
++						decl.before(replacer);
++					} else {
++						decl.replaceWith(replacer);
++					}
+ 				}
+ 			}
+ 		});
+-- 
+2.33.1
+

@@ -1,0 +1,27 @@
+From 0a5ef852920a557ea0756633c1172f03a0ab382a Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 16 Sep 2021 11:13:46 -0400
+Subject: [PATCH 16/17] chore: Update CHANGELOG.md for 2.0.0
+
+---
+ CHANGELOG.md | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 9bc1a6d..fdbebc5 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to CSS Has Pseudo
+ 
++### 2.0.0 (September 16, 2021)
++
++- Updated: Support for PostCS 8+ (major).
++- Updated: Support for Node 12+ (major).
++
+ ### 1.0.0 (June 10, 2019)
+ 
+ - Updated: `postcss-selector-parser` to 6.0.2 (major)
+-- 
+2.33.1
+

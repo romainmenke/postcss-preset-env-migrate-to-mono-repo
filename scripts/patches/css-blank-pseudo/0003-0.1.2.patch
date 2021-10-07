@@ -1,0 +1,318 @@
+From 963c3446f564512a3761b52933bd737a15114d91 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 17 Nov 2018 10:13:19 -0500
+Subject: [PATCH 03/13] 0.1.2
+
+---
+ .gitignore            |   3 +
+ .rollup.js            |   9 ++-
+ CHANGELOG.md          |   4 ++
+ README-BROWSER.md     |   8 +++
+ README.md             |  14 ++++-
+ package.json          |  11 +++-
+ src/browser-legacy.js | 125 ++++++++++++++++++++++++++++++++++++++++++
+ src/browser.js        |   8 ++-
+ 8 files changed, 173 insertions(+), 9 deletions(-)
+ create mode 100644 src/browser-legacy.js
+
+diff --git a/.gitignore b/.gitignore
+index 1d65a2d..b639672 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,8 +1,11 @@
+ node_modules
+ /browser.js*
++/browser-legacy.js*
+ /cli.js*
+ /index.js*
+ /index.mjs*
++/legacy.js*
++/legacy.mjs*
+ /postcss.js*
+ /postcss.mjs*
+ package-lock.json
+diff --git a/.rollup.js b/.rollup.js
+index 107a3ce..c6a9df9 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -2,19 +2,26 @@ import babel from 'rollup-plugin-babel';
+ import { terser } from 'rollup-plugin-terser';
+ 
+ const isBrowser = String(process.env.NODE_ENV).includes('browser');
++const isLegacy = String(process.env.NODE_ENV).includes('legacy');
+ const isCLI = String(process.env.NODE_ENV).includes('cli');
+ const isPostCSS = String(process.env.NODE_ENV).includes('postcss');
+ const targets = isCLI || isPostCSS || !isBrowser ? { node: 6 } : 'last 2 versions, not dead';
+ 
+-const input = `src/${isCLI ? 'cli' : isPostCSS ? 'postcss' : 'browser'}.js`;
++const input = `src/${isCLI ? 'cli' : isPostCSS ? 'postcss' : isLegacy ? 'browser-legacy' : 'browser'}.js`;
+ const output = isCLI
+ 	? { file: 'cli.js', format: 'cjs' }
++: isBrowser && isLegacy
++	? { file: 'browser-legacy.js', format: 'cjs' }
+ : isBrowser
+ 	? { file: 'browser.js', format: 'cjs' }
+ : isPostCSS
+ 	? [
+ 	{ file: 'postcss.js', format: 'cjs', sourcemap: true },
+ 	{ file: 'postcss.mjs', format: 'esm', sourcemap: true }
++] : isLegacy
++	? [
++	{ file: 'legacy.js', format: 'cjs', sourcemap: true },
++	{ file: 'legacy.mjs', format: 'esm', sourcemap: true }
+ ] : [
+ 	{ file: 'index.js', format: 'cjs', sourcemap: true },
+ 	{ file: 'index.mjs', format: 'esm', sourcemap: true }
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index c8588fb..a11dfa2 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to CSS Blank Pseudo
+ 
++### 0.1.2 (November 17, 2018)
++
++- Provide a version specifically for Internet Explorer 11
++
+ ### 0.1.1 (November 17, 2018)
+ 
+ - Update documentation
+diff --git a/README-BROWSER.md b/README-BROWSER.md
+index 24edb39..35586d1 100644
+--- a/README-BROWSER.md
++++ b/README-BROWSER.md
+@@ -33,6 +33,14 @@ const cssBlankPseudo = require('css-blank-pseudo');
+ cssBlankPseudo(document);
+ ```
+ 
++To support Internet Explorer 11, include the *browser-legacy* script:
++
++```js
++const cssBlankPseudo = require('css-blank-pseudo/legacy');
++
++cssBlankPseudo(document);
++```
++
+ ## Options
+ 
+ [CSS Blank Pseudo] accepts a secondary paramater to configure the attribute or
+diff --git a/README.md b/README.md
+index 48cf5d7..58be06e 100644
+--- a/README.md
++++ b/README.md
+@@ -33,8 +33,18 @@ Next, use your transformed CSS with this script:
+ <script>cssBlankPseudo(document)</script>
+ ```
+ 
+-That’s it. The script is 483 bytes and works in all browsers, as far back as
+-Internet Explorer 11.
++That’s it. The script is 509 bytes and works in all browsers.
++
++---
++
++If you support Internet Explorer 11, use the **browser legacy** script, which
++is 671 bytes:
++
++```html
++<link rel="stylesheet" href="TRANSFORMED.css">
++<script src="https://unpkg.com/css-blank-pseudo/browser-legacy"></script>
++<script>cssBlankPseudo(document)</script>
++```
+ 
+ ## How it works
+ 
+diff --git a/package.json b/package.json
+index 5de3613..97d00ff 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "css-blank-pseudo",
+-  "version": "0.1.1",
++  "version": "0.1.2",
+   "description": "Style form elements when they are empty",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -14,11 +14,16 @@
+   },
+   "files": [
+     "browser.js",
++    "browser-legacy.js",
+     "cli.js",
+     "index.js",
+     "index.js.map",
+     "index.mjs",
+     "index.mjs.map",
++    "legacy.js",
++    "legacy.js.map",
++    "legacy.mjs",
++    "legacy.mjs.map",
+     "postcss.js",
+     "postcss.js.map",
+     "postcss.mjs",
+@@ -26,10 +31,10 @@
+   ],
+   "scripts": {
+     "build": "npm run build:browser && npm run build:cli && npm run build:node && npm run build:postcss",
+-    "build:browser": "cross-env NODE_ENV=browser rollup -c .rollup.js --silent",
++    "build:browser": "cross-env NODE_ENV=browser rollup -c .rollup.js --silent && cross-env NODE_ENV=browser:legacy rollup -c .rollup.js --silent",
+     "build:cli": "cross-env NODE_ENV=cli rollup -c .rollup.js --silent",
+     "build:postcss": "cross-env NODE_ENV=postcss rollup -c .rollup.js --silent",
+-    "build:node": "rollup -c .rollup.js --silent",
++    "build:node": "rollup -c .rollup.js --silent && cross-env NODE_ENV=legacy rollup -c .rollup.js --silent",
+     "prepublishOnly": "npm build && npm test",
+     "pretest": "npm run build:postcss",
+     "pretest:postcss": "npm run build:postcss",
+diff --git a/src/browser-legacy.js b/src/browser-legacy.js
+new file mode 100644
+index 0000000..07da534
+--- /dev/null
++++ b/src/browser-legacy.js
+@@ -0,0 +1,125 @@
++export default function cssBlankPseudo(document, opts) {
++	// configuration
++	const className = Object(opts).className;
++	const attr = Object(opts).attr || 'blank';
++	const force = Object(opts).force;
++
++	try {
++		document.querySelector(':blank');
++
++		if (!force) {
++			return;
++		}
++	} catch (ignoredError) { /* do nothing and continue */ }
++
++	// observe value changes on <input>, <select>, and <textarea>
++	const window = (document.ownerDocument || document).defaultView;
++
++	observeValueOfHTMLElement(window.HTMLInputElement);
++	observeValueOfHTMLElement(window.HTMLSelectElement);
++	observeValueOfHTMLElement(window.HTMLTextAreaElement);
++	observeSelectedOfHTMLElement(window.HTMLOptionElement);
++
++	// form control elements selector
++	const selector = 'INPUT,SELECT,TEXTAREA';
++	const selectorRegExp = /^(INPUT|SELECT|TEXTAREA)$/;
++
++	// conditionally update all form control elements
++	Array.prototype.forEach.call(
++		document.querySelectorAll(selector),
++		node => {
++			if (node.nodeName === 'SELECT') {
++				node.addEventListener('change', configureCssBlankAttribute);
++			} else {
++				node.addEventListener('input', configureCssBlankAttribute);
++			}
++
++			configureCssBlankAttribute.call(node);
++		}
++	);
++
++	// conditionally observe added or unobserve removed form control elements
++	new MutationObserver(mutationsList => {
++		mutationsList.forEach(mutation => {
++			Array.prototype.forEach.call(
++				mutation.addedNodes || [],
++				node => {
++					if (node.nodeType === 1 && selectorRegExp.test(node.nodeName)) {
++						if (node.nodeName === 'SELECT') {
++							node.addEventListener('change', configureCssBlankAttribute);
++						} else {
++							node.addEventListener('input', configureCssBlankAttribute);
++						}
++
++						configureCssBlankAttribute.call(node);
++					}
++				}
++			);
++
++			Array.prototype.forEach.call(
++				mutation.removedNodes || [],
++				node => {
++					if (node.nodeType === 1 && selectorRegExp.test(node.nodeName)) {
++						if (node.nodeName === 'SELECT') {
++							node.removeEventListener('change', configureCssBlankAttribute);
++						} else {
++							node.removeEventListener('input', configureCssBlankAttribute);
++						}
++					}
++				}
++			);
++		});
++	}).observe(document, { childList: true, subtree: true });
++
++	// update a form control element’s css-blank attribute
++	function configureCssBlankAttribute() {
++		if (this.value || this.nodeName === 'SELECT' && this.options[this.selectedIndex].value) {
++			if (attr) {
++				this.removeAttribute(attr);
++			}
++
++			if (className) {
++				this.classList.remove(className);
++			}
++			this.removeAttribute('blank');
++		} else {
++			if (attr) {
++				this.setAttribute('blank', attr);
++			}
++
++			if (className) {
++				this.classList.add(className);
++			}
++		}
++	}
++
++	// observe changes to the "value" property on an HTML Element
++	function observeValueOfHTMLElement(HTMLElement) {
++		const descriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'value');
++		const nativeSet = descriptor.set;
++
++		descriptor.set = function set(value) { // eslint-disable-line no-unused-vars
++			nativeSet.apply(this, arguments);
++
++			configureCssBlankAttribute.apply(this);
++		}
++
++		Object.defineProperty(HTMLElement.prototype, 'value', descriptor);
++	}
++
++	// observe changes to the "selected" property on an HTML Element
++	function observeSelectedOfHTMLElement(HTMLElement) {
++		const descriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'selected');
++		const nativeSet = descriptor.set;
++
++		descriptor.set = function set(value) { // eslint-disable-line no-unused-vars
++			nativeSet.apply(this, arguments);
++
++			const event = document.createEvent('Event');
++			event.initEvent('change', true, true);
++			this.dispatchEvent(event);
++		}
++
++		Object.defineProperty(HTMLElement.prototype, 'selected', descriptor);
++	}
++}
+diff --git a/src/browser.js b/src/browser.js
+index 0be0848..adcbd10 100644
+--- a/src/browser.js
++++ b/src/browser.js
+@@ -13,9 +13,11 @@ export default function cssBlankPseudo(document, opts) {
+ 	} catch (ignoredError) { /* do nothing and continue */ }
+ 
+ 	// observe value changes on <input>, <select>, and <textarea>
+-	observeValueOfHTMLElement(HTMLInputElement);
+-	observeValueOfHTMLElement(HTMLSelectElement);
+-	observeValueOfHTMLElement(HTMLTextAreaElement);
++	const window = (document.ownerDocument || document).defaultView;
++
++	observeValueOfHTMLElement(window.HTMLInputElement);
++	observeValueOfHTMLElement(window.HTMLSelectElement);
++	observeValueOfHTMLElement(window.HTMLTextAreaElement);
+ 
+ 	// form control elements selector
+ 	const selector = 'input,select,textarea';
+-- 
+2.33.1
+

@@ -1,0 +1,27 @@
+From aac271c3c3ab3409ae743428a10d956444e579ad Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 15 Aug 2017 14:29:51 -0400
+Subject: [PATCH 07/43] Update documentation
+
+---
+ README.md | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/README.md b/README.md
+index 448fdad..774c48e 100644
+--- a/README.md
++++ b/README.md
+@@ -80,8 +80,8 @@ properties:
+ 
+ #### Flow-Relative Values
+ 
+-- `float: inline-start`, `float: inline-end`, `text-align: start`,
+-  `text-align: end`
++- `clear: inline-start`, `clear: inline-end`, `float: inline-start`,
++  `float: inline-end`, `text-align: start`, `text-align: end`
+ 
+ ---
+ 
+-- 
+2.33.1
+

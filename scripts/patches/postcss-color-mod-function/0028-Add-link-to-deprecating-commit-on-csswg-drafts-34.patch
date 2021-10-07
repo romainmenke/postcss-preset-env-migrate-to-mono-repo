@@ -1,0 +1,27 @@
+From 19deef4f9ba94c1ad6693d4feab5400ac3053bec Mon Sep 17 00:00:00 2001
+From: Wilhelm Behncke <2522299+grebaldi@users.noreply.github.com>
+Date: Sun, 12 Apr 2020 23:36:35 +0200
+Subject: [PATCH 28/29] Add link to deprecating commit on csswg-drafts (#34)
+
+To give a bit more explanation for why the `color-mod` function
+has been removed (temporarily) from CSS Color Module Level 4.
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index b42bc38..881c8a9 100644
+--- a/README.md
++++ b/README.md
+@@ -8,7 +8,7 @@
+ [PostCSS color-mod() Function] lets you modify colors using the `color-mod()`
+ function in CSS, following the outdated version of [CSS Color Module Level 4] specification (05 July 2016).
+ 
+-**⚠️ `color-mod()` has been removed from [Color Module Level 4 specification](https://www.w3.org/TR/css-color-4/#changes-from-20160705).**
++**⚠️ `color-mod()` has been removed from [Color Module Level 4 specification](https://www.w3.org/TR/css-color-4/#changes-from-20160705). ([Here's why](https://github.com/w3c/csswg-drafts/commit/034b063697c3dadf144504f52e0858a79cd84414))**
+ 
+ ```pcss
+ :root {
+-- 
+2.33.1
+

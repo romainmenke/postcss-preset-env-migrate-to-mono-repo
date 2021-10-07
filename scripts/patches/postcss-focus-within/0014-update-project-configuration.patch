@@ -1,0 +1,141 @@
+From dd29617b949c73ea6fba75160a2cea185a79cc3b Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 22 Sep 2021 09:59:54 -0400
+Subject: [PATCH 14/15] update project configuration
+
+---
+ .rollup.js     |  2 +-
+ CHANGELOG.md   |  7 +++++++
+ package.json   | 33 +++++++++++++++++++++++++++------
+ src/index.d.ts | 17 +++++++++++++++++
+ 4 files changed, 52 insertions(+), 7 deletions(-)
+ create mode 100644 src/index.d.ts
+
+diff --git a/.rollup.js b/.rollup.js
+index 1fb0d87..876826d 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -2,7 +2,7 @@ import pkg from './package.json'
+ 
+ export default {
+ 	...pkg.rollup,
+-	plugins: pkg.rollup.plugins.map(plugin => require(plugin)()),
++	plugins: pkg.rollup.plugins.map(plugin => ((plugin = [].concat(plugin)), require(plugin[0])(...plugin.slice(1)))),
+ 	onwarn(warning, warn) {
+ 		if (warning.code !== 'UNRESOLVED_IMPORT') warn(warning)
+ 	}
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index fbe4e71..d2d26bd 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,12 @@
+ # Changes to PostCSS Focus Within
+ 
++### 5.0.1 (September 22, 2021)
++
++- Added missing `dist` to bundle.
++- Added missing `exports` to `package.json`
++- Added missing `types` to `package.json`
++- Added bundling & testing as prepublish step.
++
+ ### 5.0.0 (September 17, 2021)
+ 
+ - Updated: Support for PostCS 8+ (major).
+diff --git a/package.json b/package.json
+index 2cbe0e1..3c421a6 100644
+--- a/package.json
++++ b/package.json
+@@ -7,8 +7,16 @@
+   "repository": "csstools/postcss-focus-within",
+   "homepage": "https://github.com/csstools/postcss-focus-within#readme",
+   "bugs": "https://github.com/csstools/postcss-focus-within/issues",
+-  "main": "dist/index.cjs.js",
+-  "module": "dist/index.esm.mjs",
++  "main": "dist/index.cjs",
++  "module": "dist/index.mjs",
++  "types": "./dist/index.d.ts",
++  "exports": {
++    ".": {
++      "import": "./dist/index.mjs",
++      "require": "./dist/index.cjs",
++      "types": "./dist/index.d.ts"
++    }
++  },
+   "files": [
+     "dist"
+   ],
+@@ -17,6 +25,7 @@
+     "build:watch": "npx rollup -c .rollup.js --watch",
+     "lint": "npx eslint --cache src",
+     "lint:fix": "npx eslint --cache --fix",
++    "prepublishOnly": "npm test",
+     "pretest": "npm install && npm run build",
+     "test": "npm run lint && npm run tape",
+     "tape": "npx postcss-tape"
+@@ -35,7 +44,8 @@
+     "postcss-tape": "6.0.1",
+     "pre-commit": "1.2.2",
+     "rollup": "2.56.3",
+-    "rollup-plugin-babel": "4.4.0"
++    "rollup-plugin-babel": "4.4.0",
++    "rollup-plugin-copy": "^3.4.0"
+   },
+   "babel": {
+     "presets": [
+@@ -61,16 +71,27 @@
+   "rollup": {
+     "input": "src/index.js",
+     "plugins": [
+-      "rollup-plugin-babel"
++      "rollup-plugin-babel",
++      [
++        "rollup-plugin-copy",
++        {
++          "targets": [
++            {
++              "src": "./src/index.d.ts",
++              "dest": "./dist"
++            }
++          ]
++        }
++      ]
+     ],
+     "output": [
+       {
+         "exports": "default",
+-        "file": "dist/index.cjs.js",
++        "file": "dist/index.cjs",
+         "format": "cjs"
+       },
+       {
+-        "file": "dist/index.esm.js",
++        "file": "dist/index.mjs",
+         "format": "esm"
+       }
+     ]
+diff --git a/src/index.d.ts b/src/index.d.ts
+new file mode 100644
+index 0000000..31ea826
+--- /dev/null
++++ b/src/index.d.ts
+@@ -0,0 +1,17 @@
++export type PluginOptions = {
++	/** Defines whether the original selector should remain. */
++	preserve?: boolean
++	/** Defines the selector to replace `:focus-within`. */
++	replaceWith?: string
++}
++
++export type Plugin = {
++	(pluginOptions?: PluginOptions): {
++		postcssPlugin: 'postcss-focus-within'
++	}
++	postcss: true
++}
++
++declare const plugin: Plugin
++
++export default plugin
+-- 
+2.33.1
+

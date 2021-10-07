@@ -1,0 +1,571 @@
+From 9b1357c30b1ec4b4747a14ac01770bc966489e40 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 3 Nov 2018 23:25:07 -0500
+Subject: [PATCH 02/12] 2.0.0
+
+---
+ .gitignore         |   5 +-
+ .rollup.client.js  |  16 ------
+ .rollup.js         |  41 ++++++++++++++
+ .rollup.postcss.js |  16 ------
+ CHANGELOG.md       |   8 +++
+ INSTALL.md         |   2 +-
+ README.md          | 133 +++++++++++++++++++++++++++++++++++++--------
+ package.json       |  42 ++++++++------
+ src/browser.js     |  61 +++++++++++++++++++++
+ src/client.js      |  21 -------
+ src/postcss.js     |  24 +++++---
+ 11 files changed, 264 insertions(+), 105 deletions(-)
+ delete mode 100644 .rollup.client.js
+ create mode 100644 .rollup.js
+ delete mode 100644 .rollup.postcss.js
+ create mode 100644 src/browser.js
+ delete mode 100644 src/client.js
+
+diff --git a/.gitignore b/.gitignore
+index 8435b82..49860a7 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,11 +1,12 @@
+ node_modules
+-/client.*
++/browser.*
++/index.*
+ /postcss.*
+ package-lock.json
+ *.log*
+ .*
+ !.editorconfig
+ !.gitignore
+-!.rollup.*.js
++!.rollup.js
+ !.tape.js
+ !.travis.yml
+diff --git a/.rollup.client.js b/.rollup.client.js
+deleted file mode 100644
+index 900f9b6..0000000
+--- a/.rollup.client.js
++++ /dev/null
+@@ -1,16 +0,0 @@
+-import babel from 'rollup-plugin-babel';
+-
+-export default {
+-	input: 'src/client.js',
+-	output: [
+-		{ file: 'client.js', format: 'cjs' },
+-		{ file: 'client.mjs', format: 'es' }
+-	],
+-	plugins: [
+-		babel({
+-			presets: [
+-				['@babel/env', { modules: false, targets: { node: 6 } }]
+-			]
+-		})
+-	]
+-};
+diff --git a/.rollup.js b/.rollup.js
+new file mode 100644
+index 0000000..29f1930
+--- /dev/null
++++ b/.rollup.js
+@@ -0,0 +1,41 @@
++import babel from 'rollup-plugin-babel';
++import { terser } from 'rollup-plugin-terser';
++
++const isBrowser = String(process.env.NODE_ENV).includes('browser');
++const isBrowserMin = String(process.env.NODE_ENV).includes('browser:min');
++const isPostCSS = String(process.env.NODE_ENV).includes('postcss');
++
++// support IE9+ browsers, otherwise node 6+
++const targets = isBrowser ? 'ie >= 9' : { node: 6 };
++
++// read from src/browser.js for browsers/node, src/postcss.js for postcss
++const input = isPostCSS ? 'src/postcss.js' : 'src/browser.js';
++
++// write to browser.js/browser.min.js for browsers, index.js/index.mjs for node
++const output = isPostCSS
++  ? [
++		{ file: 'postcss.js', format: 'cjs' },
++    { file: 'postcss.mjs', format: 'esm' }
++] : isBrowser
++	? { file: `browser${isBrowserMin ? '.min' : ''}.js`, format: 'iife', name: 'initPrefersColorScheme', sourcemap: !isBrowserMin }
++: [
++	{ file: 'index.js', format: 'cjs', sourcemap: true },
++	{ file: 'index.mjs', format: 'es', sourcemap: true }
++];
++
++// use babel, and also terser to minify browser.min.js
++const plugins = [
++	babel({
++		presets: [
++			['@babel/env', { modules: false, targets }]
++		]
++	})
++].concat(
++	isBrowserMin
++		? terser({
++			mangle: true
++		})
++	: []
++);
++
++export default { input, output, plugins };
+diff --git a/.rollup.postcss.js b/.rollup.postcss.js
+deleted file mode 100644
+index 1b8d1a3..0000000
+--- a/.rollup.postcss.js
++++ /dev/null
+@@ -1,16 +0,0 @@
+-import babel from 'rollup-plugin-babel';
+-
+-export default {
+-	input: 'src/postcss.js',
+-	output: [
+-		{ file: 'postcss.js', format: 'cjs' },
+-		{ file: 'postcss.mjs', format: 'es' }
+-	],
+-	plugins: [
+-		babel({
+-			presets: [
+-				['@babel/env', { modules: false, targets: { node: 6 } }]
+-			]
+-		})
+-	]
+-};
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 7758189..9e83229 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,13 @@
+ # Changes to Prefers Color Scheme
+ 
++### 2.0.0 (November 3, 2018)
++
++- The client library now returns an object with various features, including:
++  - `scheme` to get or set the preferred color scheme
++  - `hasNativeSupport` to report whether `prefers-color-scheme` is supported
++  - `onChange` to listen for when the preferred color scheme changes
++  - `removeListener` to destroy the native `prefers-color-scheme` listener
++
+ ### 1.0.0 (September 24, 2018)
+ 
+ - Initial version
+diff --git a/INSTALL.md b/INSTALL.md
+index 9620bbb..b5ec99d 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -11,7 +11,7 @@ instructions for:
+ Add [Prefers Color Scheme] to your project:
+ 
+ ```bash
+-npm install css-prefers-color-scheme --save-dev
++npm install css-prefers-color-scheme
+ ```
+ 
+ Use [Prefers Color Scheme] to process your CSS:
+diff --git a/README.md b/README.md
+index c86d0a7..c35ba8c 100644
+--- a/README.md
++++ b/README.md
+@@ -4,13 +4,23 @@
+ [![Build Status][cli-img]][cli-url]
+ [![Support Chat][git-img]][git-url]
+ 
+-[Prefers Color Scheme] lets you use light or dark color themes in CSS,
+-following the [Media Queries] specification.
++[Prefers Color Scheme] lets you use light and dark color schemes in all
++browsers, following the [Media Queries] specification.
+ 
+ ```bash
+ npm install css-prefers-color-scheme
+ ```
+ 
++There are 2 steps required to get color schemes working:
++
++- Transform your queries using the included [PostCSS plugin](#PostCSS-Plugin).
++- Apply your queries using the included [browser library](#Browser-Library).
++
++## PostCSS Plugin
++
++[Prefers Color Scheme] transforms `prefers-color-scheme` media queries into
++something all browsers understand.
++
+ ```css
+ @media (prefers-color-scheme: dark) {
+   :root {
+@@ -24,11 +34,9 @@ body {
+   color: var(--site-color, #111);
+   font: 100%/1.5 system-ui;
+ }
+-```
+ 
+-[PostCSS] transforms these into cross-browser compatible `color-index` queries:
++/* becomes */
+ 
+-```css
+ @media (color-index: 48) {
+   :root {
+     --site-bgcolor: #1b1b1b;
+@@ -43,31 +51,102 @@ body {
+ }
+ ```
+ 
+-`CSS._prefersColorScheme()` applies these “light mode” and “dark mode” queries
+-to documents on the fly. The entire frontend script is less than 300 bytes.
++## Browser Library
+ 
+-[Prefers Color Scheme] works in all major browsers, including Safari 6+ and
+-Internet Explorer 9+.
+-[See it for yourself.](https://app.crossbrowsertesting.com/public/i76b092cd2b52b86/screenshots/z25c0ccdfcc9c9b8956f?size=medium&type=windowed)
++[Prefers Color Scheme] applies color schemes previously transformed by the
++[PostCSS plugin](#PostCSS-Plugin).
+ 
+ ```js
+-const prefersColorScheme = require('css-prefers-color-scheme');
++// initialize prefersColorScheme (applies the system color scheme, if available)
++const prefersColorScheme = require('css-prefers-color-scheme')();
+ 
+ // apply "dark" queries
+-prefersColorScheme('dark');
++prefersColorScheme.scheme = 'dark';
+ 
+ // apply "light" queries (also disabling "dark" queries)
+-prefersColorScheme('light');
++prefersColorScheme.scheme = 'light';
+ ```
+ 
+-## PostCSS Usage
++The script is also available from the [unpkg.com](https://unpkg.com/) CDN:
+ 
+-Add [Prefers Color Scheme] to your project:
++```html
++<script src="https://unpkg.com/css-prefers-color-scheme/browser.js"></script>
++<script>
++// initialize prefersColorScheme (applies the system color scheme, if available)
++initPrefersColorScheme()
++</script>
++```
+ 
+-```bash
+-npm install css-prefers-color-scheme --save-dev
++A minified version is also available:
++
++```html
++<script src="https://unpkg.com/css-prefers-color-scheme/browser.js"></script>
++<script>
++// initialize prefersColorScheme (applies the system color scheme, if available)
++initPrefersColorScheme()
++</script>
++```
++
++[Prefers Color Scheme] works in all major browsers, including Safari 6+ and
++Internet Explorer 9+ without any polyfills.
++[See it for yourself.](https://app.crossbrowsertesting.com/public/i76b092cd2b52b86/screenshots/z25c0ccdfcc9c9b8956f?size=medium&type=windowed)
++
++---
++
++## Browser Usage
++
++Use [Prefers Color Scheme] to activate your `prefers-color-scheme` queries:
++
++```js
++const prefersColorScheme = require('css-prefers-color-scheme')();
++```
++
++By default, the system color scheme is applied, if your browser supports it.
++Otherwise, the light color scheme is applied. You may override this by passing
++in a color scheme.
++
++```js
++const prefersColorScheme = require('css-prefers-color-scheme')('dark');
++```
++
++The `prefersColorScheme` object returns the following properties:
++
++### value
++
++The `value` property returns the currently preferred color scheme, and can be
++set to change it.
++
++```js
++const prefersColorScheme = require('css-prefers-color-scheme')();
++
++// log the preferred color scheme
++console.log(prefersColorScheme.scheme);
++
++// apply "dark" queries
++prefersColorScheme.scheme = 'dark';
+ ```
+ 
++### hasNativeSupport
++
++The `hasNativeSupport` boolean represents whether `prefers-color-scheme` is
++supported by the current browser.
++
++### onChange
++
++The `onChange` function can be added in order to listen for changes to the
++preferred color scheme, whether they are triggered by the system or manually by
++the `change` function.
++
++### removeListener
++
++The `removeListener` function removes the native `prefers-color-scheme`
++listener, which may or may not be applied, depending on your browser support.
++This is provided to give you complete control over plugin cleanup.
++
++---
++
++## PostCSS Usage
++
+ Use [Prefers Color Scheme] to process your CSS:
+ 
+ ```js
+@@ -95,19 +174,25 @@ instructions for:
+ 
+ ---
+ 
+-## How does the frontend work?
++## How does it work?
++
++The [Prefers Color Scheme] [PostCSS plugin](#PostCSS-Plugin) transforms
++`prefers-color-scheme` queries into `color-index` queries, changing
++`prefers-color-scheme: dark` into `(color-index: 48)`,
++`prefers-color-scheme: light` into `(color-index: 70)`, and
++`prefers-color-scheme: no-preference` into `(color-index: 22)`.
+ 
+-The `color-index` media query is understood in all major browsers going back to
+-Internet Explorer 9, but all implementations only seem to allow a `color-index`
+-of `0`.
++The frontend receives these `color-index` queries, which are understood in all
++major browsers going back to Internet Explorer 9. However, all browsers only
++apply a `color-index` of `0`, so all other values are otherwise ignored.
+ 
+-This script changes `(color-index: 48)` queries into
++[Prefers Color Scheme] changes `(color-index: 48)` queries into
+ `not all and (color-index: 48)` to activate “dark mode” specific CSS, and then
+ it inverts `(color-index: 70)` queries into `not all and (color-index: 48)`
+ to activate “light mode” specific CSS.
+ 
+ ```css
+-@media (color-index: 70) { /* "light" query */
++@media (color-index: 70) { /* prefers-color-scheme: light */
+   body {
+     background-color: white;
+     color: black;
+@@ -116,7 +201,7 @@ to activate “light mode” specific CSS.
+ ```
+ 
+ These valid queries are accessible to `document.styleSheet`, so no css parsing
+-is required to use this library, which is how the script is less than 300 bytes.
++is required to use this library, which is how the script is only 482 bytes.
+ 
+ ## Why does the fallback work this way?
+ 
+diff --git a/package.json b/package.json
+index 8eed73d..070beba 100644
+--- a/package.json
++++ b/package.json
+@@ -1,27 +1,33 @@
+ {
+   "name": "css-prefers-color-scheme",
+-  "version": "1.0.0",
+-  "description": "Use a light or dark color theme in CSS CSS",
++  "version": "2.0.0",
++  "description": "Use light and dark color schemes in all browsers",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+   "repository": "csstools/css-prefers-color-scheme",
+   "homepage": "https://github.com/csstools/css-prefers-color-scheme#readme",
+   "bugs": "https://github.com/csstools/css-prefers-color-scheme/issues",
+-  "main": "client.js",
+-  "module": "client.mjs",
++  "main": "index.js",
++  "module": "index.mjs",
+   "files": [
+-    "client.js",
+-    "client.mjs",
++    "browser.js",
++    "browser.js.map",
++    "browser.min.js",
++    "index.mjs",
++    "index.js",
+     "postcss.js",
+     "postcss.mjs"
+   ],
+   "scripts": {
+-    "build": "npm run build:client && npm run build:postcss",
+-    "build:client": "rollup -c .rollup.client.js --silent",
+-    "build:postcss": "rollup -c .rollup.postcss.js --silent",
++    "build": "npm run build:browser && npm run build:node && npm run build:postcss",
++    "build:browser": "npm run build:browser:dist && npm run build:browser:min",
++    "build:browser:dist": "cross-env NODE_ENV=browser rollup -c .rollup.js --silent",
++    "build:browser:min": "cross-env NODE_ENV=browser:min rollup -c .rollup.js --silent",
++    "build:node": "rollup -c .rollup.js --silent",
++    "build:postcss": "cross-env NODE_ENV=postcss rollup -c .rollup.js --silent",
+     "prepublishOnly": "npm test",
+     "pretest": "npm run build",
+-    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
++    "test": "npm run test:js && npm run test:tape",
+     "test:js": "eslint src/*.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape --plugin=postcss.js"
+   },
+@@ -29,18 +35,20 @@
+     "node": ">=6.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.2"
++    "postcss": "^7.0.5"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.1.0",
+-    "@babel/preset-env": "^7.0.0",
+-    "babel-eslint": "^9.0.0",
+-    "eslint": "^5.6.0",
++    "@babel/core": "^7.1.2",
++    "@babel/preset-env": "^7.1.0",
++    "babel-eslint": "^10.0.1",
++    "cross-env": "^5.2.0",
++    "eslint": "^5.8.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.2",
+-    "rollup-plugin-babel": "^4.0.1",
++    "rollup": "^0.66.6",
++    "rollup-plugin-babel": "^4.0.3",
++    "rollup-plugin-terser": "^3.0.0",
+     "uglify-js": "^3.4.9"
+   },
+   "eslintConfig": {
+diff --git a/src/browser.js b/src/browser.js
+new file mode 100644
+index 0000000..dba0990
+--- /dev/null
++++ b/src/browser.js
+@@ -0,0 +1,61 @@
++const colorIndexRegExp = /((?:not )?all and )?(\(color-index:\s*(22|48|70)\))/i;
++
++const prefersColorSchemeInit = initialColorScheme => {
++	const mediaQueryString = '(prefers-color-scheme: dark)';
++	const mediaQueryList = window.matchMedia && matchMedia(mediaQueryString);
++	const hasNativeSupport = mediaQueryList && mediaQueryList.media === mediaQueryString;
++	const mediaQueryListener = () => {
++		set(mediaQueryList.matches ? 'dark' : 'light');
++	};
++	const removeListener = () => {
++		if (mediaQueryList) {
++			mediaQueryList.removeListener(mediaQueryListener);
++		}
++	};
++	const set = colorScheme => {
++		if (colorScheme !== currentColorScheme) {
++			currentColorScheme = colorScheme;
++
++			if (typeof result.onChange === 'function') {
++				result.onChange();
++			}
++		}
++
++		[].forEach.call(document.styleSheets, styleSheet => {
++			[].forEach.call(styleSheet.cssRules, cssRule => {
++				const mediaMatch = (Object(cssRule.media).mediaText || '').match(colorIndexRegExp);
++
++				if (mediaMatch) {
++					cssRule.media.mediaText = (
++						(/^dark$/i.test(colorScheme)
++							? mediaMatch[3] === '48'
++						: /^light$/i.test(colorScheme)
++							? mediaMatch[3] === '70'
++						: mediaMatch[3] === '22')
++							? 'not all and '
++						: ''
++					) + cssRule.media.mediaText.replace(colorIndexRegExp, '$2');
++				}
++			});
++		});
++	};
++	const result = Object.defineProperty(
++		{ hasNativeSupport, removeListener },
++		'scheme',
++		{ get: () => currentColorScheme, set }
++	);
++
++	// initialize the color scheme using the provided value, the system value, or light
++	let currentColorScheme = initialColorScheme || (mediaQueryList && mediaQueryList.matches ? 'dark' : 'light');
++
++	set(currentColorScheme);
++
++	// listen for system changes
++	if (mediaQueryList) {
++		mediaQueryList.addListener(mediaQueryListener);
++	}
++
++	return result;
++};
++
++export default prefersColorSchemeInit;
+diff --git a/src/client.js b/src/client.js
+deleted file mode 100644
+index f867d3d..0000000
+--- a/src/client.js
++++ /dev/null
+@@ -1,21 +0,0 @@
+-const colorIndexRegExp = /((?:not )?all and )?(\(color-index:\s*(22|48|70)\))/i;
+-
+-export default style => {
+-	[].forEach.call(document.styleSheets, styleSheet => {
+-		[].forEach.call(styleSheet.cssRules, cssRule => {
+-			const mediaMatch = (Object(cssRule.media).mediaText || '').match(colorIndexRegExp);
+-
+-			if (mediaMatch) {
+-				cssRule.media.mediaText = (
+-					(/^dark$/i.test(style)
+-						? mediaMatch[3] === '48'
+-					: /^light$/i.test(style)
+-						? mediaMatch[3] === '70'
+-					: mediaMatch[3] === '22')
+-						? 'not all and '
+-					: ''
+-				) + cssRule.media.mediaText.replace(colorIndexRegExp, '$2');
+-			}
+-		});
+-	});
+-};
+diff --git a/src/postcss.js b/src/postcss.js
+index 2a949c5..cf92ab1 100644
+--- a/src/postcss.js
++++ b/src/postcss.js
+@@ -5,13 +5,21 @@ const prefersInterfaceRegExp = /\(\s*prefers-color-scheme\s*:\s*(dark|light|no-p
+ const colorIndexByStyle = { dark: 48, light: 70, 'no-preference': 22 };
+ const prefersInterfaceReplacer = ($0, style) => `(color-index: ${colorIndexByStyle[style.toLowerCase()]})`;
+ 
+-export default postcss.plugin('postcss-prefers-color-scheme', () => root => {
+-	root.walkAtRules(mediaRegExp, atRule => {
+-		const { params } = atRule;
+-		const altParams = params.replace(prefersInterfaceRegExp, prefersInterfaceReplacer);
++export default postcss.plugin('postcss-prefers-color-scheme', opts => {
++	const preserve = 'preserve' in Object(opts) ? opts.preserve : false;
+ 
+-		if (params !== altParams) {
+-			atRule.params = altParams;
+-		}
+-	});
++	return root => {
++		root.walkAtRules(mediaRegExp, atRule => {
++			const { params } = atRule;
++			const altParams = params.replace(prefersInterfaceRegExp, prefersInterfaceReplacer);
++
++			if (params !== altParams) {
++				if (preserve) {
++					atRule.cloneBefore({ params: altParams });
++				} else {
++					atRule.params = altParams;
++				}
++			}
++		});
++	}
+ });
+-- 
+2.33.1
+

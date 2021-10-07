@@ -1,0 +1,25 @@
+From d7652b1e6196e8f55bf3f0aac4ac090fec7ed54e Mon Sep 17 00:00:00 2001
+From: Adam Argyle <atom@argyleink.com>
+Date: Tue, 28 Apr 2020 04:49:38 -0700
+Subject: [PATCH 81/84] Update caniuse-lite (#170)
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index b6d6029..32f66b7 100644
+--- a/package.json
++++ b/package.json
+@@ -29,7 +29,7 @@
+   "dependencies": {
+     "autoprefixer": "^9.6.1",
+     "browserslist": "^4.6.4",
+-    "caniuse-lite": "^1.0.30000981",
++    "caniuse-lite": "^1.0.30001040",
+     "css-blank-pseudo": "^0.1.4",
+     "css-has-pseudo": "^0.10.0",
+     "css-prefers-color-scheme": "^3.1.1",
+-- 
+2.33.1
+

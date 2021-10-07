@@ -1,0 +1,73 @@
+From 04b917547d848f88e26cd39c003797a9f18175cb Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 11 May 2018 17:29:40 -0400
+Subject: [PATCH 03/15] Update README.md
+
+---
+ README.md | 30 +++++++++++++++---------------
+ 1 file changed, 15 insertions(+), 15 deletions(-)
+
+diff --git a/README.md b/README.md
+index 7f45027..881e0ca 100644
+--- a/README.md
++++ b/README.md
+@@ -12,18 +12,18 @@ color notation in CSS, following the [CSS Color] specification.
+ ```pcss
+ :root {
+   --firebrick: rgb(178 34 34);
+-  --firebrick-a50: color: rgb(70% 13.5% 13.5% / 50%);
+-  --firebrick-hsl: color: hsla(0 68% 42%);
+-  --firebrick-hsl-a50: color: hsl(0 68% 42% / 50%);
++  --firebrick-a50: rgb(70% 13.5% 13.5% / 50%);
++  --firebrick-hsl: hsla(0 68% 42%);
++  --firebrick-hsl-a50: hsl(0 68% 42% / 50%);
+ }
+ 
+ /* becomes */
+ 
+ :root {
+   --firebrick: rgb(178, 34, 34);
+-  --firebrick-a50: color: rgba(178, 34, 34, .5);
+-  --firebrick-hsl: color: hsl(0, 68%, 42%);
+-  --firebrick-hsl-a50: color: hsla(0, 68%, 42%, .5);
++  --firebrick-a50: rgba(178, 34, 34, .5);
++  --firebrick-hsl: hsl(0, 68%, 42%);
++  --firebrick-hsl-a50: hsla(0, 68%, 42%, .5);
+ }
+ ```
+ 
+@@ -164,9 +164,9 @@ postcssImageSetFunction({ preserve: true })
+ ```pcss
+ :root {
+   --firebrick: rgb(178 34 34);
+-  --firebrick-a50: color: rgb(70% 13.5% 13.5% / 50%);
+-  --firebrick-hsl: color: hsla(0 68% 42%);
+-  --firebrick-hsl-a50: color: hsl(0 68% 42% / 50%);
++  --firebrick-a50: rgb(70% 13.5% 13.5% / 50%);
++  --firebrick-hsl: hsla(0 68% 42%);
++  --firebrick-hsl-a50: hsl(0 68% 42% / 50%);
+ }
+ 
+ /* becomes */
+@@ -174,12 +174,12 @@ postcssImageSetFunction({ preserve: true })
+ :root {
+   --firebrick: rgb(178, 34, 34);
+   --firebrick: rgb(178 34 34);
+-  --firebrick-a50: color: rgba(178, 34, 34, .5);
+-  --firebrick-a50: color: rgb(70% 13.5% 13.5% / 50%);
+-  --firebrick-hsl: color: hsl(0, 68%, 42%);
+-  --firebrick-hsl: color: hsla(0 68% 42%);
+-  --firebrick-hsl-a50: color: hsla(0, 68%, 42%, .5);
+-  --firebrick-hsl-a50: color: hsl(0 68% 42% / 50%);
++  --firebrick-a50: rgba(178, 34, 34, .5);
++  --firebrick-a50: rgb(70% 13.5% 13.5% / 50%);
++  --firebrick-hsl: hsl(0, 68%, 42%);
++  --firebrick-hsl: hsla(0 68% 42%);
++  --firebrick-hsl-a50: hsla(0, 68%, 42%, .5);
++  --firebrick-hsl-a50: hsl(0 68% 42% / 50%);
+ }
+ ```
+ 
+-- 
+2.33.1
+

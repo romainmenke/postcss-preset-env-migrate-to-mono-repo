@@ -1,0 +1,54 @@
+From 1998709bbb6bca8aa40f11629d877d0c5e415755 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 16 Sep 2015 03:20:40 -0400
+Subject: [PATCH 20/89] Update plugin
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Normalize toRule’s appended children for mapping
+---
+ index.js | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/index.js b/index.js
+index ca130aa..7520e38 100644
+--- a/index.js
++++ b/index.js
+@@ -2,6 +2,15 @@ var bubble  = ['document', 'media', 'supports'];
+ var postcss = require('postcss');
+ var prefix  = '';
+ 
++function normalizeNodes(node) {
++	var index = -1;
++	var child;
++
++	while (child = node.nodes[++index]) {
++		child.parent = node;
++	}
++}
++
+ function transpileSelectors(fromRule, toRule) {
+ 	var selectors = [];
+ 
+@@ -32,6 +41,8 @@ function transpileNestRule(fromRule, toRule, atRule) {
+ 	toRule.selector  = atRule.params;
+ 	toRule.selectors = transpileSelectors(fromRule, toRule);
+ 
++	normalizeNodes(toRule);
++
+ 	parent.nodes.splice(++parent.nestedIndex, 0, toRule);
+ }
+ 
+@@ -48,6 +59,8 @@ function transpileAtRule(fromRule, toRule, atRule) {
+ 	toRule.parent    = atRule;
+ 	toRule.selector  = fromRule.selector;
+ 
++	normalizeNodes(toRule);
++
+ 	atRule.nodes  = [toRule];
+ 	atRule.parent = parent;
+ 
+-- 
+2.33.1
+

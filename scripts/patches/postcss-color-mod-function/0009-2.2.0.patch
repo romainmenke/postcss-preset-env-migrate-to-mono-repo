@@ -1,0 +1,39 @@
+From 7133e87af06fbf79a3aab76dbafd607b52d74679 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 22 Jan 2018 11:47:29 -0500
+Subject: [PATCH 09/29] 2.2.0
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 2 +-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 064d6bc..70ddca3 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS color-mod() Function
+ 
++### 2.2.0 (January 22, 2018)
++
++- Added `@csstools/convert-colors` to convert between color spaces
++
+ ### 2.1.0 (January 20, 2018)
+ 
+ - Added support for legacy (comma-separated) `hsl()` colors
+diff --git a/package.json b/package.json
+index edbc1ae..1beeaf9 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-mod-function",
+-  "version": "2.1.0",
++  "version": "2.2.0",
+   "description": "Modify colors using the color-mod() function in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

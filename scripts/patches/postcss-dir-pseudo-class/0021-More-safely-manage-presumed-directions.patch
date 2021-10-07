@@ -1,0 +1,66 @@
+From 0fcde20c0aa42bd8fdba4e2a50f8e229cf1c71c5 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 19 Sep 2017 15:53:39 -0400
+Subject: [PATCH 21/34] More safely manage presumed directions
+
+---
+ index.js                  |  2 +-
+ test/basic.dir.expect.css | 14 +++++++-------
+ 2 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/index.js b/index.js
+index c0a506d..337dae3 100644
+--- a/index.js
++++ b/index.js
+@@ -75,7 +75,7 @@ module.exports = postcss.plugin('postcss-dir-pseudo-class', (opts) => (root) =>
+ 
+ 						// not[dir] attribute
+ 						const notDirAttr = selectorParser.pseudo({
+-							value: ':not'
++							value: `${firstIsHtml || firstIsRoot ? '' : 'html'}:not`
+ 						});
+ 
+ 						notDirAttr.append(
+diff --git a/test/basic.dir.expect.css b/test/basic.dir.expect.css
+index b1a24dd..d74acaa 100644
+--- a/test/basic.dir.expect.css
++++ b/test/basic.dir.expect.css
+@@ -1,28 +1,28 @@
+-:not([dir="rtl"]) {
++html:not([dir="rtl"]) {
+ 	order: 0;
+ }
+ 
+-:not([dir="rtl"]) test {
++html:not([dir="rtl"]) test {
+ 	order: 1;
+ }
+ 
+-:not([dir="rtl"]) test * {
++html:not([dir="rtl"]) test * {
+ 	order: 2;
+ }
+ 
+-:not([dir="rtl"]) test * test {
++html:not([dir="rtl"]) test * test {
+ 	order: 3;
+ }
+ 
+-:not([dir="rtl"]) test {
++html:not([dir="rtl"]) test {
+ 	order: 4;
+ }
+ 
+-:not([dir="rtl"]) test test {
++html:not([dir="rtl"]) test test {
+ 	order: 5;
+ }
+ 
+-:not([dir="rtl"]) test test {
++html:not([dir="rtl"]) test test {
+ 	order: 6;
+ }
+ 
+-- 
+2.33.1
+

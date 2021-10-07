@@ -1,0 +1,48 @@
+From 4b6ec6ddeb2ba5b0ff6927e56b70db7df31f5d1c Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 14 Jun 2015 20:33:40 -0400
+Subject: [PATCH 02/30] Update package.json
+
+Initial release
+---
+ package.json | 28 ++++++++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+ create mode 100644 package.json
+
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..9e73ca5
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,28 @@
++{
++	"name": "postcss-pseudo-class-any-link",
++	"version": "0.1.0",
++	"description": "Use the proposed :any-link pseudo-class in CSS",
++	"keywords": ["postcss", "css", "postcss-plugin", "link", "visited", "any-link", "a", "area", "hyperlink", "href"],
++	"author": "Jonathan Neal <jonathantneal@hotmail.com>",
++	"license": "CC0-1.0",
++	"bugs": {
++		"url": "https://github.com/jonathantneal/postcss-pseudo-class-any-link/issues"
++	},
++	"homepage": "https://github.com/jonathantneal/postcss-pseudo-class-any-link",
++	"repository": {
++		"type": "git",
++		"url": "https://github.com/jonathantneal/postcss-pseudo-class-any-link.git"
++	},
++	"dependencies": {
++		"postcss": "^4.1.9"
++	},
++	"devDependencies": {
++		"chai": "^2.3.0",
++		"gulp": "^3.8.11",
++		"gulp-eslint": "^0.12.0",
++		"gulp-mocha": "^2.0.1"
++	},
++	"scripts": {
++		"test": "gulp"
++	}
++}
+-- 
+2.33.1
+

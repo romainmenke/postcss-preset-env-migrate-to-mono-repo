@@ -1,0 +1,28 @@
+From bd5775db5663797ee62cd8193593ba52e9c5e277 Mon Sep 17 00:00:00 2001
+From: Daniel Ruf <daniel.ruf@ueberbit.de>
+Date: Tue, 13 Nov 2018 12:46:12 +0100
+Subject: [PATCH 67/84] ci: test on Linux, macOS and Windows
+
+---
+ .travis.yml | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/.travis.yml b/.travis.yml
+index 7f1424c..6a81966 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -2,6 +2,11 @@
+ 
+ language: node_js
+ 
++os:
++  - windows
++  - linux
++  - osx
++
+ node_js:
+   - node
+   - 10
+-- 
+2.33.1
+

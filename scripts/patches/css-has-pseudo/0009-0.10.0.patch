@@ -1,0 +1,157 @@
+From 194f13c2fc603737e6a91a4f8c35ac1d718566c9 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 11 Dec 2018 22:31:36 -0500
+Subject: [PATCH 09/17] 0.10.0
+
+---
+ CHANGELOG.md   |  4 ++++
+ README.md      |  2 +-
+ package.json   |  2 +-
+ src/browser.js | 64 +++++++++++++++++++++++++++-----------------------
+ 4 files changed, 40 insertions(+), 32 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index e0bbbb2..2da2eb0 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to CSS Has Pseudo
+ 
++### 0.10.0 (December 11, 2018)
++
++- Fixed an issue where inaccessible rules would crash the library
++
+ ### 0.9.0 (November 26, 2018)
+ 
+ - Improved CLI usage
+diff --git a/README.md b/README.md
+index a3b1b0f..5e6676e 100644
+--- a/README.md
++++ b/README.md
+@@ -41,7 +41,7 @@ Next, use your transformed CSS with this script:
+ <script>cssHasPseudo(document)</script>
+ ```
+ 
+-That’s it. The script is 768 bytes and works in all browsers, including
++That’s it. The script is 765 bytes and works in all browsers, including
+ Internet Explorer 11. With a [Mutation Observer polyfill], the script will work
+ down to Internet Explorer 9.
+ 
+diff --git a/package.json b/package.json
+index bc44a40..d1bad47 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "css-has-pseudo",
+-  "version": "0.9.0",
++  "version": "0.10.0",
+   "description": "Style elements relative to other elements in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+diff --git a/src/browser.js b/src/browser.js
+index 095d4e6..dac0ebc 100644
+--- a/src/browser.js
++++ b/src/browser.js
+@@ -5,13 +5,13 @@ export default function cssHasPseudo(document) {
+ 	const attributeElement = document.createElement('x');
+ 
+ 	// walk all stylesheets to collect observed css rules
+-	Array.prototype.forEach.call(document.styleSheets, walkStyleSheet);
++	[].forEach.call(document.styleSheets, walkStyleSheet);
+ 	transformObservedItems();
+ 
+ 	// observe DOM modifications that affect selectors
+ 	const mutationObserver = new MutationObserver(mutationsList => {
+ 		mutationsList.forEach(mutation => {
+-			Array.prototype.forEach.call(mutation.addedNodes || [], node => {
++			[].forEach.call(mutation.addedNodes || [], node => {
+ 				// walk stylesheets to collect observed css rules
+ 				if (node.nodeType === 1 && node.sheet) {
+ 					walkStyleSheet(node.sheet);
+@@ -38,10 +38,10 @@ export default function cssHasPseudo(document) {
+ 				item => {
+ 					const nodes = [];
+ 
+-					Array.prototype.forEach.call(
++					[].forEach.call(
+ 						document.querySelectorAll(item.scopeSelector),
+ 						element => {
+-							const nthChild = Array.prototype.indexOf.call(element.parentNode.children, element) + 1;
++							const nthChild = [].indexOf.call(element.parentNode.children, element) + 1;
+ 							const relativeSelectors = item.relativeSelectors.map(
+ 								relativeSelector => item.scopeSelector + ':nth-child(' + nthChild + ') ' + relativeSelector
+ 							).join();
+@@ -86,7 +86,7 @@ export default function cssHasPseudo(document) {
+ 
+ 	// remove any observed cssrules that no longer apply
+ 	function cleanupObservedCssRules() {
+-		Array.prototype.push.apply(
++		[].push.apply(
+ 			observedItems,
+ 			observedItems.splice(0).filter(
+ 				item => item.rule.parentStyleSheet &&
+@@ -98,31 +98,35 @@ export default function cssHasPseudo(document) {
+ 
+ 	// walk a stylesheet to collect observed css rules
+ 	function walkStyleSheet(styleSheet) {
+-		// walk a css rule to collect observed css rules
+-		Array.prototype.forEach.call(styleSheet.cssRules || [], rule => {
+-			if (rule.selectorText) {
+-				// decode the selector text in all browsers to:
+-				// [1] = :scope, [2] = :not(:has), [3] = :has relative, [4] = :scope relative
+-				const selectors = decodeURIComponent(rule.selectorText.replace(/\\(.)/g, '$1')).match(/^(.*?)\[:(not-)?has\((.+?)\)\](.*?)$/);
+-
+-				if (selectors) {
+-					const attributeName = ':' + (selectors[2] ? 'not-' : '') + 'has(' +
+-						// encode a :has() pseudo selector as an attribute name
+-						encodeURIComponent(selectors[3]).replace(/%3A/g, ':').replace(/%5B/g, '[').replace(/%5D/g, ']').replace(/%2C/g, ',') +
+-					')';
+-
+-					observedItems.push({
+-						rule,
+-						scopeSelector: selectors[1],
+-						isNot: selectors[2],
+-						relativeSelectors: selectors[3].split(/\s*,\s*/),
+-						attributeName,
+-						nodes: []
+-					});
++		try {
++			// walk a css rule to collect observed css rules
++			[].forEach.call(styleSheet.cssRules || [], rule => {
++				if (rule.selectorText) {
++					// decode the selector text in all browsers to:
++					// [1] = :scope, [2] = :not(:has), [3] = :has relative, [4] = :scope relative
++					const selectors = decodeURIComponent(rule.selectorText.replace(/\\(.)/g, '$1')).match(/^(.*?)\[:(not-)?has\((.+?)\)\](.*?)$/);
++
++					if (selectors) {
++						const attributeName = ':' + (selectors[2] ? 'not-' : '') + 'has(' +
++							// encode a :has() pseudo selector as an attribute name
++							encodeURIComponent(selectors[3]).replace(/%3A/g, ':').replace(/%5B/g, '[').replace(/%5D/g, ']').replace(/%2C/g, ',') +
++						')';
++
++						observedItems.push({
++							rule,
++							scopeSelector: selectors[1],
++							isNot: selectors[2],
++							relativeSelectors: selectors[3].split(/\s*,\s*/),
++							attributeName,
++							nodes: []
++						});
++					}
++				} else {
++					walkStyleSheet(rule);
+ 				}
+-			} else {
+-				walkStyleSheet(rule);
+-			}
+-		});
++			});
++		} catch (error) {
++			/* do nothing and continue */
++		}
+ 	}
+ }
+-- 
+2.33.1
+

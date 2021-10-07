@@ -1,0 +1,60 @@
+From 5b49b7cc618c0b6e0724c626a25125e3c7c39a96 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 21 Mar 2018 00:42:54 -0400
+Subject: [PATCH 24/43] Use consistent postcss-logical URL
+
+---
+ README.md    | 10 +++++-----
+ package.json |  6 +++---
+ 2 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/README.md b/README.md
+index faac0db..58fc9c6 100644
+--- a/README.md
++++ b/README.md
+@@ -276,20 +276,20 @@ before logical declarations without replacing them. By default, directional
+ fallbacks replace logical declaration. If `preserve` is defined as `true`, then
+ the `dir` option will be ignored.
+ 
+-[cli-url]: https://travis-ci.org/jonathantneal/postcss-logical-properties
+-[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-logical-properties.svg
++[cli-url]: https://travis-ci.org/jonathantneal/postcss-logical
++[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-logical.svg
+ [css-img]: https://jonathantneal.github.io/css-db/badge/css-logical.svg
+ [css-url]: https://jonathantneal.github.io/css-db/#css-logical
+ [git-url]: https://gitter.im/postcss/postcss
+ [git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
+ [npm-url]: https://www.npmjs.com/package/postcss-logical
+ [npm-img]: https://img.shields.io/npm/v/postcss-logical.svg
+-[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-logical-properties
+-[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-logical-properties.svg
++[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-logical
++[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-logical.svg
+ 
+ [CSS Logical Properties and Values]: https://drafts.csswg.org/css-logical/
+ [Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+ [Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
+ [PostCSS Loader]: https://github.com/postcss/postcss-loader
+-[PostCSS Logical Properties and Values]: https://github.com/jonathantneal/postcss-logical-properties
++[PostCSS Logical Properties and Values]: https://github.com/jonathantneal/postcss-logical
+diff --git a/package.json b/package.json
+index 40aa9a8..1b0978f 100644
+--- a/package.json
++++ b/package.json
+@@ -4,9 +4,9 @@
+   "description": "Use logical properties and values in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-  "repository": "jonathantneal/postcss-logical-properties",
+-  "homepage": "https://github.com/jonathantneal/postcss-logical-properties#readme",
+-  "bugs": "https://github.com/jonathantneal/postcss-logical-properties/issues",
++  "repository": "jonathantneal/postcss-logical",
++  "homepage": "https://github.com/jonathantneal/postcss-logical#readme",
++  "bugs": "https://github.com/jonathantneal/postcss-logical/issues",
+   "main": "index.cjs.js",
+   "module": "index.es.js",
+   "files": [
+-- 
+2.33.1
+

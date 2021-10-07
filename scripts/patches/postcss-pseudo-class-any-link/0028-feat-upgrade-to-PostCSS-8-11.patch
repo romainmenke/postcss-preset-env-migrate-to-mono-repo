@@ -1,0 +1,194 @@
+From 51298aeff4a80a36ba6dc000b2fb68685fd26688 Mon Sep 17 00:00:00 2001
+From: Armano <armano2@users.noreply.github.com>
+Date: Tue, 6 Jul 2021 02:07:32 +0200
+Subject: [PATCH 28/30] feat: upgrade to PostCSS 8 (#11)
+
+---
+ .rollup.js   | 16 ----------------
+ .tape.js     | 16 +++++++---------
+ .travis.yml  |  3 ++-
+ README.md    |  2 +-
+ index.js     | 27 ++++++++++++++++++---------
+ package.json | 33 ++++++++++-----------------------
+ 6 files changed, 38 insertions(+), 59 deletions(-)
+ delete mode 100644 .rollup.js
+
+diff --git a/.rollup.js b/.rollup.js
+deleted file mode 100644
+index ebe39f9..0000000
+--- a/.rollup.js
++++ /dev/null
+@@ -1,16 +0,0 @@
+-import babel from 'rollup-plugin-babel';
+-
+-export default {
+-	input: 'index.js',
+-	output: [
+-		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
+-		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
+-	],
+-	plugins: [
+-		babel({
+-			presets: [
+-				['@babel/env', { modules: false, targets: { node: 6 } }]
+-			]
+-		})
+-	]
+-};
+diff --git a/.tape.js b/.tape.js
+index 6d365d8..24d784e 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,13 +1,11 @@
+ module.exports = {
+-	'postcss-pseudo-class-any-link': {
+-		'basic': {
+-			message: 'supports basic usage'
+-		},
+-		'basic:preserve-false': {
+-			message: 'supports { preserve: false } usage',
+-			options: {
+-				preserve: false
+-			}
++	'basic': {
++		message: 'supports basic usage'
++	},
++	'basic:preserve-false': {
++		message: 'supports { preserve: false } usage',
++		options: {
++			preserve: false
+ 		}
+ 	}
+ };
+diff --git a/.travis.yml b/.travis.yml
+index e1f11a5..6b7feec 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,8 @@
+ language: node_js
+ 
+ node_js:
+-  - 6
++  - 10
++  - 12
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/README.md b/README.md
+index f8c66d6..8ab70a3 100644
+--- a/README.md
++++ b/README.md
+@@ -35,7 +35,7 @@ From the [proposal][Selectors]:
+ Add [PostCSS Pseudo Class Any Link] to your project:
+ 
+ ```bash
+-npm install postcss-pseudo-class-any-link --save-dev
++npm install postcss postcss-pseudo-class-any-link --save-dev
+ ```
+ 
+ Use [PostCSS Pseudo Class Any Link] to process your CSS:
+diff --git a/index.js b/index.js
+index 374beaf..423caba 100644
+--- a/index.js
++++ b/index.js
+@@ -1,14 +1,21 @@
+-import postcss from 'postcss';
+-import parser from 'postcss-selector-parser';
++const parser = require('postcss-selector-parser');
+ 
+ const anyAnyLinkMatch = /:any-link/;
+ 
+-export default postcss.plugin('postcss-pseudo-class-any-link', opts => {
++/**
++ * @param {{preserve?: boolean}} opts
++ * @returns {import('postcss').Plugin}
++ */
++module.exports = function creator(opts) {
+ 	const preserve = 'preserve' in Object(opts) ? Boolean(opts.preserve) : true;
+ 
+-	return root => {
+-		// walk each matching rule
+-		root.walkRules(anyAnyLinkMatch, rule => {
++	return {
++		postcssPlugin: 'postcss-pseudo-class-any-link',
++		Rule(rule) {
++			if (!anyAnyLinkMatch.test(rule.selector)) {
++				return;
++			}
++
+ 			const rawSelector = rule.raws.selector && rule.raws.selector.raw || rule.selector;
+ 
+ 			// workaround for https://github.com/postcss/postcss-selector-parser/issues/28#issuecomment-171910556
+@@ -62,6 +69,8 @@ export default postcss.plugin('postcss-pseudo-class-any-link', opts => {
+ 					}
+ 				}
+ 			}
+-		})
+-	};
+-});
++		}
++	}
++}
++
++module.exports.postcss = true;
+diff --git a/package.json b/package.json
+index 35680b7..ce0ab68 100644
+--- a/package.json
++++ b/package.json
+@@ -7,43 +7,30 @@
+   "repository": "jonathantneal/postcss-pseudo-class-any-link",
+   "homepage": "https://github.com/jonathantneal/postcss-pseudo-class-any-link#readme",
+   "bugs": "https://github.com/jonathantneal/postcss-pseudo-class-any-link/issues",
+-  "main": "index.cjs.js",
+-  "module": "index.es.mjs",
+-  "files": [
+-    "index.cjs.js",
+-    "index.cjs.js.map",
+-    "index.es.mjs",
+-    "index.es.mjs.map"
+-  ],
++  "main": "index.js",
+   "scripts": {
+     "prepublishOnly": "npm test",
+-    "pretest": "rollup -c .rollup.js --silent",
+     "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+-    "test:ec": "echint --ignore index.*.js test",
+     "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+-    "node": ">=6.0.0"
++    "node": ">=10.0.0"
++  },
++  "peerDependencies": {
++    "postcss": "^8.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.2",
+-    "postcss-selector-parser": "^5.0.0-rc.3"
++    "postcss-selector-parser": "^6.0.4"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.0.0",
+-    "@babel/preset-env": "^7.0.0",
+-    "babel-eslint": "^9.0.0",
+-    "eslint": "^5.6.0",
++    "eslint": "^7.22.0",
+     "eslint-config-dev": "^2.0.0",
+-    "postcss-tape": "^2.2.0",
+-    "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.0",
+-    "rollup-plugin-babel": "^4.0.1"
++    "postcss": "^8.2.8",
++    "postcss-tape": "^6.0.0"
+   },
+   "eslintConfig": {
+-    "extends": "dev",
+-    "parser": "babel-eslint"
++    "extends": "dev"
+   },
+   "keywords": [
+     "postcss",
+-- 
+2.33.1
+

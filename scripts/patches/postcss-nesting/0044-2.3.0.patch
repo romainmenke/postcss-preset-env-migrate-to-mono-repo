@@ -1,0 +1,614 @@
+From f582a24ceceabe61c0b5a0a975c49de1d34466c3 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 20 Feb 2016 23:11:32 -0500
+Subject: [PATCH 44/89] 2.3.0
+
+---
+ .editorconfig         |   1 -
+ .eslintrc             | 267 +++++++++++++++++++++++-------------------
+ .jscsrc               | 102 ++++++++++++++++
+ .travis.yml           |   2 +-
+ CHANGELOG.md          |   6 +
+ README.md             |  24 ++--
+ package.json          |  20 ++--
+ test/media.css        |   8 ++
+ test/media.expect.css |  19 ++-
+ 9 files changed, 309 insertions(+), 140 deletions(-)
+ create mode 100644 .jscsrc
+
+diff --git a/.editorconfig b/.editorconfig
+index d309381..5a40119 100644
+--- a/.editorconfig
++++ b/.editorconfig
+@@ -13,4 +13,3 @@ trim_trailing_whitespace = false
+ [*.{json,yml}]
+ indent_size = 2
+ indent_style = space
+-insert_final_newline = false
+diff --git a/.eslintrc b/.eslintrc
+index d85f696..33ed8c1 100644
+--- a/.eslintrc
++++ b/.eslintrc
+@@ -1,122 +1,153 @@
+ {
+-	"rules": {
+-		"no-shadow-restricted-names":  [2],
+-		"computed-property-spacing":   [2],
+-		"no-empty-character-class":    [2],
+-		"no-irregular-whitespace":     [2],
+-		"no-unexpected-multiline":     [2],
+-		"no-multiple-empty-lines":     [2],
+-		"space-return-throw-case":     [2],
+-		"no-constant-condition":       [2],
+-		"no-extra-boolean-cast":       [2],
+-		"no-inner-declarations":       [2],
+-		"no-this-before-super":        [2],
+-		"no-array-constructor":        [2],
+-		"object-curly-spacing":        [2, "always"],
+-		"no-floating-decimal":         [2],
+-		"no-warning-comments":         [2],
+-		"handle-callback-err":         [2],
+-		"no-unneeded-ternary":         [2],
+-		"operator-assignment":         [2],
+-		"space-before-blocks":         [2],
+-		"no-native-reassign":          [2],
+-		"no-trailing-spaces":          [2],
+-		"operator-linebreak":          [2, "after"],
+-		"consistent-return":           [2],
+-		"no-duplicate-case":           [2],
+-		"no-invalid-regexp":           [2],
+-		"no-negated-in-lhs":           [2],
+-		"constructor-super":           [2],
+-		"no-nested-ternary":           [0],
+-		"no-extend-native":            [2],
+-		"block-scoped-var":            [2],
+-		"no-control-regex":            [2],
+-		"no-sparse-arrays":            [2],
+-		"no-throw-literal":            [2],
+-		"no-return-assign":            [2],
+-		"no-const-assign":             [2],
+-		"no-class-assign":             [2],
+-		"no-extra-parens":             [2],
+-		"no-regex-spaces":             [2],
+-		"no-implied-eval":             [2],
+-		"no-useless-call":             [2],
+-		"no-self-compare":             [2],
+-		"no-octal-escape":             [2],
+-		"no-new-wrappers":             [2],
+-		"no-process-exit":             [2],
+-		"no-catch-shadow":             [2],
+-		"linebreak-style":             [2],
+-		"space-infix-ops":             [2],
+-		"space-unary-ops":             [2],
+-		"no-func-assign":              [2],
+-		"no-unreachable":              [2],
+-		"accessor-pairs":              [2],
+-		"no-empty-label":              [2],
+-		"no-fallthrough":              [2],
+-		"no-path-concat":              [2],
+-		"no-new-require":              [2],
+-		"no-spaced-func":              [2],
+-		"no-unused-vars":              [2],
+-		"spaced-comment":              [2],
+-		"no-delete-var":               [2],
+-		"comma-spacing":               [2],
+-		"no-extra-semi":               [2],
+-		"no-extra-bind":               [2],
+-		"arrow-spacing":               [2],
+-		"prefer-spread":               [2],
+-		"no-new-object":               [2],
+-		"no-multi-str":                [2],
+-		"semi-spacing":                [2],
+-		"no-lonely-if":                [2],
+-		"dot-notation":                [2],
+-		"dot-location":                [2, "property"],
+-		"comma-dangle":                [2, "never"],
+-		"no-dupe-args":                [2],
+-		"no-dupe-keys":                [2],
+-		"no-ex-assign":                [2],
+-		"no-obj-calls":                [2],
+-		"valid-typeof":                [2],
+-		"default-case":                [2],
+-		"no-redeclare":                [2],
+-		"no-div-regex":                [2],
+-		"no-sequences":                [2],
+-		"no-label-var":                [2],
+-		"comma-style":                 [2],
+-		"brace-style":                 [2],
+-		"no-debugger":                 [2],
+-		"quote-props":                 [0],
+-		"no-iterator":                 [2],
+-		"no-new-func":                 [2],
+-		"key-spacing":                 [2, { "align": "value" }],
+-		"complexity":                  [2],
+-		"new-parens":                  [2],
+-		"no-eq-null":                  [2],
+-		"no-bitwise":                  [0],
+-		"wrap-iife":                   [2],
+-		"no-caller":                   [2],
+-		"use-isnan":                   [2],
+-		"no-labels":                   [2],
+-		"no-shadow":                   [2],
+-		"camelcase":                   [2],
+-		"eol-last":                    [2],
+-		"no-octal":                    [2],
+-		"no-empty":                    [2],
+-		"no-alert":                    [2],
+-		"no-proto":                    [2],
+-		"no-undef":                    [2],
+-		"no-eval":                     [2],
+-		"no-with":                     [2],
+-		"no-void":                     [2],
+-		"new-cap":                     [2],
+-		"eqeqeq":                      [2],
+-		"no-new":                      [2],
+-		"quotes":                      [2, "single"],
+-		"indent":                      [2, "tab"],
+-		"semi":                        [2, "always"],
+-		"yoda":                        [2, "never"]
+-	},
+ 	"env": {
+-		"mocha": true,
+-		"node":  true
++		"node": true
++	},
++	"rules": {
++		"accessor-pairs": [2],
++		"block-scoped-var": [2],
++		"callback-return": [2],
++		"complexity": [2, 20],
++		"consistent-return": [2],
++		"consistent-this": [2, "self"],
++		"constructor-super": [2],
++		"default-case": [2],
++		"eqeqeq": [2],
++		"func-style": [0],
++		"global-require": [2],
++		"guard-for-in": [0],
++		"handle-callback-err": [2, "^err(or)?$"],
++		"id-length": [0],
++		"id-match": [0],
++		"init-declarations": [0],
++		"max-depth": [2, 6],
++		"max-nested-callbacks": [0],
++		"max-params": [2, 3],
++		"max-statements": [0],
++		"new-parens": [0],
++		"no-alert": [2],
++		"no-array-constructor": [0],
++		"no-bitwise": [0],
++		"no-caller": [2],
++		"no-case-declarations": [2],
++		"no-catch-shadow": [2],
++		"no-class-assign": [2],
++		"no-cond-assign": [2],
++		"no-console": [0],
++		"no-const-assign": [2],
++		"no-constant-condition": [0],
++		"no-continue": [0],
++		"no-control-regex": [2],
++		"no-debugger": [2],
++		"no-delete-var": [2],
++		"no-div-regex": [0],
++		"no-dupe-args": [2],
++		"no-dupe-class-members": [2],
++		"no-dupe-keys": [2],
++		"no-duplicate-case": [2],
++		"no-else-return": [0],
++		"no-empty-character-class": [2],
++		"no-empty-label": [2],
++		"no-empty-pattern": [2],
++		"no-empty": [2],
++		"no-eq-null": [2],
++		"no-eval": [2],
++		"no-ex-assign": [2],
++		"no-extend-native": [0],
++		"no-extra-bind": [2],
++		"no-extra-boolean-cast": [2],
++		"no-extra-parens": [2],
++		"no-extra-semi": [2],
++		"no-fallthrough": [2],
++		"no-floating-decimal": [2],
++		"no-func-assign": [2],
++		"no-implicit-coercion": [2],
++		"no-implicit-globals": [0],
++		"no-implied-eval": [2],
++		"no-inline-comments": [0],
++		"no-inner-declarations": [2],
++		"no-invalid-regexp": [2],
++		"no-invalid-this": [0],
++		"no-irregular-whitespace": [2],
++		"no-iterator": [2],
++		"no-label-var": [2],
++		"no-labels": [0],
++		"no-lone-blocks": [2],
++		"no-lonely-if": [2],
++		"no-loop-func": [2],
++		"no-magic-numbers": [0],
++		"no-mixed-requires": [0],
++		"no-multi-str": [2],
++		"no-native-reassign": [2],
++		"no-negated-condition": [0],
++		"no-negated-in-lhs": [2],
++		"no-nested-ternary": [0],
++		"no-new-func": [0],
++		"no-new-object": [2],
++		"no-new-require": [0],
++		"no-new-wrappers": [2],
++		"no-new": [2],
++		"no-obj-calls": [2],
++		"no-octal-escape": [2],
++		"no-octal": [2],
++		"no-param-reassign": [2],
++		"no-path-concat": [2],
++		"no-plusplus": [0],
++		"no-process-env": [2],
++		"no-process-exit": [0],
++		"no-proto": [2],
++		"no-redeclare": [2],
++		"no-regex-spaces": [0],
++		"no-restricted-imports": [0],
++		"no-restricted-syntax": [0],
++		"no-return-assign": [2],
++		"no-script-url": [0],
++		"no-self-compare": [2],
++		"no-sequences": [2],
++		"no-shadow-restricted-names": [2],
++		"no-shadow": [2],
++		"no-sparse-arrays": [2],
++		"no-sync": [0],
++		"no-ternary": [0],
++		"no-this-before-super": [2],
++		"no-throw-literal": [2],
++		"no-undef-init": [0],
++		"no-undef": [2],
++		"no-undefined": [0],
++		"no-unneeded-ternary": [2],
++		"no-unreachable": [2],
++		"no-unused-expressions": [2],
++		"no-unused-vars": [2],
++		"no-use-before-define": [0],
++		"no-useless-call": [2],
++		"no-useless-concat": [2],
++		"no-var": [0],
++		"no-void": [0],
++		"no-with": [2],
++		"object-shorthand": [0],
++		"one-var": [0],
++		"operator-assignment": [2, "always"],
++		"prefer-arrow-callback": [0],
++		"prefer-const": [0],
++		"prefer-reflect": [0],
++		"prefer-rest-params": [0],
++		"prefer-spread": [0],
++		"prefer-template": [0],
++		"quotes": [0],
++		"radix": [2, "as-needed"],
++		"require-yield": [0],
++		"sort-imports": [0],
++		"sort-vars": [0],
++		"strict": [0],
++		"use-isnan": [2],
++		"valid-typeof": [2],
++		"vars-on-top": [0],
++		"wrap-iife": [2, "inside"],
++		"wrap-regex": [0],
++		"yoda": [0],
++
++		"camelcase": [0],
++		"key-spacing": [0],
++		"quote-props": [0],
++		"spaced-comment": [0]
+ 	}
+ }
+diff --git a/.jscsrc b/.jscsrc
+new file mode 100644
+index 0000000..66d97a3
+--- /dev/null
++++ b/.jscsrc
+@@ -0,0 +1,102 @@
++{
++	"disallowKeywords": [
++		"with"
++	],
++	"disallowKeywordsOnNewLine": [
++		"else"
++	],
++	"disallowMultipleSpaces": false,
++	"disallowMixedSpacesAndTabs": true,
++	"disallowMultipleLineBreaks": true,
++	"disallowMultipleLineStrings": true,
++	"disallowMultipleVarDecl": true,
++	"disallowNewlineBeforeBlockStatements": true,
++	"disallowSpaceAfterObjectKeys": true,
++	"disallowSpaceAfterPrefixUnaryOperators": true,
++	"disallowSpacesInCallExpression": true,
++	"disallowSpacesInFunctionDeclaration": {
++		"beforeOpeningRoundBrace": true
++	},
++	"disallowSpacesInsideArrayBrackets": "all",
++	"disallowSpacesInsideObjectBrackets": "all",
++	"disallowSpacesInsideParentheses": true,
++	"disallowTrailingWhitespace": true,
++	"maximumLineLength": null,
++	"requireCamelCaseOrUpperCaseIdentifiers": true,
++	"requireCapitalizedConstructors": true,
++	"requireCurlyBraces": [
++		"if",
++		"else",
++		"for",
++		"while",
++		"do",
++		"try",
++		"catch"
++	],
++	"requireDotNotation": true,
++	"requireLineFeedAtFileEnd": true,
++	"requireOperatorBeforeLineBreak": true,
++	"requireSemicolons": true,
++	"requireSpaceAfterBinaryOperators": true,
++	"requireSpaceAfterKeywords": [
++		"if",
++		"else",
++		"for",
++		"while",
++		"do",
++		"switch",
++		"return",
++		"try",
++		"catch"
++	],
++	"requireSpaceBeforeBinaryOperators": [
++		"=",
++		"+=",
++		"-=",
++		"*=",
++		"/=",
++		"%=",
++		"<<=",
++		">>=",
++		">>>=",
++		"&=",
++		"|=",
++		"^=",
++		"+=",
++		"+",
++		"-",
++		"*",
++		"/",
++		"%",
++		"<<",
++		">>",
++		">>>",
++		"&",
++		"|",
++		"^",
++		"&&",
++		"||",
++		"===",
++		"==",
++		">=",
++		"<=",
++		"<",
++		">",
++		"!=",
++		"!=="
++	],
++	"requireSpaceBeforeBlockStatements": true,
++	"requireSpaceBeforeObjectValues": true,
++	"requireSpacesInAnonymousFunctionExpression": {
++		"beforeOpeningCurlyBrace": true,
++		"beforeOpeningRoundBrace": true
++	},
++	"requireSpacesInConditionalExpression": true,
++	"requireSpacesInForStatement": true,
++	"requireSpacesInFunctionDeclaration": {
++		"beforeOpeningCurlyBrace": true
++	},
++	"validateIndentation": "\t",
++	"validateParameterSeparator": ", ",
++	"validateQuoteMarks": "'"
++}
+diff --git a/.travis.yml b/.travis.yml
+index 33612fd..c8d0663 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -2,4 +2,4 @@ sudo: false
+ language: node_js
+ node_js:
+   - stable
+-  - "0.12"
+\ No newline at end of file
++  - "0.12"
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index f1a1b00..6cefb3f 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,9 @@
++## 2.3.0 (2016-02-20)
++
++- Updated: JavaScript formatting, linting, tests, and documentation
++- Updated: Properly concatenate at-rules with or expressions
++- Updated: Update internal plugin name to postcss-nesting
++
+ ## 2.2.0 (2016-01-30)
+ 
+ - Added: Nesting of all at-rules
+diff --git a/README.md b/README.md
+index d0f01d9..8b068d9 100644
+--- a/README.md
++++ b/README.md
+@@ -7,51 +7,51 @@
+ [CSS Nesting] allows you to nest one style rule inside another, following the [CSS Nesting Module Level 3] specification.
+ 
+ ```css
+-/* at rule nesting */
++/* direct nesting */
+ 
+ a, b {
+ 	color: red;
+ 
+-	@nest & c, & d {
++	& c, & d {
+ 		color: white;
+ 	}
+ 
+-	@nest & & {
++	& & {
+ 		color: blue;
+ 	}
+ 
+-	@nest &:hover {
++	&:hover {
+ 		color: black;
+ 	}
+ 
+ 	@media (min-width: 30em) {
+ 		color: yellow;
++
++		@media (min-device-pixel-ratio: 1.5) {
++			color: green;
++		}
+ 	}
+ }
+ 
+-/* direct nesting */
++/* or at-rule nesting */
+ 
+ a, b {
+ 	color: red;
+ 
+-	& c, & d {
++	@nest & c, & d {
+ 		color: white;
+ 	}
+ 
+-	& & {
++	@nest & & {
+ 		color: blue;
+ 	}
+ 
+-	&:hover {
++	@nest &:hover {
+ 		color: black;
+ 	}
+ 
+ 	@media (min-width: 30em) {
+ 		color: yellow;
+-
+-		@media (min-device-pixel-ratio: 1.5) {
+-			color: green;
+-		}
+ 	}
+ }
+ 
+diff --git a/package.json b/package.json
+index 0866c47..014ba86 100644
+--- a/package.json
++++ b/package.json
+@@ -1,17 +1,22 @@
+ {
+   "name": "postcss-nesting",
+-  "version": "2.2.0",
++  "version": "2.3.0",
+   "description": "Transpiles nested rules according to CSS Nesting Module Level 3",
+   "keywords": [
+     "postcss",
+     "css",
+     "postcss-plugin",
++    "atrules",
++    "child",
++    "children",
++    "cssnext",
++    "nested",
+     "nestings",
+-    "selectors",
+     "rules",
+-    "specs",
++    "selectors",
+     "specifications",
+-    "cssnext"
++    "specs",
++    "w3c"
+   ],
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -19,15 +24,16 @@
+   "bugs": "https://github.com/jonathantneal/postcss-nesting/issues",
+   "homepage": "https://github.com/jonathantneal/postcss-nesting",
+   "dependencies": {
+-    "postcss": "^5.0.14"
++    "postcss": "^5.0.16"
+   },
+   "devDependencies": {
+     "eslint": "^1.10.3",
++    "jscs": "^2.10.1",
+     "tap-spec": "^4.1.1",
+     "tape": "^4.4.0"
+   },
+   "scripts": {
+-    "lint": "eslint . --ignore-path .gitignore",
++    "lint": "eslint *.js --ignore-path .gitignore && jscs *.js",
+     "tape": "tape test.js | tap-spec",
+     "test": "npm run lint && npm run tape"
+   },
+@@ -35,4 +41,4 @@
+     "iojs": ">=2.0.0",
+     "node": ">=0.12.0"
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/test/media.css b/test/media.css
+index 6e8af9b..39cf052 100644
+--- a/test/media.css
++++ b/test/media.css
+@@ -15,3 +15,11 @@
+ 		}
+ 	}
+ }
++
++.main {
++	@media screen, print and speech {
++		@media (max-width: 300px), (min-aspect-ratio: 16/9) {
++			color: black;
++		}
++	}
++}
+diff --git a/test/media.expect.css b/test/media.expect.css
+index c59823b..05858b3 100644
+--- a/test/media.expect.css
++++ b/test/media.expect.css
+@@ -8,7 +8,8 @@
+ 		color: white
+ 	}
+ 
+-	.main .child {}
++	.main .child {
++}
+ 	}
+ 
+ 	@media (min-width: 100px) and (max-width: 200px) {
+@@ -24,3 +25,19 @@
+ 		color: green
+ 	}
+ }
++
++.main {
++}
++
++@media screen, print and speech {
++
++	.main {
++}
++	}
++
++@media screen and (max-width: 300px), screen and (min-aspect-ratio: 16/9), print and speech and (max-width: 300px), print and speech and (min-aspect-ratio: 16/9) {
++
++	.main {
++		color: black
++	}
++}
+-- 
+2.33.1
+

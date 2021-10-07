@@ -1,0 +1,115 @@
+From c4d16ab54cd88f66d50c574396e174e990e45d1b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Ren=C3=A9e=20Kooi?= <renee@kooi.me>
+Date: Tue, 15 Jun 2021 21:16:54 +0200
+Subject: [PATCH 13/15] update to postcss 8 (#5)
+
+* update to postcss 8
+
+* Update package.json
+
+Co-authored-by: Romain Menke <11521496+romainmenke@users.noreply.github.com>
+
+Co-authored-by: Jonathan Neal <jonathantneal@hotmail.com>
+Co-authored-by: Romain Menke <11521496+romainmenke@users.noreply.github.com>
+---
+ README.md            |  8 --------
+ package.json         |  9 ++++++---
+ src/index.js         | 18 +++++++++---------
+ src/onCSSFunction.js |  4 ----
+ 4 files changed, 15 insertions(+), 24 deletions(-)
+
+diff --git a/README.md b/README.md
+index 8929958..e2d6a1b 100644
+--- a/README.md
++++ b/README.md
+@@ -36,14 +36,6 @@ npm install postcss-color-functional-notation --save-dev
+ 
+ Use [PostCSS Color Functional Notation] to process your CSS:
+ 
+-```js
+-const postcssColorFunctionalNotation = require('postcss-color-functional-notation');
+-
+-postcssColorFunctionalNotation.process(YOUR_CSS /*, processOptions, pluginOptions */);
+-```
+-
+-Or use it as a [PostCSS] plugin:
+-
+ ```js
+ const postcss = require('postcss');
+ const postcssColorFunctionalNotation = require('postcss-color-functional-notation');
+diff --git a/package.json b/package.json
+index 49fcdca..8bf6c21 100644
+--- a/package.json
++++ b/package.json
+@@ -26,15 +26,18 @@
+     "node": ">=10.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.27",
+-    "postcss-values-parser": "^3.2.0"
++    "postcss-values-parser": "^5.0.0"
++  },
++  "peerDependencies": {
++    "postcss": "^8.0.0"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.9.0",
+     "@babel/preset-env": "^7.9.5",
+     "babel-eslint": "^10.1.0",
+     "eslint": "^6.8.0",
+-    "postcss-tape": "^5.0.2",
++    "postcss": "^8.0.5",
++    "postcss-tape": "^6.0.0",
+     "pre-commit": "^1.2.2",
+     "rollup": "^2.7.2",
+     "rollup-plugin-babel": "^4.4.0"
+diff --git a/src/index.js b/src/index.js
+index 4e2200c..202e0b0 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -1,18 +1,18 @@
+-import postcss from 'postcss'
+ import onCSSDeclaration from './onCSSDeclaration'
+ import options from './options'
+ 
+ /** Transform space and slash separated color functions in CSS. */
+-const postcssPlugin = postcss.plugin('postcss-color-functional-notation', opts => {
++export default function postcssColorFunctionalNotation(opts) {
+ 	options.preserve = 'preserve' in Object(opts) ? Boolean(opts.preserve) : false
+ 
+-	return root => {
+-		root.walkDecls(onCSSDeclaration)
++	return {
++		postcssPlugin: 'postcss-color-functional-notation',
++		Declaration: onCSSDeclaration
+ 	}
+-})
++}
+ 
+-export default postcssPlugin
++postcssColorFunctionalNotation.postcss = true
+ 
+-/** @typedef {import('postcss').Root} CSSRoot */ 
+-/** @typedef {(root: CSSRoot) => void} PostCSSTransformCallback */ 
+-/** @typedef {(opts: options) => PostCSSTransformCallback} PostCSSPluginInitializer */ 
++/** @typedef {import('postcss').Root} CSSRoot */
++/** @typedef {(root: CSSRoot) => void} PostCSSTransformCallback */
++/** @typedef {(opts: options) => PostCSSTransformCallback} PostCSSPluginInitializer */
+diff --git a/src/onCSSFunction.js b/src/onCSSFunction.js
+index e4781fb..2bf9e19 100644
+--- a/src/onCSSFunction.js
++++ b/src/onCSSFunction.js
+@@ -10,10 +10,6 @@ const onCSSFunction = node => {
+ 		const isRgbWithNumbers = isRgbColorFunctionName(name) && isRgbNumberFunctionContents(nodes)
+ 		const isRgbWithPercents = isRgbColorFunctionName(name) && isRgbPercentFunctionContents(nodes)
+ 
+-		if (name === 'hsl' && !isHsl) {
+-			console.log([name, isHue(nodes[0])], nodes[0])
+-		}
+-
+ 		if (isHsl || isRgbWithNumbers || isRgbWithPercents) {
+ 			// rename the Color function to `hsl` or `rgb`
+ 			Object.assign(node, { name: isHsl ? 'hsl' : 'rgb' })
+-- 
+2.33.1
+

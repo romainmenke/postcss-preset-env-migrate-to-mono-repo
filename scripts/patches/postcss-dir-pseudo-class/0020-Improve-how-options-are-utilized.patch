@@ -1,0 +1,36 @@
+From ace8303a57b282897768e3e445b59f57e15b1908 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 19 Sep 2017 15:50:26 -0400
+Subject: [PATCH 20/34] Improve how options are utilized
+
+---
+ index.js | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/index.js b/index.js
+index 79dc578..c0a506d 100644
+--- a/index.js
++++ b/index.js
+@@ -6,7 +6,7 @@ const selectorParser = require('postcss-selector-parser');
+ // plugin
+ module.exports = postcss.plugin('postcss-dir-pseudo-class', (opts) => (root) => {
+ 	// client browser list
+-	const clientBrowserList = browserslist(opts && opts.browsers, {
++	const clientBrowserList = browserslist(Object(opts).browsers, {
+ 		path: root.source && root.source.input && root.source.input.file
+ 	});
+ 
+@@ -63,8 +63,8 @@ module.exports = postcss.plugin('postcss-dir-pseudo-class', (opts) => (root) =>
+ 						// value of the :dir pseudo-class
+ 						const value = node.nodes.toString();
+ 
+-						// whether that value matches the presumed direction
+-						const isdir = opts && Object(opts).dir === value;
++						// whether :dir matches the presumed direction
++						const isdir = Object(opts).dir === value;
+ 
+ 						// [dir] attribute
+ 						const dirAttr = selectorParser.attribute({
+-- 
+2.33.1
+

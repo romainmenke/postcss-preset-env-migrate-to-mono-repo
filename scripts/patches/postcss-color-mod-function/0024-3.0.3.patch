@@ -1,0 +1,159 @@
+From 9ff8cac91d105ed370d8fe62e5e8a0c3b4a3003c Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 23 Sep 2018 14:56:15 -0400
+Subject: [PATCH 24/29] 3.0.3
+
+---
+ CHANGELOG.md       |  4 ++++
+ lib/import-from.js | 15 ++++++++++-----
+ lib/transform.js   | 32 ++++++++++++++++++--------------
+ package.json       |  2 +-
+ 4 files changed, 33 insertions(+), 20 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 1070eac..c089195 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS color-mod() Function
+ 
++### 3.0.3 (September 23, 2018)
++
++- Fixed an issue with certain colors not being tranformed from variables
++
+ ### 3.0.2 (September 23, 2018)
+ 
+ - Fixed an incompatibility with other `importFrom` plugins
+diff --git a/lib/import-from.js b/lib/import-from.js
+index 95a7488..c80bc48 100644
+--- a/lib/import-from.js
++++ b/lib/import-from.js
+@@ -2,6 +2,7 @@ import fs from 'fs';
+ import path from 'path';
+ import postcss from 'postcss';
+ import getCustomProperties from './get-custom-properties';
++import valueParser from 'postcss-values-parser';
+ 
+ /* Import Custom Properties from CSS AST
+ /* ========================================================================== */
+@@ -14,8 +15,8 @@ function importCustomPropertiesFromCSSAST(root) {
+ /* ========================================================================== */
+ 
+ async function importCustomPropertiesFromCSSFile(from) {
+-	const css = await readFile(path.resolve(from));
+-	const root = postcss.parse(css, { from: path.resolve(from) });
++	const css = await readFile(from);
++	const root = postcss.parse(css, { from });
+ 
+ 	return importCustomPropertiesFromCSSAST(root);
+ }
+@@ -29,6 +30,10 @@ function importCustomPropertiesFromObject(object) {
+ 		Object(object).customProperties || Object(object)['custom-properties']
+ 	);
+ 
++	for (const prop in customProperties) {
++		customProperties[prop] = valueParser(customProperties[prop]).parse();
++	}
++
+ 	return customProperties;
+ }
+ 
+@@ -36,7 +41,7 @@ function importCustomPropertiesFromObject(object) {
+ /* ========================================================================== */
+ 
+ async function importCustomPropertiesFromJSONFile(from) {
+-	const object = await readJSON(path.resolve(from));
++	const object = await readJSON(from);
+ 
+ 	return importCustomPropertiesFromObject(object);
+ }
+@@ -45,7 +50,7 @@ async function importCustomPropertiesFromJSONFile(from) {
+ /* ========================================================================== */
+ 
+ async function importCustomPropertiesFromJSFile(from) {
+-	const object = await import(path.resolve(from));
++	const object = await import(from);
+ 
+ 	return importCustomPropertiesFromObject(object);
+ }
+@@ -70,7 +75,7 @@ export default function importCustomPropertiesFromSources(sources) {
+ 		}
+ 
+ 		// source pathname
+-		const from = String(opts.from || '');
++		const from = path.resolve(String(opts.from || ''));
+ 
+ 		// type of file being read from
+ 		const type = (opts.type || path.extname(from).slice(1)).toLowerCase();
+diff --git a/lib/transform.js b/lib/transform.js
+index 8d1c4da..d8c3369 100644
+--- a/lib/transform.js
++++ b/lib/transform.js
+@@ -37,34 +37,38 @@ export default function transformAST(node, opts) {
+ function transformVariables(node, opts) {
+ 	walk(node, child => {
+ 		if (isVariable(child)) {
+-			const [variableName, fallbackNode] = transformArgsByParams(child, [
++			// get the custom property and fallback value from var()
++			const [prop, fallbackNode] = transformArgsByParams(child, [
+ 				// <value> , [ <fallback> ]?
+ 				[transformWord, isComma, transformNode]
+ 			]);
+ 
+-			if (variableName in opts.customProperties) {
+-				let customPropertyValue = opts.customProperties[variableName];
++			// if the custom property is known
++			if (prop in opts.customProperties) {
++				let customPropertyValue = opts.customProperties[prop];
+ 
++				// follow custom properties referencing custom properties
+ 				if (looseVarMatch.test(customPropertyValue)) {
+-					if (typeof customPropertyValue === 'string') {
+-						customPropertyValue = parser(customPropertyValue).parse();
+-					}
+-
+ 					const rootChildAST = customPropertyValue.clone();
+ 
+ 					transformVariables(rootChildAST, opts);
+ 
+-					customPropertyValue = opts.customProperties[variableName] = rootChildAST;
++					customPropertyValue = rootChildAST;
+ 				}
+ 
+-				child.replaceWith(parser.word({
+-					raws: child.raws,
+-					value: String(customPropertyValue)
+-				}));
+-			} else if (fallbackNode) {
++				// replace var() with the custom property value
++				if (customPropertyValue.nodes.length === 1 && customPropertyValue.nodes[0].nodes.length) {
++					customPropertyValue.nodes[0].nodes.forEach(customPropertyChild => {
++						child.parent.insertBefore(child, customPropertyChild);
++					});
++				}
++
++				child.remove();
++			} else if (fallbackNode && fallbackNode.nodes.length === 1 && fallbackNode.nodes[0].nodes.length) {
++				// otherwise, replace var() with the fallback value
+ 				transformVariables(fallbackNode, opts);
+ 
+-				child.replaceWith(...fallbackNode.nodes[0].nodes);
++				child.replaceWith(...fallbackNode.nodes[0].nodes[0]);
+ 			}
+ 		}
+ 	});
+diff --git a/package.json b/package.json
+index 97aa8dc..eceb158 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-mod-function",
+-  "version": "3.0.2",
++  "version": "3.0.3",
+   "description": "Modify colors using the color-mod() function in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

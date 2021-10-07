@@ -1,0 +1,387 @@
+From 7ef0467fb6c525457dfd2ead4a7d01ceaf09e310 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 22 Jan 2018 11:45:35 -0500
+Subject: [PATCH 08/29] Update color conversions
+
+---
+ lib/color.js          |  18 ++--
+ lib/conversions.js    | 219 +++++-------------------------------------
+ lib/transform.js      |  19 +---
+ package.json          |   1 +
+ test/basic.expect.css |   6 +-
+ 5 files changed, 40 insertions(+), 223 deletions(-)
+
+diff --git a/lib/color.js b/lib/color.js
+index 8d4c547..1f488c8 100644
+--- a/lib/color.js
++++ b/lib/color.js
+@@ -1,11 +1,11 @@
+-import { convertRGBtoHSL, convertRGBtoHWB, convertHSLtoRGB, convertHSLtoHWB, convertHWBtoRGB, convertHWBtoHSL, convertRGBtoH } from './conversions';
++import { rgb2hsl, rgb2hwb, hsl2rgb, hsl2hwb, hwb2rgb, hwb2hsl, rgb2hue } from '@csstools/convert-colors';
+ 
+ export default class Color {
+ 	constructor(color) {
+ 		this.color = Object(Object(color).color || color);
+ 
+ 		if (color.colorspace === 'rgb') {
+-			this.color.hue = convertRGBtoH(color.red, color.green, color.blue, color.hue || 0);
++			this.color.hue = rgb2hue(color.red, color.green, color.blue, color.hue || 0);
+ 		}
+ 	}
+ 
+@@ -222,7 +222,7 @@ function assign(base, channels) {
+ 
+ 			if (isRGB) {
+ 				// conditionally preserve the hue
+-				color.hue = convertRGBtoH(color.red, color.green, color.blue, base.hue || 0);
++				color.hue = rgb2hue(color.red, color.green, color.blue, base.hue || 0);
+ 			}
+ 		}
+ 	);
+@@ -250,9 +250,9 @@ function normalize(value, channel) {
+ 
+ function color2rgb(color) {
+ 	const [ red, green, blue ] = color.colorspace === 'hsl'
+-		? convertHSLtoRGB(color.hue, color.saturation, color.lightness)
++		? hsl2rgb(color.hue, color.saturation, color.lightness)
+ 	: color.colorspace === 'hwb'
+-		? convertHWBtoRGB(color.hue, color.whiteness, color.blackness)
++		? hwb2rgb(color.hue, color.whiteness, color.blackness)
+ 	: [ color.red, color.green, color.blue ];
+ 
+ 	return { red, green, blue, hue: color.hue, alpha: color.alpha, colorspace: 'rgb' };
+@@ -260,9 +260,9 @@ function color2rgb(color) {
+ 
+ function color2hsl(color) {
+ 	const [ hue, saturation, lightness ] = color.colorspace === 'rgb'
+-		? convertRGBtoHSL(color.red, color.green, color.blue, color.hue)
++		? rgb2hsl(color.red, color.green, color.blue, color.hue)
+ 	: color.colorspace === 'hwb'
+-		? convertHWBtoHSL(color.hue, color.whiteness, color.blackness)
++		? hwb2hsl(color.hue, color.whiteness, color.blackness)
+ 	: [ color.hue, color.saturation, color.lightness ];
+ 
+ 	return { hue, saturation, lightness, alpha: color.alpha, colorspace: 'hsl' };
+@@ -270,9 +270,9 @@ function color2hsl(color) {
+ 
+ function color2hwb(color) {
+ 	const [ hue, whiteness, blackness ] = color.colorspace === 'rgb'
+-		? convertRGBtoHWB(color.red, color.green, color.blue, color.hue)
++		? rgb2hwb(color.red, color.green, color.blue, color.hue)
+ 	: color.colorspace === 'hsl'
+-		? convertHSLtoHWB(color.hue, color.saturation, color.lightness)
++		? hsl2hwb(color.hue, color.saturation, color.lightness)
+ 	: [ color.hue, color.whiteness, color.blackness ];
+ 
+ 	return { hue, whiteness, blackness, alpha: color.alpha, colorspace: 'hwb' };
+diff --git a/lib/conversions.js b/lib/conversions.js
+index 22003ca..416cf44 100644
+--- a/lib/conversions.js
++++ b/lib/conversions.js
+@@ -26,201 +26,6 @@ export function convertTtoD(turn) {
+ 	return turn * 360 % 360;
+ }
+ 
+-/* Convert Red/Green/Blue to Red/Green/Blue (0 - 255)
+-/* ========================================================================== */
+-
+-export function convertRGBtoRGB255(red, green, blue) {
+-	const red255   = convertChannelToChannel255(red);
+-	const green255 = convertChannelToChannel255(green);
+-	const blue255  = convertChannelToChannel255(blue);
+-
+-	return [red255, green255, blue255];
+-}
+-
+-/* Convert Red/Green/Blue to Hue/Saturation/Lightness
+-/* ========================================================================== */
+-
+-export function convertRGBtoHSL(red, green, blue, fallbackHue = 0) {
+-	const hue        = convertRGBtoH(red, green, blue, fallbackHue);
+-	const whiteness  = convertRGBtoW(red, green, blue);
+-	const value      = convertRGBtoV(red, green, blue);
+-	const lightness  = convertWVtoL(whiteness, value);
+-	const saturation = convertLVWtoS(lightness, value, whiteness);
+-
+-	return [ hue, saturation, lightness ];
+-}
+-
+-/* Convert Red/Green/Blue to Hue/Whiteness/Blackness
+-/* ========================================================================== */
+-
+-export function convertRGBtoHWB(red, green, blue, fallbackHue = 0) {
+-	const hue       = convertRGBtoH(red, green, blue, fallbackHue);
+-	const whiteness = convertRGBtoW(red, green, blue);
+-	const value     = convertRGBtoV(red, green, blue);
+-	const blackness = convertVtoB(value);
+-
+-	return [ hue, whiteness, blackness ];
+-}
+-
+-/* Convert Hue/Saturation/Lightness to Red/Green/Blue (and fallback Hue)
+-/* ========================================================================== */
+-
+-export function convertHSLtoRGB(hue, saturation, lightness) {
+-	const hexagon = hue / 60;
+-
+-	const t2 = lightness <= 50
+-		? lightness * (saturation + 100) / 10000
+-	: (lightness + saturation) / 100 - lightness * saturation / 10000;
+-
+-	const t1 = lightness * 0.02 - t2;
+-
+-	const red   = convertTTHtoChannel(t1, t2, hexagon + 2) * 100;
+-	const green = convertTTHtoChannel(t1, t2, hexagon) * 100;
+-	const blue  = convertTTHtoChannel(t1, t2, hexagon - 2) * 100;
+-
+-	return [red, green, blue];
+-}
+-
+-/* Convert Hue/Saturation/Lightness to Hue/Whiteness/Blackness
+-/* ========================================================================== */
+-
+-export function convertHSLtoHWB(hue, saturation, lightness) {
+-	const [ red, green, blue ] = convertHSLtoRGB(hue, saturation, lightness);
+-	const [ , whiteness, blackness ] = convertRGBtoHWB(red, green, blue, hue);
+-
+-	return [ hue, whiteness, blackness ];
+-}
+-
+-/* Convert Hue/Whiteness/Blackness to Hue/Saturation/Lightness
+-/* ========================================================================== */
+-
+-export function convertHWBtoHSL(hue, whiteness, blackness) {
+-	const [ red, green, blue ] = convertHWBtoRGB(hue, whiteness, blackness);
+-	const [ , saturation, lightness ] = convertRGBtoHSL(red, green, blue, hue);
+-
+-	return [ hue, saturation, lightness ];
+-}
+-
+-/* Convert Hue/Whiteness/Blackness to Red/Green/Blue (and fallback Hue)
+-/* ========================================================================== */
+-
+-export function convertHWBtoRGB(hue, whiteness, blackness) {
+-	const [ hslRed, hslGreen, hslBlue ] = convertHSLtoRGB(hue, 100, 50);
+-
+-	const tot = whiteness + blackness;
+-	const w = tot > 100 ? whiteness / tot * 100 : whiteness;
+-	const b = tot > 100 ? blackness / tot * 100 : blackness;
+-
+-	const red   = hslRed   * (100 - w - b) / 100 + w;
+-	const green = hslGreen * (100 - w - b) / 100 + w;
+-	const blue  = hslBlue  * (100 - w - b) / 100 + w;
+-
+-	return [red, green, blue];
+-}
+-
+-/* Convert Channel to Channel (0 - 255)
+-/* ========================================================================== */
+-
+-export function convertChannelToChannel255(channel) {
+-	return Math.round(channel * 2.55);
+-}
+-
+-/* Convert Red/Green/Blue to Hue
+-/* ========================================================================== */
+-
+-export function convertRGBtoH(red, green, blue, fallbackHue = 0) {
+-	const whiteness = convertRGBtoW(red, green, blue);
+-	const value     = convertRGBtoV(red, green, blue);
+-	const chroma    = convertVWtoC(value, whiteness);
+-
+-	if (chroma === 0) {
+-		return fallbackHue;
+-	} else {
+-		const segment = value === red
+-			? (green - blue) / chroma
+-		: value === green
+-			? (blue - red) / chroma
+-		: (red - green) / chroma;
+-
+-		const shift = value === red
+-			? segment < 0
+-				? 360 / 60
+-				: 0 / 60
+-		: value === green
+-			? 120 / 60
+-		: 240 / 60;
+-
+-		const hue = (segment + shift) * 60;
+-
+-		return hue;
+-	}
+-}
+-
+-/* Convert Red/Green/Blue to Whiteness
+-/* ========================================================================== */
+-
+-export function convertRGBtoW(red, green, blue) {
+-	return Math.min(red, green, blue);
+-}
+-
+-/* Convert Red/Green/Blue to Value
+-/* ========================================================================== */
+-
+-export function convertRGBtoV(red, green, blue) {
+-	return Math.max(red, green, blue);
+-}
+-
+-/* Convert Value/Whiteness to Chroma
+-/* ========================================================================== */
+-
+-export function convertVWtoC(value, whiteness) {
+-	return value - whiteness;
+-}
+-
+-/* Convert Whiteness/Value to Lightness
+-/* ========================================================================== */
+-
+-export function convertWVtoL(whiteness, value) {
+-	return (whiteness + value) / 2;
+-}
+-
+-/* Convert Lightness/Value/Whiteness to Saturation
+-/* ========================================================================== */
+-
+-export function convertLVWtoS(lightness, value, whiteness) {
+-	return whiteness === value
+-		? 0
+-	: lightness < 50
+-		? (value - whiteness) / (value + whiteness) * 100
+-	: (value - whiteness) / (200 - value - whiteness) * 100;
+-}
+-
+-/* Convert Value to Blackness
+-/* ========================================================================== */
+-
+-export function convertVtoB(value) {
+-	return 100 - value;
+-}
+-
+-/* Convert Hue parts to Channel
+-/* ========================================================================== */
+-
+-export function convertTTHtoChannel(t1, t2, hexagon) {
+-	const althexagon = hexagon < 0
+-		? hexagon + 6
+-	: hexagon >= 6
+-		? hexagon - 6
+-	: hexagon;
+-
+-	return althexagon < 1
+-		? (t2 - t1) * althexagon + t1
+-	: althexagon < 3
+-		? t2
+-	: althexagon < 4
+-		? (t2 - t1) * (4 - althexagon) + t1
+-	: t1;
+-}
+-
+ /* Convert a Name to Red/Green/Blue
+ /* ========================================================================== */
+ 
+@@ -376,5 +181,27 @@ export function convertNtoRGB(name) {
+ 		yellowgreen: [154, 205, 50]
+ 	};
+ 
+-	return names[name];
++	return names[name] && names[name].map(c => c / 2.55);
+ }
++
++
++/* Convert a Hex to Red/Green/Blue
++/* ========================================================================== */
++
++export function convertHtoRGB(hex) {
++	// #<hex-color>{3,4,6,8}
++	const [r, g, b, a, rr, gg, bb, aa] = (hex.match(hexColorMatch) || []).slice(1);
++
++	if (rr !== undefined || r !== undefined) {
++		const red   = rr !== undefined ? parseInt(rr, 16) : r !== undefined ? parseInt(r + r, 16) : 0;
++		const green = gg !== undefined ? parseInt(gg, 16) : g !== undefined ? parseInt(g + g, 16) : 0;
++		const blue  = bb !== undefined ? parseInt(bb, 16) : b !== undefined ? parseInt(b + b, 16) : 0;
++		const alpha = aa !== undefined ? parseInt(aa, 16) : a !== undefined ? parseInt(a + a, 16) : 255;
++
++		return [red, green, blue, alpha].map(c => c / 2.55);
++	}
++
++	return undefined;
++}
++
++const hexColorMatch = /^#(?:([a-f0-9])([a-f0-9])([a-f0-9])([a-f0-9])?|([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})?)$/i;
+diff --git a/lib/transform.js b/lib/transform.js
+index 13e4ffa..638e4d3 100644
+--- a/lib/transform.js
++++ b/lib/transform.js
+@@ -1,5 +1,5 @@
+ // tooling
+-import { convertDtoD, convertGtoD, convertRtoD, convertTtoD, convertNtoRGB } from './conversions';
++import { convertDtoD, convertGtoD, convertRtoD, convertTtoD, convertNtoRGB, convertHtoRGB } from './conversions';
+ import Color from './color';
+ import manageUnresolved from './manage-unresolved';
+ import parser from 'postcss-values-parser';
+@@ -136,14 +136,9 @@ function transformColorModFunction(node, opts) {
+ function transformHexColor(node, opts) {
+ 	if (hexColorMatch.test(node.value)) {
+ 		// #<hex-color>{3,4,6,8}
+-		const [r, g, b, a, rr, gg, bb, aa] = (node.value.match(hexColorMatch) || []).slice(1);
++		const [red, green, blue, alpha] = convertHtoRGB(node.value);
+ 
+-		const color = new Color({
+-			red:   rr !== undefined ? parseInt(rr, 16) / 2.55 : r !== undefined ? parseInt(r + r, 16) / 2.55 : 0,
+-			green: gg !== undefined ? parseInt(gg, 16) / 2.55 : g !== undefined ? parseInt(g + g, 16) / 2.55 : 0,
+-			blue:  bb !== undefined ? parseInt(bb, 16) / 2.55 : b !== undefined ? parseInt(b + b, 16) / 2.55 : 0,
+-			alpha: aa !== undefined ? parseInt(aa, 16) / 2.55 : a !== undefined ? parseInt(a + a, 16) / 2.55 : 100
+-		});
++		const color = new Color({ red, green, blue, alpha });
+ 
+ 		return color;
+ 	} else {
+@@ -157,13 +152,7 @@ function transformNamedColor(node, opts) {
+ 		// <named-color>
+ 		const [red, green, blue] = convertNtoRGB(node.value);
+ 
+-		const color = new Color({
+-			red: red / 2.55,
+-			green: green / 2.55,
+-			blue: blue / 2.55,
+-			alpha: 100,
+-			colorspace: 'rgb'
+-		});
++		const color = new Color({ red, green, blue, alpha: 100, colorspace: 'rgb' });
+ 
+ 		return color;
+ 	} else {
+diff --git a/package.json b/package.json
+index 2afa951..edbc1ae 100644
+--- a/package.json
++++ b/package.json
+@@ -26,6 +26,7 @@
+     "node": ">=4.0.0"
+   },
+   "dependencies": {
++    "@csstools/convert-colors": "^1.1",
+     "postcss": "^6.0",
+     "postcss-values-parser": "^1.3"
+   },
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 050adf9..71a93f9 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -70,10 +70,10 @@ test-lightness-saturation-adjuster {
+ }
+ 
+ test-blackness-whiteness-adjuster {
+-	color: rgb(207, 207, 207);
+-	color: rgb(200, 200, 200);
++	color: rgb(204, 204, 204);
++	color: rgb(194, 194, 194);
+ 	color: rgb(248, 248, 220);
+-	color: rgb(134, 134, 134);
++	color: rgb(55, 55, 55);
+ 	color: rgb(245, 245, 51);
+ 	color: rgb(245, 245, 223);
+ 	color: rgb(245, 245, 169);
+-- 
+2.33.1
+

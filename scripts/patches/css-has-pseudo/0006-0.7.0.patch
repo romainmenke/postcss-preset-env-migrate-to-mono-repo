@@ -1,0 +1,159 @@
+From eecfdc8920d8baf88278693ce1d1d47c856ccaeb Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 26 Nov 2018 11:20:49 -0500
+Subject: [PATCH 06/17] 0.7.0
+
+---
+ CHANGELOG.md   |  4 +++
+ README.md      |  2 +-
+ package.json   |  2 +-
+ src/browser.js | 80 ++++++++++++++++++++++++++------------------------
+ 4 files changed, 47 insertions(+), 41 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index ef350d1..6c05edc 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to CSS Has Pseudo
+ 
++### 0.7.0 (November 25, 2018)
++
++- Replaced `setImmediate` with `requestAnimationFrame` for future compatibility
++
+ ### 0.6.0 (November 25, 2018)
+ 
+ - Fixed an issue where nested rules were not supported
+diff --git a/README.md b/README.md
+index 5e6676e..0969d9e 100644
+--- a/README.md
++++ b/README.md
+@@ -41,7 +41,7 @@ Next, use your transformed CSS with this script:
+ <script>cssHasPseudo(document)</script>
+ ```
+ 
+-That’s it. The script is 765 bytes and works in all browsers, including
++That’s it. The script is 764 bytes and works in all browsers, including
+ Internet Explorer 11. With a [Mutation Observer polyfill], the script will work
+ down to Internet Explorer 9.
+ 
+diff --git a/package.json b/package.json
+index 414bd53..3ba81e9 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "css-has-pseudo",
+-  "version": "0.6.0",
++  "version": "0.7.0",
+   "description": "Style elements relative to other elements in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+diff --git a/src/browser.js b/src/browser.js
+index a9233cd..d471289 100644
+--- a/src/browser.js
++++ b/src/browser.js
+@@ -27,59 +27,61 @@ export default function cssHasPseudo(document) {
+ 	mutationObserver.observe(document, { childList: true, subtree: true });
+ 
+ 	// observe DOM events that affect pseudo-selectors
+-	document.addEventListener('focus', () => setImmediate(transformObservedItems), true);
+-	document.addEventListener('blur', () => setImmediate(transformObservedItems), true);
+-	document.addEventListener('input', () => setImmediate(transformObservedItems));
++	document.addEventListener('focus', transformObservedItems, true);
++	document.addEventListener('blur', transformObservedItems, true);
++	document.addEventListener('input', transformObservedItems);
+ 
+ 	// transform observed css rules
+ 	function transformObservedItems() {
+-		observedItems.forEach(
+-			item => {
+-				const nodes = [];
++		requestAnimationFrame(() => {
++			observedItems.forEach(
++				item => {
++					const nodes = [];
+ 
+-				Array.prototype.forEach.call(
+-					document.querySelectorAll(item.scopeSelector),
+-					element => {
+-						const nthChild = Array.prototype.indexOf.call(element.parentNode.children, element) + 1;
+-						const relativeSelectors = item.relativeSelectors.map(
+-							relativeSelector => item.scopeSelector + ':nth-child(' + nthChild + ') ' + relativeSelector
+-						).join();
++					Array.prototype.forEach.call(
++						document.querySelectorAll(item.scopeSelector),
++						element => {
++							const nthChild = Array.prototype.indexOf.call(element.parentNode.children, element) + 1;
++							const relativeSelectors = item.relativeSelectors.map(
++								relativeSelector => item.scopeSelector + ':nth-child(' + nthChild + ') ' + relativeSelector
++							).join();
+ 
+-						// find any relative :has element from the :scope element
+-						const relativeElement = element.parentNode.querySelector(relativeSelectors);
++							// find any relative :has element from the :scope element
++							const relativeElement = element.parentNode.querySelector(relativeSelectors);
+ 
+-						const shouldElementMatch = item.isNot ? !relativeElement : relativeElement;
++							const shouldElementMatch = item.isNot ? !relativeElement : relativeElement;
+ 
+-						if (shouldElementMatch) {
+-							// memorize the node
+-							nodes.push(element);
++							if (shouldElementMatch) {
++								// memorize the node
++								nodes.push(element);
+ 
+-							// set an attribute with an irregular attribute name
+-							// document.createAttribute() doesn't support special characters
+-							attributeElement.innerHTML = '<x ' + item.attributeName + '>';
++								// set an attribute with an irregular attribute name
++								// document.createAttribute() doesn't support special characters
++								attributeElement.innerHTML = '<x ' + item.attributeName + '>';
+ 
+-							element.setAttributeNode(attributeElement.children[0].attributes[0].cloneNode());
++								element.setAttributeNode(attributeElement.children[0].attributes[0].cloneNode());
+ 
+-							// trigger a style refresh in IE and Edge
+-							document.documentElement.style.zoom = 1; document.documentElement.style.zoom = null;
++								// trigger a style refresh in IE and Edge
++								document.documentElement.style.zoom = 1; document.documentElement.style.zoom = null;
++							}
+ 						}
+-					}
+-				);
++					);
+ 
+-				// remove the encoded attribute from all nodes that no longer match them
+-				item.nodes.forEach(node => {
+-					if (nodes.indexOf(node) === -1) {
+-						node.removeAttribute(item.attributeName);
++					// remove the encoded attribute from all nodes that no longer match them
++					item.nodes.forEach(node => {
++						if (nodes.indexOf(node) === -1) {
++							node.removeAttribute(item.attributeName);
+ 
+-						// trigger a style refresh in IE and Edge
+-						document.documentElement.style.zoom = 1; document.documentElement.style.zoom = null;
+-					}
+-				});
++							// trigger a style refresh in IE and Edge
++							document.documentElement.style.zoom = 1; document.documentElement.style.zoom = null;
++						}
++					});
+ 
+-				// update the
+-				item.nodes = nodes;
+-			}
+-		);
++					// update the
++					item.nodes = nodes;
++				}
++			);
++		});
+ 	}
+ 
+ 	// remove any observed cssrules that no longer apply
+-- 
+2.33.1
+

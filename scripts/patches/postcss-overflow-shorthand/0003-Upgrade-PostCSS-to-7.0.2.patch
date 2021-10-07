@@ -1,0 +1,53 @@
+From 24cd0d595cd17d7489a8ab642266d05e1ad4c478 Mon Sep 17 00:00:00 2001
+From: Aaron Ballard <ans.ballard@gmail.com>
+Date: Wed, 15 Aug 2018 19:02:58 -0500
+Subject: [PATCH 3/8] Upgrade PostCSS to 7.0.2
+
+---
+ .appveyor.yml | 2 +-
+ .travis.yml   | 2 +-
+ package.json  | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+index acbf8a5..73f0d8f 100644
+--- a/.appveyor.yml
++++ b/.appveyor.yml
+@@ -2,7 +2,7 @@
+ 
+ environment:
+   matrix:
+-    - nodejs_version: 4
++    - nodejs_version: 6
+ 
+ version: "{build}"
+ build: off
+diff --git a/.travis.yml b/.travis.yml
+index c564664..e1f11a5 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 4
++  - 6
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/package.json b/package.json
+index eca2476..9414434 100644
+--- a/package.json
++++ b/package.json
+@@ -25,7 +25,7 @@
+     "node": ">=4.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^6.0.22"
++    "postcss": "^7.0.2"
+   },
+   "devDependencies": {
+     "babel-core": "^6.26.3",
+-- 
+2.33.1
+

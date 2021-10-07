@@ -1,0 +1,138 @@
+From 63233b58bea0a20ad5e2d5932b5676e42b6da90f Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 22 Sep 2021 09:17:03 -0400
+Subject: [PATCH 15/15] 6.0.1
+
+---
+ .gitignore   |  1 +
+ .rollup.js   |  2 +-
+ CHANGELOG.md |  7 +++++++
+ package.json | 36 ++++++++++++++++++++++++++++--------
+ 4 files changed, 37 insertions(+), 9 deletions(-)
+
+diff --git a/.gitignore b/.gitignore
+index 748acf5..c7b70d4 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,3 +1,4 @@
++dist
+ node_modules
+ index.*.*
+ package-lock.json
+diff --git a/.rollup.js b/.rollup.js
+index 1fb0d87..876826d 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -2,7 +2,7 @@ import pkg from './package.json'
+ 
+ export default {
+ 	...pkg.rollup,
+-	plugins: pkg.rollup.plugins.map(plugin => require(plugin)()),
++	plugins: pkg.rollup.plugins.map(plugin => ((plugin = [].concat(plugin)), require(plugin[0])(...plugin.slice(1)))),
+ 	onwarn(warning, warn) {
+ 		if (warning.code !== 'UNRESOLVED_IMPORT') warn(warning)
+ 	}
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 0b2f702..29f6131 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,12 @@
+ # Changes to PostCSS Focus Visible
+ 
++### 6.0.1 (September 22, 2021)
++
++- Added missing `dist` to bundle.
++- Added missing `exports` to `package.json`
++- Added missing `types` to `package.json`
++- Added bundling & testing as prepublish step.
++
+ ### 6.0.0 (September 17, 2021)
+ 
+ - Updated: Support for PostCS 8+ (major).
+diff --git a/package.json b/package.json
+index 6561ac9..03a7600 100644
+--- a/package.json
++++ b/package.json
+@@ -1,14 +1,22 @@
+ {
+   "name": "postcss-focus-visible",
+-  "version": "6.0.0",
++  "version": "6.0.1",
+   "description": "Use the :focus-visible pseudo-selector in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+   "repository": "csstools/postcss-focus-visible",
+   "homepage": "https://github.com/csstools/postcss-focus-visible#readme",
+   "bugs": "https://github.com/csstools/postcss-focus-visible/issues",
+-  "main": "dist/index.cjs.js",
+-  "module": "dist/index.esm.mjs",
++  "main": "dist/index.cjs",
++  "module": "dist/index.mjs",
++  "types": "./dist/index.d.ts",
++  "exports": {
++    ".": {
++      "import": "./dist/index.mjs",
++      "require": "./dist/index.cjs",
++      "types": "./dist/index.d.ts"
++    }
++  },
+   "files": [
+     "dist"
+   ],
+@@ -18,6 +26,7 @@
+     "lint": "npx eslint --cache src",
+     "lint:fix": "npx eslint --cache --fix",
+     "pretest": "npm install && npm run build",
++    "prepublishOnly": "npm test",
+     "test": "npm run lint && npm run tape",
+     "tape": "npx postcss-tape"
+   },
+@@ -31,12 +40,12 @@
+     "@babel/core": "7.15.5",
+     "@babel/preset-env": "7.15.6",
+     "eslint": "7.32.0",
+-    "eslint-config-dev": "2.0.0",
+     "postcss": "8.3.6",
+     "postcss-tape": "6.0.1",
+     "pre-commit": "1.2.2",
+     "rollup": "2.56.3",
+-    "rollup-plugin-babel": "4.4.0"
++    "rollup-plugin-babel": "4.4.0",
++    "rollup-plugin-copy": "^3.4.0"
+   },
+   "babel": {
+     "presets": [
+@@ -62,16 +71,27 @@
+   "rollup": {
+     "input": "src/index.js",
+     "plugins": [
+-      "rollup-plugin-babel"
++      "rollup-plugin-babel",
++      [
++        "rollup-plugin-copy",
++        {
++          "targets": [
++            {
++              "src": "./src/index.d.ts",
++              "dest": "./dist"
++            }
++          ]
++        }
++      ]
+     ],
+     "output": [
+       {
+         "exports": "default",
+-        "file": "dist/index.cjs.js",
++        "file": "dist/index.cjs",
+         "format": "cjs"
+       },
+       {
+-        "file": "dist/index.esm.js",
++        "file": "dist/index.mjs",
+         "format": "esm"
+       }
+     ]
+-- 
+2.33.1
+

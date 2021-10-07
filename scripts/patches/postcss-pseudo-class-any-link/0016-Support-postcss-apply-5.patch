@@ -1,0 +1,57 @@
+From 0e8c8d844d51adc164c296c4456627bd2959e147 Mon Sep 17 00:00:00 2001
+From: Texas Toland <texas@appship.it>
+Date: Wed, 29 Jun 2016 14:37:21 -0600
+Subject: [PATCH 16/30] Support postcss-apply (#5)
+
+* Add failing test
+
+* Pass test
+
+Fix #4. See postcss/postcss-selector-parser#28.
+---
+ index.js     | 7 ++++++-
+ test/test.js | 5 +++++
+ 2 files changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index 99dcc32..653f405 100644
+--- a/index.js
++++ b/index.js
+@@ -8,6 +8,11 @@ module.exports = postcss.plugin('postcss-pseudo-class-any-link', function (opts)
+ 	return function (css) {
+ 		// for each rule
+ 		css.walkRules(function (rule) {
++			var rawSelector = rule.raws.selector && rule.raws.selector.raw || rule.selector;
++			// workaround for https://github.com/postcss/postcss-selector-parser/issues/28#issuecomment-171910556
++			if (rawSelector[rawSelector.length - 1] === ':') {
++				return;
++			}
+ 			// update the selector
+ 			rule.selector = postcssSelectorParser(function (selectors) {
+ 				// cache variables
+@@ -45,7 +50,7 @@ module.exports = postcss.plugin('postcss-pseudo-class-any-link', function (opts)
+ 						}
+ 					}
+ 				}
+-			}).process(rule.selector).result;
++			}).process(rawSelector).result;
+ 		});
+ 	};
+ });
+diff --git a/test/test.js b/test/test.js
+index a0d1b78..08070e5 100644
+--- a/test/test.js
++++ b/test/test.js
+@@ -57,4 +57,9 @@ describe('postcss-pseudo-class-any-link', function () {
+ 			prefix: 'foo'
+ 		}, done);
+ 	});
++
++	// regression tests
++	it('--any-link remains --any-link', function (done) {
++		test('--any-link: { background: blue; }', '--any-link: { background: blue; }', {}, done);
++	});
+ });
+-- 
+2.33.1
+

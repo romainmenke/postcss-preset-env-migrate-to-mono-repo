@@ -1,0 +1,25 @@
+From 7ec1d4bb0b29543f86fc3083bb3098f4cb024f17 Mon Sep 17 00:00:00 2001
+From: Eric Ren <546296+rencire@users.noreply.github.com>
+Date: Sun, 18 Mar 2018 23:29:30 -0700
+Subject: [PATCH 24/84] Update README.md
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 0a3084f..625f776 100644
+--- a/README.md
++++ b/README.md
+@@ -208,7 +208,7 @@ environment variables.
+ 
+ ```js
+ require('postcss-preset-env')({
+-  browsers: 'last two versions'
++  browsers: 'last 2 versions'
+ })
+ ```
+ 
+-- 
+2.33.1
+

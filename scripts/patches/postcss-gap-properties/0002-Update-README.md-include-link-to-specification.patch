@@ -1,0 +1,33 @@
+From 05c0ea7c34d16559df77d767365e4dc971e643a8 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 30 Apr 2018 23:15:09 -0400
+Subject: [PATCH 02/10] Update README.md - include link to specification
+
+---
+ README.md | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index d19298c..947175a 100644
+--- a/README.md
++++ b/README.md
+@@ -6,7 +6,7 @@
+ [![Support Chat][git-img]][git-url]
+ 
+ [PostCSS Gap Properties] lets you use the `gap`, `column-gap`, and `row-gap`
+-shorthand properties in CSS.
++shorthand properties in CSS, following the [CSS Grid Layout] specification.
+ 
+ ```pcss
+ .standard-grid {
+@@ -172,6 +172,7 @@ remain in the CSS. By default, the original declaration is preserved.
+ [win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-gap-properties.svg
+ [win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-gap-properties
+ 
++[CSS Grid Layout]: https://www.w3.org/TR/css-grid-1/#gutters
+ [Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+ [Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
+-- 
+2.33.1
+

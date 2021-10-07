@@ -1,0 +1,67 @@
+From b725726f0bf31fe543a86c848b165d9c2c0ab600 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 25 Jul 2017 12:40:29 -0400
+Subject: [PATCH 13/34] 2.0.0
+
+---
+ CHANGELOG.md |  4 ++++
+ README.md    | 16 +++++++++++++---
+ package.json |  2 +-
+ 3 files changed, 18 insertions(+), 4 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 5b2f029..024a47b 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS :dir()
+ 
++### 2.0.0 (July 24, 2017)
++
++- Changed: Method of presumed direction from `:root` to `html:not([dir])`
++
+ ### 1.1.0 (June 2, 2017)
+ 
+ - Added: Support for browserslist and a 'browsers' option
+diff --git a/README.md b/README.md
+index 5f8706b..58df6c9 100644
+--- a/README.md
++++ b/README.md
+@@ -31,9 +31,19 @@ If your [browserslist] already supports the `:dir` pseudo-class, this plugin
+ will not change your CSS. You can learn more this by reading about the
+ [`browsers` option](#browsers-option).
+ 
+-By default, this plugin requires you to specify a direction `[dir]` attribute
+-in your HTML, preferably on the `html` element. If you prefer not to, you
+-can presume a direction in your CSS using the [`dir` option](#dir-option).
++[PostCSS :dir()] does not change selector weight, but does require at least one
++`[dir]` attribute in your HTML. If you don’t have _any_ `[dir]` attributes,
++consider using the following JavaScript:
++
++```js
++// force at least one dir attribute (this can run at any time)
++document.documentElement.dir=document.documentElement.dir||'ltr';
++```
++
++If you absolutely cannot add a `[dir]` attribute in your HTML or force one via
++JavaScript, you can still get around this by presuming a direction in your CSS
++using the [`dir` option](#dir-option), but know that this will increase
++selector weight by one element (`html`).
+ 
+ ## Usage
+ 
+diff --git a/package.json b/package.json
+index 48c235d..ad76e1e 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-dir-pseudo-class",
+-  "version": "1.1.0",
++  "version": "2.0.0",
+   "description": "Use the :dir pseudo-class in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

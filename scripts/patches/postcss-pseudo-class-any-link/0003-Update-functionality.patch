@@ -1,0 +1,35 @@
+From e5b560669b85e79363117549074a2ce576016a65 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 14 Jun 2015 20:34:00 -0400
+Subject: [PATCH 03/30] Update functionality
+
+Initial release
+---
+ index.js | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+ create mode 100644 index.js
+
+diff --git a/index.js b/index.js
+new file mode 100644
+index 0000000..cf24648
+--- /dev/null
++++ b/index.js
+@@ -0,0 +1,15 @@
++var postcss = require('postcss');
++
++module.exports = postcss.plugin('postcss-pseudo-class-any-link', function (opts) {
++	var match = new RegExp(':' + (opts && opts.prefix ? '-' + opts.prefix + '-' : '') + 'any-link\\b', 'g');
++
++	return function (css) {
++		css.eachRule(function (rule) {
++			if (match.test(rule.selector)) {
++				rule.selector = ['link', 'visited'].map(function (replacement) {
++					return rule.selector.replace(match, ':' + replacement);
++				}).join(', ');
++			}
++		});
++	};
++});
+-- 
+2.33.1
+

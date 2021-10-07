@@ -1,0 +1,73 @@
+From 82c52e2f78d5f6aa4f9accacfd066497615d5c7f Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 20 May 2017 21:14:50 -0400
+Subject: [PATCH 52/89] Update README.md spacing
+
+---
+ README.md | 36 ++++++++++++++++++------------------
+ 1 file changed, 18 insertions(+), 18 deletions(-)
+
+diff --git a/README.md b/README.md
+index bf60e14..a4f34f9 100644
+--- a/README.md
++++ b/README.md
+@@ -57,7 +57,7 @@ Use [PostCSS Nesting] as a plugin:
+ 
+ ```js
+ postcss([
+-	require('postcss-nesting')({ /* options */ })
++  require('postcss-nesting')({ /* options */ })
+ ]).process(YOUR_CSS, /* options */);
+ ```
+ 
+@@ -75,13 +75,13 @@ Use [PostCSS Nesting] in your Gulpfile:
+ var postcss = require('gulp-postcss');
+ 
+ gulp.task('css', function () {
+-	return gulp.src('./src/*.css').pipe(
+-		postcss([
+-			require('postcss-nesting')({ /* options */ })
+-		])
+-	).pipe(
+-		gulp.dest('.')
+-	);
++  return gulp.src('./src/*.css').pipe(
++    postcss([
++      require('postcss-nesting')({ /* options */ })
++    ])
++  ).pipe(
++    gulp.dest('.')
++  );
+ });
+ ```
+ 
+@@ -99,16 +99,16 @@ Use [PostCSS Nesting] in your Gruntfile:
+ grunt.loadNpmTasks('grunt-postcss');
+ 
+ grunt.initConfig({
+-	postcss: {
+-		options: {
+-			use: [
+-				require('postcss-nesting')({ /* options */ })
+-			]
+-		},
+-		dist: {
+-			src: '*.css'
+-		}
+-	}
++  postcss: {
++    options: {
++      use: [
++        require('postcss-nesting')({ /* options */ })
++      ]
++    },
++    dist: {
++      src: '*.css'
++    }
++  }
+ });
+ ```
+ 
+-- 
+2.33.1
+

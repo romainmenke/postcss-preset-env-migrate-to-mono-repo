@@ -1,0 +1,748 @@
+From 78f9cd13806177e41128c182a447a705b7befef3 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 23 Apr 2018 15:25:10 -0400
+Subject: [PATCH 72/89] 5.0.0
+
+---
+ .appveyor.yml                    |  18 +++++
+ .gitignore                       |   6 +-
+ .rollup.js                       |  16 ++++
+ .travis.yml                      |   2 +
+ CHANGELOG.md                     |   4 +
+ LICENSE.md                       | 132 ++++++++++++++++---------------
+ README.md                        |  89 +++++++++++++++------
+ index.js                         |  12 +--
+ lib/clean-node.js                |   2 +-
+ lib/get-closest-rule.js          |   4 +-
+ lib/merge-params.js              |  11 +--
+ lib/merge-selectors.js           |   7 +-
+ lib/transform-after-nodes.js     |   7 +-
+ lib/transform-before-nodes.js    |  22 ++++++
+ lib/transform-bubbling-atrule.js |  11 ++-
+ lib/transform-nesting-atrule.js  |  20 ++---
+ lib/transform-nesting-rule.js    |  13 ++-
+ lib/transform.js                 |  15 ++--
+ package.json                     |  33 +++++---
+ 19 files changed, 265 insertions(+), 159 deletions(-)
+ create mode 100644 .appveyor.yml
+ create mode 100644 .rollup.js
+ create mode 100644 lib/transform-before-nodes.js
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+new file mode 100644
+index 0000000..acbf8a5
+--- /dev/null
++++ b/.appveyor.yml
+@@ -0,0 +1,18 @@
++# https://www.appveyor.com/docs/appveyor-yml
++
++environment:
++  matrix:
++    - nodejs_version: 4
++
++version: "{build}"
++build: off
++deploy: off
++
++install:
++  - ps: Install-Product node $env:nodejs_version
++  - npm install --ignore-scripts
++
++test_script:
++  - node --version
++  - npm --version
++  - cmd: "npm test"
+diff --git a/.gitignore b/.gitignore
+index 995098a..de73e5a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,10 +1,12 @@
+ node_modules
++index.*.js
+ package-lock.json
++*.log*
++*.result.css
+ .*
+ !.appveyor.yml
+ !.editorconfig
+ !.gitignore
++!.rollup.js
+ !.tape.js
+ !.travis.yml
+-*.log*
+-*.result.css
+diff --git a/.rollup.js b/.rollup.js
+new file mode 100644
+index 0000000..0436758
+--- /dev/null
++++ b/.rollup.js
+@@ -0,0 +1,16 @@
++import babel from 'rollup-plugin-babel';
++
++export default {
++	input: 'index.js',
++	output: [
++		{ file: 'index.cjs.js', format: 'cjs' },
++		{ file: 'index.es.js', format: 'es' }
++	],
++	plugins: [
++		babel({
++			presets: [
++				['env', { modules: false, targets: { node: 4 } }]
++			]
++		})
++	]
++};
+diff --git a/.travis.yml b/.travis.yml
+index d75992d..c564664 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -1,7 +1,9 @@
+ # https://docs.travis-ci.com/user/travis-lint
+ 
+ language: node_js
++
+ node_js:
+   - 4
++
+ install:
+   - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 8c36b57..15d3dd9 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Nesting
+ 
++### 5.0.0 (March 24, 2018)
++
++- Refactored code to use Imports babel-transformed for Node v4 compatibility
++
+ ### 4.2.1 (September 19, 2017)
+ 
+ - Updated: Exposing the transform function as its own for postcss-extend
+diff --git a/LICENSE.md b/LICENSE.md
+index ba9e786..0bc1fa7 100644
+--- a/LICENSE.md
++++ b/LICENSE.md
+@@ -30,77 +30,79 @@ effect of CC0 on those rights.
+    protected by copyright and related or neighboring rights (“Copyright and
+    Related Rights”). Copyright and Related Rights include, but are not limited
+    to, the following:
+-  1. the right to reproduce, adapt, distribute, perform, display,
+-     communicate, and translate a Work;
+-  2. moral rights retained by the original author(s) and/or performer(s);
+-  3. publicity and privacy rights pertaining to a person’s image or likeness
+-     depicted in a Work;
+-  4. rights protecting against unfair competition in regards to a Work,
+-     subject to the limitations in paragraph 4(i), below;
+-  5. rights protecting the extraction, dissemination, use and reuse of data
+-     in a Work;
+-  6. database rights (such as those arising under Directive 96/9/EC of the
+-     European Parliament and of the Council of 11 March 1996 on the legal
+-     protection of databases, and under any national implementation thereof,
+-     including any amended or successor version of such directive); and
+-  7. other similar, equivalent or corresponding rights throughout the world
+-     based on applicable law or treaty, and any national implementations
+-     thereof.
++   1. the right to reproduce, adapt, distribute, perform, display, communicate,
++      and translate a Work;
++   2. moral rights retained by the original author(s) and/or performer(s);
++   3. publicity and privacy rights pertaining to a person’s image or likeness
++      depicted in a Work;
++   4. rights protecting against unfair competition in regards to a Work,
++      subject to the limitations in paragraph 4(i), below;
++   5. rights protecting the extraction, dissemination, use and reuse of data in
++      a Work;
++   6. database rights (such as those arising under Directive 96/9/EC of the
++      European Parliament and of the Council of 11 March 1996 on the legal
++      protection of databases, and under any national implementation thereof,
++      including any amended or successor version of such directive); and
++   7. other similar, equivalent or corresponding rights throughout the world
++      based on applicable law or treaty, and any national implementations
++      thereof.
+ 
+ 2. Waiver. To the greatest extent permitted by, but not in contravention of,
+-applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
+-unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
+-and Related Rights and associated claims and causes of action, whether now
+-known or unknown (including existing as well as future claims and causes of
+-action), in the Work (i) in all territories worldwide, (ii) for the maximum
+-duration provided by applicable law or treaty (including future time
+-extensions), (iii) in any current or future medium and for any number of
+-copies, and (iv) for any purpose whatsoever, including without limitation
+-commercial, advertising or promotional purposes (the “Waiver”). Affirmer makes
+-the Waiver for the benefit of each member of the public at large and to the
+-detriment of Affirmer’s heirs and successors, fully intending that such Waiver
+-shall not be subject to revocation, rescission, cancellation, termination, or
+-any other legal or equitable action to disrupt the quiet enjoyment of the Work
+-by the public as contemplated by Affirmer’s express Statement of Purpose.
++   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++   and Related Rights and associated claims and causes of action, whether now
++   known or unknown (including existing as well as future claims and causes of
++   action), in the Work (i) in all territories worldwide, (ii) for the maximum
++   duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
++   makes the Waiver for the benefit of each member of the public at large and
++   to the detriment of Affirmer’s heirs and successors, fully intending that
++   such Waiver shall not be subject to revocation, rescission, cancellation,
++   termination, or any other legal or equitable action to disrupt the quiet
++   enjoyment of the Work by the public as contemplated by Affirmer’s express
++   Statement of Purpose.
+ 
+ 3. Public License Fallback. Should any part of the Waiver for any reason be
+-judged legally invalid or ineffective under applicable law, then the Waiver
+-shall be preserved to the maximum extent permitted taking into account
+-Affirmer’s express Statement of Purpose. In addition, to the extent the Waiver
+-is so judged Affirmer hereby grants to each affected person a royalty-free, non
+-transferable, non sublicensable, non exclusive, irrevocable and unconditional
+-license to exercise Affirmer’s Copyright and Related Rights in the Work (i) in
+-all territories worldwide, (ii) for the maximum duration provided by applicable
+-law or treaty (including future time extensions), (iii) in any current or
+-future medium and for any number of copies, and (iv) for any purpose
+-whatsoever, including without limitation commercial, advertising or promotional
+-purposes (the “License”). The License shall be deemed effective as of the date
+-CC0 was applied by Affirmer to the Work. Should any part of the License for any
+-reason be judged legally invalid or ineffective under applicable law, such
+-partial invalidity or ineffectiveness shall not invalidate the remainder of the
+-License, and in such case Affirmer hereby affirms that he or she will not (i)
+-exercise any of his or her remaining Copyright and Related Rights in the Work
+-or (ii) assert any associated claims and causes of action with respect to the
+-Work, in either case contrary to Affirmer’s express Statement of Purpose.
++   judged legally invalid or ineffective under applicable law, then the Waiver
++   shall be preserved to the maximum extent permitted taking into account
++   Affirmer’s express Statement of Purpose. In addition, to the extent the
++   Waiver is so judged Affirmer hereby grants to each affected person a
++   royalty-free, non transferable, non sublicensable, non exclusive,
++   irrevocable and unconditional license to exercise Affirmer’s Copyright and
++   Related Rights in the Work (i) in all territories worldwide, (ii) for the
++   maximum duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “License”). The License
++   shall be deemed effective as of the date CC0 was applied by Affirmer to the
++   Work. Should any part of the License for any reason be judged legally
++   invalid or ineffective under applicable law, such partial invalidity or
++   ineffectiveness shall not invalidate the remainder of the License, and in
++   such case Affirmer hereby affirms that he or she will not (i) exercise any
++   of his or her remaining Copyright and Related Rights in the Work or (ii)
++   assert any associated claims and causes of action with respect to the Work,
++   in either case contrary to Affirmer’s express Statement of Purpose.
+ 
+ 4. Limitations and Disclaimers.
+-  1. No trademark or patent rights held by Affirmer are waived, abandoned,
+-     surrendered, licensed or otherwise affected by this document.
+-  2. Affirmer offers the Work as-is and makes no representations or
+-     warranties of any kind concerning the Work, express, implied, statutory
+-     or otherwise, including without limitation warranties of title,
+-     merchantability, fitness for a particular purpose, non infringement, or
+-     the absence of latent or other defects, accuracy, or the present or
+-     absence of errors, whether or not discoverable, all to the greatest
+-     extent permissible under applicable law.
+-  3. Affirmer disclaims responsibility for clearing rights of other persons
+-     that may apply to the Work or any use thereof, including without
+-     limitation any person’s Copyright and Related Rights in the Work.
+-     Further, Affirmer disclaims responsibility for obtaining any necessary
+-     consents, permissions or other rights required for any use of the Work.
+-  4. Affirmer understands and acknowledges that Creative Commons is not a
+-     party to this document and has no duty or obligation with respect to
+-     this CC0 or use of the Work.
++   1. No trademark or patent rights held by Affirmer are waived, abandoned,
++      surrendered, licensed or otherwise affected by this document.
++   2. Affirmer offers the Work as-is and makes no representations or warranties
++      of any kind concerning the Work, express, implied, statutory or
++      otherwise, including without limitation warranties of title,
++      merchantability, fitness for a particular purpose, non infringement, or
++      the absence of latent or other defects, accuracy, or the present or
++      absence of errors, whether or not discoverable, all to the greatest
++      extent permissible under applicable law.
++   3. Affirmer disclaims responsibility for clearing rights of other persons
++      that may apply to the Work or any use thereof, including without
++      limitation any person’s Copyright and Related Rights in the Work.
++      Further, Affirmer disclaims responsibility for obtaining any necessary
++      consents, permissions or other rights required for any use of the Work.
++   4. Affirmer understands and acknowledges that Creative Commons is not a
++      party to this document and has no duty or obligation with respect to this
++      CC0 or use of the Work.
+ 
+ For more information, please see
+ http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/README.md b/README.md
+index fd81abc..a82c8b4 100644
+--- a/README.md
++++ b/README.md
+@@ -1,15 +1,15 @@
+ # PostCSS Nesting [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
+ 
+-[![CSS Standard Status][css-img]][css-url]
+ [![NPM Version][npm-img]][npm-url]
++[![CSS Standard Status][css-img]][css-url]
+ [![Build Status][cli-img]][cli-url]
+-[![Licensing][lic-img]][lic-url]
+-[![Gitter Chat][git-img]][git-url]
++[![Windows Build Status][win-img]][win-url]
++[![Support Chat][git-img]][git-url]
+ 
+ [PostCSS Nesting] lets you nest style rules inside each other, following the
+ [CSS Nesting] specification.
+ 
+-```css
++```pcss
+ a, b {
+   color: red;
+ 
+@@ -18,7 +18,7 @@ a, b {
+   }
+ }
+ 
+-/* after postcss-nesting */
++/* becomes */
+ 
+ a, b {
+   color: red;
+@@ -42,7 +42,9 @@ npm install postcss-nesting --save-dev
+ Use [PostCSS Nesting] to process your CSS:
+ 
+ ```js
+-require('postcss-nesting').process(YOUR_CSS, { /* options */ });
++import postcssNesting from 'postcss-nesting';
++
++postcssNesting.process(YOUR_CSS);
+ ```
+ 
+ #### PostCSS
+@@ -56,9 +58,46 @@ npm install postcss --save-dev
+ Use [PostCSS Nesting] as a plugin:
+ 
+ ```js
++import postcss from 'gulp-postcss';
++import postcssNesting from 'postcss-nesting';
++
+ postcss([
+-  require('postcss-nesting')({ /* options */ })
+-]).process(YOUR_CSS, /* options */);
++  postcssNesting(/* options */)
++]).process(YOUR_CSS);
++```
++
++#### Webpack
++
++Add [PostCSS Loader] to your build tool:
++
++```bash
++npm install postcss-loader --save-dev
++```
++
++Use [PostCSS Nesting] in your Webpack configuration:
++
++```js
++import postcssNesting from 'postcss-nesting';
++
++export default {
++  module: {
++    rules: [
++      {
++        test: /\.css$/,
++        use: [
++          'style-loader',
++          { loader: 'css-loader', options: { importLoaders: 1 } },
++          { loader: 'postcss-loader', options: {
++            ident: 'postcss',
++            plugins: () => [
++              postcssNesting(/* options */)
++            ]
++          } }
++        ]
++      }
++    ]
++  }
++}
+ ```
+ 
+ #### Gulp
+@@ -72,17 +111,16 @@ npm install gulp-postcss --save-dev
+ Use [PostCSS Nesting] in your Gulpfile:
+ 
+ ```js
+-var postcss = require('gulp-postcss');
+-
+-gulp.task('css', function () {
+-  return gulp.src('./src/*.css').pipe(
+-    postcss([
+-      require('postcss-nesting')({ /* options */ })
+-    ])
+-  ).pipe(
+-    gulp.dest('.')
+-  );
+-});
++import postcss from 'gulp-postcss';
++import postcssNesting from 'postcss-nesting';
++
++gulp.task('css', () => gulp.src('./src/*.css').pipe(
++  postcss([
++    postcssNesting(/* options */)
++  ])
++).pipe(
++  gulp.dest('.')
++));
+ ```
+ 
+ #### Grunt
+@@ -96,13 +134,15 @@ npm install grunt-postcss --save-dev
+ Use [PostCSS Nesting] in your Gruntfile:
+ 
+ ```js
++import postcssNesting from 'postcss-nesting';
++
+ grunt.loadNpmTasks('grunt-postcss');
+ 
+ grunt.initConfig({
+   postcss: {
+     options: {
+       use: [
+-        require('postcss-nesting')({ /* options */ })
++       postcssNesting(/* options */)
+       ]
+     },
+     dist: {
+@@ -114,17 +154,18 @@ grunt.initConfig({
+ 
+ [cli-url]: https://travis-ci.org/jonathantneal/postcss-nesting
+ [cli-img]: https://img.shields.io/travis/jonathantneal/postcss-nesting.svg
+-[css-img]: https://jonathantneal.github.io/css-db/badge/css-nesting.svg
+-[css-url]: https://jonathantneal.github.io/css-db/#css-nesting
++[css-img]: https://jonathantneal.github.io/cssdb/badge/nesting-rules.svg
++[css-url]: https://jonathantneal.github.io/cssdb/#nesting-rules
+ [git-url]: https://gitter.im/postcss/postcss
+ [git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
+-[lic-url]: LICENSE.md
+-[lic-img]: https://img.shields.io/npm/l/postcss-nesting.svg
+ [npm-url]: https://www.npmjs.com/package/postcss-nesting
+ [npm-img]: https://img.shields.io/npm/v/postcss-nesting.svg
++[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-nesting.svg
++[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-nesting
+ 
+ [CSS Nesting]: http://tabatkins.github.io/specs/css-nesting/
+ [Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+ [Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
++[PostCSS Loader]: https://github.com/postcss/postcss-loader
+ [PostCSS Nesting]: https://github.com/jonathantneal/postcss-nesting
+diff --git a/index.js b/index.js
+index 710cada..ae0d905 100644
+--- a/index.js
++++ b/index.js
+@@ -1,10 +1,4 @@
+-'use strict';
++import postcss   from 'postcss';
++import transform from './lib/transform';
+ 
+-// tooling
+-const postcss   = require('postcss');
+-const transform = require('./lib/transform');
+-
+-// plugin
+-module.exports = postcss.plugin('postcss-nesting', () => {
+-	return (root) => root.walk(transform);
+-});
++export default postcss.plugin('postcss-nesting', () => root => root.walk(transform));
+diff --git a/lib/clean-node.js b/lib/clean-node.js
+index 9d430e9..369749a 100644
+--- a/lib/clean-node.js
++++ b/lib/clean-node.js
+@@ -1,5 +1,5 @@
+ // clean the raws of the node
+-module.exports = (node) => {
++export default node => {
+ 	node.raws = Object.assign(
+ 		node.raws.between ? { between: node.raws.between } : {},
+ 		node.raws.semicolon ? { semicolon: true } : {},
+diff --git a/lib/get-closest-rule.js b/lib/get-closest-rule.js
+index 62b9bff..780734b 100644
+--- a/lib/get-closest-rule.js
++++ b/lib/get-closest-rule.js
+@@ -1,7 +1,5 @@
+-'use strict';
+-
+ // return the closest rule
+-module.exports = (node) => {
++export default node => {
+ 	let selectorParent = node.parent;
+ 
+ 	while (selectorParent && selectorParent.type !== 'rule') {
+diff --git a/lib/merge-params.js b/lib/merge-params.js
+index b270a95..6b92943 100644
+--- a/lib/merge-params.js
++++ b/lib/merge-params.js
+@@ -1,9 +1,10 @@
+-// tooling
+-const comma = require('postcss').list.comma;
++import { list } from 'postcss';
++
++const { comma } = list;
+ 
+ // merge params
+-module.exports = (fromParams, toParams) => comma(fromParams).map(
+-	(params1) => comma(toParams).map(
+-		(params2) => params1 + ' and ' + params2
++export default (fromParams, toParams) => comma(fromParams).map(
++	params1 => comma(toParams).map(
++		params2 => params1 + ' and ' + params2
+ 	).join(', ')
+ ).join(', ');
+diff --git a/lib/merge-selectors.js b/lib/merge-selectors.js
+index 376a5ce..6840ac1 100644
+--- a/lib/merge-selectors.js
++++ b/lib/merge-selectors.js
+@@ -1,11 +1,12 @@
+ // tooling
+-const comma = require('postcss').list.comma;
++import { list } from 'postcss';
++const { comma } = list;
+ 
+ // merge selectors
+-module.exports = (fromSelectors, toSelectors) => (typeof fromSelectors === 'string' ? comma(fromSelectors) : fromSelectors).reduce(
++export default (fromSelectors, toSelectors) => (typeof fromSelectors === 'string' ? comma(fromSelectors) : fromSelectors).reduce(
+ 	(selectors, fromSelector) => selectors.concat(
+ 		(typeof toSelectors === 'string' ? comma(toSelectors) : toSelectors).map(
+-			(toSelector) => toSelector.replace(/&/g, fromSelector)
++			toSelector => toSelector.replace(/&/g, fromSelector)
+ 		)
+ 	),
+ 	[]
+diff --git a/lib/transform-after-nodes.js b/lib/transform-after-nodes.js
+index 7d6f099..a1d7843 100644
+--- a/lib/transform-after-nodes.js
++++ b/lib/transform-after-nodes.js
+@@ -1,8 +1,7 @@
+-// tooling
+-const cleanNode = require('./clean-node');
++import cleanNode from './clean-node';
+ 
+ // move nodes after the current node into a cloned parent node
+-module.exports = (node) => {
++export default node => {
+ 	// affected nodes after the current node
+ 	const affectedNodes = node.parent.nodes.slice(node.parent.nodes.indexOf(node) + 1).map(cleanNode);
+ 
+@@ -17,4 +16,6 @@ module.exports = (node) => {
+ 
+ 		return afterParent;
+ 	}
++
++	return undefined;
+ };
+diff --git a/lib/transform-before-nodes.js b/lib/transform-before-nodes.js
+new file mode 100644
+index 0000000..b14ac25
+--- /dev/null
++++ b/lib/transform-before-nodes.js
+@@ -0,0 +1,22 @@
++import cleanNode from './clean-node';
++
++// move nodes after the current node into a cloned parent node
++export default node => {
++	// affected nodes after the current node
++	const affectedNodes = node.parent.nodes.slice(0, node.parent.nodes.indexOf(node)).map(cleanNode);
++
++	if (affectedNodes.length) {
++		// clone the current parent
++		const beforeParent = cleanNode(node.parent.clone()).removeAll();
++
++		// append the affected nodes to the parent clone
++		beforeParent.append(affectedNodes);
++
++		// insert a parent clone before the current parent
++		node.parent.before(beforeParent);
++
++		return beforeParent;
++	}
++
++	return undefined;
++};
+diff --git a/lib/transform-bubbling-atrule.js b/lib/transform-bubbling-atrule.js
+index bf8e358..6e119e9 100644
+--- a/lib/transform-bubbling-atrule.js
++++ b/lib/transform-bubbling-atrule.js
+@@ -1,10 +1,9 @@
+-// tooling
+-const cleanNode           = require('./clean-node');
+-const mergeParams         = require('./merge-params');
+-const transformAfterNodes = require('./transform-after-nodes');
++import cleanNode           from './clean-node';
++import mergeParams         from './merge-params';
++import transformAfterNodes from './transform-after-nodes';
+ 
+ // transform a bubbling atrule (e.g. @document, @media, @supports)
+-module.exports = (node) => {
++export default node => {
+ 	// clean node
+ 	cleanNode(node);
+ 
+@@ -55,4 +54,4 @@ module.exports = (node) => {
+ };
+ 
+ // whether the node is a bubbling atrule (e.g. @document, @media, @supports)
+-module.exports.test = (node, bubbles) => node.type === 'atrule' && ['document', 'media', 'supports'].indexOf(node.name) !== -1 && node.parent && node.parent.type === 'rule';
++export const test = node => node.type === 'atrule' && ['document', 'media', 'supports'].indexOf(node.name) !== -1 && node.parent && node.parent.type === 'rule';
+diff --git a/lib/transform-nesting-atrule.js b/lib/transform-nesting-atrule.js
+index 739b415..c655e48 100644
+--- a/lib/transform-nesting-atrule.js
++++ b/lib/transform-nesting-atrule.js
+@@ -1,13 +1,13 @@
+-// tooling
+-const cleanNode           = require('./clean-node');
+-const comma               = require('postcss').list.comma;
+-const getClosestRule      = require('./get-closest-rule');
+-const mergeSelectors      = require('./merge-selectors');
+-const postcss             = require('postcss');
+-const transformAfterNodes = require('./transform-after-nodes');
++import postcss, { list }   from 'postcss';
++import cleanNode           from './clean-node';
++import getClosestRule      from './get-closest-rule';
++import mergeSelectors      from './merge-selectors';
++import transformAfterNodes from './transform-after-nodes';
++
++const { comma } = list;
+ 
+ // transform a nesting atrule (e.g. @nest .something &)
+-module.exports = (node) => {
++export default node => {
+ 	// clean node and child nodes
+ 	cleanNode(node).nodes.forEach(cleanNode);
+ 
+@@ -61,6 +61,6 @@ module.exports = (node) => {
+ };
+ 
+ // whether the node is a nesting atrule (e.g. @nest .something &)
+-module.exports.test = (node) => node.type === 'atrule' && node.name === 'nest' && node.parent && node.parent.type === 'rule' && comma(node.params).every(
+-	(selector) => selector.split('&').length === 2 && /&([^\w-|]|$)/.test(selector)
++export const test = node => node.type === 'atrule' && node.name === 'nest' && node.parent && node.parent.type === 'rule' && comma(node.params).every(
++	selector => selector.split('&').length === 2 && /&([^\w-|]|$)/.test(selector)
+ );
+diff --git a/lib/transform-nesting-rule.js b/lib/transform-nesting-rule.js
+index 6895281..8546d2f 100644
+--- a/lib/transform-nesting-rule.js
++++ b/lib/transform-nesting-rule.js
+@@ -1,10 +1,9 @@
+-// tooling
+-const cleanNode           = require('./clean-node');
+-const mergeSelectors      = require('./merge-selectors');
+-const transformAfterNodes = require('./transform-after-nodes');
++import cleanNode           from './clean-node';
++import mergeSelectors      from './merge-selectors';
++import transformAfterNodes from './transform-after-nodes';
+ 
+ // transform a nesting rule (e.g. &.something)
+-module.exports = (node) => {
++export default node => {
+ 	// clean node and child nodes
+ 	cleanNode(node).nodes.forEach(cleanNode);
+ 
+@@ -24,6 +23,6 @@ module.exports = (node) => {
+ };
+ 
+ // whether the node is a nesting rule (e.g. &.something)
+-module.exports.test = (node) => node.type === 'rule' && node.parent && node.parent.type === 'rule' && node.selectors.every(
+-	(selector) => selector.trim().lastIndexOf('&') === 0 && /^&([^\w-|]|$)/.test(selector)
++export const test = node => node.type === 'rule' && node.parent && node.parent.type === 'rule' && node.selectors.every(
++	selector => selector.trim().lastIndexOf('&') === 0 && /^&([^\w-|]|$)/.test(selector)
+ );
+diff --git a/lib/transform.js b/lib/transform.js
+index df9bd4f..ff5685b 100644
+--- a/lib/transform.js
++++ b/lib/transform.js
+@@ -1,17 +1,16 @@
+-// tooling
+-const transformBubblingAtrule = require('./transform-bubbling-atrule');
+-const transformNestingAtRule  = require('./transform-nesting-atrule');
+-const transformNestingRule    = require('./transform-nesting-rule');
++import transformBubblingAtrule, { test as transformBubblingAtruleTest } from './transform-bubbling-atrule';
++import transformNestingAtRule,  { test as transformNestingAtRuleTest }  from './transform-nesting-atrule';
++import transformNestingRule,    { test as transformNestingRuleTest }    from './transform-nesting-rule';
+ 
+ // conditionally transform a nesting rule
+-module.exports = (node) => {
+-	if (transformBubblingAtrule.test(node)) {
++export default node => {
++	if (transformBubblingAtruleTest(node)) {
+ 		// conditionally transform a bubbling atrule
+ 		transformBubblingAtrule(node);
+-	} else if (transformNestingAtRule.test(node)) {
++	} else if (transformNestingAtRuleTest(node)) {
+ 		// conditionally transform a nesting atrule
+ 		transformNestingAtRule(node);
+-	} else if (transformNestingRule.test(node)) {
++	} else if (transformNestingRuleTest(node)) {
+ 		// conditionally transform a nesting rule
+ 		transformNestingRule(node);
+ 	}
+diff --git a/package.json b/package.json
+index 8699500..8f3653b 100644
+--- a/package.json
++++ b/package.json
+@@ -1,38 +1,45 @@
+ {
+   "name": "postcss-nesting",
+-  "version": "4.2.1",
+-  "description": "Nest style and media rules inside each another, following the CSS Nesting Module Level 3 specification",
++  "version": "5.0.0",
++  "description": "Nest style rules inside each other",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+   "repository": "jonathantneal/postcss-nesting",
+   "homepage": "https://github.com/jonathantneal/postcss-nesting#readme",
+   "bugs": "https://github.com/jonathantneal/postcss-nesting/issues",
+-  "main": "index.js",
++  "main": "index.cjs.js",
++  "module": "index.es.js",
+   "files": [
+-    "index.js",
+-    "lib"
++    "index.cjs.js",
++    "index.es.js"
+   ],
+   "scripts": {
+-    "clean": "git clean -X -d -f",
+-    "prepublish": "npm test",
++    "prepublishOnly": "npm test",
++    "pretest": "rollup -c .rollup.js --silent",
+     "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+-    "test:js": "eslint *.js --cache --ignore-pattern .gitignore",
++    "test:js": "eslint *.js lib/*.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+     "node": ">=4.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^6.0.11"
++    "postcss": "^6.0.21"
+   },
+   "devDependencies": {
+-    "eslint": "^4.7.1",
++    "babel-core": "^6.26.0",
++    "babel-eslint": "^8.2.3",
++    "babel-preset-env": "^1.6.1",
++    "eslint": "^4.19.1",
+     "eslint-config-dev": "^2.0.0",
+-    "postcss-tape": "^2.1.0",
+-    "pre-commit": "^1.2.2"
++    "postcss-tape": "^2.2.0",
++    "pre-commit": "^1.2.2",
++    "rollup": "^0.58.2",
++    "rollup-plugin-babel": "^3.0.4"
+   },
+   "eslintConfig": {
+-    "extends": "dev"
++    "extends": "dev",
++    "parser": "babel-eslint"
+   },
+   "keywords": [
+     "postcss",
+-- 
+2.33.1
+

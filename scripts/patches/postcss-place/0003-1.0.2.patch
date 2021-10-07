@@ -1,0 +1,144 @@
+From c28c91d8acf9b935c02138368e72952fb231caa1 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 14 Dec 2016 10:14:07 -0800
+Subject: [PATCH 03/20] 1.0.2
+
+---
+ CHANGELOG.md |  5 ++++
+ index.js     | 79 ++++++++++++++++++++++++++++++----------------------
+ package.json |  6 ++--
+ 3 files changed, 54 insertions(+), 36 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 071bbeb..3274032 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to Place
+ 
++### 1.0.2 (December 8, 2016)
++
++- Updated: Use destructing assignment on plugin options
++- Updated: Use template literals
++
+ ### 1.0.1 (December 6, 2016)
+ 
+ - Updated: boilerplate conventions (`postcss-tape`)
+diff --git a/index.js b/index.js
+index b1cf577..21a0e34 100644
+--- a/index.js
++++ b/index.js
+@@ -4,38 +4,51 @@ const parser  = require('postcss-value-parser');
+ 
+ // plugin
+ module.exports = postcss.plugin('postcss-place', ({
+-	prefix
+-} = {}) => (root) => {
+-	// property
+-	const prop = new RegExp(prefix ? '^-' + prefix + '-(content|items|self)' : '^place-(content|items|self)');
+-
+-	root.walkDecls(prop, (decl) => {
+-		// alignment
+-		const alignment = decl.prop.match(prop)[1];
+-
+-		// value
+-		const value = parser(decl.value);
+-
+-		// divider position
+-		const index = value.nodes.map(
+-			(node) => node.type
+-		).indexOf('space');
+-
+-		// new justify-[alignment] and align-[alignment] declarations
+-		const alignValue   = index === -1 ? decl.value : parser.stringify(value.nodes.slice(0, index));
+-		const justifyValue = index === -1 ? decl.value : parser.stringify(value.nodes.slice(index + 1));
+-
+-		decl.cloneBefore({
+-			prop: 'align-' + alignment,
+-			value: alignValue
++	prefix = ''
++} = {}) => {
++	// dashed prefix
++	const dashedPrefix = prefix ? `-${ prefix }-` : '';
++
++	// property matcher
++	const propertyMatch = new RegExp(`^${ dashedPrefix }place-(content|items|self)`);
++
++	return (root) => {
++		// walk each matching declaration
++		root.walkDecls(propertyMatch, (decl) => {
++			// alignment
++			const alignment = decl.prop.match(propertyMatch)[1];
++
++			// value
++			const value = parser(decl.value);
++
++			// divider position
++			const index = value.nodes.map(
++				(node) => node.type
++			).indexOf('space');
++
++			// new justify-[alignment] and align-[alignment] declarations
++			const alignValue   = index === -1 ? decl.value : parser.stringify(value.nodes.slice(0, index));
++			const justifyValue = index === -1 ? decl.value : parser.stringify(value.nodes.slice(index + 1));
++
++			decl.cloneBefore({
++				prop: `align-${ alignment }`,
++				value: alignValue
++			});
++
++			decl.cloneBefore({
++				prop: `justify-${ alignment }`,
++				value: justifyValue
++			});
++
++			// remove place-[alignment]
++			decl.remove();
+ 		});
+-
+-		decl.cloneBefore({
+-			prop: 'justify-' + alignment,
+-			value: justifyValue
+-		});
+-
+-		// remove place-[alignment]
+-		decl.remove();
+-	});
++	};
+ });
++
++// override plugin#process
++module.exports.process = function (cssString, pluginOptions, processOptions) {
++	return postcss([
++		0 in arguments ? module.exports(pluginOptions) : module.exports()
++	]).process(cssString, processOptions);
++};
+diff --git a/package.json b/package.json
+index 13113b2..38c510e 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-place",
+-  "version": "1.0.1",
++  "version": "1.0.2",
+   "description": "`place-[alignment] shorthand for align-[alignment] and justify-[alignment]",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com> (http://jonathantneal.com)",
+   "license": "CC0-1.0",
+@@ -27,11 +27,11 @@
+   "devDependencies": {
+     "echint": "^2.1.0",
+     "echint-config-dev": "1.0.0",
+-    "eslint": "^3.11.1",
++    "eslint": "^3.12.1",
+     "eslint-config-dev": "1.0.0",
+     "jscs": "^3.0.7",
+     "jscs-config-dev": "1.0.1",
+-    "postcss-tape": "1.0.1"
++    "postcss-tape": "1.3.0"
+   },
+   "echint": {
+     "extends": "dev"
+-- 
+2.33.1
+

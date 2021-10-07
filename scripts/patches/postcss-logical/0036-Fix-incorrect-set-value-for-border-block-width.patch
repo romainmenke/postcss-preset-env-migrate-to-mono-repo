@@ -1,0 +1,81 @@
+From ccda5eb27ed33b5e45ac8f0c4f76571de196a38f Mon Sep 17 00:00:00 2001
+From: Ivan Demidov <Scrum@list.ru>
+Date: Mon, 7 Oct 2019 18:35:52 +0300
+Subject: [PATCH 36/43] Fix incorrect set value for border-block-width
+
+---
+ src/lib/transform-border.js     | 2 +-
+ test/border.css                 | 1 +
+ test/border.expect.css          | 2 ++
+ test/border.ltr.expect.css      | 2 ++
+ test/border.preserve.expect.css | 3 +++
+ 5 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/src/lib/transform-border.js b/src/lib/transform-border.js
+index 82af648..3bab6f9 100644
+--- a/src/lib/transform-border.js
++++ b/src/lib/transform-border.js
+@@ -11,7 +11,7 @@ export default {
+ 		}),
+ 		decl.clone({
+ 			prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-			value: values[0]
++			value: values[1] || values[0]
+ 		})
+ 	],
+ 
+diff --git a/test/border.css b/test/border.css
+index caa8d2f..77d7df9 100644
+--- a/test/border.css
++++ b/test/border.css
+@@ -45,6 +45,7 @@ test-flowing-border-width {
+ 	border-width: inherit;
+ 	border-inline-end-width: 4px;
+ 	border-width: inherit;
++	border-block-width: 2px 4px;
+ }
+ 
+ test-flowing-border-radius {
+diff --git a/test/border.expect.css b/test/border.expect.css
+index 1b743f9..30cbd3e 100644
+--- a/test/border.expect.css
++++ b/test/border.expect.css
+@@ -93,6 +93,8 @@ test-flowing-border-width {
+ 	border-width: inherit;
+ 	border-width: inherit;
+ 	border-width: inherit;
++	border-top-width: 2px;
++	border-bottom-width: 4px;
+ }
+ 
+ test-flowing-border-radius:dir(ltr) {
+diff --git a/test/border.ltr.expect.css b/test/border.ltr.expect.css
+index b69b72d..3ee90fa 100644
+--- a/test/border.ltr.expect.css
++++ b/test/border.ltr.expect.css
+@@ -50,6 +50,8 @@ test-flowing-border-width {
+ 	border-width: inherit;
+ 	border-right-width: 4px;
+ 	border-width: inherit;
++	border-top-width: 2px;
++	border-bottom-width: 4px;
+ }
+ 
+ test-flowing-border-radius {
+diff --git a/test/border.preserve.expect.css b/test/border.preserve.expect.css
+index 43bec38..450b504 100644
+--- a/test/border.preserve.expect.css
++++ b/test/border.preserve.expect.css
+@@ -106,6 +106,9 @@ test-flowing-border-width {
+ 	border-width: inherit;
+ 	border-inline-end-width: 4px;
+ 	border-width: inherit;
++	border-top-width: 2px;
++	border-bottom-width: 4px;
++	border-block-width: 2px 4px;
+ }
+ 
+ test-flowing-border-radius:dir(ltr) {
+-- 
+2.33.1
+

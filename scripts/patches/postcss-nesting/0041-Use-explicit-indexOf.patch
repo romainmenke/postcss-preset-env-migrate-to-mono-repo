@@ -1,0 +1,34 @@
+From ed6da54914635f13147218b6e047cdbd5b4f3f16 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 20 Feb 2016 23:00:45 -0500
+Subject: [PATCH 41/89] Use explicit indexOf
+
+---
+ index.js | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/index.js b/index.js
+index d3e984a..1ae04c3 100644
+--- a/index.js
++++ b/index.js
+@@ -34,7 +34,7 @@ module.exports = postcss.plugin('postcss-nesting', function (opts) {
+ 					root.insertAfter(rule.insertAfterNode || rule, newrule);
+ 
+ 					rule.insertAfterNode = newrule;
+-				} else if (isAtRule && target.name === name && ~target.params.indexOf('&')) {
++				} else if (isAtRule && target.name === name && target.params.indexOf('&') !== -1) {
+ 					target.remove();
+ 
+ 					newrule.selector = target.params;
+@@ -46,7 +46,7 @@ module.exports = postcss.plugin('postcss-nesting', function (opts) {
+ 					root.insertAfter(rule.insertAfterNode || rule, newrule);
+ 
+ 					rule.insertAfterNode = newrule;
+-				} else if (isAtRule && ~bubble.indexOf(target.name)) {
++				} else if (isAtRule && bubble.indexOf(target.name) !== -1) {
+ 					var selector = rule.selector;
+ 
+ 					if (root.type === 'atrule' && root.name === target.name && root.parent) {
+-- 
+2.33.1
+

@@ -1,0 +1,57 @@
+From 7d6ff261fdcbdfa26008d9ee67f0a566ce9293c8 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 27 Feb 2018 20:51:24 -0500
+Subject: [PATCH 13/84] 3.2.2
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 6 +++---
+ 2 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index dc52831..3a0b45a 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Preset Env
+ 
++### 3.2.2 (February 27, 2018)
++
++- Updated: `postcss-color-mod-function` to v2.4.2 (patch update)
++
+ ### 3.2.1 (February 21, 2018)
+ 
+ - Updated: Use the latest tested version of all dependencies
+diff --git a/package.json b/package.json
+index 36f094c..f31d8d1 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-preset-env",
+-  "version": "3.2.1",
++  "version": "3.2.2",
+   "description": "Convert modern CSS into something browsers understand",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -33,7 +33,7 @@
+     "postcss-apply": "^0.8.0",
+     "postcss-attribute-case-insensitive": "^2.0.0",
+     "postcss-color-hex-alpha": "^3.0.0",
+-    "postcss-color-mod-function": "^2.4.1",
++    "postcss-color-mod-function": "^2.4.2",
+     "postcss-color-rebeccapurple": "^3.0.0",
+     "postcss-color-rgb": "^2.0.0",
+     "postcss-custom-media": "^6.0.0",
+@@ -64,7 +64,7 @@
+     "postcss-simple-vars": "^4.1.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.56.2",
++    "rollup": "^0.56.3",
+     "rollup-plugin-babel": "^3.0.3"
+   },
+   "eslintConfig": {
+-- 
+2.33.1
+

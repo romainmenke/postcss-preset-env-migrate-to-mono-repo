@@ -1,0 +1,270 @@
+From ef0b764fc9eeccff9d1157ebd94127894030af86 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 30 Jan 2016 01:32:10 -0500
+Subject: [PATCH 39/89] 2.2.0
+
+- Added: Nesting of all at-rules
+- Updated: Direct nesting order maintains order
+- Updated: Tests and documentation
+---
+ CHANGELOG.md           |  6 ++++
+ README.md              |  8 ++++++
+ index.js               | 64 ++++++++++++++++++++++++------------------
+ package.json           |  7 +++--
+ test.js                |  3 ++
+ test/direct.expect.css |  2 +-
+ test/media.css         | 17 +++++++++++
+ test/media.expect.css  | 26 +++++++++++++++++
+ 8 files changed, 103 insertions(+), 30 deletions(-)
+ create mode 100644 test/media.css
+ create mode 100644 test/media.expect.css
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index dbf2dee..f1a1b00 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,9 @@
++## 2.2.0 (2016-01-30)
++
++- Added: Nesting of all at-rules
++- Updated: Direct nesting order maintains order
++- Updated: Tests and documentation
++
+ ## 2.1.1 (2016-01-03)
+ 
+ - Updated: Project conventions
+diff --git a/README.md b/README.md
+index 3d96f4b..d0f01d9 100644
+--- a/README.md
++++ b/README.md
+@@ -48,6 +48,10 @@ a, b {
+ 
+ 	@media (min-width: 30em) {
+ 		color: yellow;
++
++		@media (min-device-pixel-ratio: 1.5) {
++			color: green;
++		}
+ 	}
+ }
+ 
+@@ -74,6 +78,10 @@ a:hover, b:hover {
+         color: yellow;
+     }
+ }
++
++@media (min-width: 30em) and (min-device-pixel-ratio: 1.5) {
++	color: green;
++}
+ ```
+ 
+ ## Usage
+diff --git a/index.js b/index.js
+index aeb629e..ac1cc64 100644
+--- a/index.js
++++ b/index.js
+@@ -8,58 +8,68 @@ module.exports = postcss.plugin('postcss-nested', function (opts) {
+ 	if (opts && opts.prefix) name   = '-' + opts.prefix + '-' + name;
+ 
+ 	return function (css) {
+-		css.walkAtRules(function (atrule) {
+-			var rule = atrule.parent;
++		css.walk(function (target) {
++			var rule = target.parent;
+ 			var root = rule && rule.parent;
+ 
++			var isAtRule = target.type === 'atrule';
++			var isRule   = target.type === 'rule';
++
+ 			if (root && rule.type === 'rule') {
+ 				var newrule = postcss.rule({
+-					source: atrule.source
++					source: target.source
+ 				});
+ 
+-				if (atrule.name === name && ~atrule.params.indexOf('&')) {
+-					atrule.remove();
++				if (isRule && target.selectors.every(function (selector) {
++					return selector.lastIndexOf('&') === 0;
++				})) {
++					target.remove();
+ 
+-					newrule.selector = atrule.params;
++					newrule.selector = target.selector;
+ 
+-					newrule.append(atrule.nodes);
++					newrule.append(target.nodes);
+ 
+ 					transpileSelectors(rule, newrule);
+ 
+ 					root.insertAfter(rule.insertAfterNode || rule, newrule);
+ 
+ 					rule.insertAfterNode = newrule;
+-				} else if (~bubble.indexOf(atrule.name)) {
+-					atrule.remove();
++				} else if (isAtRule && target.name === name && ~target.params.indexOf('&')) {
++					target.remove();
+ 
+-					newrule.selector = rule.selector;
++					newrule.selector = target.params;
+ 
+-					newrule.append(atrule.nodes);
++					newrule.append(target.nodes);
+ 
+-					atrule.removeAll();
++					transpileSelectors(rule, newrule);
+ 
+-					atrule.append(newrule);
++					root.insertAfter(rule.insertAfterNode || rule, newrule);
+ 
+-					root.insertAfter(rule.insertAfterNode || rule, atrule);
++					rule.insertAfterNode = newrule;
++				} else if (isAtRule && ~bubble.indexOf(target.name)) {
++					var selector = rule.selector;
+ 
+-					rule.insertAfterNode = atrule;
+-				}
+-			}
+-		});
++					if (root.type === 'atrule' && root.name === target.name && root.parent) {
++						target.params = root.params + ' and ' + target.params;
++
++						rule = root;
++						root = root.parent;
++					}
++
++					target.remove();
+ 
+-		css.walkRules(function (rule) {
+-			if (rule.parent.type === 'root') return;
++					newrule.selector = selector;
+ 
+-			if (rule.selectors.filter(function (selector) {
+-				return selector.lastIndexOf('&') !== 0;
+-			}).length) return;
++					newrule.append(target.nodes);
+ 
+-			transpileSelectors(rule.parent, rule);
++					target.removeAll();
+ 
+-			rule.moveAfter(rule.parent);
++					target.append(newrule);
+ 
+-			if (!rule.prev().nodes.length) {
+-				rule.prev().remove();
++					root.insertAfter(rule.insertAfterNode || rule, target);
++
++					rule.insertAfterNode = target;
++				}
+ 			}
+ 		});
+ 	};
+diff --git a/package.json b/package.json
+index 6db1771..0866c47 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-nesting",
+-  "version": "2.1.1",
++  "version": "2.2.0",
+   "description": "Transpiles nested rules according to CSS Nesting Module Level 3",
+   "keywords": [
+     "postcss",
+@@ -8,7 +8,10 @@
+     "postcss-plugin",
+     "nestings",
+     "selectors",
+-    "rules"
++    "rules",
++    "specs",
++    "specifications",
++    "cssnext"
+   ],
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+diff --git a/test.js b/test.js
+index 11827dc..b919681 100644
+--- a/test.js
++++ b/test.js
+@@ -8,6 +8,9 @@ var tests = {
+ 		},
+ 		'ignore': {
+ 			message: 'ignores invalid syntax'
++		},
++		'media': {
++			message: 'supports nested media queries'
+ 		}
+ 	}
+ };
+diff --git a/test/direct.expect.css b/test/direct.expect.css
+index 08b6eee..4bd6a50 100644
+--- a/test/direct.expect.css
++++ b/test/direct.expect.css
+@@ -58,7 +58,7 @@ a b {
+ 	a b {
+ 		color: blue
+ 	}
+-		}
++}
+ 
+ @media {
+ 
+diff --git a/test/media.css b/test/media.css
+new file mode 100644
+index 0000000..6e8af9b
+--- /dev/null
++++ b/test/media.css
+@@ -0,0 +1,17 @@
++.main {
++	color: blue;
++
++	@media (min-width: 100px) {
++		color: white;
++
++		@media (max-width: 200px) {
++			color: red;
++		}
++
++		& .child {
++			@media (max-width: 200px) {
++				color: green;
++			}
++		}
++	}
++}
+diff --git a/test/media.expect.css b/test/media.expect.css
+new file mode 100644
+index 0000000..c59823b
+--- /dev/null
++++ b/test/media.expect.css
+@@ -0,0 +1,26 @@
++.main {
++	color: blue
++}
++
++	@media (min-width: 100px) {
++
++	.main {
++		color: white
++	}
++
++	.main .child {}
++	}
++
++	@media (min-width: 100px) and (max-width: 200px) {
++
++	.main {
++		color: red
++	}
++}
++
++	@media (min-width: 100px) and (max-width: 200px) {
++
++	.main .child {
++		color: green
++	}
++}
+-- 
+2.33.1
+

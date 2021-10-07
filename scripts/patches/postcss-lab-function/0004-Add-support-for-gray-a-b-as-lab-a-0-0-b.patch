@@ -1,0 +1,168 @@
+From 2ee1743724927c669653a47816b2c252e79e7522 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 24 Jul 2018 20:53:07 -0400
+Subject: [PATCH 04/19] Add support for gray(a / b) as lab(a 0 0 / b)
+
+---
+ index.js                            | 61 ++++++++++++++++++++++++++---
+ test/basic.css                      |  8 ++++
+ test/basic.expect.css               |  8 ++++
+ test/basic.preserve-true.expect.css | 13 ++++++
+ 4 files changed, 84 insertions(+), 6 deletions(-)
+
+diff --git a/index.js b/index.js
+index ff5eeb1..ff94a81 100644
+--- a/index.js
++++ b/index.js
+@@ -16,11 +16,13 @@ export default postcss.plugin('postcss-lab-function', opts => {
+ 					if (colorRegExp.test(node.value)) {
+ 						const children = node.nodes.slice(1, -1);
+ 						const isLab = labRegExp.test(node.value);
+-						const isFunctionalLAB = matchFunctionalLAB(children);
+-						const isFunctionalLCH = matchFunctionalLCH(children);
++						const isGray = grayRegExp.test(node.value);
++						const isFunctionalLAB = !isGray && matchFunctionalLAB(children);
++						const isFunctionalLCH = !isGray && matchFunctionalLCH(children);
++						const isFunctionalGray = isGray && matchFunctionalGray(children);
+ 
+ 						if (isFunctionalLAB || isFunctionalLCH) {
+-							node.value = 'rgb'
++							node.value = 'rgb';
+ 
+ 							const slashNode = children[3];
+ 							const alphaNode = children[4];
+@@ -63,6 +65,46 @@ export default postcss.plugin('postcss-lab-function', opts => {
+ 
+ 							node.nodes.splice(3, 0, [ newComma() ]);
+ 							node.nodes.splice(2, 0, [ newComma() ]);
++						} else if (isFunctionalGray) {
++							node.value = 'rgb';
++
++							const alphaNode = children[2];
++
++							const rgbValues = lab2rgb(
++								...[
++									children[0].value,
++									0,
++									0
++								].map(
++									number => parseFloat(number)
++								)
++							).map(
++								sourceValue => Math.max(Math.min(parseInt(sourceValue * 2.55), 255), 0)
++							);
++
++							node.removeAll()
++							.append(newParen('('))
++							.append(newNumber(rgbValues[0]))
++							.append(newComma())
++							.append(newNumber(rgbValues[1]))
++							.append(newComma())
++							.append(newNumber(rgbValues[2]))
++							.append(newParen(')'));
++
++							if (alphaNode) {
++								if (isPercentage(alphaNode) && !isCalc(alphaNode)) {
++									alphaNode.unit = '';
++									alphaNode.value = String(alphaNode.value / 100);
++								}
++
++								if (alphaNode.value !== '1') {
++									node.value += 'a';
++
++									node
++									.insertBefore(node.last, newComma())
++									.insertBefore(node.last, alphaNode)
++								}
++							}
+ 						}
+ 					}
+ 				});
+@@ -79,9 +121,10 @@ export default postcss.plugin('postcss-lab-function', opts => {
+ 	};
+ });
+ 
+-const colorAnyRegExp = /(^|[^\w-])(lab?|lch?)\(/i;
+-const colorRegExp = /^(lab?|lch?)$/i;
++const colorAnyRegExp = /(^|[^\w-])(lab|lch|gray)\(/i;
++const colorRegExp = /^(lab|lch|gray)$/i;
+ const labRegExp = /^lab$/i;
++const grayRegExp = /^gray$/i;
+ const alphaUnitMatch = /^%?$/i;
+ const calcFuncMatch = /^calc$/i;
+ const hueUnitMatch = /^(deg|grad|rad|turn)?$/i;
+@@ -94,11 +137,17 @@ const isPercentage = node => isCalc(node) || Object(node).type === 'number' && n
+ const isSlash = node => Object(node).type === 'operator' && node.value === '/';
+ const functionalLABMatch = [isNumber, isNumber, isNumber, isSlash, isAlphaValue];
+ const functionalLCHMatch = [isNumber, isNumber, isHue, isSlash, isAlphaValue];
++const functionalGrayMatch = [isNumber, isSlash, isAlphaValue];
+ const matchFunctionalLAB = children => children.every(
+ 	(child, index) => typeof functionalLABMatch[index] === 'function' && functionalLABMatch[index](child)
+ );
+ const matchFunctionalLCH = children => children.every(
+ 	(child, index) => typeof functionalLCHMatch[index] === 'function' && functionalLCHMatch[index](child)
+ );
++const matchFunctionalGray = children => children.every(
++	(child, index) => typeof functionalGrayMatch[index] === 'function' && functionalGrayMatch[index](child)
++);
+ 
+-const newComma = () => parser.comma({ value: ',' })
++const newComma = () => parser.comma({ value: ',' });
++const newNumber = value => parser.number({ value });
++const newParen = value => parser.paren({ value });
+diff --git a/test/basic.css b/test/basic.css
+index a06b69e..aa52e7f 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -15,3 +15,11 @@
+ 	color: lch(40 68.8 34.5 / 50%);
+ 	color: lch(100 50 0);
+ }
++
++.test-gray {
++	color: gray(40);
++	color: gray(40 / 1);
++	color: gray(40 / .5);
++	color: gray(40 / 100%);
++	color: gray(40 / 50%);
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 4068e14..76dccae 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -15,3 +15,11 @@
+ 	color: rgba(178, 34, 34, 0.5);
+ 	color: rgb(255, 216, 255);
+ }
++
++.test-gray {
++	color: rgb(94,94,94);
++	color: rgb(94,94,94);
++	color: rgba(94,94,94, .5);
++	color: rgb(94,94,94);
++	color: rgba(94,94,94, 0.5);
++}
+diff --git a/test/basic.preserve-true.expect.css b/test/basic.preserve-true.expect.css
+index fdf49eb..88b381d 100644
+--- a/test/basic.preserve-true.expect.css
++++ b/test/basic.preserve-true.expect.css
+@@ -27,3 +27,16 @@
+ 	color: rgb(255, 216, 255);
+ 	color: lch(100 50 0);
+ }
++
++.test-gray {
++	color: rgb(94,94,94);
++	color: gray(40);
++	color: rgb(94,94,94);
++	color: gray(40 / 1);
++	color: rgba(94,94,94, .5);
++	color: gray(40 / .5);
++	color: rgb(94,94,94);
++	color: gray(40 / 100%);
++	color: rgba(94,94,94, 0.5);
++	color: gray(40 / 50%);
++}
+-- 
+2.33.1
+

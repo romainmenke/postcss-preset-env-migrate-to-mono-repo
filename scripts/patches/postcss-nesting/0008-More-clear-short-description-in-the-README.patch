@@ -1,0 +1,26 @@
+From 13dc1d395f6a04e1ddbc67f3de00e9b8f61e8d6a Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 17 Jun 2015 18:58:35 +0200
+Subject: [PATCH 08/89] More clear short description in the README
+
+Close #1
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 2dae9f7..73584a0 100644
+--- a/README.md
++++ b/README.md
+@@ -2,7 +2,7 @@
+ 
+ <img align="right" width="135" height="95" src="http://postcss.github.io/postcss/logo-leftp.png" title="Philosopher’s stone, logo of PostCSS">
+ 
+-[PostCSS Nesting] is a [PostCSS] plugin that allows you nest one style rule inside another.
++[PostCSS Nesting] is a [PostCSS] plugin that transform W3C [CSS Nesting Module Level 3] syntax (@tabatkins proposal) to more compatible CSS.
+ 
+ ```css
+ /* before */
+-- 
+2.33.1
+

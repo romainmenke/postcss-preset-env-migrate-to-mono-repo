@@ -1,0 +1,25 @@
+From 61f2bc54c606c9d308e467c0b61205ea908c64bc Mon Sep 17 00:00:00 2001
+From: in-in <in-in@users.noreply.github.com>
+Date: Mon, 7 Oct 2019 18:36:35 +0300
+Subject: [PATCH 37/43] Update README.md to add missing logical size properties
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 3ec809d..1a7cfa0 100644
+--- a/README.md
++++ b/README.md
+@@ -105,7 +105,7 @@ properties:
+ 
+ #### Logical Sizes
+ 
+-- `block-size`, `inline-size`
++- `block-size`, `max-block-size`, `min-block-size`, `inline-size`, `max-inline-size`, `min-inline-size`
+ 
+ #### Flow-Relative Values
+ 
+-- 
+2.33.1
+

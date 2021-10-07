@@ -1,0 +1,25 @@
+From 104eb5320f7ac070114aa4cc81d5339e25960e6d Mon Sep 17 00:00:00 2001
+From: Eduard Kyvenko <edu@june.dk>
+Date: Fri, 10 Aug 2018 09:46:39 +0200
+Subject: [PATCH 26/30] Upgrade postcss version to v7
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index bac6750..3f05cbd 100644
+--- a/package.json
++++ b/package.json
+@@ -25,7 +25,7 @@
+     "node": ">=4.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^6.0.22",
++    "postcss": "^7.0.2",
+     "postcss-selector-parser": "^4.0.0"
+   },
+   "devDependencies": {
+-- 
+2.33.1
+

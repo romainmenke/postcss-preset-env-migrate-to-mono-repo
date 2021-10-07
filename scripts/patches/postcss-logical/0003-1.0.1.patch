@@ -1,0 +1,40 @@
+From 26adc1843b3d80aa551f8bfa20efd51de5430b2d Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 13 Aug 2017 15:04:56 -0400
+Subject: [PATCH 03/43] 1.0.1
+
+---
+ CHANGELOG.md | 5 +++++
+ package.json | 2 +-
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 5bdbfd8..56503e7 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Logical Properties
+ 
++### 1.0.1 (Aug 13, 2017)
++
++- Improve flow-relative border support
++- Update dependencies
++
+ ### 1.0.0 (Aug 8, 2017)
+ 
+ - Initial version
+diff --git a/package.json b/package.json
+index c78ef9a..4542075 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-logical",
+-  "version": "1.0.0",
++  "version": "1.0.1",
+   "description": "Use logical properties and flow-relative values in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

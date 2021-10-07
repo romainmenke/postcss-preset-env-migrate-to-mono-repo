@@ -1,0 +1,54 @@
+From 39756e624b7253a5ad581ad17bba8166c797d654 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 2 Jun 2017 13:42:29 -0400
+Subject: [PATCH 07/34] 1.1.0
+
+---
+ CHANGELOG.md |  5 +++++
+ package.json | 10 ++++++++--
+ 2 files changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 8031dac..5b2f029 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS :dir()
+ 
++### 1.1.0 (June 2, 2017)
++
++- Added: Support for browserslist and a 'browsers' option
++- Added: Support for a presumed direction via the 'browsers' option
++
+ ### 1.0.0 (May 30, 2017)
+ 
+ - Initial version
+diff --git a/package.json b/package.json
+index 81ed7c7..33c4b03 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-dir-pseudo-class",
+-  "version": "1.0.0",
++  "version": "1.1.0",
+   "description": "Use the :dir pseudo-class in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -43,6 +43,12 @@
+     "directions",
+     "selector",
+     "attribute",
+-    "polyfill"
++    "polyfill",
++    "left",
++    "left-to-right",
++    "ltr",
++    "right",
++    "right-to-left",
++    "rtl"
+   ]
+ }
+-- 
+2.33.1
+

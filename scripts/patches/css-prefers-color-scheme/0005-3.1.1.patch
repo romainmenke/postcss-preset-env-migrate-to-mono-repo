@@ -1,0 +1,69 @@
+From ba8003a13b7ba82c060cc72cf2850ed37bf2544d Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 10 Nov 2018 16:29:37 -0500
+Subject: [PATCH 05/12] 3.1.1
+
+---
+ src/postcss-cli.js => cli.js | 14 +++++++++++++-
+ package.json                 |  5 +++--
+ 2 files changed, 16 insertions(+), 3 deletions(-)
+ rename src/postcss-cli.js => cli.js (82%)
+
+diff --git a/src/postcss-cli.js b/cli.js
+similarity index 82%
+rename from src/postcss-cli.js
+rename to cli.js
+index f8cb19d..715c69a 100755
+--- a/src/postcss-cli.js
++++ b/cli.js
+@@ -1,7 +1,19 @@
+ #!/usr/bin/env node
+ 
+ const fs = require('fs');
+-const prefersColorScheme = require('../postcss');
++const prefersColorScheme = require('./postcss');
++
++if (process.argv.length < 3) {
++	console.log([
++		'Prefers Color Scheme\n',
++		'  Transforms CSS with @media (prefers-color-scheme) {}\n',
++		'Usage:\n',
++		'  css-prefers-color-scheme source.css transformed.css',
++		'  css-prefers-color-scheme --in=source.css --out=transformed.css --opts={}',
++		'  echo "@media (prefers-color-scheme: dark) {}" | css-prefers-color-scheme\n'
++	].join('\n'));
++	process.exit(0);
++}
+ 
+ // get process and plugin options from the command line
+ const fileRegExp = /^[\w\/.]+$/;
+diff --git a/package.json b/package.json
+index c87ac55..3beffef 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "css-prefers-color-scheme",
+-  "version": "3.1.0",
++  "version": "3.1.1",
+   "description": "Use light and dark color schemes in all browsers",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -10,12 +10,13 @@
+   "main": "index.js",
+   "module": "index.mjs",
+   "bin": {
+-    "css-prefers-color-scheme": "src/postcss-cli.js"
++    "css-prefers-color-scheme": "cli.js"
+   },
+   "files": [
+     "browser.js",
+     "browser.js.map",
+     "browser.min.js",
++    "cli.js",
+     "index.mjs",
+     "index.mjs.map",
+     "index.js",
+-- 
+2.33.1
+

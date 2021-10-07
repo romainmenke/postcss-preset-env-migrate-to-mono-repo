@@ -1,0 +1,1484 @@
+From d4691ebcd74172f158f5d066c139aba5448d4d41 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 9 Jun 2018 19:01:33 -0400
+Subject: [PATCH 74/89] 6.0.0
+
+---
+ .appveyor.yml                    |   2 +-
+ .rollup.js                       |   5 +-
+ .travis.yml                      |   2 +-
+ CHANGELOG.md                     |   5 ++
+ CONTRIBUTING.md                  |  32 ++++---
+ INSTALL.md                       | 149 +++++++++++++++++++++++++++++++
+ README.md                        | 128 ++++----------------------
+ index.js                         |   6 +-
+ lib/atrule-within-atrule.js      |  23 +++++
+ lib/atrule-within-rule.js        |  28 ++++++
+ lib/clean-node.js                |  10 ---
+ lib/cleanup-parent.js            |   5 ++
+ lib/get-closest-rule.js          |  10 ---
+ lib/merge-params.js              |  13 +--
+ lib/merge-selectors.js           |  23 +++--
+ lib/nest-rule-within-rule.js     |  32 +++++++
+ lib/rule-within-rule.js          |  19 ++++
+ lib/shift-nodes-before-parent.js |  16 ++++
+ lib/transform-after-nodes.js     |  21 -----
+ lib/transform-before-nodes.js    |  22 -----
+ lib/transform-bubbling-atrule.js |  57 ------------
+ lib/transform-nesting-atrule.js  |  66 --------------
+ lib/transform-nesting-rule.js    |  28 ------
+ lib/transform.js                 |  17 ----
+ lib/valid-atrules.js             |   1 +
+ lib/valid-selector.js            |   4 +
+ lib/walk.js                      |  24 +++++
+ package.json                     |  13 +--
+ test/at-rule.expect.css          |  16 ++--
+ test/basic.css                   |  53 ++++++++---
+ test/basic.expect.css            |  73 ++++++++++-----
+ test/direct.expect.css           |  18 ++--
+ test/empty.expect.css            |  21 ++---
+ test/media.expect.css            |  66 +++++++-------
+ 34 files changed, 525 insertions(+), 483 deletions(-)
+ create mode 100644 INSTALL.md
+ create mode 100644 lib/atrule-within-atrule.js
+ create mode 100644 lib/atrule-within-rule.js
+ delete mode 100644 lib/clean-node.js
+ create mode 100644 lib/cleanup-parent.js
+ delete mode 100644 lib/get-closest-rule.js
+ create mode 100644 lib/nest-rule-within-rule.js
+ create mode 100644 lib/rule-within-rule.js
+ create mode 100644 lib/shift-nodes-before-parent.js
+ delete mode 100644 lib/transform-after-nodes.js
+ delete mode 100644 lib/transform-before-nodes.js
+ delete mode 100644 lib/transform-bubbling-atrule.js
+ delete mode 100644 lib/transform-nesting-atrule.js
+ delete mode 100644 lib/transform-nesting-rule.js
+ delete mode 100644 lib/transform.js
+ create mode 100644 lib/valid-atrules.js
+ create mode 100644 lib/valid-selector.js
+ create mode 100644 lib/walk.js
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+index acbf8a5..73f0d8f 100644
+--- a/.appveyor.yml
++++ b/.appveyor.yml
+@@ -2,7 +2,7 @@
+ 
+ environment:
+   matrix:
+-    - nodejs_version: 4
++    - nodejs_version: 6
+ 
+ version: "{build}"
+ build: off
+diff --git a/.rollup.js b/.rollup.js
+index 0436758..1d581ca 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -8,8 +8,11 @@ export default {
+ 	],
+ 	plugins: [
+ 		babel({
++			plugins: [
++				'array-includes'
++			],
+ 			presets: [
+-				['env', { modules: false, targets: { node: 4 } }]
++				['env', { modules: false, targets: { node: 6 } }]
+ 			]
+ 		})
+ 	]
+diff --git a/.travis.yml b/.travis.yml
+index c564664..e1f11a5 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 4
++  - 6
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 15d3dd9..5a125aa 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Nesting
+ 
++### 6.0.0 (June 9, 2018)
++
++- Deprecated: Nested at-rules like `@media` will no longer work in 7.0.0
++- Refactored code to improve efficiency
++
+ ### 5.0.0 (March 24, 2018)
+ 
+ - Refactored code to use Imports babel-transformed for Node v4 compatibility
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+index e1b6dca..3d23f37 100644
+--- a/CONTRIBUTING.md
++++ b/CONTRIBUTING.md
+@@ -14,54 +14,52 @@ Remember, a bug is a _demonstrable problem_ caused by _our_ code.
+ 
+ ## Submitting Pull Requests
+ 
+-Pull requests are the greatest contributions, so be sure they are focused in 
+-scope, and do avoid unrelated commits.
++Pull requests are the greatest contributions, so be sure they are focused in
++scope and avoid unrelated commits.
+ 
+-1. To begin, [fork this project], clone your fork, and add our upstream.
++1. To begin; [fork this project], clone your fork, and add our upstream.
+    ```bash
+    # Clone your fork of the repo into the current directory
+-   git clone https://github.com/<your-user>/postcss-nesting
++   git clone git@github.com:YOUR_USER/postcss-nesting.git
+ 
+    # Navigate to the newly cloned directory
+    cd postcss-nesting
+ 
+    # Assign the original repo to a remote called "upstream"
+-   git remote add upstream https://github.com/jonathantneal/postcss-nesting
++   git remote add upstream git@github.com:jonathantneal/postcss-nesting.git
+ 
+-   # Install the tools necessary for development
++   # Install the tools necessary for testing
+    npm install
+    ```
+ 
+ 2. Create a branch for your feature or fix:
+    ```bash
+-   # Move into a new branch for a feature
++   # Move into a new branch for your feature
+    git checkout -b feature/thing
+    ```
+    ```bash
+-   # Move into a new branch for a fix
++   # Move into a new branch for your fix
+    git checkout -b fix/something
+    ```
+ 
+-3. Be sure your code follows our practices.
++3. If your code follows our practices, then push your feature branch:
+    ```bash
+    # Test current code
+-   npm run test
++   npm test
+    ```
+-
+-4. Push your branch up to your fork:
+    ```bash
+-   # Push a feature branch
++   # Push the branch for your new feature
+    git push origin feature/thing
+    ```
+    ```bash
+-   # Push a fix branch
+-   git push origin fix/something
++   # Or, push the branch for your update
++   git push origin update/something
+    ```
+ 
+-5. Now [open a pull request] with a clear title and description.
++That’s it! Now [open a pull request] with a clear title and description.
+ 
+ [already been reported]: issues
+ [fork this project]:     fork
+-[live example]:          http://codepen.io/pen
++[live example]:          https://codepen.io/pen
+ [open a pull request]:   https://help.github.com/articles/using-pull-requests/
+ [reduced test case]:     https://css-tricks.com/reduced-test-cases/
+diff --git a/INSTALL.md b/INSTALL.md
+new file mode 100644
+index 0000000..45ae189
+--- /dev/null
++++ b/INSTALL.md
+@@ -0,0 +1,149 @@
++# Installing PostCSS Nesting
++
++[PostCSS Nesting] runs in all Node environments, with special instructions for:
++
++| [Node](#node) | [Webpack](#webpack) | [Create React App](#create-react-app) | [Gulp](#gulp) | [Grunt](#grunt) |
++| --- | --- | --- | --- | --- |
++
++## Node
++
++Add [PostCSS Nesting] to your project:
++
++```bash
++npm install postcss-nesting --save-dev
++```
++
++Use [PostCSS Nesting] to process your CSS:
++
++```js
++import postcssNesting from 'postcss-nesting';
++
++postcssNesting.process(YOUR_CSS /*, processOptions, pluginOptions */);
++```
++
++Or use it as a [PostCSS] plugin:
++
++```js
++import postcss from 'postcss';
++import postcssNesting from 'postcss-nesting';
++
++postcss([
++  postcssNesting(/* pluginOptions */)
++]).process(YOUR_CSS /*, processOptions */);
++```
++
++## Webpack
++
++Add [PostCSS Loader] to your project:
++
++```bash
++npm install postcss-loader --save-dev
++```
++
++Use [PostCSS Nesting] in your Webpack configuration:
++
++```js
++import postcssNesting from 'postcss-nesting';
++
++module.exports = {
++  module: {
++    rules: [
++      {
++        test: /\.css$/,
++        use: [
++          'style-loader',
++          { loader: 'css-loader', options: { importLoaders: 1 } },
++          { loader: 'postcss-loader', options: {
++            ident: 'postcss',
++            plugins: () => [
++              postcssNesting(/* pluginOptions */)
++            ]
++          } }
++        ]
++      }
++    ]
++  }
++}
++```
++
++## Create React App
++
++Add [React App Rewired] and [React App Rewire PostCSS] to your project:
++
++```bash
++npm install react-app-rewired react-app-rewire-postcss --save-dev
++```
++
++Use [React App Rewire PostCSS] and [PostCSS Nesting] in your
++`config-overrides.js` file:
++
++```js
++import reactAppRewirePostcss from 'react-app-rewire-postcss';
++import postcssNesting from 'postcss-nesting';
++
++export default config => reactAppRewirePostcss(config, {
++  plugins: () => [
++    postcssNesting(/* pluginOptions */)
++  ]
++});
++```
++
++## Gulp
++
++Add [Gulp PostCSS] to your project:
++
++```bash
++npm install gulp-postcss --save-dev
++```
++
++Use [PostCSS Nesting] in your Gulpfile:
++
++```js
++import postcss from 'gulp-postcss';
++import postcssNesting from 'postcss-nesting';
++
++gulp.task('css', () => gulp.src('./src/*.css').pipe(
++  postcss([
++    postcssNesting(/* pluginOptions */)
++  ])
++).pipe(
++  gulp.dest('.')
++));
++```
++
++## Grunt
++
++Add [Grunt PostCSS] to your project:
++
++```bash
++npm install grunt-postcss --save-dev
++```
++
++Use [PostCSS Nesting] in your Gruntfile:
++
++```js
++import postcssNesting from 'postcss-nesting';
++
++grunt.loadNpmTasks('grunt-postcss');
++
++grunt.initConfig({
++  postcss: {
++    options: {
++      use: [
++       postcssNesting(/* pluginOptions */)
++      ]
++    },
++    dist: {
++      src: '*.css'
++    }
++  }
++});
++```
++
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
++[PostCSS]: https://github.com/postcss/postcss
++[PostCSS Loader]: https://github.com/postcss/postcss-loader
++[PostCSS Nesting]: https://github.com/jonathantneal/postcss-nesting
++[React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
++[React App Rewired]: https://github.com/timarney/react-app-rewired
+diff --git a/README.md b/README.md
+index 893c695..c138919 100644
+--- a/README.md
++++ b/README.md
+@@ -1,9 +1,8 @@
+-# PostCSS Nesting [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
++# PostCSS Nesting [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS" width="90" height="90" align="right">][postcss]
+ 
+-[![NPM Version][npm-img]][npm-url]
+ [![CSS Standard Status][css-img]][css-url]
++[![NPM Version][npm-img]][npm-url]
+ [![Build Status][cli-img]][cli-url]
+-[![Windows Build Status][win-img]][win-url]
+ [![Support Chat][git-img]][git-url]
+ 
+ [PostCSS Nesting] lets you nest style rules inside each other, following the
+@@ -29,143 +28,50 @@ a c, a d, b c, b d {
+ }
+ ```
+ 
++**NOTICE**: In v7.0.0 nesting at-rules like `@media` will no longer work, as
++they are not part of the nesting proposal.
++
+ ## Usage
+ 
+-Add [PostCSS Nesting] to your build tool:
++Add [PostCSS Nesting] to your project:
+ 
+ ```bash
+ npm install postcss-nesting --save-dev
+ ```
+ 
+-#### Node
+-
+ Use [PostCSS Nesting] to process your CSS:
+ 
+ ```js
+ import postcssNesting from 'postcss-nesting';
+ 
+-postcssNesting.process(YOUR_CSS);
+-```
+-
+-#### PostCSS
+-
+-Add [PostCSS] to your build tool:
+-
+-```bash
+-npm install postcss --save-dev
++postcssNesting.process(YOUR_CSS /*, processOptions, pluginOptions */);
+ ```
+ 
+-Use [PostCSS Nesting] as a plugin:
++Or use it as a [PostCSS] plugin:
+ 
+ ```js
+-import postcss from 'gulp-postcss';
++import postcss from 'postcss';
+ import postcssNesting from 'postcss-nesting';
+ 
+ postcss([
+-  postcssNesting(/* options */)
+-]).process(YOUR_CSS);
+-```
+-
+-#### Webpack
+-
+-Add [PostCSS Loader] to your build tool:
+-
+-```bash
+-npm install postcss-loader --save-dev
+-```
+-
+-Use [PostCSS Nesting] in your Webpack configuration:
+-
+-```js
+-import postcssNesting from 'postcss-nesting';
+-
+-export default {
+-  module: {
+-    rules: [
+-      {
+-        test: /\.css$/,
+-        use: [
+-          'style-loader',
+-          { loader: 'css-loader', options: { importLoaders: 1 } },
+-          { loader: 'postcss-loader', options: {
+-            ident: 'postcss',
+-            plugins: () => [
+-              postcssNesting(/* options */)
+-            ]
+-          } }
+-        ]
+-      }
+-    ]
+-  }
+-}
++  postcssNesting(/* pluginOptions */)
++]).process(YOUR_CSS /*, processOptions */);
+ ```
+ 
+-#### Gulp
++[PostCSS Nesting] runs in all Node environments, with special instructions for:
+ 
+-Add [Gulp PostCSS] to your build tool:
++| [Node](INSTALL.md#node) | [Webpack](INSTALL.md#webpack) | [Create React App](INSTALL.md#create-react-app) | [Gulp](INSTALL.md#gulp) | [Grunt](INSTALL.md#grunt) |
++| --- | --- | --- | --- | --- |
+ 
+-```bash
+-npm install gulp-postcss --save-dev
+-```
+-
+-Use [PostCSS Nesting] in your Gulpfile:
+-
+-```js
+-import postcss from 'gulp-postcss';
+-import postcssNesting from 'postcss-nesting';
+-
+-gulp.task('css', () => gulp.src('./src/*.css').pipe(
+-  postcss([
+-    postcssNesting(/* options */)
+-  ])
+-).pipe(
+-  gulp.dest('.')
+-));
+-```
+-
+-#### Grunt
+-
+-Add [Grunt PostCSS] to your build tool:
+-
+-```bash
+-npm install grunt-postcss --save-dev
+-```
+-
+-Use [PostCSS Nesting] in your Gruntfile:
+-
+-```js
+-import postcssNesting from 'postcss-nesting';
+-
+-grunt.loadNpmTasks('grunt-postcss');
+-
+-grunt.initConfig({
+-  postcss: {
+-    options: {
+-      use: [
+-       postcssNesting(/* options */)
+-      ]
+-    },
+-    dist: {
+-      src: '*.css'
+-    }
+-  }
+-});
+-```
+-
+-[cli-url]: https://travis-ci.org/jonathantneal/postcss-nesting
+ [cli-img]: https://img.shields.io/travis/jonathantneal/postcss-nesting.svg
++[cli-url]: https://travis-ci.org/jonathantneal/postcss-nesting
+ [css-img]: https://cssdb.org/badge/nesting-rules.svg
+ [css-url]: https://cssdb.org/#nesting-rules
++[git-img]: https://img.shields.io/badge/support-chat-blue.svg
+ [git-url]: https://gitter.im/postcss/postcss
+-[git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
+-[npm-url]: https://www.npmjs.com/package/postcss-nesting
+ [npm-img]: https://img.shields.io/npm/v/postcss-nesting.svg
+-[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-nesting.svg
+-[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-nesting
++[npm-url]: https://www.npmjs.com/package/postcss-nesting
+ 
+ [CSS Nesting]: http://tabatkins.github.io/specs/css-nesting/
+-[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+-[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
+-[PostCSS Loader]: https://github.com/postcss/postcss-loader
+ [PostCSS Nesting]: https://github.com/jonathantneal/postcss-nesting
+diff --git a/index.js b/index.js
+index ae0d905..d41b55b 100644
+--- a/index.js
++++ b/index.js
+@@ -1,4 +1,4 @@
+-import postcss   from 'postcss';
+-import transform from './lib/transform';
++import postcss from 'postcss';
++import walk from './lib/walk';
+ 
+-export default postcss.plugin('postcss-nesting', () => root => root.walk(transform));
++export default postcss.plugin('postcss-nesting', () => walk);
+diff --git a/lib/atrule-within-atrule.js b/lib/atrule-within-atrule.js
+new file mode 100644
+index 0000000..baab671
+--- /dev/null
++++ b/lib/atrule-within-atrule.js
+@@ -0,0 +1,23 @@
++import shiftNodesBeforeParent from './shift-nodes-before-parent';
++import mergeParams from './merge-params';
++import cleanupParent from './cleanup-parent';
++
++/*
++ * DEPRECATED: In v7.0.0 these features will be removed as they are not part of
++ * the nesting proposal.
++ */
++
++export default function transformAtruleWithinAtrule(node) {
++	// move previous siblings and the node to before the parent
++	const parent = shiftNodesBeforeParent(node);
++
++	// update the params of the node to be merged with the parent
++	node.params = mergeParams(parent.params, node.params);
++
++	// conditionally cleanup an empty parent rule
++	cleanupParent(parent);
++}
++
++import validAtrules from './valid-atrules';
++
++export const isAtruleWithinAtrule = node => node.type === 'atrule' && validAtrules.includes(node.name) && Object(node.parent).type === 'atrule' && node.name === node.parent.name;
+diff --git a/lib/atrule-within-rule.js b/lib/atrule-within-rule.js
+new file mode 100644
+index 0000000..1b610c2
+--- /dev/null
++++ b/lib/atrule-within-rule.js
+@@ -0,0 +1,28 @@
++import shiftNodesBeforeParent from './shift-nodes-before-parent';
++import cleanupParent from './cleanup-parent';
++import validAtrules from './valid-atrules';
++import walk from './walk';
++
++/*
++ * DEPRECATED: In v7.0.0 these features will be removed as they are not part of
++ * the nesting proposal.
++ */
++
++export default function atruleWithinRule(node) {
++	// move previous siblings and the node to before the parent
++	const parent = shiftNodesBeforeParent(node);
++
++	// clone the parent as a new rule with children appended to it
++	const rule = parent.clone().removeAll().append(node.nodes);
++
++	// append the new rule to the node
++	node.append(rule);
++
++	// conditionally cleanup an empty parent rule
++	cleanupParent(parent);
++
++	// walk the children of the new rule
++	walk(rule);
++}
++
++export const isAtruleWithinRule = node => node.type === 'atrule' && validAtrules.includes(node.name) && Object(node.parent).type === 'rule';
+diff --git a/lib/clean-node.js b/lib/clean-node.js
+deleted file mode 100644
+index 369749a..0000000
+--- a/lib/clean-node.js
++++ /dev/null
+@@ -1,10 +0,0 @@
+-// clean the raws of the node
+-export default node => {
+-	node.raws = Object.assign(
+-		node.raws.between ? { between: node.raws.between } : {},
+-		node.raws.semicolon ? { semicolon: true } : {},
+-		node.raws.important ? { important: node.raws.important } : {}
+-	);
+-
+-	return node;
+-};
+diff --git a/lib/cleanup-parent.js b/lib/cleanup-parent.js
+new file mode 100644
+index 0000000..57dbf0c
+--- /dev/null
++++ b/lib/cleanup-parent.js
+@@ -0,0 +1,5 @@
++export default function cleanupParent(parent) {
++	if (!parent.nodes.length) {
++		parent.remove();
++	}
++}
+diff --git a/lib/get-closest-rule.js b/lib/get-closest-rule.js
+deleted file mode 100644
+index 780734b..0000000
+--- a/lib/get-closest-rule.js
++++ /dev/null
+@@ -1,10 +0,0 @@
+-// return the closest rule
+-export default node => {
+-	let selectorParent = node.parent;
+-
+-	while (selectorParent && selectorParent.type !== 'rule') {
+-		selectorParent = selectorParent.parent;
+-	}
+-
+-	return selectorParent;
+-};
+diff --git a/lib/merge-params.js b/lib/merge-params.js
+index 6b92943..f7d5339 100644
+--- a/lib/merge-params.js
++++ b/lib/merge-params.js
+@@ -2,9 +2,10 @@ import { list } from 'postcss';
+ 
+ const { comma } = list;
+ 
+-// merge params
+-export default (fromParams, toParams) => comma(fromParams).map(
+-	params1 => comma(toParams).map(
+-		params2 => params1 + ' and ' + params2
+-	).join(', ')
+-).join(', ');
++export default function mergeParams(fromParams, toParams) {
++	return comma(fromParams).map(
++		params1 => comma(toParams).map(
++			params2 => `${params1} and ${params2}`
++		).join(', ')
++	).join(', ');
++}
+diff --git a/lib/merge-selectors.js b/lib/merge-selectors.js
+index 6840ac1..6a504eb 100644
+--- a/lib/merge-selectors.js
++++ b/lib/merge-selectors.js
+@@ -1,13 +1,12 @@
+-// tooling
+-import { list } from 'postcss';
+-const { comma } = list;
++import { replaceable } from './valid-selector';
+ 
+-// merge selectors
+-export default (fromSelectors, toSelectors) => (typeof fromSelectors === 'string' ? comma(fromSelectors) : fromSelectors).reduce(
+-	(selectors, fromSelector) => selectors.concat(
+-		(typeof toSelectors === 'string' ? comma(toSelectors) : toSelectors).map(
+-			toSelector => toSelector.replace(/&/g, fromSelector)
+-		)
+-	),
+-	[]
+-);
++export default function mergeSelectors(fromSelectors, toSelectors) {
++	return fromSelectors.reduce(
++		(selectors, fromSelector) => selectors.concat(
++			toSelectors.map(
++				toSelector => toSelector.replace(replaceable, fromSelector)
++			)
++		),
++		[]
++	);
++}
+diff --git a/lib/nest-rule-within-rule.js b/lib/nest-rule-within-rule.js
+new file mode 100644
+index 0000000..f4bc815
+--- /dev/null
++++ b/lib/nest-rule-within-rule.js
+@@ -0,0 +1,32 @@
++import { list } from 'postcss';
++import shiftNodesBeforeParent from './shift-nodes-before-parent';
++import cleanupParent from './cleanup-parent';
++import mergeSelectors from './merge-selectors';
++import validSelector from './valid-selector';
++import walk from './walk';
++
++const { comma } = list;
++
++export default function transformNestRuleWithinRule(node) {
++	// move previous siblings and the node to before the parent
++	const parent = shiftNodesBeforeParent(node);
++
++	// clone the parent as a new rule with children appended to it
++	const rule = parent.clone().removeAll().append(node.nodes);
++
++	// replace the node with the new rule
++	node.replaceWith(rule);
++
++	// update the selectors of the node to be merged with the parent
++	rule.selectors = mergeSelectors(parent.selectors, comma(node.params));
++
++	// conditionally cleanup an empty parent rule
++	cleanupParent(parent);
++
++	// walk the children of the new rule
++	walk(rule);
++}
++
++export const isNestRuleWithinRule = node => node.type === 'atrule' && node.name === 'nest' && Object(node.parent).type === 'rule' && comma(node.params).every(
++	selector => selector.split('&').length === 2 && validSelector.test(selector)
++);
+diff --git a/lib/rule-within-rule.js b/lib/rule-within-rule.js
+new file mode 100644
+index 0000000..e90a6e6
+--- /dev/null
++++ b/lib/rule-within-rule.js
+@@ -0,0 +1,19 @@
++import shiftNodesBeforeParent from './shift-nodes-before-parent';
++import cleanupParent from './cleanup-parent';
++import mergeSelectors from './merge-selectors';
++import validSelector from './valid-selector';
++
++export default function transformRuleWithinRule(node) {
++	// move previous siblings and the node to before the parent
++	const parent = shiftNodesBeforeParent(node);
++
++	// update the selectors of the node to be merged with the parent
++	node.selectors = mergeSelectors(parent.selectors, node.selectors);
++
++	// conditionally cleanup an empty parent rule
++	cleanupParent(parent);
++}
++
++export const isRuleWithinRule = node => node.type === 'rule' && Object(node.parent).type === 'rule' && node.selectors.every(
++	selector => selector.trim().lastIndexOf('&') === 0 && validSelector.test(selector)
++);
+diff --git a/lib/shift-nodes-before-parent.js b/lib/shift-nodes-before-parent.js
+new file mode 100644
+index 0000000..512bd5a
+--- /dev/null
++++ b/lib/shift-nodes-before-parent.js
+@@ -0,0 +1,16 @@
++export default function shiftNodesBeforeParent(node) {
++	const parent = node.parent;
++	const index = parent.index(node);
++
++	// conditionally move previous siblings into a clone of the parent
++	if (index) {
++		parent.cloneBefore().removeAll().append(
++			parent.nodes.slice(0, index)
++		)
++	}
++
++	// move the current node before the parent (and after the conditional clone)
++	parent.before(node);
++
++	return parent;
++}
+diff --git a/lib/transform-after-nodes.js b/lib/transform-after-nodes.js
+deleted file mode 100644
+index a1d7843..0000000
+--- a/lib/transform-after-nodes.js
++++ /dev/null
+@@ -1,21 +0,0 @@
+-import cleanNode from './clean-node';
+-
+-// move nodes after the current node into a cloned parent node
+-export default node => {
+-	// affected nodes after the current node
+-	const affectedNodes = node.parent.nodes.slice(node.parent.nodes.indexOf(node) + 1).map(cleanNode);
+-
+-	if (affectedNodes.length) {
+-		// insert an empty parent clone after the parent
+-		const afterParent = cleanNode(node.parent.clone()).removeAll();
+-
+-		node.parent.after(afterParent);
+-
+-		// append the affected nodes to the empty parent clone
+-		afterParent.append(affectedNodes);
+-
+-		return afterParent;
+-	}
+-
+-	return undefined;
+-};
+diff --git a/lib/transform-before-nodes.js b/lib/transform-before-nodes.js
+deleted file mode 100644
+index b14ac25..0000000
+--- a/lib/transform-before-nodes.js
++++ /dev/null
+@@ -1,22 +0,0 @@
+-import cleanNode from './clean-node';
+-
+-// move nodes after the current node into a cloned parent node
+-export default node => {
+-	// affected nodes after the current node
+-	const affectedNodes = node.parent.nodes.slice(0, node.parent.nodes.indexOf(node)).map(cleanNode);
+-
+-	if (affectedNodes.length) {
+-		// clone the current parent
+-		const beforeParent = cleanNode(node.parent.clone()).removeAll();
+-
+-		// append the affected nodes to the parent clone
+-		beforeParent.append(affectedNodes);
+-
+-		// insert a parent clone before the current parent
+-		node.parent.before(beforeParent);
+-
+-		return beforeParent;
+-	}
+-
+-	return undefined;
+-};
+diff --git a/lib/transform-bubbling-atrule.js b/lib/transform-bubbling-atrule.js
+deleted file mode 100644
+index 6e119e9..0000000
+--- a/lib/transform-bubbling-atrule.js
++++ /dev/null
+@@ -1,57 +0,0 @@
+-import cleanNode           from './clean-node';
+-import mergeParams         from './merge-params';
+-import transformAfterNodes from './transform-after-nodes';
+-
+-// transform a bubbling atrule (e.g. @document, @media, @supports)
+-export default node => {
+-	// clean node
+-	cleanNode(node);
+-
+-	// affected nodes after the current node moved into a cloned parent node
+-	transformAfterNodes(node);
+-
+-	// inner nodes within the current node
+-	const innerNodes = node.nodes.slice(0).map(cleanNode);
+-
+-	// prepend an empty parent clone to the node
+-	const parentCloneForNodesWithinAtrule = cleanNode(node.parent.clone()).removeAll();
+-
+-	node.prepend(parentCloneForNodesWithinAtrule);
+-
+-	// append the inner nodes to the empty parent clone
+-	parentCloneForNodesWithinAtrule.append(innerNodes);
+-
+-	// swap semicolon raws
+-	const semicolon = node.raws.semicolon;
+-
+-	node.raws.semicolon = node.parent.raws.semicolon;
+-	node.parent.raws.semicolon = semicolon;
+-
+-	// move the node after the parent
+-	const parent = node.parent.after(node);
+-
+-	if (!parent.nodes.length) {
+-		// conditionally remove the original empty parent
+-		parent.remove();
+-	}
+-
+-	// if the node and the parent are both media atrules
+-	if (node.parent.type === 'atrule' && node.name === node.parent.name) {
+-		// affected nodes after the current node moved into a cloned parent node
+-		transformAfterNodes(node);
+-
+-		// merge media params
+-		node.params = mergeParams(node.parent.params, node.params);
+-
+-		// move the node after the parent
+-		const subparent = node.parent.after(node);
+-
+-		if (!subparent.nodes.length) {
+-			// conditionally remove the original empty parent
+-			subparent.remove();
+-		}
+-	}
+-};
+-
+-// whether the node is a bubbling atrule (e.g. @document, @media, @supports)
+-export const test = node => node.type === 'atrule' && ['document', 'media', 'supports'].indexOf(node.name) !== -1 && node.parent && node.parent.type === 'rule';
+diff --git a/lib/transform-nesting-atrule.js b/lib/transform-nesting-atrule.js
+deleted file mode 100644
+index c655e48..0000000
+--- a/lib/transform-nesting-atrule.js
++++ /dev/null
+@@ -1,66 +0,0 @@
+-import postcss, { list }   from 'postcss';
+-import cleanNode           from './clean-node';
+-import getClosestRule      from './get-closest-rule';
+-import mergeSelectors      from './merge-selectors';
+-import transformAfterNodes from './transform-after-nodes';
+-
+-const { comma } = list;
+-
+-// transform a nesting atrule (e.g. @nest .something &)
+-export default node => {
+-	// clean node and child nodes
+-	cleanNode(node).nodes.forEach(cleanNode);
+-
+-	// affected nodes after the current node moved into a cloned parent node
+-	const afterParent = transformAfterNodes(node);
+-
+-	// get the closest rule
+-	const selectorParent = getClosestRule(node);
+-
+-	// clone of the atrule as a rule
+-	const rule = postcss.rule({
+-		// merge selectors
+-		selectors: mergeSelectors(selectorParent && selectorParent.selectors || '', node.params),
+-		source: node.source
+-	});
+-
+-	// clone atrule semicolon raws
+-	rule.raws = node.raws.semicolon ? { semicolon: true } : {};
+-
+-	// move the clone after the parent
+-	const parent = node.parent.after(rule);
+-
+-	// remove the original node
+-	node.remove();
+-
+-	// move child nodes into the clone
+-	rule.append(node.nodes);
+-
+-	if (!parent.nodes.length) {
+-		// conditionally remove the original empty parent
+-		parent.remove();
+-	}
+-
+-	// if the next sibling shares the same selector
+-	if (afterParent && afterParent.selector === rule.selector) {
+-		rule.append(afterParent.nodes);
+-
+-		afterParent.remove();
+-	}
+-
+-	// if the previous sibling shares the same selector
+-	if (parent.parent && parent.next() === rule && parent.selector === rule.selector) {
+-		parent.append(rule.nodes);
+-
+-		rule.remove();
+-
+-		return parent;
+-	}
+-
+-	return rule;
+-};
+-
+-// whether the node is a nesting atrule (e.g. @nest .something &)
+-export const test = node => node.type === 'atrule' && node.name === 'nest' && node.parent && node.parent.type === 'rule' && comma(node.params).every(
+-	selector => selector.split('&').length === 2 && /&([^\w-|]|$)/.test(selector)
+-);
+diff --git a/lib/transform-nesting-rule.js b/lib/transform-nesting-rule.js
+deleted file mode 100644
+index 8546d2f..0000000
+--- a/lib/transform-nesting-rule.js
++++ /dev/null
+@@ -1,28 +0,0 @@
+-import cleanNode           from './clean-node';
+-import mergeSelectors      from './merge-selectors';
+-import transformAfterNodes from './transform-after-nodes';
+-
+-// transform a nesting rule (e.g. &.something)
+-export default node => {
+-	// clean node and child nodes
+-	cleanNode(node).nodes.forEach(cleanNode);
+-
+-	// move nodes after the current node into a cloned parent node
+-	transformAfterNodes(node);
+-
+-	// merge selectors
+-	node.selectors = mergeSelectors(node.parent.selectors, node.selectors);
+-
+-	// move the node after the parent
+-	const parent = node.parent.after(node);
+-
+-	if (!parent.nodes.length) {
+-		// conditionally remove the original empty parent
+-		parent.remove();
+-	}
+-};
+-
+-// whether the node is a nesting rule (e.g. &.something)
+-export const test = node => node.type === 'rule' && node.parent && node.parent.type === 'rule' && node.selectors.every(
+-	selector => selector.trim().lastIndexOf('&') === 0 && /^&([^\w-|]|$)/.test(selector)
+-);
+diff --git a/lib/transform.js b/lib/transform.js
+deleted file mode 100644
+index ff5685b..0000000
+--- a/lib/transform.js
++++ /dev/null
+@@ -1,17 +0,0 @@
+-import transformBubblingAtrule, { test as transformBubblingAtruleTest } from './transform-bubbling-atrule';
+-import transformNestingAtRule,  { test as transformNestingAtRuleTest }  from './transform-nesting-atrule';
+-import transformNestingRule,    { test as transformNestingRuleTest }    from './transform-nesting-rule';
+-
+-// conditionally transform a nesting rule
+-export default node => {
+-	if (transformBubblingAtruleTest(node)) {
+-		// conditionally transform a bubbling atrule
+-		transformBubblingAtrule(node);
+-	} else if (transformNestingAtRuleTest(node)) {
+-		// conditionally transform a nesting atrule
+-		transformNestingAtRule(node);
+-	} else if (transformNestingRuleTest(node)) {
+-		// conditionally transform a nesting rule
+-		transformNestingRule(node);
+-	}
+-};
+diff --git a/lib/valid-atrules.js b/lib/valid-atrules.js
+new file mode 100644
+index 0000000..3438450
+--- /dev/null
++++ b/lib/valid-atrules.js
+@@ -0,0 +1 @@
++export default ['document', 'media', 'supports'];
+diff --git a/lib/valid-selector.js b/lib/valid-selector.js
+new file mode 100644
+index 0000000..b9d943a
+--- /dev/null
++++ b/lib/valid-selector.js
+@@ -0,0 +1,4 @@
++// a valid selector is an ampersand followed by a non-word character or nothing
++export default /&(?:[^\w-|]|$)/;
++
++export const replaceable = /&/g;
+diff --git a/lib/walk.js b/lib/walk.js
+new file mode 100644
+index 0000000..e62d437
+--- /dev/null
++++ b/lib/walk.js
+@@ -0,0 +1,24 @@
++import transformRuleWithinRule, { isRuleWithinRule} from './rule-within-rule';
++import transformNestRuleWithinRule, { isNestRuleWithinRule } from './nest-rule-within-rule';
++import transformAtruleWithinRule, { isAtruleWithinRule } from './atrule-within-rule';
++import transformAtruleWithinAtrule, { isAtruleWithinAtrule } from './atrule-within-atrule';
++
++export default function walk(node) {
++	node.nodes.slice(0).forEach(child => {
++		if (child.parent === node) {
++			if (isRuleWithinRule(child)) {
++				transformRuleWithinRule(child);
++			} else if (isNestRuleWithinRule(child)) {
++				transformNestRuleWithinRule(child);
++			} else if (isAtruleWithinRule(child)) {
++				transformAtruleWithinRule(child);
++			} else if (isAtruleWithinAtrule(child)) {
++				transformAtruleWithinAtrule(child);
++			}
++
++			if (Object(child.nodes).length) {
++				walk(child);
++			}
++		}
++	});
++}
+diff --git a/package.json b/package.json
+index 8f3653b..c3f81d0 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-nesting",
+-  "version": "5.0.0",
++  "version": "6.0.0",
+   "description": "Nest style rules inside each other",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -21,20 +21,21 @@
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+-    "node": ">=4.0.0"
++    "node": ">=6.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^6.0.21"
++    "postcss": "^6.0.22"
+   },
+   "devDependencies": {
+-    "babel-core": "^6.26.0",
++    "babel-core": "^6.26.3",
+     "babel-eslint": "^8.2.3",
+-    "babel-preset-env": "^1.6.1",
++    "babel-plugin-array-includes": "^2.0.3",
++    "babel-preset-env": "^1.7.0",
+     "eslint": "^4.19.1",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.58.2",
++    "rollup": "^0.60.1",
+     "rollup-plugin-babel": "^3.0.4"
+   },
+   "eslintConfig": {
+diff --git a/test/at-rule.expect.css b/test/at-rule.expect.css
+index df7cfad..e14978c 100644
+--- a/test/at-rule.expect.css
++++ b/test/at-rule.expect.css
+@@ -2,29 +2,29 @@ a {
+ 	order: 1
+ }
+ b a {
+-	order: 2;
++		order: 2
+ }
+ c a {
+-	order: 3;
++		order: 3
+ }
+ d a {
+-	order: 4;
++		order: 4
+ }
+ e a {
+-	order: 5;
++		order: 5
+ }
+ a {
+ 	order: 1
+ }
+ a b {
+-	order: 2;
++		order: 2
+ }
+ a c {
+-	order: 3;
++		order: 3
+ }
+ a d {
+-	order: 4;
++		order: 4
+ }
+ a e {
+-	order: 5;
++		order: 5
+ }
+diff --git a/test/basic.css b/test/basic.css
+index df6cafd..dbd84ef 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -1,19 +1,48 @@
+-.rule-1 {
++a {
+ 	order: 1;
++
+ 	@media screen, print {
+ 		order: 2;
+-		&.rule-2 {
++
++		@media (min-width: 480px) {
+ 			order: 3;
+-			@media (max-width: 30em) {
+-				order: 4;
+-				@nest .rule-prefix & {
+-					order: 5;
+-				}
+-				order: 6;
+-			}
+-			order: 7;
+ 		}
+-		order: 8;
++
++		order: 4;
++	}
++
++	order: 5;
++	order: 6;
++
++	& b {
++		order: 7;
++
++		& c {
++			order: 8;
++		}
++
++		order: 9;
++	}
++
++	order: 10;
++
++	@nest body & {
++		order: 11;
++
++		@nest html & {
++			order: 12;
++		}
++
++		order: 13;
++	}
++
++	order: 14;
++
++	@media screen {
++		order: 15;
++
++		@media (min-width: 480px) {
++			order: 16;
++		}
+ 	}
+-	order: 9;
+ }
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index aefc97b..759fdf0 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -1,33 +1,62 @@
+-.rule-1 {
+-	order: 1;
++a {
++	order: 1
+ }
+ @media screen, print {
+-	.rule-1 {
+-		order: 2;
+-	}
+-	.rule-1.rule-2 {
+-		order: 3;
+-	}
++	a {
++		order: 2
+ }
+-@media screen and (max-width: 30em), print and (max-width: 30em) {
+-	.rule-1.rule-2 {
+-		order: 4;
+-	}
+-	.rule-prefix .rule-1.rule-2 {
+-		order: 5;
+-	}
+-	.rule-1.rule-2 {
+-		order: 6;
+ 	}
++@media screen and (min-width: 480px), print and (min-width: 480px) {
++	a {
++			order: 3
+ }
++		}
+ @media screen, print {
+-	.rule-1.rule-2 {
++	a {
++
++		order: 4
++}
++	}
++a {
++
++	order: 5;
++	order: 6
++}
++a b {
+ 		order: 7;
+ 	}
+-	.rule-1 {
+-		order: 8;
++a b c {
++			order: 8;
++		}
++a b {
++
++		order: 9;
+ 	}
++a {
++
++	order: 10
+ }
+-.rule-1 {
+-	order: 9;
++body a {
++		order: 11
++}
++html body a {
++			order: 12
++}
++body a {
++
++		order: 13
++}
++a {
++
++	order: 14
++}
++@media screen {
++	a {
++		order: 15
++}
++	}
++@media screen and (min-width: 480px) {
++	a {
++			order: 16
+ }
++		}
+diff --git a/test/direct.expect.css b/test/direct.expect.css
+index 07c4bdf..fad601f 100644
+--- a/test/direct.expect.css
++++ b/test/direct.expect.css
+@@ -2,14 +2,14 @@ a, b {
+ 	order: 1;
+ }
+ a c, a d, b c, b d {
+-	order: 2;
+-}
++		order: 2;
++	}
+ a c e, a c f, a d e, a d f, b c e, b c f, b d e, b d f {
+-	order: 3;
+-}
++			order: 3;
++		}
+ a c, a d, b c, b d {
+-	order: 4;
+-}
++		order: 4;
++	}
+ a, b {
+ 	order: 5;
+ }
+@@ -17,13 +17,13 @@ a, b {
+ 	order: 1;
+ }
+ a c, a d, b c, b d {
+-	order: 2;
++		order: 2;
+ }
+ a c e, a c f, a d e, a d f, b c e, b c f, b d e, b d f {
+-	order: 3;
++			order: 3;
+ }
+ a c, a d, b c, b d {
+-	order: 4;
++		order: 4;
+ }
+ a, b {
+ 	order: 5;
+diff --git a/test/empty.expect.css b/test/empty.expect.css
+index a2423bc..a23b4e2 100644
+--- a/test/empty.expect.css
++++ b/test/empty.expect.css
+@@ -1,29 +1,30 @@
+-a b c {
+-	order: 1;
+-}
++
++		a b c {
++			order: 1;
++		}
+ d {
+ 	order: 2
+ }
+ d e {
+-	order: 3;
+-}
++		order: 3;
++	}
+ f g {
+-	order: 4;
+-}
++		order: 4;
++	}
+ f {
+ 	order: 5;
+ }
+ a b c {
+-	order: 1;
++			order: 1
+ }
+ d {
+ 	order: 2
+ }
+ d e {
+-	order: 3;
++		order: 3
+ }
+ f g {
+-	order: 4;
++		order: 4;
+ }
+ f {
+ 	order: 5;
+diff --git a/test/media.expect.css b/test/media.expect.css
+index b3e80c9..2d3e4cc 100644
+--- a/test/media.expect.css
++++ b/test/media.expect.css
+@@ -1,52 +1,52 @@
+ a {
+-	order: 1;
++	order: 1
+ }
+ @media (min-width: 100px) {
+-	a {
+-		order: 2;
+-	}
++a {
++		order: 2
+ }
+-@media (min-width: 100px) and (max-width: 200px) {
+-	a {
+-		order: 3;
+ 	}
+-}
+ @media (min-width: 100px) and (max-width: 200px) {
+-	a b {
+-		order: 4;
+-	}
++a {
++			order: 3
+ }
++		}
++@media (min-width: 100px) and (max-width: 200px) {
++		a b {
++				order: 4
++		}
++			}
+ @media screen and (max-width: 300px), screen and (min-aspect-ratio: 16/9), print and speech and (max-width: 300px), print and speech and (min-aspect-ratio: 16/9) {
+-	a {
+-		order: 5;
+-	}
+-	a c {
+-		order: 6;
+-	}
++a {
++			order: 5
+ }
++			a c {
++				order: 6;
++			}
++		}
+ a {
+-	order: 1;
++	order: 1
+ }
+ @media (min-width: 100px) {
+-	a {
+-		order: 2;
+-	}
++a {
++		order: 2
+ }
+-@media (min-width: 100px) and (max-width: 200px) {
+-	a {
+-		order: 3;
+ 	}
++@media (min-width: 100px) and (max-width: 200px) {
++a {
++			order: 3
+ }
++		}
+ @media (min-width: 100px) and (max-width: 200px) {
+-	a b {
+-		order: 4;
+-	}
++a b {
++				order: 4
+ }
++			}
+ @media screen and (max-width: 300px), screen and (min-aspect-ratio: 16/9), print and speech and (max-width: 300px), print and speech and (min-aspect-ratio: 16/9) {
+-	a {
+-		order: 5;
+-	}
+-	a c {
+-		order: 6;
+-	}
++a {
++			order: 5
++}
++a c {
++				order: 6
+ }
++		}
+-- 
+2.33.1
+

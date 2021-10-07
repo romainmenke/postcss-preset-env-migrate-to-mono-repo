@@ -1,0 +1,647 @@
+From e85161efe6099234e576c7c689e96a3eb9de3b64 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 19 Aug 2017 20:52:40 -0400
+Subject: [PATCH 09/43] Support "dir" option
+
+---
+ dependent-js/transform-border.js     | 199 +++++++++++++++------------
+ dependent-js/transform-float.js      |  31 ++---
+ dependent-js/transform-inset.js      |  56 ++++----
+ dependent-js/transform-side.js       |  95 +++++++------
+ dependent-js/transform-spacing.js    |  60 ++++----
+ dependent-js/transform-text-align.js |  31 ++---
+ index.js                             |   6 +-
+ 7 files changed, 254 insertions(+), 224 deletions(-)
+
+diff --git a/dependent-js/transform-border.js b/dependent-js/transform-border.js
+index 74ec630..274b329 100644
+--- a/dependent-js/transform-border.js
++++ b/dependent-js/transform-border.js
+@@ -5,13 +5,51 @@ const matchLogicalBorder = /^border(-width|-style|-color)?$/i;
+ const matchLogicalBorderSide = /^border-(block|block-start|block-end|inline|inline-start|inline-end|start|end)(-(width|style|color))?$/i;
+ 
+ // border
+-module.exports['border'] = (decl, values) => {
++module.exports['border'] = (decl, values, dir) => {
+ 	const isLogical = matchLogical.test(values[0]);
+ 
+ 	if (isLogical) {
+ 		values[0] = values[0].replace(matchLogical, '');
+ 	}
+ 
++	const ltrDecls = [
++		decl.clone({
++			prop: `border-top${decl.prop.replace(matchLogicalBorder, '$1')}`,
++			value: values[0]
++		}),
++		decl.clone({
++			prop: `border-left${decl.prop.replace(matchLogicalBorder, '$1')}`,
++			value: values[1] || values[0]
++		}),
++		decl.clone({
++			prop: `border-bottom${decl.prop.replace(matchLogicalBorder, '$1')}`,
++			value: values[2] || values[0]
++		}),
++		decl.clone({
++			prop: `border-right${decl.prop.replace(matchLogicalBorder, '$1')}`,
++			value: values[3] || values[1] || values[0]
++		})
++	];
++
++	const rtlDecls = [
++		decl.clone({
++			prop: `border-top${decl.prop.replace(matchLogicalBorder, '$1')}`,
++			value: values[0]
++		}),
++		decl.clone({
++			prop: `border-right${decl.prop.replace(matchLogicalBorder, '$1')}`,
++			value: values[1] || values[0]
++		}),
++		decl.clone({
++			prop: `border-bottom${decl.prop.replace(matchLogicalBorder, '$1')}`,
++			value: values[2] || values[0]
++		}),
++		decl.clone({
++			prop: `border-left${decl.prop.replace(matchLogicalBorder, '$1')}`,
++			value: values[3] || values[1] || values[0]
++		})
++	];
++
+ 	return isLogical ? 1 === values.length
+ 		? decl.clone({
+ 			value: decl.value.replace(matchLogical, '')
+@@ -35,43 +73,9 @@ module.exports['border'] = (decl, values) => {
+ 					value: values[1] || values[0]
+ 				})
+ 			]
+-			: [
+-				cloneRule(decl, 'ltr').append([
+-					decl.clone({
+-						prop: `border-top${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-						value: values[0]
+-					}),
+-					decl.clone({
+-						prop: `border-left${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-						value: values[1] || values[0]
+-					}),
+-					decl.clone({
+-						prop: `border-bottom${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-						value: values[2] || values[0]
+-					}),
+-					decl.clone({
+-						prop: `border-right${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-						value: values[3] || values[1] || values[0]
+-					})
+-				]),
+-				cloneRule(decl, 'rtl').append([
+-					decl.clone({
+-						prop: `border-top${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-						value: values[0]
+-					}),
+-					decl.clone({
+-						prop: `border-right${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-						value: values[1] || values[0]
+-					}),
+-					decl.clone({
+-						prop: `border-bottom${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-						value: values[2] || values[0]
+-					}),
+-					decl.clone({
+-						prop: `border-left${decl.prop.replace(matchLogicalBorder, '$1')}`,
+-						value: values[3] || values[1] || values[0]
+-					})
+-				])
++			: 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++				cloneRule(decl, 'ltr').append(ltrDecls),
++				cloneRule(decl, 'rtl').append(rtlDecls)
+ 			]
+ 		: null;
+ };
+@@ -100,19 +104,8 @@ module.exports['border-block-end'] = (decl) => {
+ };
+ 
+ // border-inline
+-module.exports['border-inline'] = (decl, values) => 1 === values.length || 2 === values.length && values[0] === values[1]
+-? [
+-	decl.clone({
+-		prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-		value: values[0]
+-	}),
+-	decl.clone({
+-		prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+-		value: values[1] || values[0]
+-	})
+-]
+-: [
+-	cloneRule(decl, 'ltr').append([
++module.exports['border-inline'] = (decl, values, dir) => {
++	const ltrDecls = [
+ 		decl.clone({
+ 			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[0]
+@@ -121,8 +114,9 @@ module.exports['border-inline'] = (decl, values) => 1 === values.length || 2 ===
+ 			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[1] || values[0]
+ 		})
+-	]),
+-	cloneRule(decl, 'rtl').append([
++	];
++
++	const rtlDecls = [
+ 		decl.clone({
+ 			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[0]
+@@ -131,40 +125,51 @@ module.exports['border-inline'] = (decl, values) => 1 === values.length || 2 ===
+ 			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[1] || values[0]
+ 		})
+-	])
+-];
++	];
++
++	const isLTR = 1 === values.length || 2 === values.length && values[0] === values[1];
++
++	return isLTR ? ltrDecls : 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++		cloneRule(decl, 'ltr').append(ltrDecls),
++		cloneRule(decl, 'rtl').append(rtlDecls)
++	];
++};
+ 
+ // border-inline-start
+-module.exports['border-inline-start'] = (decl) => [
+-	cloneRule(decl, 'ltr').append(
+-		decl.clone({
+-			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`
+-		})
+-	),
+-	cloneRule(decl, 'rtl').append(
+-		decl.clone({
+-			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`
+-		})
+-	)
+-];
++module.exports['border-inline-start'] = (decl, values, dir) => {
++	const ltrDecl = decl.clone({
++		prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`
++	});
++
++	const rtlDecl = decl.clone({
++		prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`
++	});
++
++	return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
++		cloneRule(decl, 'ltr').append(ltrDecl),
++		cloneRule(decl, 'rtl').append(rtlDecl)
++	];
++};
+ 
+ // border-inline-end
+-module.exports['border-inline-end'] = (decl) => [
+-	cloneRule(decl, 'ltr').append(
+-		decl.clone({
+-			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`
+-		})
+-	),
+-	cloneRule(decl, 'rtl').append(
+-		decl.clone({
+-			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`
+-		})
+-	)
+-];
++module.exports['border-inline-end'] = (decl, values, dir) => {
++	const ltrDecl = decl.clone({
++		prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`
++	});
++
++	const rtlDecl = decl.clone({
++		prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`
++	});
++
++	return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
++		cloneRule(decl, 'ltr').append(ltrDecl),
++		cloneRule(decl, 'rtl').append(rtlDecl)
++	];
++};
+ 
+ // border-start
+-module.exports['border-start'] = (decl, values) => [
+-	cloneRule(decl, 'ltr').append([
++module.exports['border-start'] = (decl, values, dir) => {
++	const ltrDecls = [
+ 		decl.clone({
+ 			prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[0]
+@@ -173,8 +178,9 @@ module.exports['border-start'] = (decl, values) => [
+ 			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[1] || values[0]
+ 		})
+-	]),
+-	cloneRule(decl, 'rtl').append([
++	];
++
++	const rtlDecls = [
+ 		decl.clone({
+ 			prop: `border-top${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[0]
+@@ -183,12 +189,17 @@ module.exports['border-start'] = (decl, values) => [
+ 			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[1] || values[0]
+ 		})
+-	])
+-];
++	];
++
++	return 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++		cloneRule(decl, 'ltr').append(ltrDecls),
++		cloneRule(decl, 'rtl').append(rtlDecls)
++	];
++};
+ 
+ // border-end
+-module.exports['border-end'] = (decl, values) => [
+-	cloneRule(decl, 'ltr').append([
++module.exports['border-end'] = (decl, values, dir) => {
++	const ltrDecls = [
+ 		decl.clone({
+ 			prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[0]
+@@ -197,8 +208,9 @@ module.exports['border-end'] = (decl, values) => [
+ 			prop: `border-right${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[1] || values[0]
+ 		})
+-	]),
+-	cloneRule(decl, 'rtl').append([
++	];
++
++	const rtlDecls = [
+ 		decl.clone({
+ 			prop: `border-bottom${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[0]
+@@ -207,5 +219,10 @@ module.exports['border-end'] = (decl, values) => [
+ 			prop: `border-left${decl.prop.replace(matchLogicalBorderSide, '$2')}`,
+ 			value: values[1] || values[0]
+ 		})
+-	])
+-];
++	];
++
++	return 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++		cloneRule(decl, 'ltr').append(ltrDecls),
++		cloneRule(decl, 'rtl').append(rtlDecls)
++	];
++};
+diff --git a/dependent-js/transform-float.js b/dependent-js/transform-float.js
+index 8b1be7e..eedab0a 100644
+--- a/dependent-js/transform-float.js
++++ b/dependent-js/transform-float.js
+@@ -1,21 +1,14 @@
+ const cloneRule = require('./clone-rule');
+ 
+-module.exports = (decl) => /^inline-start$/i.test(decl.value)
+-	? [
+-		cloneRule(decl, 'ltr').append([
+-			decl.clone({ value: 'left' })
+-		]),
+-		cloneRule(decl, 'rtl').append([
+-			decl.clone({ value: 'right' })
+-		])
+-	]
+-	: /^inline-end$/i.test(decl.value)
+-		? [
+-			cloneRule(decl, 'ltr').append([
+-				decl.clone({ value: 'right' })
+-			]),
+-			cloneRule(decl, 'rtl').append([
+-				decl.clone({ value: 'left' })
+-			])
+-		]
+-		: null;
++module.exports = (decl, values, dir) => {
++	const lDecl = decl.clone({ value: 'left' });
++	const rDecl = decl.clone({ value: 'right' });
++
++	return /^inline-start$/i.test(decl.value) ? 'ltr' === dir ? lDecl : 'rtl' === dir ? rDecl : [
++		cloneRule(decl, 'ltr').append(lDecl),
++		cloneRule(decl, 'rtl').append(rDecl)
++	] : /^inline-end$/i.test(decl.value) ? 'ltr' === dir ? rDecl : 'rtl' === dir ? lDecl : [
++		cloneRule(decl, 'ltr').append(rDecl),
++		cloneRule(decl, 'rtl').append(lDecl)
++	] : null;
++};
+diff --git a/dependent-js/transform-inset.js b/dependent-js/transform-inset.js
+index e4ce88d..b072ec4 100644
+--- a/dependent-js/transform-inset.js
++++ b/dependent-js/transform-inset.js
+@@ -1,29 +1,33 @@
+ const cloneRule = require('./clone-rule');
+ 
+-module.exports = (decl, values) => 'logical' === values[0]
+-	? !values[4] || values[2] === values[4]
+-		? [
+-			decl.clone({ prop: 'top', value: values[1] }),
+-			decl.clone({ prop: 'left', value: values[2] || values[1] }),
+-			decl.clone({ prop: 'bottom', value: values[3] || values[1] }),
+-			decl.clone({ prop: 'right', value: values[4] || values[2] || values[1] })
+-		] : [
+-			cloneRule(decl, 'ltr').append([
+-				decl.clone({ prop: 'top', value: values[1] }),
+-				decl.clone({ prop: 'left', value: values[2] || values[1] }),
+-				decl.clone({ prop: 'bottom', value: values[3] || values[1] }),
+-				decl.clone({ prop: 'right', value: values[4] || values[2] || values[1] })
+-			]),
+-			cloneRule(decl, 'rtl').append([
+-				decl.clone({ prop: 'top', value: values[1] }),
+-				decl.clone({ prop: 'right', value: values[2] || values[1] }),
+-				decl.clone({ prop: 'bottom', value: values[3] || values[1] }),
+-				decl.clone({ prop: 'left', value: values[4] || values[2] || values[1] })
+-			])
+-		]
+-	: [
+-		decl.clone({ prop: 'top', value: values[0] }),
+-		decl.clone({ prop: 'right', value: values[1] || values[0] }),
+-		decl.clone({ prop: 'bottom', value: values[2] || values[0] }),
+-		decl.clone({ prop: 'left', value: values[3] || values[1] || values[0] })
++module.exports = (decl, values, dir) => {
++	if ('logical' !== values[0]) {
++		return [
++			decl.clone({ prop: 'top', value: values[0] }),
++			decl.clone({ prop: 'right', value: values[1] || values[0] }),
++			decl.clone({ prop: 'bottom', value: values[2] || values[0] }),
++			decl.clone({ prop: 'left', value: values[3] || values[1] || values[0] })
++		];
++	}
++
++	const isLTR = !values[4] || values[4] === values[2];
++
++	const ltrDecls = [
++		decl.clone({ prop: 'top', value: values[1] }),
++		decl.clone({ prop: 'left', value: values[2] || values[1] }),
++		decl.clone({ prop: 'bottom', value: values[3] || values[1] }),
++		decl.clone({ prop: 'right', value: values[4] || values[2] || values[1] })
++	];
++
++	const rtlDecls = [
++		decl.clone({ prop: 'top', value: values[1] }),
++		decl.clone({ prop: 'right', value: values[2] || values[1] }),
++		decl.clone({ prop: 'bottom', value: values[3] || values[1] }),
++		decl.clone({ prop: 'left', value: values[4] || values[2] || values[1] })
++	];
++
++	return isLTR || 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++		cloneRule(decl, 'ltr').append(ltrDecls),
++		cloneRule(decl, 'rtl').append(rtlDecls)
+ 	];
++}
+diff --git a/dependent-js/transform-side.js b/dependent-js/transform-side.js
+index c4a8b0b..8bde3fa 100644
+--- a/dependent-js/transform-side.js
++++ b/dependent-js/transform-side.js
+@@ -21,62 +21,79 @@ module.exports['block-end'] = (decl) => {
+ };
+ 
+ // inset-inline, margin-inline, padding-inline
+-module.exports['inline'] = (decl, values) => 1 === values.length || 2 === values.length && values[0] === values[1]
+-? [
+-	cloneDecl(decl, '-left', values[0]),
+-	cloneDecl(decl, '-right', values[1] || values[0])
+-]
+-: [
+-	cloneRule(decl, 'ltr').append([
++module.exports['inline'] = (decl, values, dir) => {
++	const ltrDecls = [
+ 		cloneDecl(decl, '-left', values[0]),
+ 		cloneDecl(decl, '-right', values[1] || values[0])
+-	]),
+-	cloneRule(decl, 'rtl').append([
++	];
++
++	const rtlDecls = [
+ 		cloneDecl(decl, '-right', values[0]),
+ 		cloneDecl(decl, '-left', values[1] || values[0])
+-	]),
+-];
++	];
++
++	const isLTR = 1 === values.length || 2 === values.length && values[0] === values[1];
++
++	return isLTR ? ltrDecls : 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++		cloneRule(decl, 'ltr').append(ltrDecls),
++		cloneRule(decl, 'rtl').append(rtlDecls),
++	];
++}
+ 
+ // inset-inline-start, margin-inline-start, padding-inline-start
+-module.exports['inline-start'] = (decl) => [
+-	cloneRule(decl, 'ltr').append(
+-		cloneDecl(decl, '-left', decl.value)
+-	),
+-	cloneRule(decl, 'rtl').append(
+-		cloneDecl(decl, '-right', decl.value)
+-	)
+-];
++module.exports['inline-start'] = (decl, values, dir) => {
++	const ltrDecl = cloneDecl(decl, '-left', decl.value);
++	const rtlDecl = cloneDecl(decl, '-right', decl.value);
++
++	return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
++		cloneRule(decl, 'ltr').append(ltrDecl),
++		cloneRule(decl, 'rtl').append(rtlDecl)
++	];
++};
+ 
+ // inset-inline-end, margin-inline-end, padding-inline-end
+-module.exports['inline-end'] = (decl) => [
+-	cloneRule(decl, 'ltr').append(
+-		cloneDecl(decl, '-right', decl.value)
+-	),
+-	cloneRule(decl, 'rtl').append(
+-		cloneDecl(decl, '-left', decl.value)
+-	)
+-];
++module.exports['inline-end'] = (decl, values, dir) => {
++	const ltrDecl = cloneDecl(decl, '-right', decl.value);
++	const rtlDecl = cloneDecl(decl, '-left', decl.value);
++
++	return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
++		cloneRule(decl, 'ltr').append(ltrDecl),
++		cloneRule(decl, 'rtl').append(rtlDecl)
++	];
++};
+ 
+ // inset-start, margin-start, padding-start
+-module.exports['start'] = (decl, values) => [
+-	cloneRule(decl, 'ltr').append([
++module.exports['start'] = (decl, values, dir) => {
++	const ltrDecls = [
+ 		cloneDecl(decl, '-top', values[0]),
+ 		cloneDecl(decl, '-left', values[1] || values[0])
+-	]),
+-	cloneRule(decl, 'rtl').append([
++	];
++
++	const rtlDecls = [
+ 		cloneDecl(decl, '-top', values[0]),
+ 		cloneDecl(decl, '-right', values[1] || values[0])
+-	])
+-];
++	];
++
++	return 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++		cloneRule(decl, 'ltr').append(ltrDecls),
++		cloneRule(decl, 'rtl').append(rtlDecls)
++	];
++};
+ 
+ // inset-end, margin-end, padding-end
+-module.exports['end'] = (decl, values) => [
+-	cloneRule(decl, 'ltr').append([
++module.exports['end'] = (decl, values, dir) => {
++	const ltrDecls = [
+ 		cloneDecl(decl, '-bottom', values[0]),
+ 		cloneDecl(decl, '-right', values[1] || values[0])
+-	]),
+-	cloneRule(decl, 'rtl').append([
++	];
++
++	const rtlDecls = [
+ 		cloneDecl(decl, '-bottom', values[0]),
+ 		cloneDecl(decl, '-left', values[1] || values[0])
+-	])
+-];
++	];
++
++	return 'ltr' === dir ? ltrDecls : 'rtl' === dir ? rtlDecls : [
++		cloneRule(decl, 'ltr').append(ltrDecls),
++		cloneRule(decl, 'rtl').append(rtlDecls)
++	];
++};
+diff --git a/dependent-js/transform-spacing.js b/dependent-js/transform-spacing.js
+index cbe4d4d..537afc7 100644
+--- a/dependent-js/transform-spacing.js
++++ b/dependent-js/transform-spacing.js
+@@ -1,30 +1,34 @@
+ const cloneRule = require('./clone-rule');
+ 
+-module.exports = (decl, values) => 'logical' === values[0]
+-	? !values[4] || values[4] === values[2]
+-		? decl.clone({
+-			value: decl.value.replace(/^\s*logical\s+/i, '')
+-		})
+-		: [
+-			cloneRule(decl, 'ltr').append(
+-				decl.clone({
+-					value: [
+-						values[1],
+-						values[4] || values[2] || values[1],
+-						values[3] || values[1],
+-						values[2] || values[1]
+-					].join(' ')
+-				})
+-			),
+-			cloneRule(decl, 'rtl').append(
+-				decl.clone({
+-					value: [
+-						values[1],
+-						values[2] || values[1],
+-						values[3] || values[1],
+-						values[4] || values[2] || values[1]
+-					].join(' ')
+-				})
+-			)
+-		]
+-	: null;
++module.exports = (decl, values, dir) => {
++	if ('logical' !== values[0]) {
++		return null;
++	}
++
++	const isLTR = !values[4] || values[4] === values[2];
++
++	const ltrDecl = decl.clone({
++		value: [
++			values[1],
++			values[4] || values[2] || values[1],
++			values[3] || values[1],
++			values[2] || values[1]
++		].join(' ')
++	});
++
++	const rtlDecl = decl.clone({
++		value: [
++			values[1],
++			values[2] || values[1],
++			values[3] || values[1],
++			values[4] || values[2] || values[1]
++		].join(' ')
++	});
++
++	return isLTR ? decl.clone({
++		value: decl.value.replace(/^\s*logical\s+/i, '')
++	}) : 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
++		cloneRule(decl, 'ltr').append(ltrDecl),
++		cloneRule(decl, 'rtl').append(rtlDecl)
++	];
++};
+diff --git a/dependent-js/transform-text-align.js b/dependent-js/transform-text-align.js
+index 7dc40d3..9b74e03 100644
+--- a/dependent-js/transform-text-align.js
++++ b/dependent-js/transform-text-align.js
+@@ -1,21 +1,14 @@
+ const cloneRule = require('./clone-rule');
+ 
+-module.exports = (decl) => /^start$/i.test(decl.value)
+-	? [
+-		cloneRule(decl, 'ltr').append([
+-			decl.clone({ value: 'left' })
+-		]),
+-		cloneRule(decl, 'rtl').append([
+-			decl.clone({ value: 'right' })
+-		])
+-	]
+-	: /^end$/i.test(decl.value)
+-		? [
+-			cloneRule(decl, 'ltr').append([
+-				decl.clone({ value: 'right' })
+-			]),
+-			cloneRule(decl, 'rtl').append([
+-				decl.clone({ value: 'left' })
+-			])
+-		]
+-		: null;
++module.exports = (decl, values, dir) => {
++	const lDecl = decl.clone({ value: 'left' });
++	const rDecl = decl.clone({ value: 'right' });
++
++	return /^start$/i.test(decl.value) ? 'ltr' === dir ? lDecl : 'rtl' === dir ? rDecl : [
++		cloneRule(decl, 'ltr').append(lDecl),
++		cloneRule(decl, 'rtl').append(rDecl)
++	] : /^end$/i.test(decl.value) ? 'ltr' === dir ? rDecl : 'rtl' === dir ? lDecl : [
++		cloneRule(decl, 'ltr').append(rDecl),
++		cloneRule(decl, 'rtl').append(lDecl)
++	] : null;
++};
+diff --git a/index.js b/index.js
+index e445026..63dc709 100644
+--- a/index.js
++++ b/index.js
+@@ -42,13 +42,15 @@ const transforms = {
+ };
+ 
+ // plugin
+-module.exports = postcss.plugin('postcss-logical-properties', () => (root) => {
++module.exports = postcss.plugin('postcss-logical-properties', (opts) => (root) => {
++	const dir = Object(opts) === opts ? /^rtl$/i.test(opts.dir) ? 'rtl' : 'ltr' : false;
++
+ 	root.walkDecls((decl) => {
+ 		const values = postcss.list.split(decl.value, /^border(-block|-inline|-start|-end)?(-width|-style|-color)?$/i.test(decl.prop) ? '/' : ' ');
+ 		const prop = decl.prop.replace(matchSupportedProperties, '$2$5').toLowerCase();
+ 
+ 		if (prop in transforms) {
+-			const replacer = transforms[prop](decl, values);
++			const replacer = transforms[prop](decl, values, dir);
+ 
+ 			if (replacer) {
+ 				decl.replaceWith(replacer);
+-- 
+2.33.1
+

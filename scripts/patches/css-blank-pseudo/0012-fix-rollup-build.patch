@@ -1,0 +1,25 @@
+From 4cc48d973f7bb00c30131b4919310bb5fbcaf171 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 16 Sep 2021 10:54:17 -0400
+Subject: [PATCH 12/13] fix: rollup build
+
+---
+ .rollup.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/.rollup.js b/.rollup.js
+index 8e95445..b17ce52 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -9,7 +9,7 @@ const targets = isCLI || isPostCSS || !isBrowser ? { node: 10 } : 'last 2 versio
+ 
+ const input = `src/${isCLI ? 'cli' : isPostCSS ? 'postcss' : isLegacy ? 'browser-legacy' : 'browser'}.js`;
+ const output = isCLI
+-	? { file: 'cli.js', format: 'cjs', exports: 'default', sourcemap: true, strict: false }
++	? { file: 'cli.js', format: 'cjs', sourcemap: true, strict: false }
+ : isBrowser && isLegacy
+ 	? { file: 'browser-legacy.js', format: 'cjs', exports: 'default', sourcemap: true, strict: false }
+ : isBrowser
+-- 
+2.33.1
+

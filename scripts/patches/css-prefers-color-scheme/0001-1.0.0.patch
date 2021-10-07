@@ -1,0 +1,867 @@
+From fdfbf0788c9c8a0dff238addd607c55207394c2f Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 24 Sep 2018 22:45:08 -0400
+Subject: [PATCH 01/12] 1.0.0
+
+---
+ .editorconfig         |  15 +++++
+ .gitignore            |  11 ++++
+ .rollup.client.js     |  16 +++++
+ .rollup.postcss.js    |  16 +++++
+ .tape.js              |   7 ++
+ .travis.yml           |   9 +++
+ CHANGELOG.md          |   5 ++
+ CONTRIBUTING.md       |  65 ++++++++++++++++++
+ INSTALL.md            | 150 ++++++++++++++++++++++++++++++++++++++++++
+ LICENSE.md            | 108 ++++++++++++++++++++++++++++++
+ README.md             | 136 ++++++++++++++++++++++++++++++++++++++
+ package.json          |  66 +++++++++++++++++++
+ src/client.js         |  21 ++++++
+ src/postcss.js        |  17 +++++
+ test/basic.css        |  26 ++++++++
+ test/basic.expect.css |  26 ++++++++
+ test/basic.result.css |  26 ++++++++
+ 17 files changed, 720 insertions(+)
+ create mode 100644 .editorconfig
+ create mode 100644 .gitignore
+ create mode 100644 .rollup.client.js
+ create mode 100644 .rollup.postcss.js
+ create mode 100644 .tape.js
+ create mode 100644 .travis.yml
+ create mode 100644 CHANGELOG.md
+ create mode 100644 CONTRIBUTING.md
+ create mode 100644 INSTALL.md
+ create mode 100644 LICENSE.md
+ create mode 100644 README.md
+ create mode 100644 package.json
+ create mode 100644 src/client.js
+ create mode 100644 src/postcss.js
+ create mode 100644 test/basic.css
+ create mode 100644 test/basic.expect.css
+ create mode 100644 test/basic.result.css
+
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..40e2967
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,15 @@
++root = true
++
++[*]
++charset = utf-8
++end_of_line = lf
++indent_style = tab
++insert_final_newline = true
++trim_trailing_whitespace = true
++
++[*.md]
++trim_trailing_whitespace = false
++
++[{*.{json,md,yml},.*}]
++indent_size = 2
++indent_style = space
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..8435b82
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,11 @@
++node_modules
++/client.*
++/postcss.*
++package-lock.json
++*.log*
++.*
++!.editorconfig
++!.gitignore
++!.rollup.*.js
++!.tape.js
++!.travis.yml
+diff --git a/.rollup.client.js b/.rollup.client.js
+new file mode 100644
+index 0000000..900f9b6
+--- /dev/null
++++ b/.rollup.client.js
+@@ -0,0 +1,16 @@
++import babel from 'rollup-plugin-babel';
++
++export default {
++	input: 'src/client.js',
++	output: [
++		{ file: 'client.js', format: 'cjs' },
++		{ file: 'client.mjs', format: 'es' }
++	],
++	plugins: [
++		babel({
++			presets: [
++				['@babel/env', { modules: false, targets: { node: 6 } }]
++			]
++		})
++	]
++};
+diff --git a/.rollup.postcss.js b/.rollup.postcss.js
+new file mode 100644
+index 0000000..1b8d1a3
+--- /dev/null
++++ b/.rollup.postcss.js
+@@ -0,0 +1,16 @@
++import babel from 'rollup-plugin-babel';
++
++export default {
++	input: 'src/postcss.js',
++	output: [
++		{ file: 'postcss.js', format: 'cjs' },
++		{ file: 'postcss.mjs', format: 'es' }
++	],
++	plugins: [
++		babel({
++			presets: [
++				['@babel/env', { modules: false, targets: { node: 6 } }]
++			]
++		})
++	]
++};
+diff --git a/.tape.js b/.tape.js
+new file mode 100644
+index 0000000..a100e08
+--- /dev/null
++++ b/.tape.js
+@@ -0,0 +1,7 @@
++module.exports = {
++	'postcss-prefers-color-scheme': {
++		'basic': {
++			message: 'supports basic usage'
++		}
++	}
++};
+diff --git a/.travis.yml b/.travis.yml
+new file mode 100644
+index 0000000..e1f11a5
+--- /dev/null
++++ b/.travis.yml
+@@ -0,0 +1,9 @@
++# https://docs.travis-ci.com/user/travis-lint
++
++language: node_js
++
++node_js:
++  - 6
++
++install:
++  - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100644
+index 0000000..7758189
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,5 @@
++# Changes to Prefers Color Scheme
++
++### 1.0.0 (September 24, 2018)
++
++- Initial version
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+new file mode 100644
+index 0000000..6951d3f
+--- /dev/null
++++ b/CONTRIBUTING.md
+@@ -0,0 +1,65 @@
++# Contributing to Prefers Color Scheme
++
++You want to help? You rock! Now, take a moment to be sure your contributions
++make sense to everyone else.
++
++## Reporting Issues
++
++Found a problem? Want a new feature?
++
++- See if your issue or idea has [already been reported].
++- Provide a [reduced test case] or a [live example].
++
++Remember, a bug is a _demonstrable problem_ caused by _our_ code.
++
++## Submitting Pull Requests
++
++Pull requests are the greatest contributions, so be sure they are focused in
++scope and avoid unrelated commits.
++
++1. To begin; [fork this project], clone your fork, and add our upstream.
++   ```bash
++   # Clone your fork of the repo into the current directory
++   git clone git@github.com:YOUR_USER/css-prefers-color-scheme.git
++
++   # Navigate to the newly cloned directory
++   cd css-prefers-color-scheme
++
++   # Assign the original repo to a remote called "upstream"
++   git remote add upstream git@github.com:csstools/css-prefers-color-scheme.git
++
++   # Install the tools necessary for testing
++   npm install
++   ```
++
++2. Create a branch for your feature or fix:
++   ```bash
++   # Move into a new branch for your feature
++   git checkout -b feature/thing
++   ```
++   ```bash
++   # Move into a new branch for your fix
++   git checkout -b fix/something
++   ```
++
++3. If your code follows our practices, then push your feature branch:
++   ```bash
++   # Test current code
++   npm test
++   ```
++   ```bash
++   # Push the branch for your new feature
++   git push origin feature/thing
++   ```
++   ```bash
++   # Or, push the branch for your update
++   git push origin update/something
++   ```
++
++That’s it! Now [open a pull request] with a clear title and description.
++
++[already been reported]: https://github.com/csstools/css-prefers-color-scheme/issues
++[fork this project]:     https://github.com/csstools/css-prefers-color-scheme/fork
++[live example]:          https://codepen.io/pen
++[open a pull request]:   https://help.github.com/articles/using-pull-requests/
++[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+diff --git a/INSTALL.md b/INSTALL.md
+new file mode 100644
+index 0000000..9620bbb
+--- /dev/null
++++ b/INSTALL.md
+@@ -0,0 +1,150 @@
++# Installing Prefers Color Scheme
++
++[Prefers Color Scheme] runs in all Node environments, with special
++instructions for:
++
++| [Node](#node) | [Webpack](#webpack) | [Create React App](#create-react-app) | [Gulp](#gulp) | [Grunt](#grunt) |
++| --- | --- | --- | --- | --- |
++
++## Node
++
++Add [Prefers Color Scheme] to your project:
++
++```bash
++npm install css-prefers-color-scheme --save-dev
++```
++
++Use [Prefers Color Scheme] to process your CSS:
++
++```js
++const postcssPrefers = require('css-prefers-color-scheme/postcss');
++
++prefersColorScheme.process(YOUR_CSS /*, processOptions, pluginOptions */);
++```
++
++Or use it as a [PostCSS] plugin:
++
++```js
++const postcss = require('postcss');
++const postcssPrefers = require('css-prefers-color-scheme/postcss');
++
++postcss([
++  prefersColorScheme(/* pluginOptions */)
++]).process(YOUR_CSS /*, processOptions */);
++```
++
++## Webpack
++
++Add [PostCSS Loader] to your project:
++
++```bash
++npm install postcss-loader --save-dev
++```
++
++Use [Prefers Color Scheme] in your Webpack configuration:
++
++```js
++const postcssPrefers = require('css-prefers-color-scheme/postcss');
++
++module.exports = {
++  module: {
++    rules: [
++      {
++        test: /\.css$/,
++        use: [
++          'style-loader',
++          { loader: 'css-loader', options: { importLoaders: 1 } },
++          { loader: 'postcss-loader', options: {
++            ident: 'postcss',
++            plugins: () => [
++              prefersColorScheme(/* pluginOptions */)
++            ]
++          } }
++        ]
++      }
++    ]
++  }
++}
++```
++
++## Create React App
++
++Add [React App Rewired] and [React App Rewire PostCSS] to your project:
++
++```bash
++npm install react-app-rewired react-app-rewire-postcss --save-dev
++```
++
++Use [React App Rewire PostCSS] and [Prefers Color Scheme] in your
++`config-overrides.js` file:
++
++```js
++const reactAppRewirePostcss = require('react-app-rewire-postcss');
++const postcssPrefers = require('css-prefers-color-scheme/postcss');
++
++export default config => reactAppRewirePostcss(config, {
++  plugins: () => [
++    prefersColorScheme(/* pluginOptions */)
++  ]
++});
++```
++
++## Gulp
++
++Add [Gulp PostCSS] to your project:
++
++```bash
++npm install gulp-postcss --save-dev
++```
++
++Use [Prefers Color Scheme] in your Gulpfile:
++
++```js
++const postcss = require('gulp-postcss');
++const postcssPrefers = require('css-prefers-color-scheme/postcss');
++
++gulp.task('css', () => gulp.src('./src/*.css').pipe(
++  postcss([
++    prefersColorScheme(/* pluginOptions */)
++  ])
++).pipe(
++  gulp.dest('.')
++));
++```
++
++## Grunt
++
++Add [Grunt PostCSS] to your project:
++
++```bash
++npm install grunt-postcss --save-dev
++```
++
++Use [Prefers Color Scheme] in your Gruntfile:
++
++```js
++const postcssPrefers = require('css-prefers-color-scheme/postcss');
++
++grunt.loadNpmTasks('grunt-postcss');
++
++grunt.initConfig({
++  postcss: {
++    options: {
++      use: [
++       prefersColorScheme(/* pluginOptions */)
++      ]
++    },
++    dist: {
++      src: '*.css'
++    }
++  }
++});
++```
++
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
++[PostCSS]: https://github.com/postcss/postcss
++[PostCSS Loader]: https://github.com/postcss/postcss-loader
++[Prefers Color Scheme]: https://github.com/jonathantneal/postcss-prefers-color-scheme
++[React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
++[React App Rewired]: https://github.com/timarney/react-app-rewired
+diff --git a/LICENSE.md b/LICENSE.md
+new file mode 100644
+index 0000000..0bc1fa7
+--- /dev/null
++++ b/LICENSE.md
+@@ -0,0 +1,108 @@
++# CC0 1.0 Universal
++
++## Statement of Purpose
++
++The laws of most jurisdictions throughout the world automatically confer
++exclusive Copyright and Related Rights (defined below) upon the creator and
++subsequent owner(s) (each and all, an “owner”) of an original work of
++authorship and/or a database (each, a “Work”).
++
++Certain owners wish to permanently relinquish those rights to a Work for the
++purpose of contributing to a commons of creative, cultural and scientific works
++(“Commons”) that the public can reliably and without fear of later claims of
++infringement build upon, modify, incorporate in other works, reuse and
++redistribute as freely as possible in any form whatsoever and for any purposes,
++including without limitation commercial purposes. These owners may contribute
++to the Commons to promote the ideal of a free culture and the further
++production of creative, cultural and scientific works, or to gain reputation or
++greater distribution for their Work in part through the use and efforts of
++others.
++
++For these and/or other purposes and motivations, and without any expectation of
++additional consideration or compensation, the person associating CC0 with a
++Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
++and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
++publicly distribute the Work under its terms, with knowledge of his or her
++Copyright and Related Rights in the Work and the meaning and intended legal
++effect of CC0 on those rights.
++
++1. Copyright and Related Rights. A Work made available under CC0 may be
++   protected by copyright and related or neighboring rights (“Copyright and
++   Related Rights”). Copyright and Related Rights include, but are not limited
++   to, the following:
++   1. the right to reproduce, adapt, distribute, perform, display, communicate,
++      and translate a Work;
++   2. moral rights retained by the original author(s) and/or performer(s);
++   3. publicity and privacy rights pertaining to a person’s image or likeness
++      depicted in a Work;
++   4. rights protecting against unfair competition in regards to a Work,
++      subject to the limitations in paragraph 4(i), below;
++   5. rights protecting the extraction, dissemination, use and reuse of data in
++      a Work;
++   6. database rights (such as those arising under Directive 96/9/EC of the
++      European Parliament and of the Council of 11 March 1996 on the legal
++      protection of databases, and under any national implementation thereof,
++      including any amended or successor version of such directive); and
++   7. other similar, equivalent or corresponding rights throughout the world
++      based on applicable law or treaty, and any national implementations
++      thereof.
++
++2. Waiver. To the greatest extent permitted by, but not in contravention of,
++   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++   and Related Rights and associated claims and causes of action, whether now
++   known or unknown (including existing as well as future claims and causes of
++   action), in the Work (i) in all territories worldwide, (ii) for the maximum
++   duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
++   makes the Waiver for the benefit of each member of the public at large and
++   to the detriment of Affirmer’s heirs and successors, fully intending that
++   such Waiver shall not be subject to revocation, rescission, cancellation,
++   termination, or any other legal or equitable action to disrupt the quiet
++   enjoyment of the Work by the public as contemplated by Affirmer’s express
++   Statement of Purpose.
++
++3. Public License Fallback. Should any part of the Waiver for any reason be
++   judged legally invalid or ineffective under applicable law, then the Waiver
++   shall be preserved to the maximum extent permitted taking into account
++   Affirmer’s express Statement of Purpose. In addition, to the extent the
++   Waiver is so judged Affirmer hereby grants to each affected person a
++   royalty-free, non transferable, non sublicensable, non exclusive,
++   irrevocable and unconditional license to exercise Affirmer’s Copyright and
++   Related Rights in the Work (i) in all territories worldwide, (ii) for the
++   maximum duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “License”). The License
++   shall be deemed effective as of the date CC0 was applied by Affirmer to the
++   Work. Should any part of the License for any reason be judged legally
++   invalid or ineffective under applicable law, such partial invalidity or
++   ineffectiveness shall not invalidate the remainder of the License, and in
++   such case Affirmer hereby affirms that he or she will not (i) exercise any
++   of his or her remaining Copyright and Related Rights in the Work or (ii)
++   assert any associated claims and causes of action with respect to the Work,
++   in either case contrary to Affirmer’s express Statement of Purpose.
++
++4. Limitations and Disclaimers.
++   1. No trademark or patent rights held by Affirmer are waived, abandoned,
++      surrendered, licensed or otherwise affected by this document.
++   2. Affirmer offers the Work as-is and makes no representations or warranties
++      of any kind concerning the Work, express, implied, statutory or
++      otherwise, including without limitation warranties of title,
++      merchantability, fitness for a particular purpose, non infringement, or
++      the absence of latent or other defects, accuracy, or the present or
++      absence of errors, whether or not discoverable, all to the greatest
++      extent permissible under applicable law.
++   3. Affirmer disclaims responsibility for clearing rights of other persons
++      that may apply to the Work or any use thereof, including without
++      limitation any person’s Copyright and Related Rights in the Work.
++      Further, Affirmer disclaims responsibility for obtaining any necessary
++      consents, permissions or other rights required for any use of the Work.
++   4. Affirmer understands and acknowledges that Creative Commons is not a
++      party to this document and has no duty or obligation with respect to this
++      CC0 or use of the Work.
++
++For more information, please see
++http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..c86d0a7
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,136 @@
++# Prefers Color Scheme [<img src="https://jonathantneal.github.io/dom-logo.svg" alt="PostCSS" width="90" height="90" align="right">][Prefers Color Scheme]
++
++[![NPM Version][npm-img]][npm-url]
++[![Build Status][cli-img]][cli-url]
++[![Support Chat][git-img]][git-url]
++
++[Prefers Color Scheme] lets you use light or dark color themes in CSS,
++following the [Media Queries] specification.
++
++```bash
++npm install css-prefers-color-scheme
++```
++
++```css
++@media (prefers-color-scheme: dark) {
++  :root {
++    --site-bgcolor: #1b1b1b;
++    --site-color: #fff;
++  }
++}
++
++body {
++  background-color: var(--site-bgcolor, #f9f9f9);
++  color: var(--site-color, #111);
++  font: 100%/1.5 system-ui;
++}
++```
++
++[PostCSS] transforms these into cross-browser compatible `color-index` queries:
++
++```css
++@media (color-index: 48) {
++  :root {
++    --site-bgcolor: #1b1b1b;
++    --site-color: #fff;
++  }
++}
++
++body {
++  background-color: var(--site-bgcolor, #f9f9f9);
++  color: var(--site-color, #111);
++  font: 100%/1.5 system-ui;
++}
++```
++
++`CSS._prefersColorScheme()` applies these “light mode” and “dark mode” queries
++to documents on the fly. The entire frontend script is less than 300 bytes.
++
++[Prefers Color Scheme] works in all major browsers, including Safari 6+ and
++Internet Explorer 9+.
++[See it for yourself.](https://app.crossbrowsertesting.com/public/i76b092cd2b52b86/screenshots/z25c0ccdfcc9c9b8956f?size=medium&type=windowed)
++
++```js
++const prefersColorScheme = require('css-prefers-color-scheme');
++
++// apply "dark" queries
++prefersColorScheme('dark');
++
++// apply "light" queries (also disabling "dark" queries)
++prefersColorScheme('light');
++```
++
++## PostCSS Usage
++
++Add [Prefers Color Scheme] to your project:
++
++```bash
++npm install css-prefers-color-scheme --save-dev
++```
++
++Use [Prefers Color Scheme] to process your CSS:
++
++```js
++const postcssPrefersColorScheme = require('css-prefers-color-scheme/postcss');
++
++postcssPrefersColorScheme.process(YOUR_CSS /*, processOptions, pluginOptions */);
++```
++
++Or use it as a [PostCSS] plugin:
++
++```js
++const postcss = require('postcss');
++const postcssPrefersColorScheme = require('css-prefers-color-scheme/postcss');
++
++postcss([
++  postcssPrefersColorScheme(/* pluginOptions */)
++]).process(YOUR_CSS /*, processOptions */);
++```
++
++[Prefers Color Scheme] runs in all Node environments, with special
++instructions for:
++
++| [Node](INSTALL.md#node) | [Webpack](INSTALL.md#webpack) | [Create React App](INSTALL.md#create-react-app) | [Gulp](INSTALL.md#gulp) | [Grunt](INSTALL.md#grunt) |
++| --- | --- | --- | --- | --- |
++
++---
++
++## How does the frontend work?
++
++The `color-index` media query is understood in all major browsers going back to
++Internet Explorer 9, but all implementations only seem to allow a `color-index`
++of `0`.
++
++This script changes `(color-index: 48)` queries into
++`not all and (color-index: 48)` to activate “dark mode” specific CSS, and then
++it inverts `(color-index: 70)` queries into `not all and (color-index: 48)`
++to activate “light mode” specific CSS.
++
++```css
++@media (color-index: 70) { /* "light" query */
++  body {
++    background-color: white;
++    color: black;
++  }
++}
++```
++
++These valid queries are accessible to `document.styleSheet`, so no css parsing
++is required to use this library, which is how the script is less than 300 bytes.
++
++## Why does the fallback work this way?
++
++The value of `48` is chosen for dark mode because it is the keycode for `0`,
++the hexidecimal value of black. Likewise, `70` is chosen for light mode because
++it is the keycode for `f`, the hexidecimal value of white.
++
++[cli-img]: https://img.shields.io/travis/csstools/css-prefers-color-scheme.svg
++[cli-url]: https://travis-ci.org/csstools/css-prefers-color-scheme
++[git-img]: https://img.shields.io/badge/support-chat-blue.svg
++[git-url]: https://gitter.im/postcss/postcss
++[npm-img]: https://img.shields.io/npm/v/css-prefers-color-scheme.svg
++[npm-url]: https://www.npmjs.com/package/css-prefers-color-scheme
++
++[PostCSS]: https://github.com/postcss/postcss
++[Prefers Color Scheme]: https://github.com/csstools/css-prefers-color-scheme
++[Media Queries]: https://drafts.csswg.org/mediaqueries-5/#descdef-media-prefers-color-scheme
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..8eed73d
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,66 @@
++{
++  "name": "css-prefers-color-scheme",
++  "version": "1.0.0",
++  "description": "Use a light or dark color theme in CSS CSS",
++  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
++  "license": "CC0-1.0",
++  "repository": "csstools/css-prefers-color-scheme",
++  "homepage": "https://github.com/csstools/css-prefers-color-scheme#readme",
++  "bugs": "https://github.com/csstools/css-prefers-color-scheme/issues",
++  "main": "client.js",
++  "module": "client.mjs",
++  "files": [
++    "client.js",
++    "client.mjs",
++    "postcss.js",
++    "postcss.mjs"
++  ],
++  "scripts": {
++    "build": "npm run build:client && npm run build:postcss",
++    "build:client": "rollup -c .rollup.client.js --silent",
++    "build:postcss": "rollup -c .rollup.postcss.js --silent",
++    "prepublishOnly": "npm test",
++    "pretest": "npm run build",
++    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
++    "test:js": "eslint src/*.js --cache --ignore-path .gitignore --quiet",
++    "test:tape": "postcss-tape --plugin=postcss.js"
++  },
++  "engines": {
++    "node": ">=6.0.0"
++  },
++  "dependencies": {
++    "postcss": "^7.0.2"
++  },
++  "devDependencies": {
++    "@babel/core": "^7.1.0",
++    "@babel/preset-env": "^7.0.0",
++    "babel-eslint": "^9.0.0",
++    "eslint": "^5.6.0",
++    "eslint-config-dev": "^2.0.0",
++    "postcss-tape": "^2.2.0",
++    "pre-commit": "^1.2.2",
++    "rollup": "^0.66.2",
++    "rollup-plugin-babel": "^4.0.1",
++    "uglify-js": "^3.4.9"
++  },
++  "eslintConfig": {
++    "extends": "dev",
++    "parser": "babel-eslint"
++  },
++  "keywords": [
++    "postcss",
++    "css",
++    "postcss-plugin",
++    "media",
++    "query",
++    "prefers",
++    "color",
++    "scheme",
++    "dark",
++    "light",
++    "no-preference",
++    "mode",
++    "queries",
++    "interface"
++  ]
++}
+diff --git a/src/client.js b/src/client.js
+new file mode 100644
+index 0000000..f867d3d
+--- /dev/null
++++ b/src/client.js
+@@ -0,0 +1,21 @@
++const colorIndexRegExp = /((?:not )?all and )?(\(color-index:\s*(22|48|70)\))/i;
++
++export default style => {
++	[].forEach.call(document.styleSheets, styleSheet => {
++		[].forEach.call(styleSheet.cssRules, cssRule => {
++			const mediaMatch = (Object(cssRule.media).mediaText || '').match(colorIndexRegExp);
++
++			if (mediaMatch) {
++				cssRule.media.mediaText = (
++					(/^dark$/i.test(style)
++						? mediaMatch[3] === '48'
++					: /^light$/i.test(style)
++						? mediaMatch[3] === '70'
++					: mediaMatch[3] === '22')
++						? 'not all and '
++					: ''
++				) + cssRule.media.mediaText.replace(colorIndexRegExp, '$2');
++			}
++		});
++	});
++};
+diff --git a/src/postcss.js b/src/postcss.js
+new file mode 100644
+index 0000000..2a949c5
+--- /dev/null
++++ b/src/postcss.js
+@@ -0,0 +1,17 @@
++import postcss from 'postcss';
++
++const mediaRegExp = /^media$/i;
++const prefersInterfaceRegExp = /\(\s*prefers-color-scheme\s*:\s*(dark|light|no-preference)\s*\)/i;
++const colorIndexByStyle = { dark: 48, light: 70, 'no-preference': 22 };
++const prefersInterfaceReplacer = ($0, style) => `(color-index: ${colorIndexByStyle[style.toLowerCase()]})`;
++
++export default postcss.plugin('postcss-prefers-color-scheme', () => root => {
++	root.walkAtRules(mediaRegExp, atRule => {
++		const { params } = atRule;
++		const altParams = params.replace(prefersInterfaceRegExp, prefersInterfaceReplacer);
++
++		if (params !== altParams) {
++			atRule.params = altParams;
++		}
++	});
++});
+diff --git a/test/basic.css b/test/basic.css
+new file mode 100644
+index 0000000..2276649
+--- /dev/null
++++ b/test/basic.css
+@@ -0,0 +1,26 @@
++@media (prefers-color-scheme: no-preference) {
++	:root {
++		--site-bgcolor: #f9f9f9;
++		--site-color: #111;
++	}
++}
++
++@media (prefers-color-scheme: dark) {
++	:root {
++		--site-bgcolor: #1b1b1b;
++		--site-color: #fff;
++	}
++}
++
++@media (prefers-color-scheme: light) {
++	:root {
++		--site-bgcolor: #fff;
++		--site-color: #222;
++	}
++}
++
++body {
++	background-color: var(--site-bgcolor, #f9f9f9);
++	color: var(--site-color, #111);
++	font: 100%/1.5 system-ui;
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+new file mode 100644
+index 0000000..4915583
+--- /dev/null
++++ b/test/basic.expect.css
+@@ -0,0 +1,26 @@
++@media (color-index: 22) {
++	:root {
++		--site-bgcolor: #f9f9f9;
++		--site-color: #111;
++	}
++}
++
++@media (color-index: 48) {
++	:root {
++		--site-bgcolor: #1b1b1b;
++		--site-color: #fff;
++	}
++}
++
++@media (color-index: 70) {
++	:root {
++		--site-bgcolor: #fff;
++		--site-color: #222;
++	}
++}
++
++body {
++	background-color: var(--site-bgcolor, #f9f9f9);
++	color: var(--site-color, #111);
++	font: 100%/1.5 system-ui;
++}
+diff --git a/test/basic.result.css b/test/basic.result.css
+new file mode 100644
+index 0000000..4915583
+--- /dev/null
++++ b/test/basic.result.css
+@@ -0,0 +1,26 @@
++@media (color-index: 22) {
++	:root {
++		--site-bgcolor: #f9f9f9;
++		--site-color: #111;
++	}
++}
++
++@media (color-index: 48) {
++	:root {
++		--site-bgcolor: #1b1b1b;
++		--site-color: #fff;
++	}
++}
++
++@media (color-index: 70) {
++	:root {
++		--site-bgcolor: #fff;
++		--site-color: #222;
++	}
++}
++
++body {
++	background-color: var(--site-bgcolor, #f9f9f9);
++	color: var(--site-color, #111);
++	font: 100%/1.5 system-ui;
++}
+-- 
+2.33.1
+

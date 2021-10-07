@@ -1,0 +1,235 @@
+From d481c2daed352b5f3b9d308e58142edd163403b2 Mon Sep 17 00:00:00 2001
+From: Aleksandr Shevchenko <alexandre.shevchenko@gmail.com>
+Date: Fri, 15 Mar 2019 22:12:48 +0100
+Subject: [PATCH 31/43] Add support for logical border radius
+
+---
+ README.md                       |  3 +-
+ index.js                        |  1 +
+ lib/transform-border.js         | 64 +++++++++++++++++++++++++++++++++
+ test/border.css                 |  7 ++++
+ test/border.expect.css          | 32 +++++++++++++++++
+ test/border.ltr.expect.css      |  7 ++++
+ test/border.preserve.expect.css | 39 ++++++++++++++++++++
+ 7 files changed, 152 insertions(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 012b285..b660800 100644
+--- a/README.md
++++ b/README.md
+@@ -82,7 +82,8 @@ properties:
+   `border-end-style`, `border-width`, `border-block-width`,
+   `border-block-start-width`, `border-block-end-width`, `border-inline-width`,
+   `border-inline-start-width`, `border-inline-end-width`, `border-start-width`,
+-  `border-end-width`
++  `border-end-width`, `border-start-start-radius`, `border-start-end-radius`,
++  `border-end-start-radius`, `border-end-end-radius`
+ 
+ #### Logical Offsets
+ 
+diff --git a/index.js b/index.js
+index f8ac558..654ef42 100644
+--- a/index.js
++++ b/index.js
+@@ -25,6 +25,7 @@ const transforms = {
+ 	'border-inline-end': transformBorder['border-inline-end'], 'border-inline-end-width': transformBorder['border-inline-end'], 'border-inline-end-style': transformBorder['border-inline-end'], 'border-inline-end-color': transformBorder['border-inline-end'],
+ 	'border-start': transformBorder['border-start'], 'border-start-width': transformBorder['border-start'], 'border-start-style': transformBorder['border-start'], 'border-start-color': transformBorder['border-start'],
+ 	'border-end': transformBorder['border-end'], 'border-end-width': transformBorder['border-end'], 'border-end-style': transformBorder['border-end'], 'border-end-color': transformBorder['border-end'],
++	'border-start-start-radius': transformBorder['border-start-start-radius'], 'border-start-end-radius': transformBorder['border-start-end-radius'], 'border-end-start-radius': transformBorder['border-end-start-radius'], 'border-end-end-radius': transformBorder['border-end-end-radius'],
+ 	'clear': transformFloat,
+ 	'inset': transformInset,
+ 	'margin': transformSpacing,
+diff --git a/lib/transform-border.js b/lib/transform-border.js
+index 25d6a6f..f13834b 100644
+--- a/lib/transform-border.js
++++ b/lib/transform-border.js
+@@ -225,5 +225,69 @@ export default {
+ 			cloneRule(decl, 'ltr').append(ltrDecls),
+ 			cloneRule(decl, 'rtl').append(rtlDecls)
+ 		];
++	},
++
++	// border-start-start-radius
++	'border-start-start-radius': (decl, values, dir) => {
++		const ltrDecl = decl.clone({
++			prop: `border-top-left-radius`
++		});
++
++		const rtlDecl = decl.clone({
++			prop: `border-top-right-radius`
++		});
++
++		return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
++			cloneRule(decl, 'ltr').append(ltrDecl),
++			cloneRule(decl, 'rtl').append(rtlDecl)
++		];
++	},
++
++	// border-start-end-radius
++	'border-start-end-radius': (decl, values, dir) => {
++		const ltrDecl = decl.clone({
++			prop: `border-bottom-left-radius`
++		});
++
++		const rtlDecl = decl.clone({
++			prop: `border-bottom-right-radius`
++		});
++
++		return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
++			cloneRule(decl, 'ltr').append(ltrDecl),
++			cloneRule(decl, 'rtl').append(rtlDecl)
++		];
++	},
++
++	// border-end-start-radius
++	'border-end-start-radius': (decl, values, dir) => {
++		const ltrDecl = decl.clone({
++			prop: `border-top-right-radius`
++		});
++
++		const rtlDecl = decl.clone({
++			prop: `border-top-left-radius`
++		});
++
++		return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
++			cloneRule(decl, 'ltr').append(ltrDecl),
++			cloneRule(decl, 'rtl').append(rtlDecl)
++		];
++	},
++
++	// border-end-end-radius
++	'border-end-end-radius': (decl, values, dir) => {
++		const ltrDecl = decl.clone({
++			prop: `border-bottom-right-radius`
++		});
++
++		const rtlDecl = decl.clone({
++			prop: `border-bottom-left-radius`
++		});
++
++		return 'ltr' === dir ? ltrDecl : 'rtl' === dir ? rtlDecl : [
++			cloneRule(decl, 'ltr').append(ltrDecl),
++			cloneRule(decl, 'rtl').append(rtlDecl)
++		];
+ 	}
+ };
+diff --git a/test/border.css b/test/border.css
+index 08341b0..44f20a4 100644
+--- a/test/border.css
++++ b/test/border.css
+@@ -50,3 +50,10 @@ test-flowing-border-color {
+ 	border-end-color: 13px solid black / 14px solid black;
+ 	border-color: inherit;
+ }
++
++test-flowing-border-radius {
++	border-start-start-radius: 7px;
++	border-start-end-radius: 8px;
++	border-end-start-radius: 9px;
++	border-end-end-radius: 10px;
++}
+diff --git a/test/border.expect.css b/test/border.expect.css
+index c625c06..cba1472 100644
+--- a/test/border.expect.css
++++ b/test/border.expect.css
+@@ -207,3 +207,35 @@ test-flowing-border-color {
+ 	border-color: inherit;
+ 	border-color: inherit;
+ }
++
++test-flowing-border-radius:dir(ltr) {
++	border-top-left-radius: 7px;
++}
++
++test-flowing-border-radius:dir(rtl) {
++	border-top-right-radius: 7px;
++}
++
++test-flowing-border-radius:dir(ltr) {
++	border-bottom-left-radius: 8px;
++}
++
++test-flowing-border-radius:dir(rtl) {
++	border-bottom-right-radius: 8px;
++}
++
++test-flowing-border-radius:dir(ltr) {
++	border-top-right-radius: 9px;
++}
++
++test-flowing-border-radius:dir(rtl) {
++	border-top-left-radius: 9px;
++}
++
++test-flowing-border-radius:dir(ltr) {
++	border-bottom-right-radius: 10px;
++}
++
++test-flowing-border-radius:dir(rtl) {
++	border-bottom-left-radius: 10px;
++}
+diff --git a/test/border.ltr.expect.css b/test/border.ltr.expect.css
+index 330fe8b..34380ae 100644
+--- a/test/border.ltr.expect.css
++++ b/test/border.ltr.expect.css
+@@ -79,3 +79,10 @@ test-flowing-border-color {
+ 	border-right-color: 14px solid black;
+ 	border-color: inherit;
+ }
++
++test-flowing-border-radius {
++	border-top-left-radius: 7px;
++	border-bottom-left-radius: 8px;
++	border-top-right-radius: 9px;
++	border-bottom-right-radius: 10px;
++}
+diff --git a/test/border.preserve.expect.css b/test/border.preserve.expect.css
+index 2031e0a..158a5c1 100644
+--- a/test/border.preserve.expect.css
++++ b/test/border.preserve.expect.css
+@@ -231,3 +231,42 @@ test-flowing-border-color {
+ 	border-end-color: 13px solid black / 14px solid black;
+ 	border-color: inherit;
+ }
++
++test-flowing-border-radius:dir(ltr) {
++	border-top-left-radius: 7px;
++}
++
++test-flowing-border-radius:dir(rtl) {
++	border-top-right-radius: 7px;
++}
++
++test-flowing-border-radius:dir(ltr) {
++	border-bottom-left-radius: 8px;
++}
++
++test-flowing-border-radius:dir(rtl) {
++	border-bottom-right-radius: 8px;
++}
++
++test-flowing-border-radius:dir(ltr) {
++	border-top-right-radius: 9px;
++}
++
++test-flowing-border-radius:dir(rtl) {
++	border-top-left-radius: 9px;
++}
++
++test-flowing-border-radius:dir(ltr) {
++	border-bottom-right-radius: 10px;
++}
++
++test-flowing-border-radius:dir(rtl) {
++	border-bottom-left-radius: 10px;
++}
++
++test-flowing-border-radius {
++	border-start-start-radius: 7px;
++	border-start-end-radius: 8px;
++	border-end-start-radius: 9px;
++	border-end-end-radius: 10px;
++}
+-- 
+2.33.1
+

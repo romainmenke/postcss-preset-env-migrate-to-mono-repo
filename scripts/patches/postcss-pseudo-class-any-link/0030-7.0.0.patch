@@ -1,0 +1,163 @@
+From b1da2a1297423de739d70be88c4b6d75603bbf76 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 17 Sep 2021 19:52:33 -0400
+Subject: [PATCH 30/30] 7.0.0
+
+---
+ .github/workflows/test.yml | 18 ++++++++++++++++++
+ .gitignore                 |  3 ++-
+ .travis.yml                | 10 ----------
+ CHANGELOG.md               |  5 +++++
+ README.md                  |  4 ++--
+ package.json               | 27 +++++++++++++++++----------
+ 6 files changed, 44 insertions(+), 23 deletions(-)
+ create mode 100644 .github/workflows/test.yml
+ delete mode 100644 .travis.yml
+
+diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
+new file mode 100644
+index 0000000..4a287db
+--- /dev/null
++++ b/.github/workflows/test.yml
+@@ -0,0 +1,18 @@
++name: test
++on:
++  push:
++
++jobs:
++  test:
++    runs-on: ubuntu-latest
++    strategy:
++      matrix:
++        node: [12, 16]
++    steps:
++      - uses: actions/checkout@v2
++      - uses: actions/setup-node@v2
++        with:
++          node-version: ${{ matrix.node }}
++
++      - run: yarn install --ignore-scripts
++      - run: yarn run test
+diff --git a/.gitignore b/.gitignore
+index d920b78..aefbe6f 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,11 +1,12 @@
+ node_modules
+ index.*.*
+ package-lock.json
++yarn.lock
+ *.log*
+ *.result.css
+ .*
+ !.editorconfig
++!.github
+ !.gitignore
+ !.rollup.js
+ !.tape.js
+-!.travis.yml
+diff --git a/.travis.yml b/.travis.yml
+deleted file mode 100644
+index 6b7feec..0000000
+--- a/.travis.yml
++++ /dev/null
+@@ -1,10 +0,0 @@
+-# https://docs.travis-ci.com/user/travis-lint
+-
+-language: node_js
+-
+-node_js:
+-  - 10
+-  - 12
+-
+-install:
+-  - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 42c7cde..9a5f75f 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Pseudo Class Any Link
+ 
++### 7.0.0 (September 17, 2021)
++
++- Updated: Support for PostCSS 8+ (major).
++- Updated: Support for Node v12+ (major).
++
+ ### 6.0.0 (September 17, 2018)
+ 
+ - Updated: Support for PostCSS v7+
+diff --git a/README.md b/README.md
+index ba199ed..72f365e 100644
+--- a/README.md
++++ b/README.md
+@@ -88,8 +88,8 @@ nav :link > span, nav :visited > span {
+ }
+ ```
+ 
+-[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-pseudo-class-any-link.svg
+-[cli-url]: https://travis-ci.org/jonathantneal/postcss-pseudo-class-any-link
++[cli-img]: https://github.com/csstools/postcss-pseudo-class-any-link/workflows/test/badge.svg
++[cli-url]: https://github.com/csstools/postcss-pseudo-class-any-link/actions/workflows/test.yml?query=workflow/test
+ [css-img]: https://cssdb.org/badge/any-link-pseudo-class.svg
+ [css-url]: https://cssdb.org/#any-link-pseudo-class
+ [git-img]: https://img.shields.io/badge/support-chat-blue.svg
+diff --git a/package.json b/package.json
+index ce0ab68..817a43c 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-pseudo-class-any-link",
+-  "version": "6.0.0",
++  "version": "7.0.0",
+   "description": "Use the :any-link pseudo-class in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -10,27 +10,34 @@
+   "main": "index.js",
+   "scripts": {
+     "prepublishOnly": "npm test",
+-    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
++    "test": "npm run test:js && npm run test:tape",
+     "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+-    "node": ">=10.0.0"
++    "node": ">=12"
+   },
+   "peerDependencies": {
+-    "postcss": "^8.0.0"
++    "postcss": "^8.3"
+   },
+   "dependencies": {
+-    "postcss-selector-parser": "^6.0.4"
++    "postcss-selector-parser": "^6"
+   },
+   "devDependencies": {
+-    "eslint": "^7.22.0",
+-    "eslint-config-dev": "^2.0.0",
+-    "postcss": "^8.2.8",
+-    "postcss-tape": "^6.0.0"
++    "eslint": "7.32.0",
++    "postcss": "8.3.6",
++    "postcss-tape": "6.0.1"
+   },
+   "eslintConfig": {
+-    "extends": "dev"
++    "env": {
++      "browser": true,
++      "es6": true,
++      "node": true
++    },
++    "parserOptions": {
++      "sourceType": "module"
++    },
++    "root": true
+   },
+   "keywords": [
+     "postcss",
+-- 
+2.33.1
+

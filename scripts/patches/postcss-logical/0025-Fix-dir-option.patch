@@ -1,0 +1,27 @@
+From 6c37dc9e51e1355678ad657e05ba143d5b500eaf Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 21 Mar 2018 01:35:31 -0400
+Subject: [PATCH 25/43] Fix dir option
+
+---
+ index.js | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/index.js b/index.js
+index 6185c96..8362d3b 100644
+--- a/index.js
++++ b/index.js
+@@ -44,8 +44,8 @@ const transforms = {
+ // plugin
+ export default postcss.plugin('postcss-logical-properties', opts => {
+ 	const preserve = Boolean(Object(opts).preserve);
+-	const dir = !preserve && 'dir' in Object(opts)
+-		? /^rtl$/i.test(Object(opts).dir)
++	const dir = !preserve && typeof Object(opts).dir === 'string'
++		? /^rtl$/i.test(opts.dir)
+ 			? 'rtl'
+ 		: 'ltr'
+ 	: false;
+-- 
+2.33.1
+

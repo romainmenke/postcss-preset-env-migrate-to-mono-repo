@@ -1,0 +1,2113 @@
+From 2ae0263b0cfe22fb0cb288c45bf4088308983187 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 8 May 2017 15:43:54 -0400
+Subject: [PATCH 48/89] 3.0.0
+
+---
+ .eslintrc                        | 146 -------------------------------
+ .gitignore                       |   9 +-
+ .jscsrc                          | 102 ---------------------
+ .npmignore                       |   2 -
+ .tape.js                         |  19 ++++
+ .travis.yml                      |   4 +-
+ CHANGELOG.md                     |  37 +++++---
+ CONTRIBUTING.md                  |  10 ++-
+ LICENSE.md                       | 107 ++++++++++++++++++++--
+ README.md                        | 134 +++++++---------------------
+ index.js                         | 134 +++++++---------------------
+ lib/clean-node.js                |   6 ++
+ lib/merge-params.js              |   9 ++
+ lib/merge-selectors.js           |  12 +++
+ lib/transform-after-nodes.js     |  18 ++++
+ lib/transform-bubbling-atrule.js |  52 +++++++++++
+ lib/transform-nesting-atrule.js  |  43 +++++++++
+ lib/transform-nesting-rule.js    |  29 ++++++
+ package.json                     |  65 ++++++++------
+ test.js                          |  78 -----------------
+ test/basic.css                   |  92 ++++---------------
+ test/basic.expect.css            | 102 +++++----------------
+ test/direct.css                  |  93 ++++----------------
+ test/direct.expect.css           | 107 ++++++----------------
+ test/empty.css                   |  42 +++++----
+ test/empty.expect.css            |  39 +++++----
+ test/ignore.css                  |  19 ++--
+ test/ignore.expect.css           |  19 ++--
+ test/media.css                   |  43 ++++++---
+ test/media.expect.css            |  63 ++++++++-----
+ 30 files changed, 649 insertions(+), 986 deletions(-)
+ delete mode 100644 .eslintrc
+ delete mode 100644 .jscsrc
+ delete mode 100644 .npmignore
+ create mode 100644 .tape.js
+ create mode 100644 lib/clean-node.js
+ create mode 100644 lib/merge-params.js
+ create mode 100644 lib/merge-selectors.js
+ create mode 100644 lib/transform-after-nodes.js
+ create mode 100644 lib/transform-bubbling-atrule.js
+ create mode 100644 lib/transform-nesting-atrule.js
+ create mode 100644 lib/transform-nesting-rule.js
+ delete mode 100644 test.js
+
+diff --git a/.eslintrc b/.eslintrc
+deleted file mode 100644
+index ee0ecdd..0000000
+--- a/.eslintrc
++++ /dev/null
+@@ -1,146 +0,0 @@
+-{
+-	"root": true,
+-	"env": {
+-		"browser": true,
+-		"es6": true,
+-		"node": true
+-	},
+-	"rules": {
+-		"accessor-pairs": [2],
+-		"block-scoped-var": [2],
+-		"callback-return": [2],
+-		"complexity": [2, 20],
+-		"consistent-return": [2],
+-		"consistent-this": [2, "self"],
+-		"constructor-super": [2],
+-		"default-case": [2],
+-		"eqeqeq": [2],
+-		"global-require": [2],
+-		"guard-for-in": [0],
+-		"handle-callback-err": [2, "^err(or)?$"],
+-		"id-length": [0],
+-		"init-declarations": [2, "always"],
+-		"max-depth": [2, 6],
+-		"max-nested-callbacks": [0],
+-		"max-params": [2, 3],
+-		"max-statements": [0],
+-		"new-cap": [2],
+-		"new-parens": [2],
+-		"no-alert": [2],
+-		"no-array-constructor": [2],
+-		"no-bitwise": [0],
+-		"no-caller": [2],
+-		"no-case-declarations": [2],
+-		"no-catch-shadow": [2],
+-		"no-class-assign": [2],
+-		"no-cond-assign": [2],
+-		"no-console": [2],
+-		"no-const-assign": [2],
+-		"no-constant-condition": [0],
+-		"no-continue": [0],
+-		"no-control-regex": [2],
+-		"no-debugger": [2],
+-		"no-delete-var": [2],
+-		"no-div-regex": [0],
+-		"no-dupe-args": [2],
+-		"no-dupe-class-members": [2],
+-		"no-dupe-keys": [2],
+-		"no-duplicate-case": [2],
+-		"no-else-return": [0],
+-		"no-empty-character-class": [2],
+-		"no-empty-pattern": [2],
+-		"no-empty": [2],
+-		"no-eq-null": [2],
+-		"no-eval": [2],
+-		"no-ex-assign": [2],
+-		"no-extend-native": [0],
+-		"no-extra-bind": [2],
+-		"no-extra-boolean-cast": [2],
+-		"no-extra-parens": [2],
+-		"no-extra-semi": [2],
+-		"no-fallthrough": [2],
+-		"no-floating-decimal": [2],
+-		"no-func-assign": [2],
+-		"no-implicit-coercion": [2],
+-		"no-implicit-globals": [0],
+-		"no-implied-eval": [2],
+-		"no-inline-comments": [0],
+-		"no-inner-declarations": [2],
+-		"no-invalid-regexp": [2],
+-		"no-invalid-this": [0],
+-		"no-irregular-whitespace": [2],
+-		"no-iterator": [2],
+-		"no-label-var": [2],
+-		"no-labels": [0],
+-		"no-lone-blocks": [2],
+-		"no-lonely-if": [2],
+-		"no-loop-func": [2],
+-		"no-magic-numbers": [0],
+-		"no-mixed-requires": [0],
+-		"no-multi-str": [2],
+-		"no-native-reassign": [2],
+-		"no-negated-condition": [0],
+-		"no-negated-in-lhs": [2],
+-		"no-nested-ternary": [2],
+-		"no-new-func": [0],
+-		"no-new-object": [2],
+-		"no-new-require": [0],
+-		"no-new-wrappers": [2],
+-		"no-new": [2],
+-		"no-obj-calls": [2],
+-		"no-octal-escape": [2],
+-		"no-octal": [2],
+-		"no-param-reassign": [0],
+-		"no-path-concat": [2],
+-		"no-plusplus": [0],
+-		"no-process-env": [2],
+-		"no-process-exit": [0],
+-		"no-proto": [2],
+-		"no-redeclare": [2],
+-		"no-regex-spaces": [2],
+-		"no-restricted-imports": [0],
+-		"no-restricted-syntax": [0],
+-		"no-return-assign": [2],
+-		"no-script-url": [2],
+-		"no-self-compare": [2],
+-		"no-sequences": [2],
+-		"no-shadow-restricted-names": [2],
+-		"no-shadow": [2],
+-		"no-sparse-arrays": [2],
+-		"no-sync": [0],
+-		"no-ternary": [0],
+-		"no-this-before-super": [2],
+-		"no-throw-literal": [2],
+-		"no-undef-init": [2],
+-		"no-undef": [2],
+-		"no-undefined": [0],
+-		"no-unneeded-ternary": [2],
+-		"no-unreachable": [2],
+-		"no-unused-expressions": [2],
+-		"no-unused-vars": [2],
+-		"no-use-before-define": [0],
+-		"no-useless-call": [2],
+-		"no-useless-concat": [2],
+-		"no-var": [0],
+-		"no-void": [0],
+-		"no-with": [2],
+-		"object-shorthand": [0],
+-		"one-var": [0],
+-		"operator-assignment": [2, "always"],
+-		"prefer-arrow-callback": [0],
+-		"prefer-const": [0],
+-		"prefer-reflect": [0],
+-		"prefer-rest-params": [0],
+-		"prefer-spread": [0],
+-		"prefer-template": [0],
+-		"radix": [2, "as-needed"],
+-		"require-yield": [0],
+-		"strict": [0],
+-		"use-isnan": [2],
+-		"valid-typeof": [2],
+-		"vars-on-top": [0],
+-		"wrap-iife": [2, "any"],
+-		"wrap-regex": [2],
+-		"yoda": [0]
+-	}
+-}
+diff --git a/.gitignore b/.gitignore
+index ef0a70e..b8fc2cd 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,3 +1,8 @@
+ node_modules
+-npm-debug.log
+-test/*.actual.css
++.*
++!.gitignore
++!.tape.js
++!.travis.yml
++*.log*
++*.result.css
++package-lock.json
+diff --git a/.jscsrc b/.jscsrc
+deleted file mode 100644
+index 66d97a3..0000000
+--- a/.jscsrc
++++ /dev/null
+@@ -1,102 +0,0 @@
+-{
+-	"disallowKeywords": [
+-		"with"
+-	],
+-	"disallowKeywordsOnNewLine": [
+-		"else"
+-	],
+-	"disallowMultipleSpaces": false,
+-	"disallowMixedSpacesAndTabs": true,
+-	"disallowMultipleLineBreaks": true,
+-	"disallowMultipleLineStrings": true,
+-	"disallowMultipleVarDecl": true,
+-	"disallowNewlineBeforeBlockStatements": true,
+-	"disallowSpaceAfterObjectKeys": true,
+-	"disallowSpaceAfterPrefixUnaryOperators": true,
+-	"disallowSpacesInCallExpression": true,
+-	"disallowSpacesInFunctionDeclaration": {
+-		"beforeOpeningRoundBrace": true
+-	},
+-	"disallowSpacesInsideArrayBrackets": "all",
+-	"disallowSpacesInsideObjectBrackets": "all",
+-	"disallowSpacesInsideParentheses": true,
+-	"disallowTrailingWhitespace": true,
+-	"maximumLineLength": null,
+-	"requireCamelCaseOrUpperCaseIdentifiers": true,
+-	"requireCapitalizedConstructors": true,
+-	"requireCurlyBraces": [
+-		"if",
+-		"else",
+-		"for",
+-		"while",
+-		"do",
+-		"try",
+-		"catch"
+-	],
+-	"requireDotNotation": true,
+-	"requireLineFeedAtFileEnd": true,
+-	"requireOperatorBeforeLineBreak": true,
+-	"requireSemicolons": true,
+-	"requireSpaceAfterBinaryOperators": true,
+-	"requireSpaceAfterKeywords": [
+-		"if",
+-		"else",
+-		"for",
+-		"while",
+-		"do",
+-		"switch",
+-		"return",
+-		"try",
+-		"catch"
+-	],
+-	"requireSpaceBeforeBinaryOperators": [
+-		"=",
+-		"+=",
+-		"-=",
+-		"*=",
+-		"/=",
+-		"%=",
+-		"<<=",
+-		">>=",
+-		">>>=",
+-		"&=",
+-		"|=",
+-		"^=",
+-		"+=",
+-		"+",
+-		"-",
+-		"*",
+-		"/",
+-		"%",
+-		"<<",
+-		">>",
+-		">>>",
+-		"&",
+-		"|",
+-		"^",
+-		"&&",
+-		"||",
+-		"===",
+-		"==",
+-		">=",
+-		"<=",
+-		"<",
+-		">",
+-		"!=",
+-		"!=="
+-	],
+-	"requireSpaceBeforeBlockStatements": true,
+-	"requireSpaceBeforeObjectValues": true,
+-	"requireSpacesInAnonymousFunctionExpression": {
+-		"beforeOpeningCurlyBrace": true,
+-		"beforeOpeningRoundBrace": true
+-	},
+-	"requireSpacesInConditionalExpression": true,
+-	"requireSpacesInForStatement": true,
+-	"requireSpacesInFunctionDeclaration": {
+-		"beforeOpeningCurlyBrace": true
+-	},
+-	"validateIndentation": "\t",
+-	"validateParameterSeparator": ", ",
+-	"validateQuoteMarks": "'"
+-}
+diff --git a/.npmignore b/.npmignore
+deleted file mode 100644
+index 93f1361..0000000
+--- a/.npmignore
++++ /dev/null
+@@ -1,2 +0,0 @@
+-node_modules
+-npm-debug.log
+diff --git a/.tape.js b/.tape.js
+new file mode 100644
+index 0000000..88def0a
+--- /dev/null
++++ b/.tape.js
+@@ -0,0 +1,19 @@
++module.exports = {
++	'postcss-nesting': {
++		'basic': {
++			message: 'supports basic usage'
++		},
++		'direct': {
++			message: 'supports direct usage'
++		},
++		'empty': {
++			message: 'removes empty rules'
++		},
++		'ignore': {
++			message: 'ignores invalid entries'
++		},
++		'media': {
++			message: 'supports nested media'
++		}
++	}
++};
+diff --git a/.travis.yml b/.travis.yml
+index c8d0663..8524235 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -1,5 +1,3 @@
+-sudo: false
+ language: node_js
+ node_js:
+-  - stable
+-  - "0.12"
++  - 4
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 438eca3..d8a636d 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,4 +1,13 @@
+-## 2.3.1 (2016-03-16)
++# Changes to PostCSS Nesting
++
++### 3.0.0 (May 8, 2017)
++
++- Added: Node 4.x support
++- Added: PostCSS 6 support
++- Added: Preserved ordering
++- Removed: Node 0.12 support
++
++### 2.3.1 (March 16, 2016)
+ 
+ - Updated: Allow any direct nesting that follows the syntactic constraints
+ - Updated: PostCSS 5.0.6
+@@ -6,69 +15,69 @@
+ - Updated: Dependencies
+ - Updated: Project configuration
+ 
+-## 2.3.0 (2016-02-20)
++### 2.3.0 (February 20, 2016)
+ 
+ - Updated: JavaScript formatting, linting, tests, and documentation
+ - Updated: Properly concatenate at-rules with or expressions
+ - Updated: Update internal plugin name to postcss-nesting
+ 
+-## 2.2.0 (2016-01-30)
++### 2.2.0 (January 30, 2016)
+ 
+ - Added: Nesting of all at-rules
+ - Updated: Direct nesting order maintains order
+ - Updated: Tests and documentation
+ 
+-## 2.1.1 (2016-01-03)
++### 2.1.1 (January 3, 2016)
+ 
+ - Updated: Project conventions
+ 
+-## 2.1.0 (2016-01-03)
++### 2.1.0 (January 3, 2016)
+ 
+ - Added: Support for valid direct nesting
+ 
+-## 2.0.6 (2015-10-15)
++### 2.0.6 (October 15, 2015)
+ 
+ - Fixed: Issue with new PostCSS rules
+ 
+-## 2.0.5 (2015-10-12)
++### 2.0.5 (October 12, 2015)
+ 
+ - Updated: Nested rules source map to the parent rule
+ - Updated: PostCSS 5.0.9
+ - Updated: Tests and documentation
+ - Updated: Project configuration
+ 
+-## 2.0.4 (2015-09-23)
++### 2.0.4 (September 23, 2015)
+ 
+ - Updated: Map source raws
+ 
+-## 2.0.3 (2015-09-22)
++### 2.0.3 (September 22, 2015)
+ 
+ - Updated: Refactored plugin
+ - Updated: Tests
+ - Updated: PostCSS 5.0.6
+ 
+-## 2.0.2 (2015-09-16)
++### 2.0.2 (September 16, 2015)
+ 
+ - Fixed: Issue where the new rule’s children were not mapped to the parent internally
+ 
+-## 2.0.1 (2015-09-16)
++### 2.0.1 (September 16, 2015)
+ 
+ - Fixed: Issue where  a `@nest` rule followed by another bubbling at-rule would not bubble
+ - Added: CONTRIBUTING.md
+ 
+-## 2.0.0 (2015-09-16)
++### 2.0.0 (September 16, 2015)
+ 
+ - Added: Requirement of `&` per the specification
+ - Added: New prefix option
+ - Added: `@document` and `@supports` as bubbles
+ - Updated: Documentation
+ 
+-## 1.0.0 (2015-09-15)
++### 1.0.0 (September 15, 2015)
+ 
+ - Added: New `@nest` at-rule syntax
+ - Updated: PostCSS 5
+ - Removed: Old inner bracket syntax
+ 
+-## 0.1.0 (2015-06-17)
++### 0.1.0 (June 17, 2015)
+ 
+ - Added: Initial release
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+index ed4bd60..104bbe1 100644
+--- a/CONTRIBUTING.md
++++ b/CONTRIBUTING.md
+@@ -1,4 +1,7 @@
+-You want to help? You rock! Now, take a moment to be sure your contributions make sense to everyone else.
++# Contributing to PostCSS Nesting
++
++You want to help? You rock! Now, take a moment to be sure your contributions
++make sense to everyone else.
+ 
+ ## Reporting Issues
+ 
+@@ -11,12 +14,13 @@ Remember, a bug is a _demonstrable problem_ caused by _our_ code.
+ 
+ ## Submitting Pull Requests
+ 
+-Pull requests are the greatest contributions, so be sure they are focused in scope, and do avoid unrelated commits.
++Pull requests are the greatest contributions, so be sure they are focused in 
++scope, and do avoid unrelated commits.
+ 
+ 1. To begin, [fork this project], clone your fork, and add our upstream.
+ 	```bash
+ 	# Clone your fork of the repo into the current directory
+-	git clone https://github.com/<your-username>/postcss-nesting
++	git clone https://github.com/<your-user>/postcss-nesting
+ 	# Navigate to the newly cloned directory
+ 	cd postcss-nesting
+ 	# Assign the original repo to a remote called "upstream"
+diff --git a/LICENSE.md b/LICENSE.md
+index 565f84e..34f902f 100644
+--- a/LICENSE.md
++++ b/LICENSE.md
+@@ -1,15 +1,106 @@
+-# CC0 1.0 Universal License
++# CC0 1.0 Universal
+ 
+-Public Domain Dedication
++## Statement of Purpose
+ 
+-The person(s) who associated a work with this deed has dedicated the work to the public domain by waiving all of his or her rights to the work worldwide under copyright law, including all related and neighboring rights, to the extent allowed by law.
++The laws of most jurisdictions throughout the world automatically confer
++exclusive Copyright and Related Rights (defined below) upon the creator and
++subsequent owner(s) (each and all, an “owner”) of an original work of
++authorship and/or a database (each, a “Work”).
+ 
+-You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.
++Certain owners wish to permanently relinquish those rights to a Work for the
++purpose of contributing to a commons of creative, cultural and scientific works
++(“Commons”) that the public can reliably and without fear of later claims of
++infringement build upon, modify, incorporate in other works, reuse and
++redistribute as freely as possible in any form whatsoever and for any purposes,
++including without limitation commercial purposes. These owners may contribute
++to the Commons to promote the ideal of a free culture and the further
++production of creative, cultural and scientific works, or to gain reputation or
++greater distribution for their Work in part through the use and efforts of
++others.
+ 
+-In no way are the patent or trademark rights of any person affected by CC0, nor are the rights that other persons may have in the work or in how the work is used, such as publicity or privacy rights.
++For these and/or other purposes and motivations, and without any expectation of
++additional consideration or compensation, the person associating CC0 with a
++Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
++and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
++publicly distribute the Work under its terms, with knowledge of his or her
++Copyright and Related Rights in the Work and the meaning and intended legal
++effect of CC0 on those rights.
+ 
+-Unless expressly stated otherwise, the person(s) who associated a work with this deed makes no warranties about the work, and disclaims liability for all uses of the work, to the fullest extent permitted by applicable law.
++1. Copyright and Related Rights. A Work made available under CC0 may be
++	 protected by copyright and related or neighboring rights (“Copyright and
++	 Related Rights”). Copyright and Related Rights include, but are not limited
++	 to, the following:
++	1. the right to reproduce, adapt, distribute, perform, display,
++		 communicate, and translate a Work;
++	2. moral rights retained by the original author(s) and/or performer(s);
++	3. publicity and privacy rights pertaining to a person’s image or likeness
++		 depicted in a Work;
++	4. rights protecting against unfair competition in regards to a Work,
++		 subject to the limitations in paragraph 4(i), below;
++	5. rights protecting the extraction, dissemination, use and reuse of data
++		 in a Work;
++	6. database rights (such as those arising under Directive 96/9/EC of the
++		 European Parliament and of the Council of 11 March 1996 on the legal
++		 protection of databases, and under any national implementation thereof,
++		 including any amended or successor version of such directive); and
++	7. other similar, equivalent or corresponding rights throughout the world
++		 based on applicable law or treaty, and any national implementations
++		 thereof.
+ 
+-When using or citing the work, you should not imply endorsement by the author or the affirmer.
++2. Waiver. To the greatest extent permitted by, but not in contravention of,
++applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++and Related Rights and associated claims and causes of action, whether now
++known or unknown (including existing as well as future claims and causes of
++action), in the Work (i) in all territories worldwide, (ii) for the maximum
++duration provided by applicable law or treaty (including future time
++extensions), (iii) in any current or future medium and for any number of
++copies, and (iv) for any purpose whatsoever, including without limitation
++commercial, advertising or promotional purposes (the “Waiver”). Affirmer makes
++the Waiver for the benefit of each member of the public at large and to the
++detriment of Affirmer’s heirs and successors, fully intending that such Waiver
++shall not be subject to revocation, rescission, cancellation, termination, or
++any other legal or equitable action to disrupt the quiet enjoyment of the Work
++by the public as contemplated by Affirmer’s express Statement of Purpose.
+ 
+-This is a [human-readable summary of the Legal Code](https://creativecommons.org/publicdomain/zero/1.0/) ([read the full text](https://creativecommons.org/publicdomain/zero/1.0/legalcode)).
++3. Public License Fallback. Should any part of the Waiver for any reason be
++judged legally invalid or ineffective under applicable law, then the Waiver
++shall be preserved to the maximum extent permitted taking into account
++Affirmer’s express Statement of Purpose. In addition, to the extent the Waiver
++is so judged Affirmer hereby grants to each affected person a royalty-free, non
++transferable, non sublicensable, non exclusive, irrevocable and unconditional
++license to exercise Affirmer’s Copyright and Related Rights in the Work (i) in
++all territories worldwide, (ii) for the maximum duration provided by applicable
++law or treaty (including future time extensions), (iii) in any current or
++future medium and for any number of copies, and (iv) for any purpose
++whatsoever, including without limitation commercial, advertising or promotional
++purposes (the “License”). The License shall be deemed effective as of the date
++CC0 was applied by Affirmer to the Work. Should any part of the License for any
++reason be judged legally invalid or ineffective under applicable law, such
++partial invalidity or ineffectiveness shall not invalidate the remainder of the
++License, and in such case Affirmer hereby affirms that he or she will not (i)
++exercise any of his or her remaining Copyright and Related Rights in the Work
++or (ii) assert any associated claims and causes of action with respect to the
++Work, in either case contrary to Affirmer’s express Statement of Purpose.
++
++4. Limitations and Disclaimers.
++		1. No trademark or patent rights held by Affirmer are waived, abandoned,
++			 surrendered, licensed or otherwise affected by this document.
++		2. Affirmer offers the Work as-is and makes no representations or
++			 warranties of any kind concerning the Work, express, implied, statutory
++			 or otherwise, including without limitation warranties of title,
++			 merchantability, fitness for a particular purpose, non infringement, or
++			 the absence of latent or other defects, accuracy, or the present or
++			 absence of errors, whether or not discoverable, all to the greatest
++			 extent permissible under applicable law.
++		3. Affirmer disclaims responsibility for clearing rights of other persons
++			 that may apply to the Work or any use thereof, including without
++			 limitation any person’s Copyright and Related Rights in the Work.
++			 Further, Affirmer disclaims responsibility for obtaining any necessary
++			 consents, permissions or other rights required for any use of the Work.
++		4. Affirmer understands and acknowledges that Creative Commons is not a
++			 party to this document and has no duty or obligation with respect to
++			 this CC0 or use of the Work.
++
++For more information, please see
++http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/README.md b/README.md
+index cc10bea..bf60e14 100644
+--- a/README.md
++++ b/README.md
+@@ -1,94 +1,37 @@
+-# CSS Nesting
++# PostCSS Nesting [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
+ 
+-<a href="https://github.com/postcss/postcss"><img src="http://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="80" height="80" align="right"></a>
++[![NPM Version][npm-img]][npm-url]
++[![Build Status][cli-img]][cli-url]
++[![Licensing][lic-img]][lic-url]
++[![Changelog][log-img]][log-url]
++[![Gitter Chat][git-img]][git-url]
+ 
+-[![NPM Version][npm-img]][npm] [![Build Status][ci-img]][ci]
+-
+-[CSS Nesting] allows you to nest one style rule inside another, following the [CSS Nesting Module Level 3] specification.
++[PostCSS Nesting] lets you nest style rules inside each other, following the
++[CSS Nesting Module Level 3] specification.
+ 
+ ```css
+-/* direct nesting */
+-
+-a, b {
+-	color: red;
+-
+-	& c, & d {
+-		color: white;
+-	}
+-
+-	& & {
+-		color: blue;
+-	}
+-
+-	&:hover {
+-		color: black;
+-	}
+-
+-	@media (min-width: 30em) {
+-		color: yellow;
+-
+-		@media (min-device-pixel-ratio: 1.5) {
+-			color: green;
+-		}
+-	}
+-}
+-
+-/* or at-rule nesting */
+-
+ a, b {
+-	color: red;
+-
+-	@nest & c, & d {
+-		color: white;
+-	}
+-
+-	@nest & & {
+-		color: blue;
+-	}
+-
+-	@nest &:hover {
+-		color: black;
+-	}
++  color: red;
+ 
+-	@media (min-width: 30em) {
+-		color: yellow;
+-	}
++  & c, & d {
++    color: white;
++  }
+ }
+ 
+-/* after */
++/* after postcss-nesting */
+ 
+ a, b {
+-    color: red;
++  color: red;
+ }
+ 
+ a c, a d, b c, b d {
+-    color: white;
+-}
+-
+-a a, b b {
+-    color: blue;
+-}
+-
+-a:hover, b:hover {
+-    color: black;
+-}
+-
+-@media (min-width: 30em) {
+-    a, b {
+-        color: yellow;
+-    }
+-}
+-
+-@media (min-width: 30em) and (min-device-pixel-ratio: 1.5) {
+-    a, b {
+-	color: green;
+-    }
++  color: white;
+ }
+ ```
+ 
+ ## Usage
+ 
+-Add [CSS Nesting] to your build tool:
++Add [PostCSS Nesting] to your build tool:
+ 
+ ```bash
+ npm install postcss-nesting --save-dev
+@@ -96,6 +39,8 @@ npm install postcss-nesting --save-dev
+ 
+ #### Node
+ 
++Use [PostCSS Nesting] to process your CSS:
++
+ ```js
+ require('postcss-nesting').process(YOUR_CSS, { /* options */ });
+ ```
+@@ -108,7 +53,7 @@ Add [PostCSS] to your build tool:
+ npm install postcss --save-dev
+ ```
+ 
+-Load [CSS Nesting] as a PostCSS plugin:
++Use [PostCSS Nesting] as a plugin:
+ 
+ ```js
+ postcss([
+@@ -124,7 +69,7 @@ Add [Gulp PostCSS] to your build tool:
+ npm install gulp-postcss --save-dev
+ ```
+ 
+-Enable [CSS Nesting] within your Gulpfile:
++Use [PostCSS Nesting] in your Gulpfile:
+ 
+ ```js
+ var postcss = require('gulp-postcss');
+@@ -148,7 +93,7 @@ Add [Grunt PostCSS] to your build tool:
+ npm install grunt-postcss --save-dev
+ ```
+ 
+-Enable [CSS Nesting] within your Gruntfile:
++Use [PostCSS Nesting] in your Gruntfile:
+ 
+ ```js
+ grunt.loadNpmTasks('grunt-postcss');
+@@ -167,31 +112,20 @@ grunt.initConfig({
+ });
+ ```
+ 
+-## Options
+-
+-#### `bubble`
+-
+-Type: `Array`  
+-Default: `['document', 'media', 'supports']`
+-
+-Specifies additional at-rules whose contents should be transpiled so that the at-rule comes first. By default, `@media`, `@supports` and `@document` will do this.
+-
+-#### `prefix`
+-
+-Type: `String`  
+-Default: `null`
+-
+-Specifies a prefix to be surrounded by dashes before the `@nest` at-rule (e.g. `@-x-nest`).
+-
+-[ci]:      https://travis-ci.org/jonathantneal/postcss-nesting
+-[ci-img]:  https://img.shields.io/travis/jonathantneal/postcss-nesting.svg
+-[npm]:     https://www.npmjs.com/package/postcss-nesting
++[npm-url]: https://www.npmjs.com/package/postcss-nesting
+ [npm-img]: https://img.shields.io/npm/v/postcss-nesting.svg
+-
+-[Gulp PostCSS]:  https://github.com/postcss/gulp-postcss
++[cli-url]: https://travis-ci.org/jonathantneal/postcss-nesting
++[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-nesting.svg
++[lic-url]: LICENSE.md
++[lic-img]: https://img.shields.io/npm/l/postcss-nesting.svg
++[log-url]: CHANGELOG.md
++[log-img]: https://img.shields.io/badge/changelog-md-blue.svg
++[git-url]: https://gitter.im/postcss/postcss
++[git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
++
++[PostCSS Nesting]: https://github.com/jonathantneal/postcss-nesting
++[PostCSS]: https://github.com/postcss/postcss
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+ [Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+-[PostCSS]:       https://github.com/postcss/postcss
+ 
+ [CSS Nesting Module Level 3]: http://tabatkins.github.io/specs/css-nesting/
+-
+-[CSS Nesting]: https://github.com/jonathantneal/postcss-nesting
+diff --git a/index.js b/index.js
+index e0a2cd9..a4627d3 100644
+--- a/index.js
++++ b/index.js
+@@ -1,112 +1,38 @@
+-var postcss = require('postcss');
+-var comma   = postcss.list.comma;
++'use strict';
+ 
+-module.exports = postcss.plugin('postcss-nesting', function (opts) {
+-	var bubble = ['document', 'media', 'supports'];
+-	var name   = 'nest';
++// tooling
++const postcss                 = require('postcss');
++const transformBubblingAtrule = require('./lib/transform-bubbling-atrule');
++const transformNestingAtRule  = require('./lib/transform-nesting-atrule');
++const transformNestingRule    = require('./lib/transform-nesting-rule');
+ 
+-	if (opts && opts.bubble) {
+-		bubble = bubble.concat(opts.bubble);
+-	}
++// plugin
++module.exports = postcss.plugin('postcss-nesting', () => {
++	return walk;
++});
+ 
+-	if (opts && opts.prefix) {
+-		name = '-' + opts.prefix + '-' + name;
++function walk(node) {
++	// console.log('walk', [node.type], [node.name || node.selector || node.prop || 'root'], node.nodes ? `length: ${node.nodes.length}` : `value: "${node.value}"`);
++
++	if (transformBubblingAtrule.test(node)) {
++		// conditionally transform a bubbling atrule
++		transformBubblingAtrule(node);
++	} else if (transformNestingAtRule.test(node)) {
++		// conditionally transform a nesting atrule
++		node = transformNestingAtRule(node); // eslint-disable-line no-param-reassign
++	} else if (transformNestingRule.test(node)) {
++		// conditionally transform a nesting rule
++		transformNestingRule(node);
+ 	}
+ 
+-	return function (css) {
+-		css.walk(function (target) {
+-			var rule = target.parent;
+-			var root = rule && rule.parent;
+-
+-			var isAtRule = target.type === 'atrule';
+-			var isRule   = target.type === 'rule';
+-
+-			if (root && rule.type === 'rule') {
+-				var newrule = postcss.rule({
+-					source: target.source
+-				});
+-
+-				if (isRule && target.selectors.every(function (selector) {
+-					return selector.indexOf('&') === 0;
+-				})) {
+-					target.remove();
+-
+-					newrule.selector = target.selector;
+-
+-					newrule.append(target.nodes);
+-
+-					transpileSelectors(rule, newrule);
+-
+-					root.insertAfter(rule.insertAfterNode || rule, newrule);
+-
+-					rule.insertAfterNode = newrule;
+-				} else if (isAtRule && target.name === name && target.params.indexOf('&') !== -1) {
+-					target.remove();
+-
+-					newrule.selector = target.params;
+-
+-					newrule.append(target.nodes);
+-
+-					transpileSelectors(rule, newrule);
+-
+-					root.insertAfter(rule.insertAfterNode || rule, newrule);
+-
+-					rule.insertAfterNode = newrule;
+-				} else if (isAtRule && bubble.indexOf(target.name) !== -1) {
+-					var selector = rule.selector;
++	if (node.nodes) {
++		// conditionally walk the children of the node
++		let childNode = node.nodes[0];
+ 
+-					if (root.type === 'atrule' && root.name === target.name && root.parent) {
+-						target.params = comma(root.params).map(function (params1) {
+-							return comma(target.params).map(function (params2) {
+-								return params1 + ' and ' + params2;
+-							}).join(', ');
+-						}).join(', ');
++		while (childNode) {
++			walk(childNode);
+ 
+-						rule = root;
+-						root = root.parent;
+-					}
+-
+-					target.remove();
+-
+-					newrule.selector = selector;
+-
+-					newrule.append(target.nodes);
+-
+-					target.removeAll();
+-
+-					target.append(newrule);
+-
+-					root.insertAfter(rule.insertAfterNode || rule, target);
+-
+-					rule.insertAfterNode = target;
+-				}
+-			}
+-
+-			if (!rule.nodes.length) {
+-				rule.remove();
+-			} else {
+-				rule.nodes.forEach(function (n) {
+-					var isRuleOrAtRule = (/rule$/).test(n.type);
+-
+-					if (!isRuleOrAtRule || n.nodes.length) {
+-						return;
+-					}
+-
+-					n.remove();
+-				});
+-			}
+-		});
+-	};
+-});
+-
+-function transpileSelectors(fromRule, toRule) {
+-	var selectors = [];
+-
+-	fromRule.selectors.forEach(function (fromSelector) {
+-		toRule.selectors.forEach(function (toSelector) {
+-			selectors.push(toSelector.replace(/&/g, fromSelector));
+-		});
+-	});
+-
+-	toRule.selectors = selectors;
++			childNode = childNode.parent && childNode.parent.nodes[childNode.parent.nodes.indexOf(childNode) + 1];
++		}
++	}
+ }
+diff --git a/lib/clean-node.js b/lib/clean-node.js
+new file mode 100644
+index 0000000..1ceb342
+--- /dev/null
++++ b/lib/clean-node.js
+@@ -0,0 +1,6 @@
++// clean the raws of the node
++module.exports = (node) => {
++	node.raws = {};
++
++	return node;
++};
+diff --git a/lib/merge-params.js b/lib/merge-params.js
+new file mode 100644
+index 0000000..b270a95
+--- /dev/null
++++ b/lib/merge-params.js
+@@ -0,0 +1,9 @@
++// tooling
++const comma = require('postcss').list.comma;
++
++// merge params
++module.exports = (fromParams, toParams) => comma(fromParams).map(
++	(params1) => comma(toParams).map(
++		(params2) => params1 + ' and ' + params2
++	).join(', ')
++).join(', ');
+diff --git a/lib/merge-selectors.js b/lib/merge-selectors.js
+new file mode 100644
+index 0000000..376a5ce
+--- /dev/null
++++ b/lib/merge-selectors.js
+@@ -0,0 +1,12 @@
++// tooling
++const comma = require('postcss').list.comma;
++
++// merge selectors
++module.exports = (fromSelectors, toSelectors) => (typeof fromSelectors === 'string' ? comma(fromSelectors) : fromSelectors).reduce(
++	(selectors, fromSelector) => selectors.concat(
++		(typeof toSelectors === 'string' ? comma(toSelectors) : toSelectors).map(
++			(toSelector) => toSelector.replace(/&/g, fromSelector)
++		)
++	),
++	[]
++);
+diff --git a/lib/transform-after-nodes.js b/lib/transform-after-nodes.js
+new file mode 100644
+index 0000000..ba2acd6
+--- /dev/null
++++ b/lib/transform-after-nodes.js
+@@ -0,0 +1,18 @@
++// tooling
++const cleanNode = require('./clean-node');
++
++// move nodes after the current node into a cloned parent node
++module.exports = (node) => {
++	// affected nodes after the current node
++	const affectedNodes = node.parent.nodes.slice(node.parent.nodes.indexOf(node) + 1).map(cleanNode);
++
++	if (affectedNodes.length) {
++		// insert an empty parent clone after the parent
++		const emptyParentClone = cleanNode(node.parent.clone()).removeAll();
++
++		node.parent.after(emptyParentClone);
++
++		// append the affected nodes to the empty parent clone
++		emptyParentClone.append(affectedNodes);
++	}
++};
+diff --git a/lib/transform-bubbling-atrule.js b/lib/transform-bubbling-atrule.js
+new file mode 100644
+index 0000000..3dccec7
+--- /dev/null
++++ b/lib/transform-bubbling-atrule.js
+@@ -0,0 +1,52 @@
++// tooling
++const cleanNode           = require('./clean-node');
++const mergeParams         = require('./merge-params');
++const transformAfterNodes = require('./transform-after-nodes');
++
++// transform a bubbling atrule (e.g. @document, @media, @supports)
++module.exports = (node) => {
++	// clean node
++	cleanNode(node);
++
++	// affected nodes after the current node moved into a cloned parent node
++	transformAfterNodes(node);
++
++	// inner nodes within the current node
++	const innerNodes = node.nodes.slice(0).map(cleanNode);
++
++	// prepend an empty parent clone to the node
++	const parentCloneForNodesWithinAtrule = cleanNode(node.parent.clone()).removeAll();
++
++	node.prepend(parentCloneForNodesWithinAtrule);
++
++	// append the inner nodes to the empty parent clone
++	parentCloneForNodesWithinAtrule.append(innerNodes);
++
++	// move the node after the parent
++	const parent = node.parent.after(node);
++
++	if (!parent.nodes.length) {
++		// conditionally remove the original empty parent
++		parent.remove();
++	}
++
++	// if the node and the parent are both media atrules
++	if (node.parent.type === 'atrule' && node.name === node.parent.name) {
++		// affected nodes after the current node moved into a cloned parent node
++		transformAfterNodes(node);
++
++		// merge media params
++		node.params = mergeParams(node.parent.params, node.params);
++
++		// move the node after the parent
++		const subparent = node.parent.after(node);
++
++		if (!subparent.nodes.length) {
++			// conditionally remove the original empty parent
++			subparent.remove();
++		}
++	}
++};
++
++// whether the node is a bubbling atrule (e.g. @document, @media, @supports)
++module.exports.test = (node, bubbles) => node.type === 'atrule' && ['document', 'media', 'supports'].indexOf(node.name) !== -1 && node.parent && node.parent.type === 'rule';
+diff --git a/lib/transform-nesting-atrule.js b/lib/transform-nesting-atrule.js
+new file mode 100644
+index 0000000..413801d
+--- /dev/null
++++ b/lib/transform-nesting-atrule.js
+@@ -0,0 +1,43 @@
++// tooling
++const cleanNode           = require('./clean-node');
++const comma               = require('postcss').list.comma;
++const mergeSelectors      = require('./merge-selectors');
++const postcss             = require('postcss');
++const transformAfterNodes = require('./transform-after-nodes');
++
++// transform a nesting atrule (e.g. @nest .something &)
++module.exports = (node) => {
++	// clean node and child nodes
++	cleanNode(node).nodes.forEach(cleanNode);
++
++	// affected nodes after the current node moved into a cloned parent node
++	transformAfterNodes(node);
++
++	// clone of the atrule as a rule
++	const rule = postcss.rule({
++		// merge selectors
++		selectors: mergeSelectors(node.parent.selectors, node.params),
++		source: node.source
++	});
++
++	// move the clone after the parent
++	const parent = node.parent.after(rule);
++
++	// remove the original node
++	node.remove();
++
++	// move child nodes into the clone
++	rule.append(node.nodes);
++
++	if (!parent.nodes.length) {
++		// conditionally remove the original empty parent
++		parent.remove();
++	}
++
++	return rule;
++};
++
++// whether the node is a nesting atrule (e.g. @nest .something &)
++module.exports.test = (node) => node.type === 'atrule' && node.name === 'nest' && node.parent && node.parent.type === 'rule' && comma(node.params).every(
++	(childNode) => childNode.indexOf('&') !== -1
++);
+diff --git a/lib/transform-nesting-rule.js b/lib/transform-nesting-rule.js
+new file mode 100644
+index 0000000..2161eb3
+--- /dev/null
++++ b/lib/transform-nesting-rule.js
+@@ -0,0 +1,29 @@
++// tooling
++const cleanNode           = require('./clean-node');
++const mergeSelectors      = require('./merge-selectors');
++const transformAfterNodes = require('./transform-after-nodes');
++
++// transform a nesting rule (e.g. &.something)
++module.exports = (node) => {
++	// clean node and child nodes
++	cleanNode(node).nodes.forEach(cleanNode);
++
++	// move nodes after the current node into a cloned parent node
++	transformAfterNodes(node);
++
++	// merge selectors
++	node.selectors = mergeSelectors(node.parent.selectors, node.selectors);
++
++	// move the node after the parent
++	const parent = node.parent.after(node);
++
++	if (!parent.nodes.length) {
++		// conditionally remove the original empty parent
++		parent.remove();
++	}
++};
++
++// whether the node is a nesting rule (e.g. &.something)
++module.exports.test = (node) => node.type === 'rule' && node.parent && node.parent.type === 'rule' && node.selectors.every(
++	(childNode) => childNode.trim()[0] === '&'
++);
+diff --git a/package.json b/package.json
+index d928739..247ff41 100644
+--- a/package.json
++++ b/package.json
+@@ -1,7 +1,39 @@
+ {
+   "name": "postcss-nesting",
+-  "version": "2.3.1",
+-  "description": "Transpiles nested rules according to CSS Nesting Module Level 3",
++  "version": "3.0.0",
++  "description": "Nest style and media rules inside each another, following the CSS Nesting Module Level 3 specification",
++  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
++  "license": "CC0-1.0",
++  "repository": "jonathantneal/postcss-nesting",
++  "homepage": "https://github.com/jonathantneal/postcss-nesting#readme",
++  "bugs": "https://github.com/jonathantneal/postcss-nesting/issues",
++  "main": "index.js",
++  "files": [
++    "index.js",
++    "lib"
++  ],
++  "scripts": {
++    "clean": "git clean -X -d -f",
++    "prepublish": "npm test",
++    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
++    "test:js": "eslint *.js --cache --ignore-pattern .gitignore",
++    "test:tape": "postcss-tape"
++  },
++  "engines": {
++    "node": ">=4.0.0"
++  },
++  "dependencies": {
++    "postcss": "^6.0.1"
++  },
++  "devDependencies": {
++    "eslint": "^3.19.0",
++    "eslint-config-dev": "^2.0.0",
++    "postcss-tape": "^2.0.1",
++    "pre-commit": "^1.2.2"
++  },
++  "eslintConfig": {
++    "extends": "dev"
++  },
+   "keywords": [
+     "postcss",
+     "css",
+@@ -14,31 +46,10 @@
+     "nestings",
+     "rules",
+     "selectors",
++    "syntax",
+     "specifications",
+     "specs",
+-    "w3c"
+-  ],
+-  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+-  "license": "CC0-1.0",
+-  "repository": "jonathantneal/postcss-nesting",
+-  "bugs": "https://github.com/jonathantneal/postcss-nesting/issues",
+-  "homepage": "https://github.com/jonathantneal/postcss-nesting",
+-  "dependencies": {
+-    "postcss": "^5.0.19"
+-  },
+-  "devDependencies": {
+-    "eslint": "^2.4.0",
+-    "jscs": "^2.11.0",
+-    "tap-spec": "^4.1.1",
+-    "tape": "^4.5.1"
+-  },
+-  "scripts": {
+-    "lint": "eslint *.js --ignore-path .gitignore && jscs *.js",
+-    "tape": "tape test.js | tap-spec",
+-    "test": "npm run lint && npm run tape"
+-  },
+-  "engines": {
+-    "iojs": ">=2.0.0",
+-    "node": ">=0.12.0"
+-  }
++    "w3c",
++    "csswg"
++  ]
+ }
+diff --git a/test.js b/test.js
+deleted file mode 100644
+index cc99402..0000000
+--- a/test.js
++++ /dev/null
+@@ -1,78 +0,0 @@
+-var tests = {
+-	'postcss-nesting': {
+-		'basic': {
+-			message: 'supports basic usage'
+-		},
+-		'direct': {
+-			message: 'supports direct nesting'
+-		},
+-		'ignore': {
+-			message: 'ignores invalid syntax'
+-		},
+-		'media': {
+-			message: 'supports nested media queries'
+-		},
+-		'empty': {
+-			message: 'ensure empty rules are removed'
+-		}
+-	}
+-};
+-
+-var debug = true;
+-var dir   = './test/';
+-
+-var fs      = require('fs');
+-var path    = require('path');
+-var plugin  = require('./');
+-var test    = require('tape');
+-
+-Object.keys(tests).forEach(function (name) {
+-	var parts = tests[name];
+-
+-	test(name, function (t) {
+-		var fixtures = Object.keys(parts);
+-
+-		t.plan(fixtures.length * 2);
+-
+-		fixtures.forEach(function (fixture) {
+-			var message    = parts[fixture].message;
+-			var options    = parts[fixture].options;
+-			var warning    = parts[fixture].warning || 0;
+-			var warningMsg = message + ' (# of warnings)';
+-
+-			var baseName   = fixture.split(':')[0];
+-			var testName   = fixture.split(':').join('.');
+-
+-			var inputPath  = path.resolve(dir + baseName + '.css');
+-			var expectPath = path.resolve(dir + testName + '.expect.css');
+-			var actualPath = path.resolve(dir + testName + '.actual.css');
+-
+-			var inputCSS = '';
+-			var expectCSS = '';
+-
+-			try {
+-				inputCSS = fs.readFileSync(inputPath,  'utf8');
+-			} catch (error) {
+-				fs.writeFileSync(inputPath, inputCSS);
+-			}
+-
+-			try {
+-				expectCSS = fs.readFileSync(expectPath,  'utf8');
+-			} catch (error) {
+-				fs.writeFileSync(expectPath, expectCSS);
+-			}
+-
+-			plugin.process(inputCSS, options).then(function (result) {
+-				var actualCSS = result.css;
+-
+-				if (debug) {
+-					fs.writeFileSync(actualPath, actualCSS);
+-				}
+-
+-				t.equal(actualCSS, expectCSS, message);
+-
+-				t.equal(result.warnings().length, warning, warningMsg);
+-			});
+-		});
+-	});
+-});
+diff --git a/test/basic.css b/test/basic.css
+index def35db..df6cafd 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -1,79 +1,19 @@
+-a, b {
+-	color: white;
+-
+-	@nest & c, & d {
+-		color: blue;
+-	}
+-}
+-
+-a, b {
+-	color: white;
+-
+-	@nest & c, & d {
+-		color: blue;
+-
+-		@nest & e, & f {
+-			color: black;
+-		}
+-	}
+-}
+-
+-a, b {
+-	color: red;
+-
+-	@nest & & {
+-		color: white;
+-	}
+-}
+-
+-a {
+-	color: red;
+-
+-	@media {
+-		color: white;
+-	}
+-}
+-
+-a {
+-	color: red;
+-
+-	@nest & b {
+-		color: white;
+-
+-		@media {
+-			color: blue;
+-		}
+-	}
+-
+-	@media {
+-		color: black;
+-
+-		@nest & c {
+-			color: yellow;
+-		}
+-	}
+-}
+-
+-a {
+-	color: red;
+-
+-	@unknown test {
+-		color: white;
+-	}
+-}
+-
+-b {
+-	color: white;
+-
+-	@phone {
+-		color: blue;
+-	}
+-
+-	@media {
+-		color: black;
+-
+-		@nest & c {
+-			color: yellow;
++.rule-1 {
++	order: 1;
++	@media screen, print {
++		order: 2;
++		&.rule-2 {
++			order: 3;
++			@media (max-width: 30em) {
++				order: 4;
++				@nest .rule-prefix & {
++					order: 5;
++				}
++				order: 6;
++			}
++			order: 7;
+ 		}
++		order: 8;
+ 	}
++	order: 9;
+ }
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index b536276..aefc97b 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -1,91 +1,33 @@
+-a, b {
+-	color: white
++.rule-1 {
++	order: 1;
+ }
+-
+-a c, a d, b c, b d {
+-	color: blue
+-}
+-
+-a, b {
+-	color: white
+-}
+-
+-a c, a d, b c, b d {
+-	color: blue
+-}
+-
+-a c e, a c f, a d e, a d f, b c e, b c f, b d e, b d f {
+-	color: black
+-}
+-
+-a, b {
+-	color: red
+-}
+-
+-a a, b b {
+-	color: white
+-}
+-
+-a {
+-	color: red
+-}
+-
+-@media {
+-
+-	a {
+-		color: white
++@media screen, print {
++	.rule-1 {
++		order: 2;
+ 	}
++	.rule-1.rule-2 {
++		order: 3;
+ 	}
+-
+-a {
+-	color: red
+ }
+-
+-a b {
+-	color: white
+-}
+-
+-@media {
+-
+-	a b {
+-		color: blue
++@media screen and (max-width: 30em), print and (max-width: 30em) {
++	.rule-1.rule-2 {
++		order: 4;
+ 	}
+-}
+-
+-@media {
+-
+-	a {
+-		color: black
++	.rule-prefix .rule-1.rule-2 {
++		order: 5;
+ 	}
+-
+-	a c {
+-		color: yellow
++	.rule-1.rule-2 {
++		order: 6;
+ 	}
++}
++@media screen, print {
++	.rule-1.rule-2 {
++		order: 7;
+ 	}
+-
+-a {
+-	color: red;
+-
+-	@unknown test {
+-		color: white;
++	.rule-1 {
++		order: 8;
+ 	}
+ }
+-
+-b {
+-	color: white;
+-
+-	@phone {
+-		color: blue;
+-	}
++.rule-1 {
++	order: 9;
+ }
+-
+-@media {
+-
+-	b {
+-		color: black
+-	}
+-
+-	b c {
+-		color: yellow
+-	}
+-	}
+diff --git a/test/direct.css b/test/direct.css
+index 2591c0b..af39d6e 100644
+--- a/test/direct.css
++++ b/test/direct.css
+@@ -1,87 +1,30 @@
+ a, b {
+-	color: blue;
+-
++	order: 1;
+ 	& c, & d {
+-		color: blue;
+-	}
+-}
+-
+-a, b {
+-	color: blue;
+-
+-	& c, & d {
+-		color: blue;
+-
++		order: 2;
+ 		& e, & f {
+-			color: blue;
++			order: 3;
+ 		}
++		order: 4;
+ 	}
+-}
+-
+-a, b {
+-	color: blue;
+-
++	order: 5;
+ 	& & {
+-		color: blue;
+-	}
+-
+-	c & {
+-		color: red;
+-	}
+-
+-	& c, c & {
+-		color: red;
+-	}
+-}
+-
+-a {
+-	color: blue;
+-
+-	@media {
+-		color: blue;
++		order: 6;
+ 	}
++	order: 7;
+ }
+-
+-a {
+-	color: blue;
+-
+-	& b {
+-		color: blue;
+-
+-		@media {
+-			color: blue;
+-		}
+-	}
+-
+-	@media {
+-		color: blue;
+-
+-		& c {
+-			color: blue;
++a, b {
++	order: 1;
++	@nest & c, & d {
++		order: 2;
++		@nest & e, & f {
++			order: 3;
+ 		}
++		order: 4;
+ 	}
+-}
+-
+-a {
+-	color: blue;
+-
+-	@unknown test {
+-		color: red;
+-	}
+-}
+-
+-b {
+-	color: blue;
+-
+-	@phone {
+-		color: red;
+-	}
+-
+-	@media {
+-		color: blue;
+-
+-		& c {
+-			color: blue;
+-		}
++	order: 5;
++	@nest & & {
++		order: 6;
+ 	}
++	order: 7;
+ }
+diff --git a/test/direct.expect.css b/test/direct.expect.css
+index 2054a81..d64cb39 100644
+--- a/test/direct.expect.css
++++ b/test/direct.expect.css
+@@ -1,99 +1,42 @@
+ a, b {
+-	color: blue
++	order: 1;
+ }
+-
+ a c, a d, b c, b d {
+-	color: blue
++	order: 2;
+ }
+-
+-a, b {
+-	color: blue
++a c e, a c f, a d e, a d f, b c e, b c f, b d e, b d f {
++	order: 3;
+ }
+-
+ a c, a d, b c, b d {
+-	color: blue
+-}
+-
+-a c e, a c f, a d e, a d f, b c e, b c f, b d e, b d f {
+-	color: blue
++	order: 4;
+ }
+-
+ a, b {
+-	color: blue;
+-
+-	c & {
+-		color: red;
+-	}
+-
+-	& c, c & {
+-		color: red;
+-	}
++	order: 5;
+ }
+-
+ a a, b b {
+-	color: blue
++	order: 6;
++}
++a, b {
++	order: 7;
++}
++a, b {
++	order: 1;
+ }
+-
+-a {
+-	color: blue
++a c, a d, b c, b d {
++	order: 2;
+ }
+-
+-@media {
+-
+-	a {
+-		color: blue
+-	}
+-	}
+-
+-a {
+-	color: blue
++a c e, a c f, a d e, a d f, b c e, b c f, b d e, b d f {
++	order: 3;
+ }
+-
+-a b {
+-	color: blue
++a c, a d, b c, b d {
++	order: 4;
+ }
+-
+-@media {
+-
+-	a b {
+-		color: blue
+-	}
++a, b {
++	order: 5;
+ }
+-
+-@media {
+-
+-	a {
+-		color: blue
+-	}
+-
+-	a c {
+-		color: blue
+-	}
+-	}
+-
+-a {
+-	color: blue;
+-
+-	@unknown test {
+-		color: red;
+-	}
++a a, b b {
++	order: 6;
+ }
+-
+-b {
+-	color: blue;
+-
+-	@phone {
+-		color: red;
+-	}
++a, b {
++	order: 7;
+ }
+-
+-@media {
+-
+-	b {
+-		color: blue
+-	}
+-
+-	b c {
+-		color: blue
+-	}
+-	}
+diff --git a/test/empty.css b/test/empty.css
+index 85fd7b5..fb5988f 100644
+--- a/test/empty.css
++++ b/test/empty.css
+@@ -1,26 +1,38 @@
+ a {
+ 	& b {
+-		prop: val;
++		& c {
++			order: 1;
++		}
++	}
++}
++d {
++	order: 2;
++	& e {
++		order: 3;
++	}
++}
++f {
++	& g {
++		order: 4;
+ 	}
+-
+-	& c {
+-		prop: val;
++	order: 5;
++}
++a {
++	@nest & b {
++		@nest & c {
++			order: 1;
++		}
+ 	}
+ }
+-
+ d {
++	order: 2;
+ 	@nest & e {
+-		prop: val;
+-
+-		@nest & f {
+-			prop: val;
+-		}
++		order: 3;
+ 	}
+ }
+-
+-g {
+-	prop: val;
+-	& h {
+-		prop: val
++f {
++	@nest & g {
++		order: 4;
+ 	}
++	order: 5;
+ }
+diff --git a/test/empty.expect.css b/test/empty.expect.css
+index 5482c09..1bc7d62 100644
+--- a/test/empty.expect.css
++++ b/test/empty.expect.css
+@@ -1,23 +1,30 @@
+-a b {
+-	prop: val
++a b c {
++	order: 1
+ }
+-
+-a c {
+-	prop: val
++d {
++	order: 2
+ }
+-
+ d e {
+-	prop: val
++	order: 3
+ }
+-
+-d e f {
+-	prop: val
++f g {
++	order: 4
+ }
+-
+-g {
+-	prop: val
++f {
++	order: 5
+ }
+-
+-g h {
+-	prop: val
++a b c {
++	order: 1
++}
++d {
++	order: 2
++}
++d e {
++	order: 3
++}
++f g {
++	order: 4
++}
++f {
++	order: 5
+ }
+diff --git a/test/ignore.css b/test/ignore.css
+index ec65a94..e8de19a 100644
+--- a/test/ignore.css
++++ b/test/ignore.css
+@@ -1,19 +1,18 @@
+ a, b {
+-	color: white;
+-
++	order: 1;
+ 	c, d {
+-		color: blue;
++		order: 2;
+ 	}
+ }
+-
++& e {
++	order: 3;
++}
+ a, b {
+-	color: white;
+-
++	order: 1;
+ 	@nest c, d {
+-		color: blue;
++		order: 2;
+ 	}
+ }
+-
+-& a {
+-	color: white;
++@nest & e {
++	order: 3;
+ }
+diff --git a/test/ignore.expect.css b/test/ignore.expect.css
+index ec65a94..e8de19a 100644
+--- a/test/ignore.expect.css
++++ b/test/ignore.expect.css
+@@ -1,19 +1,18 @@
+ a, b {
+-	color: white;
+-
++	order: 1;
+ 	c, d {
+-		color: blue;
++		order: 2;
+ 	}
+ }
+-
++& e {
++	order: 3;
++}
+ a, b {
+-	color: white;
+-
++	order: 1;
+ 	@nest c, d {
+-		color: blue;
++		order: 2;
+ 	}
+ }
+-
+-& a {
+-	color: white;
++@nest & e {
++	order: 3;
+ }
+diff --git a/test/media.css b/test/media.css
+index 39cf052..d8714e9 100644
+--- a/test/media.css
++++ b/test/media.css
+@@ -1,25 +1,44 @@
+-.main {
+-	color: blue;
+-
++a {
++	order: 1;
+ 	@media (min-width: 100px) {
+-		color: white;
+-
++		order: 2;
+ 		@media (max-width: 200px) {
+-			color: red;
++			order: 3;
+ 		}
+-
+-		& .child {
++		& b {
+ 			@media (max-width: 200px) {
+-				color: green;
++				order: 4;
++			}
++		}
++	}
++	@media screen, print and speech {
++		@media (max-width: 300px), (min-aspect-ratio: 16/9) {
++			order: 5;
++			& c {
++				order: 6;
+ 			}
+ 		}
+ 	}
+ }
+-
+-.main {
++a {
++	order: 1;
++	@media (min-width: 100px) {
++		order: 2;
++		@media (max-width: 200px) {
++			order: 3;
++		}
++		@nest & b {
++			@media (max-width: 200px) {
++				order: 4;
++			}
++		}
++	}
+ 	@media screen, print and speech {
+ 		@media (max-width: 300px), (min-aspect-ratio: 16/9) {
+-			color: black;
++			order: 5;
++			@nest & c {
++				order: 6;
++			}
+ 		}
+ 	}
+ }
+diff --git a/test/media.expect.css b/test/media.expect.css
+index 2686f9f..19c7006 100644
+--- a/test/media.expect.css
++++ b/test/media.expect.css
+@@ -1,31 +1,52 @@
+-.main {
+-	color: blue
++a {
++	order: 1
+ }
+-
+-	@media (min-width: 100px) {
+-
+-	.main {
+-		color: white
++@media (min-width: 100px) {
++	a {
++		order: 2
+ 	}
++}
++@media (min-width: 100px) and (max-width: 200px) {
++	a {
++		order: 3
++	}
++}
++@media (min-width: 100px) and (max-width: 200px) {
++	a b {
++		order: 4
++	}
++}
++@media screen and (max-width: 300px), screen and (min-aspect-ratio: 16/9), print and speech and (max-width: 300px), print and speech and (min-aspect-ratio: 16/9) {
++	a {
++		order: 5
+ 	}
+-
+-	@media (min-width: 100px) and (max-width: 200px) {
+-
+-	.main {
+-		color: red
++	a c {
++		order: 6
+ 	}
+ }
+-
+-	@media (min-width: 100px) and (max-width: 200px) {
+-
+-	.main .child {
+-		color: green
++a {
++	order: 1
++}
++@media (min-width: 100px) {
++	a {
++		order: 2
++	}
++}
++@media (min-width: 100px) and (max-width: 200px) {
++	a {
++		order: 3
++	}
++}
++@media (min-width: 100px) and (max-width: 200px) {
++	a b {
++		order: 4
+ 	}
+ }
+-
+ @media screen and (max-width: 300px), screen and (min-aspect-ratio: 16/9), print and speech and (max-width: 300px), print and speech and (min-aspect-ratio: 16/9) {
+-
+-	.main {
+-		color: black
++	a {
++		order: 5
++	}
++	a c {
++		order: 6
+ 	}
+ }
+-- 
+2.33.1
+

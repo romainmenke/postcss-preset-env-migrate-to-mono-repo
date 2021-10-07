@@ -1,0 +1,1784 @@
+From 606e09248830f49534d61b2c36ed2add09ee52a5 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 20 Sep 2018 07:12:19 -0400
+Subject: [PATCH 30/43] 3.0.0
+
+---
+ .tape.js                        |   9 ++
+ CHANGELOG.md                    |   7 +
+ README.md                       |  34 +++--
+ index.js                        |  30 ++++-
+ lib/clone-rule.js               |  22 +---
+ lib/split.js                    |  56 ++++++++
+ lib/transform-transition.js     | 122 +++++++++++++++++
+ package.json                    |  10 +-
+ test/border.expect.css          | 196 ++++++++++++++++------------
+ test/border.preserve.expect.css | 224 ++++++++++++++++++--------------
+ test/clear.expect.css           |  22 ++--
+ test/float.expect.css           |  20 +--
+ test/inset.expect.css           | 138 +++++++++++---------
+ test/margin.expect.css          |  98 ++++++++------
+ test/padding.expect.css         |  98 ++++++++------
+ test/text-align.expect.css      |  20 +--
+ test/transition.css             |  45 +++++++
+ test/transition.expect.css      | 103 +++++++++++++++
+ test/transition.ltr.expect.css  |  45 +++++++
+ 19 files changed, 900 insertions(+), 399 deletions(-)
+ create mode 100644 lib/split.js
+ create mode 100644 lib/transform-transition.js
+ create mode 100644 test/transition.css
+ create mode 100644 test/transition.expect.css
+ create mode 100644 test/transition.ltr.expect.css
+
+diff --git a/.tape.js b/.tape.js
+index 05757bc..6823527 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -74,6 +74,15 @@ module.exports = {
+ 			options: {
+ 				dir: 'ltr'
+ 			}
++		},
++		'transition': {
++			message: 'supports logical "transition" properties'
++		},
++		'transition:ltr': {
++			message: 'supports logical "transition" properties with { dir: "ltr" }',
++			options: {
++				dir: 'ltr'
++			}
+ 		}
+ 	}
+ };
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 85be9dc..4281a32 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,12 @@
+ # Changes to PostCSS Logical Properties
+ 
++### 3.0.0 (September 20, 2018)
++
++- Added: Support for logical properties within `transition` and
++  `transition-property`.
++- Changed: Physical rule fallbacks are written as full selectors rather than
++  as nesting selectors.
++
+ ### 2.0.0 (September 17, 2018)
+ 
+ - Updated: Support for PostCSS v7+
+diff --git a/README.md b/README.md
+index 4de166a..012b285 100644
+--- a/README.md
++++ b/README.md
+@@ -20,18 +20,15 @@ physical, direction and dimension mappings in CSS, following the
+ 
+ /* becomes */
+ 
+-.banner {
+-  color: #222222;
+-  top: 0; left: 5px; bottom: 10px; right: 5px;
++.banner:dir(ltr) {
++  padding-left: 20px; padding-right: 40px;
++}
+ 
+-  &:dir(ltr) {
+-    padding-left: 20px; padding-right: 40px;
+-  }
+-  
+-  &:dir(rtl) {
+-    padding-right: 20px; padding-left: 40px;
+-  }
++.banner:dir(rtl) {
++  padding-right: 20px; padding-left: 40px;
++}
+ 
++.banner {
+   resize: vertical;
+   transition: color 200ms;
+ }
+@@ -48,18 +45,17 @@ physical, direction and dimension mappings in CSS, following the
+ 
+ /* or, when used with { preserve: true } */
+ 
++.banner:dir(ltr) {
++  padding-left: 20px; padding-right: 40px;
++}
++
++.banner:dir(rtl) {
++  padding-right: 20px; padding-left: 40px;
++}
++
+ .banner {
+   color: #222222;
+   top: 0; left: 5px; bottom: 10px; right: 5px;
+-
+-  &:dir(ltr) {
+-    padding-left: 20px; padding-right: 40px;
+-  }
+-
+-  &:dir(rtl) {
+-    padding-right: 20px; padding-left: 40px;
+-  }
+-
+   inset: logical 0 5px 10px;
+   padding-inline: 20px 40px;
+   resize: block;
+diff --git a/index.js b/index.js
+index 8362d3b..f8ac558 100644
+--- a/index.js
++++ b/index.js
+@@ -10,7 +10,9 @@ import transformSide from './lib/transform-side';
+ import transformSize from './lib/transform-size';
+ import transformSpacing from './lib/transform-spacing';
+ import transformTextAlign from './lib/transform-text-align';
++import transformTransition from './lib/transform-transition';
+ import matchSupportedProperties from './lib/match-supported-properties';
++import { splitBySlash, splitBySpace } from './lib/split';
+ 
+ // supported transforms
+ const transforms = {
+@@ -38,9 +40,14 @@ const transforms = {
+ 	'float': transformFloat,
+ 	'resize': transformResize,
+ 	'size': transformSize,
+-	'text-align': transformTextAlign
++	'text-align': transformTextAlign,
++	'transition': transformTransition,
++	'transition-property': transformTransition
+ };
+ 
++// properties that will be split by slash
++const splitBySlashPropRegExp = /^border(-block|-inline|-start|-end)?(-width|-style|-color)?$/i;
++
+ // plugin
+ export default postcss.plugin('postcss-logical-properties', opts => {
+ 	const preserve = Boolean(Object(opts).preserve);
+@@ -52,17 +59,28 @@ export default postcss.plugin('postcss-logical-properties', opts => {
+ 
+ 	return root => {
+ 		root.walkDecls(decl => {
+-			const values = postcss.list.split(decl.value, /^border(-block|-inline|-start|-end)?(-width|-style|-color)?$/i.test(decl.prop) ? '/' : ' ');
++			const parent = decl.parent;
++			const values = splitBySlashPropRegExp.test(decl.prop) ? splitBySlash(decl.value, true) : splitBySpace(decl.value, true);
+ 			const prop = decl.prop.replace(matchSupportedProperties, '$2$5').toLowerCase();
+ 
+ 			if (prop in transforms) {
+ 				const replacer = transforms[prop](decl, values, dir);
+ 
+ 				if (replacer) {
+-					if (preserve) {
+-						decl.before(replacer);
+-					} else {
+-						decl.replaceWith(replacer);
++					[].concat(replacer).forEach(replacement => {
++						if (replacement.type === 'rule') {
++							parent.before(replacement);
++						} else {
++							decl.before(replacement);
++						}
++					});
++
++					if (!preserve) {
++						decl.remove();
++
++						if (!parent.nodes.length) {
++							parent.remove();
++						}
+ 					}
+ 				}
+ 			}
+diff --git a/lib/clone-rule.js b/lib/clone-rule.js
+index 91039ef..cc34721 100644
+--- a/lib/clone-rule.js
++++ b/lib/clone-rule.js
+@@ -1,23 +1,11 @@
+-'use strict';
+-
+ import postcss from 'postcss';
+ 
+ export default (decl, dir) => {
+-	let node = decl.parent;
+-
+-	while (node && 'rule' !== node.type) {
+-		node = node.parent;
+-	}
+-
+-	if (node) {
+-		node = node.clone({
+-			raws: {}
+-		}).removeAll()
+-	} else {
+-		node = postcss.rule();
+-	}
++	const rule = Object(decl.parent).type === 'rule' ? decl.parent.clone({
++		raws: {}
++	}).removeAll() : postcss.rule({ selector: '&' });
+ 
+-	node.selector = `&:dir(${dir})`;
++	rule.selectors = rule.selectors.map(selector => `${selector}:dir(${dir})`);
+ 
+-	return node;
++	return rule;
+ };
+diff --git a/lib/split.js b/lib/split.js
+new file mode 100644
+index 0000000..5291f39
+--- /dev/null
++++ b/lib/split.js
+@@ -0,0 +1,56 @@
++export function splitByComma(string, isTrimmed) {
++	return splitByRegExp(string, /^,$/, isTrimmed);
++}
++
++export function splitBySpace(string, isTrimmed) {
++	return splitByRegExp(string, /^\s$/, isTrimmed);
++}
++
++export function splitBySlash(string, isTrimmed) {
++	return splitByRegExp(string, /^\/$/, isTrimmed);
++}
++
++function splitByRegExp(string, re, isTrimmed) {
++	const array = [];
++	let buffer = '';
++	let split = false;
++	let func = 0;
++	let i = -1;
++
++	while (++i < string.length) {
++		const char = string[i];
++
++		if (char === '(') {
++			func += 1;
++		} else if (char === ')') {
++			if (func > 0) {
++				func -= 1;
++			}
++		} else if (func === 0) {
++			if (re.test(char)) {
++				split = true;
++			}
++		}
++
++		if (split) {
++			if (!isTrimmed || buffer.trim()) {
++				array.push(isTrimmed ? buffer.trim() : buffer);
++			}
++
++			if (!isTrimmed) {
++				array.push(char);
++			}
++
++			buffer = '';
++			split = false;
++		} else {
++			buffer += char
++		}
++	}
++
++	if (buffer !== '') {
++		array.push(isTrimmed ? buffer.trim() : buffer);
++	}
++
++	return array;
++}
+diff --git a/lib/transform-transition.js b/lib/transform-transition.js
+new file mode 100644
+index 0000000..ef45d42
+--- /dev/null
++++ b/lib/transform-transition.js
+@@ -0,0 +1,122 @@
++import cloneRule from './clone-rule';
++import { splitByComma, splitBySpace } from './split';
++
++export default (decl, notValues, dir) => {
++	const ltrValues = [];
++	const rtlValues = [];
++
++	splitByComma(decl.value).forEach(value => {
++		let hasBeenSplit = false;
++
++		splitBySpace(value).forEach((word, index, words) => {
++			if (word in valueMap) {
++				hasBeenSplit = true;
++
++				valueMap[word].ltr.forEach(replacement => {
++					const clone = words.slice();
++
++					clone.splice(index, 1, replacement);
++
++					if (ltrValues.length && !/^,$/.test(ltrValues[ltrValues.length - 1])) {
++						ltrValues.push(',');
++					}
++
++					ltrValues.push(clone.join(''));
++				});
++
++				valueMap[word].rtl.forEach(replacement => {
++					const clone = words.slice();
++
++					clone.splice(index, 1, replacement);
++
++					if (rtlValues.length && !/^,$/.test(rtlValues[rtlValues.length - 1])) {
++						rtlValues.push(',');
++					}
++
++					rtlValues.push(clone.join(''));
++				});
++			}
++		});
++
++		if (!hasBeenSplit) {
++			ltrValues.push(value);
++			rtlValues.push(value);
++		}
++	});
++
++	const ltrDecl = decl.clone({ value: ltrValues.join('') });
++	const rtlDecl = decl.clone({ value: rtlValues.join('') });
++
++	return ltrValues.length && 'ltr' === dir
++		? ltrDecl
++	: rtlValues.length && 'rtl' === dir
++		? rtlDecl
++	: ltrDecl.value !== rtlDecl.value
++		? [
++			cloneRule(decl, 'ltr').append(ltrDecl),
++			cloneRule(decl, 'rtl').append(rtlDecl)
++		]
++	: null;
++};
++
++const valueMap = {
++	'border-block': { ltr: ['border-top', 'border-bottom'], rtl: ['border-top', 'border-bottom'] },
++	'border-block-color': { ltr: ['border-top-color', 'border-bottom-color'], rtl: ['border-top-color', 'border-bottom-color'] },
++	'border-block-end': { ltr: ['border-bottom'], rtl: ['border-bottom'] },
++	'border-block-end-color': { ltr: ['border-bottom-color'], rtl: ['border-bottom-color'] },
++	'border-block-end-style': { ltr: ['border-bottom-style'], rtl: ['border-bottom-style'] },
++	'border-block-end-width': { ltr: ['border-bottom-width'], rtl: ['border-bottom-width'] },
++	'border-block-start': { ltr: ['border-top'], rtl: ['border-top'] },
++	'border-block-start-color': { ltr: ['border-top-color'], rtl: ['border-top-color'] },
++	'border-block-start-style': { ltr: ['border-top-style'], rtl: ['border-top-style'] },
++	'border-block-start-width': { ltr: ['border-top-width'], rtl: ['border-top-width'] },
++	'border-block-style': { ltr: ['border-top-style', 'border-bottom-style'], rtl: ['border-top-style', 'border-bottom-style'] },
++	'border-block-width': { ltr: ['border-top-width', 'border-bottom-width'], rtl: ['border-top-width', 'border-bottom-width'] },
++	'border-end': { ltr: ['border-bottom', 'border-right'], rtl: ['border-bottom', 'border-left'] },
++	'border-end-color': { ltr: ['border-bottom-color', 'border-right-color'], rtl: ['border-bottom-color', 'border-left-color'] },
++	'border-end-style': { ltr: ['border-bottom-style', 'border-right-style'], rtl: ['border-bottom-style', 'border-left-style'] },
++	'border-end-width': { ltr: ['border-bottom-width', 'border-right-width'], rtl: ['border-bottom-width', 'border-left-width'] },
++	'border-inline': { ltr: ['border-left', 'border-right'], rtl: ['border-left', 'border-right'] },
++	'border-inline-color': { ltr: ['border-left-color', 'border-right-color'], rtl: ['border-left-color', 'border-right-color'] },
++	'border-inline-end': { ltr: ['border-right'], rtl: ['border-left'] },
++	'border-inline-end-color': { ltr: ['border-right-color'], rtl: ['border-left-color'] },
++	'border-inline-end-style': { ltr: ['border-right-style'], rtl: ['border-left-style'] },
++	'border-inline-end-width': { ltr: ['border-right-width'], rtl: ['border-left-width'] },
++	'border-inline-start': { ltr: ['border-left'], rtl: ['border-right'] },
++	'border-inline-start-color': { ltr: ['border-left-color'], rtl: ['border-right-color'] },
++	'border-inline-start-style': { ltr: ['border-left-style'], rtl: ['border-right-style'] },
++	'border-inline-start-width': { ltr: ['border-left-width'], rtl: ['border-right-width'] },
++	'border-inline-style': { ltr: ['border-left-style', 'border-right-style'], rtl: ['border-left-style', 'border-right-style'] },
++	'border-inline-width': { ltr: ['border-left-width', 'border-right-width'], rtl: ['border-left-width', 'border-right-width'] },
++	'border-start': { ltr: ['border-top', 'border-left'], rtl: ['border-top', 'border-right'] },
++	'border-start-color': { ltr: ['border-top-color', 'border-left-color'], rtl: ['border-top-color', 'border-right-color'] },
++	'border-start-style': { ltr: ['border-top-style', 'border-left-style'], rtl: ['border-top-style', 'border-right-style'] },
++	'border-start-width': { ltr: ['border-top-width', 'border-left-width'], rtl: ['border-top-width', 'border-right-width'] },
++	'block-size': { ltr: ['height'], rtl: ['height'] },
++	'inline-size': { ltr: ['width'], rtl: ['width'] },
++	'inset': { ltr: ['top', 'right', 'bottom', 'left'], rtl: ['top', 'right', 'bottom', 'left'] },
++	'inset-block': { ltr: ['top', 'bottom'], rtl: ['top', 'bottom'] },
++	'inset-block-start': { ltr: ['top'], rtl: ['top'] },
++	'inset-block-end': { ltr: ['bottom'], rtl: ['bottom'] },
++	'inset-end': { ltr: ['bottom', 'right'], rtl: ['bottom', 'left'] },
++	'inset-inline': { ltr: ['left', 'right'], rtl: ['left', 'right'] },
++	'inset-inline-start': { ltr: ['left'], rtl: ['right'] },
++	'inset-inline-end': { ltr: ['right'], rtl: ['left'] },
++	'inset-start': { ltr: ['top', 'left'], rtl: ['top', 'right'] },
++	'margin-block': { ltr: ['margin-top', 'margin-bottom'], rtl: ['margin-top', 'margin-bottom'] },
++	'margin-block-start': { ltr: ['margin-top'], rtl: ['margin-top'] },
++	'margin-block-end': { ltr: ['margin-bottom'], rtl: ['margin-bottom'] },
++	'margin-end': { ltr: ['margin-bottom', 'margin-right'], rtl: ['margin-bottom', 'margin-left'] },
++	'margin-inline': { ltr: ['margin-left', 'margin-right'], rtl: ['margin-left', 'margin-right'] },
++	'margin-inline-start': { ltr: ['margin-left'], rtl: ['margin-right'] },
++	'margin-inline-end': { ltr: ['margin-right'], rtl: ['margin-left'] },
++	'margin-start': { ltr: ['margin-top', 'margin-left'], rtl: ['margin-top', 'margin-right'] },
++	'padding-block': { ltr: ['padding-top', 'padding-bottom'], rtl: ['padding-top', 'padding-bottom'] },
++	'padding-block-start': { ltr: ['padding-top'], rtl: ['padding-top'] },
++	'padding-block-end': { ltr: ['padding-bottom'], rtl: ['padding-bottom'] },
++	'padding-end': { ltr: ['padding-bottom', 'padding-right'], rtl: ['padding-bottom', 'padding-left'] },
++	'padding-inline': { ltr: ['padding-left', 'padding-right'], rtl: ['padding-left', 'padding-right'] },
++	'padding-inline-start': { ltr: ['padding-left'], rtl: ['padding-right'] },
++	'padding-inline-end': { ltr: ['padding-right'], rtl: ['padding-left'] },
++	'padding-start': { ltr: ['padding-top', 'padding-left'], rtl: ['padding-top', 'padding-right'] },
++};
+diff --git a/package.json b/package.json
+index ca0aa17..2a331a4 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-logical",
+-  "version": "2.0.0",
++  "version": "3.0.0",
+   "description": "Use logical properties and values in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -30,16 +30,16 @@
+     "postcss": "^7.0.2"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.0.0",
+-    "@babel/preset-env": "^7.0.0",
++    "@babel/core": "^7.1.0",
++    "@babel/preset-env": "^7.1.0",
+     "babel-eslint": "^9.0.0",
+     "echint": "^4.0.1",
+     "eslint": "^5.6.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.0",
+-    "rollup-plugin-babel": "^4.0.1"
++    "rollup": "^0.66.1",
++    "rollup-plugin-babel": "^4.0.3"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+diff --git a/test/border.expect.css b/test/border.expect.css
+index 6d670f7..c625c06 100644
+--- a/test/border.expect.css
++++ b/test/border.expect.css
+@@ -24,154 +24,186 @@ test-border {
+ 	border-bottom: 16px solid black;
+ }
+ 
+-test-flowing-border {
+-	border: inherit;
+-	&:dir(ltr) {
++test-flowing-border:dir(ltr) {
+ 	border-top: 1px solid black;
+ 	border-left: 2px solid black;
+ 	border-bottom: 3px solid black;
+ 	border-right: 4px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-top: 1px solid black;
+ 	border-right: 2px solid black;
+ 	border-bottom: 3px solid black;
+ 	border-left: 4px solid black;
+-	}
+-	border: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border:dir(ltr) {
+ 	border-left: 5px solid black;
+ 	border-right: 6px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-right: 5px solid black;
+ 	border-left: 6px solid black;
+-	}
+-	border: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border:dir(ltr) {
+ 	border-left: 7px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-right: 7px solid black;
+-	}
+-	border: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border:dir(ltr) {
+ 	border-right: 8px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-left: 8px solid black;
+-	}
+-	border: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border:dir(ltr) {
+ 	border-top: 9px solid black;
+ 	border-left: 9px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-top: 9px solid black;
+ 	border-right: 9px solid black;
+-	}
+-	border: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border:dir(ltr) {
+ 	border-top: 10px solid black;
+ 	border-left: 11px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-top: 10px solid black;
+ 	border-right: 11px solid black;
+-	}
+-	border: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border:dir(ltr) {
+ 	border-bottom: 12px solid black;
+ 	border-right: 12px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-bottom: 12px solid black;
+ 	border-left: 12px solid black;
+-	}
+-	border: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border:dir(ltr) {
+ 	border-bottom: 13px solid black;
+ 	border-right: 14px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-bottom: 13px solid black;
+ 	border-left: 14px solid black;
+-	}
++}
++
++test-flowing-border {
++	border: inherit;
++	border: inherit;
++	border: inherit;
++	border: inherit;
++	border: inherit;
++	border: inherit;
++	border: inherit;
++	border: inherit;
+ 	border: inherit;
+ }
+ 
+-test-flowing-border-color {
+-	border-color: inherit;
+-	&:dir(ltr) {
++test-flowing-border-color:dir(ltr) {
+ 	border-top-color: 1px solid black;
+ 	border-left-color: 2px solid black;
+ 	border-bottom-color: 3px solid black;
+ 	border-right-color: 4px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-top-color: 1px solid black;
+ 	border-right-color: 2px solid black;
+ 	border-bottom-color: 3px solid black;
+ 	border-left-color: 4px solid black;
+-	}
+-	border-color: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border-color:dir(ltr) {
+ 	border-left-color: 5px solid black;
+ 	border-right-color: 6px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-right-color: 5px solid black;
+ 	border-left-color: 6px solid black;
+-	}
+-	border-color: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border-color:dir(ltr) {
+ 	border-left-color: 7px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-right-color: 7px solid black;
+-	}
+-	border-color: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border-color:dir(ltr) {
+ 	border-right-color: 8px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-left-color: 8px solid black;
+-	}
+-	border-color: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border-color:dir(ltr) {
+ 	border-top-color: 9px solid black;
+ 	border-left-color: 9px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-top-color: 9px solid black;
+ 	border-right-color: 9px solid black;
+-	}
+-	border-color: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border-color:dir(ltr) {
+ 	border-top-color: 10px solid black;
+ 	border-left-color: 11px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-top-color: 10px solid black;
+ 	border-right-color: 11px solid black;
+-	}
+-	border-color: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border-color:dir(ltr) {
+ 	border-bottom-color: 12px solid black;
+ 	border-right-color: 12px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-bottom-color: 12px solid black;
+ 	border-left-color: 12px solid black;
+-	}
+-	border-color: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border-color:dir(ltr) {
+ 	border-bottom-color: 13px solid black;
+ 	border-right-color: 14px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-bottom-color: 13px solid black;
+ 	border-left-color: 14px solid black;
+-	}
++}
++
++test-flowing-border-color {
++	border-color: inherit;
++	border-color: inherit;
++	border-color: inherit;
++	border-color: inherit;
++	border-color: inherit;
++	border-color: inherit;
++	border-color: inherit;
++	border-color: inherit;
+ 	border-color: inherit;
+ }
+diff --git a/test/border.preserve.expect.css b/test/border.preserve.expect.css
+index dffc85d..2031e0a 100644
+--- a/test/border.preserve.expect.css
++++ b/test/border.preserve.expect.css
+@@ -32,170 +32,202 @@ test-border {
+ 	border-bottom: 16px solid black;
+ }
+ 
+-test-flowing-border {
+-	border: inherit;
+-	&:dir(ltr) {
++test-flowing-border:dir(ltr) {
+ 	border-top: 1px solid black;
+ 	border-left: 2px solid black;
+ 	border-bottom: 3px solid black;
+ 	border-right: 4px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-top: 1px solid black;
+ 	border-right: 2px solid black;
+ 	border-bottom: 3px solid black;
+ 	border-left: 4px solid black;
+-	}
+-	border: logical 1px solid black / 2px solid black / 3px solid black / 4px solid black;
+-	border: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border:dir(ltr) {
+ 	border-left: 5px solid black;
+ 	border-right: 6px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-right: 5px solid black;
+ 	border-left: 6px solid black;
+-	}
+-	border-inline: 5px solid black / 6px solid black;
+-	border: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border:dir(ltr) {
+ 	border-left: 7px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-right: 7px solid black;
+-	}
+-	border-inline-start: 7px solid black;
+-	border: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border:dir(ltr) {
+ 	border-right: 8px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-left: 8px solid black;
+-	}
+-	border-inline-end: 8px solid black;
+-	border: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border:dir(ltr) {
+ 	border-top: 9px solid black;
+ 	border-left: 9px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-top: 9px solid black;
+ 	border-right: 9px solid black;
+-	}
+-	border-start: 9px solid black;
+-	border: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border:dir(ltr) {
+ 	border-top: 10px solid black;
+ 	border-left: 11px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-top: 10px solid black;
+ 	border-right: 11px solid black;
+-	}
+-	border-start: 10px solid black / 11px solid black;
+-	border: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border:dir(ltr) {
+ 	border-bottom: 12px solid black;
+ 	border-right: 12px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-bottom: 12px solid black;
+ 	border-left: 12px solid black;
+-	}
+-	border-end: 12px solid black;
+-	border: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border:dir(ltr) {
+ 	border-bottom: 13px solid black;
+ 	border-right: 14px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border:dir(rtl) {
+ 	border-bottom: 13px solid black;
+ 	border-left: 14px solid black;
+-	}
++}
++
++test-flowing-border {
++	border: inherit;
++	border: logical 1px solid black / 2px solid black / 3px solid black / 4px solid black;
++	border: inherit;
++	border-inline: 5px solid black / 6px solid black;
++	border: inherit;
++	border-inline-start: 7px solid black;
++	border: inherit;
++	border-inline-end: 8px solid black;
++	border: inherit;
++	border-start: 9px solid black;
++	border: inherit;
++	border-start: 10px solid black / 11px solid black;
++	border: inherit;
++	border-end: 12px solid black;
++	border: inherit;
+ 	border-end: 13px solid black / 14px solid black;
+ 	border: inherit;
+ }
+ 
+-test-flowing-border-color {
+-	border-color: inherit;
+-	&:dir(ltr) {
++test-flowing-border-color:dir(ltr) {
+ 	border-top-color: 1px solid black;
+ 	border-left-color: 2px solid black;
+ 	border-bottom-color: 3px solid black;
+ 	border-right-color: 4px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-top-color: 1px solid black;
+ 	border-right-color: 2px solid black;
+ 	border-bottom-color: 3px solid black;
+ 	border-left-color: 4px solid black;
+-	}
+-	border-color: logical 1px solid black / 2px solid black / 3px solid black / 4px solid black;
+-	border-color: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border-color:dir(ltr) {
+ 	border-left-color: 5px solid black;
+ 	border-right-color: 6px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-right-color: 5px solid black;
+ 	border-left-color: 6px solid black;
+-	}
+-	border-inline-color: 5px solid black / 6px solid black;
+-	border-color: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border-color:dir(ltr) {
+ 	border-left-color: 7px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-right-color: 7px solid black;
+-	}
+-	border-inline-start-color: 7px solid black;
+-	border-color: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border-color:dir(ltr) {
+ 	border-right-color: 8px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-left-color: 8px solid black;
+-	}
+-	border-inline-end-color: 8px solid black;
+-	border-color: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border-color:dir(ltr) {
+ 	border-top-color: 9px solid black;
+ 	border-left-color: 9px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-top-color: 9px solid black;
+ 	border-right-color: 9px solid black;
+-	}
+-	border-start-color: 9px solid black;
+-	border-color: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border-color:dir(ltr) {
+ 	border-top-color: 10px solid black;
+ 	border-left-color: 11px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-top-color: 10px solid black;
+ 	border-right-color: 11px solid black;
+-	}
+-	border-start-color: 10px solid black / 11px solid black;
+-	border-color: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border-color:dir(ltr) {
+ 	border-bottom-color: 12px solid black;
+ 	border-right-color: 12px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-bottom-color: 12px solid black;
+ 	border-left-color: 12px solid black;
+-	}
+-	border-end-color: 12px solid black;
+-	border-color: inherit;
+-	&:dir(ltr) {
++}
++
++test-flowing-border-color:dir(ltr) {
+ 	border-bottom-color: 13px solid black;
+ 	border-right-color: 14px solid black;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-border-color:dir(rtl) {
+ 	border-bottom-color: 13px solid black;
+ 	border-left-color: 14px solid black;
+-	}
++}
++
++test-flowing-border-color {
++	border-color: inherit;
++	border-color: logical 1px solid black / 2px solid black / 3px solid black / 4px solid black;
++	border-color: inherit;
++	border-inline-color: 5px solid black / 6px solid black;
++	border-color: inherit;
++	border-inline-start-color: 7px solid black;
++	border-color: inherit;
++	border-inline-end-color: 8px solid black;
++	border-color: inherit;
++	border-start-color: 9px solid black;
++	border-color: inherit;
++	border-start-color: 10px solid black / 11px solid black;
++	border-color: inherit;
++	border-end-color: 12px solid black;
++	border-color: inherit;
+ 	border-end-color: 13px solid black / 14px solid black;
+ 	border-color: inherit;
+ }
+diff --git a/test/clear.expect.css b/test/clear.expect.css
+index 75cc0cc..43741d2 100644
+--- a/test/clear.expect.css
++++ b/test/clear.expect.css
+@@ -1,17 +1,17 @@
+-test-clear {
+-	clear: both;
+-	clear: left;
+-	&:dir(ltr) {
++test-clear:dir(ltr) {
+ 	clear: left;
+-	}
+-	&:dir(rtl) {
++}
++test-clear:dir(rtl) {
+ 	clear: right;
+-	}
+-	&:dir(ltr) {
++}
++test-clear:dir(ltr) {
+ 	clear: right;
+-	}
+-	&:dir(rtl) {
++}
++test-clear:dir(rtl) {
++	clear: left;
++}
++test-clear {
++	clear: both;
+ 	clear: left;
+-	}
+ 	clear: right;
+ }
+diff --git a/test/float.expect.css b/test/float.expect.css
+index d2c5c40..37c4e13 100644
+--- a/test/float.expect.css
++++ b/test/float.expect.css
+@@ -1,16 +1,16 @@
+-test-float {
+-	float: left;
+-	&:dir(ltr) {
++test-float:dir(ltr) {
+ 	float: left;
+-	}
+-	&:dir(rtl) {
++}
++test-float:dir(rtl) {
+ 	float: right;
+-	}
+-	&:dir(ltr) {
++}
++test-float:dir(ltr) {
+ 	float: right;
+-	}
+-	&:dir(rtl) {
++}
++test-float:dir(rtl) {
++	float: left;
++}
++test-float {
+ 	float: left;
+-	}
+ 	float: right;
+ }
+diff --git a/test/inset.expect.css b/test/inset.expect.css
+index 9be548e..d824cf8 100644
+--- a/test/inset.expect.css
++++ b/test/inset.expect.css
+@@ -17,103 +17,119 @@ test-inset {
+ 	right: 8px;
+ }
+ 
+-test-flowing-inset {
+-	top: auto;
+-	right: auto;
+-	bottom: auto;
+-	left: auto;
+-	&:dir(ltr) {
++test-flowing-inset:dir(ltr) {
+ 	top: 1px;
+ 	left: 2px;
+ 	bottom: 3px;
+ 	right: 4px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-inset:dir(rtl) {
+ 	top: 1px;
+ 	right: 2px;
+ 	bottom: 3px;
+ 	left: 4px;
+-	}
+-	top: auto;
+-	right: auto;
+-	bottom: auto;
+-	left: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-inset:dir(ltr) {
+ 	left: 5px;
+ 	right: 6px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-inset:dir(rtl) {
+ 	right: 5px;
+ 	left: 6px;
+-	}
++}
++
++test-flowing-inset:dir(ltr) {
++	left: 7px;
++}
++
++test-flowing-inset:dir(rtl) {
++	right: 7px;
++}
++
++test-flowing-inset:dir(ltr) {
++	right: 8px;
++}
++
++test-flowing-inset:dir(rtl) {
++	left: 8px;
++}
++
++test-flowing-inset:dir(ltr) {
++	top: 9px;
++	left: 9px;
++}
++
++test-flowing-inset:dir(rtl) {
++	top: 9px;
++	right: 9px;
++}
++
++test-flowing-inset:dir(ltr) {
++	top: 10px;
++	left: 11px;
++}
++
++test-flowing-inset:dir(rtl) {
++	top: 10px;
++	right: 11px;
++}
++
++test-flowing-inset:dir(ltr) {
++	bottom: 12px;
++	right: 12px;
++}
++
++test-flowing-inset:dir(rtl) {
++	bottom: 12px;
++	left: 12px;
++}
++
++test-flowing-inset:dir(ltr) {
++	bottom: 13px;
++	right: 14px;
++}
++
++test-flowing-inset:dir(rtl) {
++	bottom: 13px;
++	left: 14px;
++}
++
++test-flowing-inset {
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
++	top: auto;
++	right: auto;
++	bottom: auto;
++	left: auto;
+ 	top: auto;
+ 	right: auto;
+ 	bottom: auto;
+ 	left: auto;
+-	&:dir(ltr) {
+-	left: 7px;
+-	}
+-	&:dir(rtl) {
+-	right: 7px;
+-	}
+ 	top: auto;
+ 	right: auto;
+ 	bottom: auto;
+ 	left: auto;
+-	&:dir(ltr) {
+-	right: 8px;
+-	}
+-	&:dir(rtl) {
+-	left: 8px;
+-	}
+ 	top: auto;
+ 	right: auto;
+ 	bottom: auto;
+ 	left: auto;
+-	&:dir(ltr) {
+-	top: 9px;
+-	left: 9px;
+-	}
+-	&:dir(rtl) {
+-	top: 9px;
+-	right: 9px;
+-	}
+ 	top: auto;
+ 	right: auto;
+ 	bottom: auto;
+ 	left: auto;
+-	&:dir(ltr) {
+-	top: 10px;
+-	left: 11px;
+-	}
+-	&:dir(rtl) {
+-	top: 10px;
+-	right: 11px;
+-	}
+ 	top: auto;
+ 	right: auto;
+ 	bottom: auto;
+ 	left: auto;
+-	&:dir(ltr) {
+-	bottom: 12px;
+-	right: 12px;
+-	}
+-	&:dir(rtl) {
+-	bottom: 12px;
+-	left: 12px;
+-	}
+ 	top: auto;
+ 	right: auto;
+ 	bottom: auto;
+ 	left: auto;
+-	&:dir(ltr) {
+-	bottom: 13px;
+-	right: 14px;
+-	}
+-	&:dir(rtl) {
+-	bottom: 13px;
+-	left: 14px;
+-	}
+ 	top: auto;
+ 	right: auto;
+ 	bottom: auto;
+diff --git a/test/margin.expect.css b/test/margin.expect.css
+index fb8b4a8..c4f57d6 100644
+--- a/test/margin.expect.css
++++ b/test/margin.expect.css
+@@ -15,72 +15,88 @@ test-margin {
+ 	margin-bottom: 16px;
+ }
+ 
+-test-flowing-margin {
+-	margin: auto;
+-	&:dir(ltr) {
++test-flowing-margin:dir(ltr) {
+ 	margin: 1px 4px 3px 2px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-margin:dir(rtl) {
+ 	margin: 1px 2px 3px 4px;
+-	}
+-	margin: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-margin:dir(ltr) {
+ 	margin-left: 5px;
+ 	margin-right: 6px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-margin:dir(rtl) {
+ 	margin-right: 5px;
+ 	margin-left: 6px;
+-	}
+-	margin: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-margin:dir(ltr) {
+ 	margin-left: 7px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-margin:dir(rtl) {
+ 	margin-right: 7px;
+-	}
+-	margin: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-margin:dir(ltr) {
+ 	margin-right: 8px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-margin:dir(rtl) {
+ 	margin-left: 8px;
+-	}
+-	margin: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-margin:dir(ltr) {
+ 	margin-top: 9px;
+ 	margin-left: 9px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-margin:dir(rtl) {
+ 	margin-top: 9px;
+ 	margin-right: 9px;
+-	}
+-	margin: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-margin:dir(ltr) {
+ 	margin-top: 10px;
+ 	margin-left: 11px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-margin:dir(rtl) {
+ 	margin-top: 10px;
+ 	margin-right: 11px;
+-	}
+-	margin: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-margin:dir(ltr) {
+ 	margin-bottom: 12px;
+ 	margin-right: 12px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-margin:dir(rtl) {
+ 	margin-bottom: 12px;
+ 	margin-left: 12px;
+-	}
+-	margin: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-margin:dir(ltr) {
+ 	margin-bottom: 13px;
+ 	margin-right: 14px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-margin:dir(rtl) {
+ 	margin-bottom: 13px;
+ 	margin-left: 14px;
+-	}
++}
++
++test-flowing-margin {
++	margin: auto;
++	margin: auto;
++	margin: auto;
++	margin: auto;
++	margin: auto;
++	margin: auto;
++	margin: auto;
++	margin: auto;
+ 	margin: auto;
+ }
+diff --git a/test/padding.expect.css b/test/padding.expect.css
+index 0819c1e..61d1667 100644
+--- a/test/padding.expect.css
++++ b/test/padding.expect.css
+@@ -15,72 +15,88 @@ test-padding {
+ 	padding-bottom: 16px;
+ }
+ 
+-test-flowing-padding {
+-	padding: auto;
+-	&:dir(ltr) {
++test-flowing-padding:dir(ltr) {
+ 	padding: 1px 4px 3px 2px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-padding:dir(rtl) {
+ 	padding: 1px 2px 3px 4px;
+-	}
+-	padding: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-padding:dir(ltr) {
+ 	padding-left: 5px;
+ 	padding-right: 6px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-padding:dir(rtl) {
+ 	padding-right: 5px;
+ 	padding-left: 6px;
+-	}
+-	padding: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-padding:dir(ltr) {
+ 	padding-left: 7px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-padding:dir(rtl) {
+ 	padding-right: 7px;
+-	}
+-	padding: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-padding:dir(ltr) {
+ 	padding-right: 8px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-padding:dir(rtl) {
+ 	padding-left: 8px;
+-	}
+-	padding: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-padding:dir(ltr) {
+ 	padding-top: 9px;
+ 	padding-left: 9px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-padding:dir(rtl) {
+ 	padding-top: 9px;
+ 	padding-right: 9px;
+-	}
+-	padding: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-padding:dir(ltr) {
+ 	padding-top: 10px;
+ 	padding-left: 11px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-padding:dir(rtl) {
+ 	padding-top: 10px;
+ 	padding-right: 11px;
+-	}
+-	padding: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-padding:dir(ltr) {
+ 	padding-bottom: 12px;
+ 	padding-right: 12px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-padding:dir(rtl) {
+ 	padding-bottom: 12px;
+ 	padding-left: 12px;
+-	}
+-	padding: auto;
+-	&:dir(ltr) {
++}
++
++test-flowing-padding:dir(ltr) {
+ 	padding-bottom: 13px;
+ 	padding-right: 14px;
+-	}
+-	&:dir(rtl) {
++}
++
++test-flowing-padding:dir(rtl) {
+ 	padding-bottom: 13px;
+ 	padding-left: 14px;
+-	}
++}
++
++test-flowing-padding {
++	padding: auto;
++	padding: auto;
++	padding: auto;
++	padding: auto;
++	padding: auto;
++	padding: auto;
++	padding: auto;
++	padding: auto;
+ 	padding: auto;
+ }
+diff --git a/test/text-align.expect.css b/test/text-align.expect.css
+index 605981c..f33230f 100644
+--- a/test/text-align.expect.css
++++ b/test/text-align.expect.css
+@@ -1,16 +1,16 @@
+-test-text-align {
+-	text-align: left;
+-	&:dir(ltr) {
++test-text-align:dir(ltr) {
+ 	text-align: left;
+-	}
+-	&:dir(rtl) {
++}
++test-text-align:dir(rtl) {
+ 	text-align: right;
+-	}
+-	&:dir(ltr) {
++}
++test-text-align:dir(ltr) {
+ 	text-align: right;
+-	}
+-	&:dir(rtl) {
++}
++test-text-align:dir(rtl) {
++	text-align: left;
++}
++test-text-align {
+ 	text-align: left;
+-	}
+ 	text-align: right;
+ }
+diff --git a/test/transition.css b/test/transition.css
+new file mode 100644
+index 0000000..9a91e6f
+--- /dev/null
++++ b/test/transition.css
+@@ -0,0 +1,45 @@
++.transition {
++	transition: 1s opacity ease;
++}
++
++.transition-block {
++	transition: 1s inset-block ease;
++	transition: 1s margin-block ease;
++	transition: 1s padding-block ease;
++	transition-property: border-block, border-block-color, border-block-style, border-block-width;
++}
++
++.transition-inline {
++	transition: 1s inset-inline ease;
++	transition: 1s margin-inline ease;
++	transition: 1s padding-inline ease;
++	transition-property: border-inline, border-inline-color, border-inline-style, border-inline-width;
++}
++
++.transition-start {
++	transition: 1s inset-start ease;
++	transition: 1s margin-start ease;
++	transition: 1s padding-start ease;
++}
++
++.transition-block-start {
++	transition: 1s inset-block-start ease;
++	transition: 1s margin-block-start ease;
++	transition: 1s padding-block-start ease;
++}
++
++.transition-end {
++	transition: 1s inset-end ease;
++	transition: 1s margin-end ease;
++	transition: 1s padding-end ease;
++}
++
++.transition-inline-end {
++	transition: 1s inset-inline-end ease;
++	transition: 1s margin-inline-end ease;
++	transition: 1s padding-inline-end ease;
++}
++
++.transition-mixed {
++	transition: 1s opacity ease, 1s inset-inline-start ease;
++}
+diff --git a/test/transition.expect.css b/test/transition.expect.css
+new file mode 100644
+index 0000000..7bb68a4
+--- /dev/null
++++ b/test/transition.expect.css
+@@ -0,0 +1,103 @@
++.transition {
++	transition: 1s opacity ease;
++}
++
++.transition-block {
++	transition: 1s inset-block ease;
++	transition: 1s margin-block ease;
++	transition: 1s padding-block ease;
++	transition-property: border-block, border-block-color, border-block-style, border-block-width;
++}
++
++.transition-inline {
++	transition: 1s inset-inline ease;
++	transition: 1s margin-inline ease;
++	transition: 1s padding-inline ease;
++	transition-property: border-inline, border-inline-color, border-inline-style, border-inline-width;
++}
++
++.transition-start:dir(ltr) {
++	transition: 1s top ease,1s left ease;
++}
++
++.transition-start:dir(rtl) {
++	transition: 1s top ease,1s right ease;
++}
++
++.transition-start:dir(ltr) {
++	transition: 1s margin-top ease,1s margin-left ease;
++}
++
++.transition-start:dir(rtl) {
++	transition: 1s margin-top ease,1s margin-right ease;
++}
++
++.transition-start:dir(ltr) {
++	transition: 1s padding-top ease,1s padding-left ease;
++}
++
++.transition-start:dir(rtl) {
++	transition: 1s padding-top ease,1s padding-right ease;
++}
++
++.transition-block-start {
++	transition: 1s inset-block-start ease;
++	transition: 1s margin-block-start ease;
++	transition: 1s padding-block-start ease;
++}
++
++.transition-end:dir(ltr) {
++	transition: 1s bottom ease,1s right ease;
++}
++
++.transition-end:dir(rtl) {
++	transition: 1s bottom ease,1s left ease;
++}
++
++.transition-end:dir(ltr) {
++	transition: 1s margin-bottom ease,1s margin-right ease;
++}
++
++.transition-end:dir(rtl) {
++	transition: 1s margin-bottom ease,1s margin-left ease;
++}
++
++.transition-end:dir(ltr) {
++	transition: 1s padding-bottom ease,1s padding-right ease;
++}
++
++.transition-end:dir(rtl) {
++	transition: 1s padding-bottom ease,1s padding-left ease;
++}
++
++.transition-inline-end:dir(ltr) {
++	transition: 1s right ease;
++}
++
++.transition-inline-end:dir(rtl) {
++	transition: 1s left ease;
++}
++
++.transition-inline-end:dir(ltr) {
++	transition: 1s margin-right ease;
++}
++
++.transition-inline-end:dir(rtl) {
++	transition: 1s margin-left ease;
++}
++
++.transition-inline-end:dir(ltr) {
++	transition: 1s padding-right ease;
++}
++
++.transition-inline-end:dir(rtl) {
++	transition: 1s padding-left ease;
++}
++
++.transition-mixed:dir(ltr) {
++	transition: 1s opacity ease, 1s left ease;
++}
++
++.transition-mixed:dir(rtl) {
++	transition: 1s opacity ease, 1s right ease;
++}
+diff --git a/test/transition.ltr.expect.css b/test/transition.ltr.expect.css
+new file mode 100644
+index 0000000..469b058
+--- /dev/null
++++ b/test/transition.ltr.expect.css
+@@ -0,0 +1,45 @@
++.transition {
++	transition: 1s opacity ease;
++}
++
++.transition-block {
++	transition: 1s top ease,1s bottom ease;
++	transition: 1s margin-top ease,1s margin-bottom ease;
++	transition: 1s padding-top ease,1s padding-bottom ease;
++	transition-property: border-top,border-bottom, border-top-color, border-bottom-color, border-top-style, border-bottom-style, border-top-width, border-bottom-width;
++}
++
++.transition-inline {
++	transition: 1s left ease,1s right ease;
++	transition: 1s margin-left ease,1s margin-right ease;
++	transition: 1s padding-left ease,1s padding-right ease;
++	transition-property: border-left,border-right, border-left-color, border-right-color, border-left-style, border-right-style, border-left-width, border-right-width;
++}
++
++.transition-start {
++	transition: 1s top ease,1s left ease;
++	transition: 1s margin-top ease,1s margin-left ease;
++	transition: 1s padding-top ease,1s padding-left ease;
++}
++
++.transition-block-start {
++	transition: 1s top ease;
++	transition: 1s margin-top ease;
++	transition: 1s padding-top ease;
++}
++
++.transition-end {
++	transition: 1s bottom ease,1s right ease;
++	transition: 1s margin-bottom ease,1s margin-right ease;
++	transition: 1s padding-bottom ease,1s padding-right ease;
++}
++
++.transition-inline-end {
++	transition: 1s right ease;
++	transition: 1s margin-right ease;
++	transition: 1s padding-right ease;
++}
++
++.transition-mixed {
++	transition: 1s opacity ease, 1s left ease;
++}
+-- 
+2.33.1
+

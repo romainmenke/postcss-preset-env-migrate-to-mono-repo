@@ -1,0 +1,520 @@
+From 306e3bbf02e8c601a8e0ca79857d6ce53a35a389 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 1 Jul 2019 08:21:26 -0400
+Subject: [PATCH 06/14] 3.0.0
+
+* Update packages without breaking local tests
+* Update PostCSS Values Parser
+---
+ .rollup.js                              |   6 +-
+ .tape.js                                | 136 ++++++++++++------------
+ .travis.yml                             |   2 +-
+ CHANGELOG.md                            |   5 +
+ CONTRIBUTING.md                         |   2 +-
+ INSTALL.md                              |   2 +-
+ README.md                               |   6 +-
+ lib/is-env-func.js                      |   2 -
+ package.json                            |  59 +++++-----
+ index.js => src/index.js                |   0
+ {lib => src/lib}/get-fn-value.js        |   2 +-
+ {lib => src/lib}/get-replaced-value.js  |   4 +-
+ {lib => src/lib}/get-supported-value.js |   2 +-
+ {lib => src/lib}/import-from.js         |   4 +-
+ {lib => src/lib}/is-atrule.js           |   0
+ {lib => src/lib}/is-decl.js             |   0
+ src/lib/is-env-func.js                  |   2 +
+ {lib => src/lib}/set-supported-value.js |   0
+ {lib => src/lib}/update-env-value.js    |   0
+ {lib => src/lib}/walk-env-funcs.js      |   2 +-
+ 20 files changed, 124 insertions(+), 112 deletions(-)
+ delete mode 100644 lib/is-env-func.js
+ rename index.js => src/index.js (100%)
+ rename {lib => src/lib}/get-fn-value.js (77%)
+ rename {lib => src/lib}/get-replaced-value.js (84%)
+ rename {lib => src/lib}/get-supported-value.js (56%)
+ rename {lib => src/lib}/import-from.js (95%)
+ rename {lib => src/lib}/is-atrule.js (100%)
+ rename {lib => src/lib}/is-decl.js (100%)
+ create mode 100644 src/lib/is-env-func.js
+ rename {lib => src/lib}/set-supported-value.js (100%)
+ rename {lib => src/lib}/update-env-value.js (100%)
+ rename {lib => src/lib}/walk-env-funcs.js (86%)
+
+diff --git a/.rollup.js b/.rollup.js
+index 3f28a55..5a69f60 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -1,10 +1,10 @@
+ import babel from 'rollup-plugin-babel';
+ 
+ export default {
+-	input: 'index.js',
++	input: 'src/index.js',
+ 	output: [
+ 		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
+-		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
++		{ file: 'index.esm.mjs', format: 'es', sourcemap: true }
+ 	],
+ 	plugins: [
+ 		babel({
+@@ -12,7 +12,7 @@ export default {
+ 				'@babel/plugin-syntax-dynamic-import'
+ 			],
+ 			presets: [
+-				['@babel/env', { modules: false, targets: { node: 6 } }]
++				['@babel/env', { modules: false, targets: { node: 8 } }]
+ 			]
+ 		})
+ 	]
+diff --git a/.tape.js b/.tape.js
+index dc9f015..f676e2c 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,88 +1,86 @@
+ module.exports = {
+-	'postcss-env-function': {
+-		'basic': {
+-			message: 'supports basic usage'
+-		},
+-		'basic:import': {
+-			message: 'supports { importFrom: { environmentVariables: { ... } } } usage',
+-			options: {
+-				importFrom: {
++	'basic': {
++		message: 'supports basic usage'
++	},
++	'basic:import': {
++		message: 'supports { importFrom: { environmentVariables: { ... } } } usage',
++		options: {
++			importFrom: {
++				environmentVariables: {
++					'--some-custom-padding': '20px',
++					'--another-custom-width': '600px'
++				}
++			}
++		}
++	},
++	'basic:import-fn': {
++		message: 'supports { importFrom() } usage',
++		options: {
++			importFrom() {
++				return {
+ 					environmentVariables: {
+ 						'--some-custom-padding': '20px',
+ 						'--another-custom-width': '600px'
+ 					}
+-				}
++				};
+ 			}
+ 		},
+-		'basic:import-fn': {
+-			message: 'supports { importFrom() } usage',
+-			options: {
+-				importFrom() {
+-					return {
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
++	'basic:import-fn-promise': {
++		message: 'supports { async importFrom() } usage',
++		options: {
++			importFrom() {
++				return new Promise(resolve => {
++					resolve({
+ 						environmentVariables: {
+ 							'--some-custom-padding': '20px',
+ 							'--another-custom-width': '600px'
+ 						}
+-					};
+-				}
+-			},
+-			expect: 'basic.import.expect.css',
+-			result: 'basic.import.result.css'
+-		},
+-		'basic:import-fn-promise': {
+-			message: 'supports { async importFrom() } usage',
+-			options: {
+-				importFrom() {
+-					return new Promise(resolve => {
+-						resolve({
+-							environmentVariables: {
+-								'--some-custom-padding': '20px',
+-								'--another-custom-width': '600px'
+-							}
+-						})
+-					});
+-				}
+-			},
+-			expect: 'basic.import.expect.css',
+-			result: 'basic.import.result.css'
++					})
++				});
++			}
+ 		},
+-		'basic:import-json': {
+-			message: 'supports { importFrom: "test/import-variables.json" } usage',
+-			options: {
+-				importFrom: 'test/import-variables.json'
+-			},
+-			expect: 'basic.import.expect.css',
+-			result: 'basic.import.result.css'
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
++	'basic:import-json': {
++		message: 'supports { importFrom: "test/import-variables.json" } usage',
++		options: {
++			importFrom: 'test/import-variables.json'
+ 		},
+-		'basic:import-js': {
+-			message: 'supports { importFrom: "test/import-variables.js" } usage',
+-			options: {
+-				importFrom: 'test/import-variables.js'
+-			},
+-			expect: 'basic.import.expect.css',
+-			result: 'basic.import.result.css'
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
++	'basic:import-js': {
++		message: 'supports { importFrom: "test/import-variables.js" } usage',
++		options: {
++			importFrom: 'test/import-variables.js'
+ 		},
+-		'basic:import-js-from': {
+-			message: 'supports { importFrom: { from: "test/import-variables.js" } } usage',
+-			options: {
+-				importFrom: { from: 'test/import-variables.js' }
+-			},
+-			expect: 'basic.import.expect.css',
+-			result: 'basic.import.result.css'
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
++	'basic:import-js-from': {
++		message: 'supports { importFrom: { from: "test/import-variables.js" } } usage',
++		options: {
++			importFrom: { from: 'test/import-variables.js' }
+ 		},
+-		'basic:import-js-from-type': {
+-			message: 'supports { importFrom: [ { from: "test/import-variables.js", type: "js" } ] } usage',
+-			options: {
+-				importFrom: [ { from: 'test/import-variables.js', type: 'js' } ]
+-			},
+-			expect: 'basic.import.expect.css',
+-			result: 'basic.import.result.css'
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
++	'basic:import-js-from-type': {
++		message: 'supports { importFrom: [ { from: "test/import-variables.js", type: "js" } ] } usage',
++		options: {
++			importFrom: [ { from: 'test/import-variables.js', type: 'js' } ]
+ 		},
+-		'basic:import-is-empty': {
+-			message: 'supports { importFrom: {} } usage',
+-			options: {
+-				importFrom: {}
+-			}
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
++	'basic:import-is-empty': {
++		message: 'supports { importFrom: {} } usage',
++		options: {
++			importFrom: {}
+ 		}
+ 	}
+ };
+diff --git a/.travis.yml b/.travis.yml
+index e1f11a5..6ebed1d 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 6
++  - 8
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 3eb6219..a0b3a6e 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Environment Variables
+ 
++### 3.0.0 (June 13, 2019)
++
++- Updated: `postcss-values-parser` to 3.0.4 (major)
++- Updated: `postcss` to 7.0.17 (patch)
++
+ ### 2.0.2 (September 20, 2018)
+ 
+ - Updated: Do not break on an empty importFrom object
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+index 69d4440..7a102d4 100644
+--- a/CONTRIBUTING.md
++++ b/CONTRIBUTING.md
+@@ -26,7 +26,7 @@ scope and avoid unrelated commits.
+    cd postcss-env-function
+ 
+    # Assign the original repo to a remote called "upstream"
+-   git remote add upstream git@github.com:jonathantneal/postcss-env-function.git
++   git remote add upstream git@github.com:csstools/postcss-env-function.git
+ 
+    # Install the tools necessary for testing
+    npm install
+diff --git a/INSTALL.md b/INSTALL.md
+index 77a30a1..67919c9 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -165,6 +165,6 @@ grunt.initConfig({
+ [PostCSS]: https://github.com/postcss/postcss
+ [PostCSS CLI]: https://github.com/postcss/postcss-cli
+ [PostCSS Loader]: https://github.com/postcss/postcss-loader
+-[PostCSS Environment Variables]: https://github.com/jonathantneal/postcss-env-function
++[PostCSS Environment Variables]: https://github.com/csstools/postcss-env-function
+ [React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
+ [React App Rewired]: https://github.com/timarney/react-app-rewired
+diff --git a/README.md b/README.md
+index ed7e3b6..616accd 100644
+--- a/README.md
++++ b/README.md
+@@ -123,8 +123,8 @@ postcssCustomProperties({
+ See example imports written in [JS](test/import-variables.js) and
+ [JSON](test/import-variables.json).
+ 
+-[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-env-function.svg
+-[cli-url]: https://travis-ci.org/jonathantneal/postcss-env-function
++[cli-img]: https://img.shields.io/travis/csstools/postcss-env-function/master.svg
++[cli-url]: https://travis-ci.org/csstools/postcss-env-function
+ [css-img]: https://cssdb.org/badge/environment-variables.svg
+ [css-url]: https://cssdb.org/#environment-variables
+ [git-img]: https://img.shields.io/badge/support-chat-blue.svg
+@@ -134,4 +134,4 @@ See example imports written in [JS](test/import-variables.js) and
+ 
+ [CSS Environment Variables]: https://drafts.csswg.org/css-env-1/
+ [PostCSS]: https://github.com/postcss/postcss
+-[PostCSS Environment Variables]: https://github.com/jonathantneal/postcss-env-function
++[PostCSS Environment Variables]: https://github.com/csstools/postcss-env-function
+diff --git a/lib/is-env-func.js b/lib/is-env-func.js
+deleted file mode 100644
+index ac3da5a..0000000
+--- a/lib/is-env-func.js
++++ /dev/null
+@@ -1,2 +0,0 @@
+-// returns whether a node is a css env() function
+-export default (node) => node && node.type === 'func' && node.value === 'env';
+diff --git a/package.json b/package.json
+index 16ba077..6c2083c 100644
+--- a/package.json
++++ b/package.json
+@@ -1,50 +1,59 @@
+ {
+   "name": "postcss-env-function",
+-  "version": "2.0.2",
++  "version": "3.0.0",
+   "description": "Use env() variables in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-  "repository": "jonathantneal/postcss-env-function",
+-  "homepage": "https://github.com/jonathantneal/postcss-env-function#readme",
+-  "bugs": "https://github.com/jonathantneal/postcss-env-function/issues",
++  "repository": "csstools/postcss-env-function",
++  "homepage": "https://github.com/csstools/postcss-env-function#readme",
++  "bugs": "https://github.com/csstools/postcss-env-function/issues",
+   "main": "index.cjs.js",
+-  "module": "index.es.mjs",
++  "module": "index.esm.mjs",
+   "files": [
+     "index.cjs.js",
+     "index.cjs.js.map",
+-    "index.es.mjs",
+-    "index.es.mjs.map"
++    "index.esm.mjs",
++    "index.esm.mjs.map"
+   ],
+   "scripts": {
+     "prepublishOnly": "npm test",
+-    "pretest": "rollup -c .rollup.js --silent",
+-    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+-    "test:ec": "echint --ignore index.*.js test",
+-    "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
++    "pretest:tape": "rollup -c .rollup.js --silent",
++    "test": "npm run test:js && npm run test:tape",
++    "test:js": "eslint src/{*,**/*}.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+-    "node": ">=6.0.0"
++    "node": ">=8.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.2",
+-    "postcss-values-parser": "^2.0.0"
++    "postcss": "^7.0.17",
++    "postcss-values-parser": "^3.0.4"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.1.0",
+-    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+-    "@babel/preset-env": "^7.1.0",
+-    "babel-eslint": "^9.0.0",
+-    "eslint": "^5.6.0",
+-    "eslint-config-dev": "^2.0.0",
+-    "postcss-tape": "^2.2.0",
++    "@babel/core": "^7.4.5",
++    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
++    "@babel/preset-env": "^7.4.5",
++    "babel-eslint": "^10.0.1",
++    "eslint": "^5.16.0",
++    "postcss-tape": "^5.0.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.1",
+-    "rollup-plugin-babel": "^4.0.3"
++    "rollup": "^1.15.3",
++    "rollup-plugin-babel": "^4.3.2"
+   },
+   "eslintConfig": {
+-    "extends": "dev",
+-    "parser": "babel-eslint"
++    "env": {
++      "browser": true,
++      "es6": true,
++      "node": true
++    },
++    "extends": "eslint:recommended",
++    "parser": "babel-eslint",
++    "parserOptions": {
++      "ecmaVersion": 2018,
++      "impliedStrict": true,
++      "sourceType": "module"
++    },
++    "root": true
+   },
+   "keywords": [
+     "postcss",
+diff --git a/index.js b/src/index.js
+similarity index 100%
+rename from index.js
+rename to src/index.js
+diff --git a/lib/get-fn-value.js b/src/lib/get-fn-value.js
+similarity index 77%
+rename from lib/get-fn-value.js
+rename to src/lib/get-fn-value.js
+index 1f61a05..29880fa 100644
+--- a/lib/get-fn-value.js
++++ b/src/lib/get-fn-value.js
+@@ -2,7 +2,7 @@ const dashedMatch = /^--/;
+ 
+ // returns the value of a css function as a string
+ export default (node) => {
+-	const value = String(node.nodes.slice(1, -1));
++	const value = String(node.nodes);
+ 
+ 	return dashedMatch.test(value) ? value : undefined;
+ };
+diff --git a/lib/get-replaced-value.js b/src/lib/get-replaced-value.js
+similarity index 84%
+rename from lib/get-replaced-value.js
+rename to src/lib/get-replaced-value.js
+index 32b166c..da724a7 100644
+--- a/lib/get-replaced-value.js
++++ b/src/lib/get-replaced-value.js
+@@ -1,11 +1,11 @@
+-import parser from 'postcss-values-parser';
++import { parse } from 'postcss-values-parser';
+ import updateEnvValue from './update-env-value';
+ import walkEnvFuncs from './walk-env-funcs';
+ 
+ // returns a value replaced with environment variables
+ export default (originalValue, variables) => {
+ 	// get the ast of the original value
+-	const ast = parser(originalValue).parse();
++	const ast = parse(originalValue);
+ 
+ 	// walk all of the css env() functions
+ 	walkEnvFuncs(ast, node => {
+diff --git a/lib/get-supported-value.js b/src/lib/get-supported-value.js
+similarity index 56%
+rename from lib/get-supported-value.js
+rename to src/lib/get-supported-value.js
+index 1bbc83f..ac7f04f 100644
+--- a/lib/get-supported-value.js
++++ b/src/lib/get-supported-value.js
+@@ -2,4 +2,4 @@ import isAtrule from './is-atrule';
+ import isDecl from './is-decl';
+ 
+ // returns a value from an at-rule or declaration
+-export default (node) => isAtrule(node) && node.params || isDecl(node) && node.value;
++export default (node) => isAtrule(node) ? node.params : isDecl(node) ? node.value : null;
+diff --git a/lib/import-from.js b/src/lib/import-from.js
+similarity index 95%
+rename from lib/import-from.js
+rename to src/lib/import-from.js
+index c50ba15..ff3d967 100644
+--- a/lib/import-from.js
++++ b/src/lib/import-from.js
+@@ -1,6 +1,6 @@
+ import fs from 'fs';
+ import path from 'path';
+-import valueParser from 'postcss-values-parser';
++import { parse } from 'postcss-values-parser';
+ 
+ /* Import Custom Properties from Object
+ /* ========================================================================== */
+@@ -12,7 +12,7 @@ function importEnvironmentVariablesFromObject(object) {
+ 	);
+ 
+ 	for (const key in environmentVariables) {
+-		environmentVariables[key] = valueParser(environmentVariables[key]).parse().nodes;
++		environmentVariables[key] = parse(environmentVariables[key]).nodes;
+ 	}
+ 
+ 	return environmentVariables;
+diff --git a/lib/is-atrule.js b/src/lib/is-atrule.js
+similarity index 100%
+rename from lib/is-atrule.js
+rename to src/lib/is-atrule.js
+diff --git a/lib/is-decl.js b/src/lib/is-decl.js
+similarity index 100%
+rename from lib/is-decl.js
+rename to src/lib/is-decl.js
+diff --git a/src/lib/is-env-func.js b/src/lib/is-env-func.js
+new file mode 100644
+index 0000000..12d9146
+--- /dev/null
++++ b/src/lib/is-env-func.js
+@@ -0,0 +1,2 @@
++// returns whether a node is a css env() function
++export default (node) => node && node.type === 'func' && node.name === 'env';
+diff --git a/lib/set-supported-value.js b/src/lib/set-supported-value.js
+similarity index 100%
+rename from lib/set-supported-value.js
+rename to src/lib/set-supported-value.js
+diff --git a/lib/update-env-value.js b/src/lib/update-env-value.js
+similarity index 100%
+rename from lib/update-env-value.js
+rename to src/lib/update-env-value.js
+diff --git a/lib/walk-env-funcs.js b/src/lib/walk-env-funcs.js
+similarity index 86%
+rename from lib/walk-env-funcs.js
+rename to src/lib/walk-env-funcs.js
+index a709527..070f30e 100644
+--- a/lib/walk-env-funcs.js
++++ b/src/lib/walk-env-funcs.js
+@@ -1,7 +1,7 @@
+ import isEnvFunc from './is-env-func';
+ 
+ // walks a node recursively and runs a function using its children
+-export default function walk(node, fn) {
++export default function walk (node, fn) {
+ 	node.nodes.slice(0).forEach(childNode => {
+ 		if (childNode.nodes) {
+ 			walk(childNode, fn);
+-- 
+2.33.1
+

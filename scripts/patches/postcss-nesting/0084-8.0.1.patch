@@ -1,0 +1,40 @@
+From 69da21c407d319b10524098832423435f73318e4 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 1 May 2021 22:42:03 -0400
+Subject: [PATCH 84/89] 8.0.1
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 2 +-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 52dea5f..b2ac541 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Nesting
+ 
++### 8.0.1 (May 1, 2021)
++
++- Fixed: Compatibility issue with CommonJS.
++
+ ### 8.0.0 (April 26, 2021)
+ 
+ - Updated: Support for PostCSS 8+.
+diff --git a/package.json b/package.json
+index 9d9c9f0..85fb24d 100644
+--- a/package.json
++++ b/package.json
+@@ -2,7 +2,7 @@
+   "name": "postcss-nesting",
+   "description": "Nest rules inside each other in CSS",
+   "license": "CC0-1.0",
+-  "version": "8.0.0",
++  "version": "8.0.1",
+   "type": "module",
+   "main": "postcss-8-nesting/postcss-nesting.cjs",
+   "module": "postcss-8-nesting/postcss-nesting.mjs",
+-- 
+2.33.1
+

@@ -1,0 +1,49 @@
+From f2bcd1aa85d93d848105a4f6e42dc3fa8911153d Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 25 Apr 2020 01:50:27 -0400
+Subject: [PATCH 12/15] 3.0.2
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 5 +++--
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 9e12c24..4f2ce81 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Color Functional Notation
+ 
++### 3.0.2 (April 25, 2020)
++
++- Updated: Publish
++
+ ### 3.0.1 (April 25, 2020)
+ 
+ - Updated: Using `walkType` to evade walker bug in `postcss-values-parser`
+diff --git a/package.json b/package.json
+index d06c617..49fcdca 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-functional-notation",
+-  "version": "3.0.1",
++  "version": "3.0.2",
+   "description": "Use space and slash separated color notation in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -19,7 +19,8 @@
+     "lint:fix": "npx eslint --cache --fix",
+     "pretest": "npm install && npm run build",
+     "test": "npm run lint && npm run tape",
+-    "tape": "npx postcss-tape"
++    "tape": "npx postcss-tape",
++    "prepublishOnly": "npm test"
+   },
+   "engines": {
+     "node": ">=10.0.0"
+-- 
+2.33.1
+

@@ -1,0 +1,51 @@
+From 54a87cde806c1e095e960af756c57397c24bc8b6 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 6 Jun 2019 12:23:32 -0400
+Subject: [PATCH 33/43] Update references to csstools
+
+---
+ README.md    | 6 +++---
+ package.json | 6 +++---
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/README.md b/README.md
+index b660800..103069c 100644
+--- a/README.md
++++ b/README.md
+@@ -184,8 +184,8 @@ the `dir` option will be ignored.
+ 
+ [css-img]: https://cssdb.org/badge/logical-properties-and-values.svg
+ [css-url]: https://cssdb.org/#logical-properties-and-values
+-[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-logical.svg
+-[cli-url]: https://travis-ci.org/jonathantneal/postcss-logical
++[cli-img]: https://img.shields.io/travis/csstools/postcss-logical.svg
++[cli-url]: https://travis-ci.org/csstools/postcss-logical
+ [git-img]: https://img.shields.io/badge/support-chat-blue.svg
+ [git-url]: https://gitter.im/postcss/postcss
+ [npm-img]: https://img.shields.io/npm/v/postcss-logical.svg
+@@ -196,4 +196,4 @@ the `dir` option will be ignored.
+ [Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
+ [PostCSS Loader]: https://github.com/postcss/postcss-loader
+-[PostCSS Logical Properties and Values]: https://github.com/jonathantneal/postcss-logical
++[PostCSS Logical Properties and Values]: https://github.com/csstools/postcss-logical
+diff --git a/package.json b/package.json
+index c0b3527..c9ec626 100644
+--- a/package.json
++++ b/package.json
+@@ -4,9 +4,9 @@
+   "description": "Use logical properties and values in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-  "repository": "jonathantneal/postcss-logical",
+-  "homepage": "https://github.com/jonathantneal/postcss-logical#readme",
+-  "bugs": "https://github.com/jonathantneal/postcss-logical/issues",
++  "repository": "csstools/postcss-logical",
++  "homepage": "https://github.com/csstools/postcss-logical#readme",
++  "bugs": "https://github.com/csstools/postcss-logical/issues",
+   "main": "index.cjs.js",
+   "module": "index.esm.mjs",
+   "files": [
+-- 
+2.33.1
+

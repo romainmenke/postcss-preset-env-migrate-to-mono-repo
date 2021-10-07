@@ -1,0 +1,73 @@
+From c857ccf4f7cf8205222574cd9e9267e4c0023b71 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 19 Sep 2017 09:59:58 -0400
+Subject: [PATCH 70/89] Move transform into its own function
+
+---
+ index.js         | 22 ++--------------------
+ lib/transform.js | 18 ++++++++++++++++++
+ 2 files changed, 20 insertions(+), 20 deletions(-)
+ create mode 100644 lib/transform.js
+
+diff --git a/index.js b/index.js
+index 7504e3b..710cada 100644
+--- a/index.js
++++ b/index.js
+@@ -1,28 +1,10 @@
+ 'use strict';
+ 
+ // tooling
+-const postcss                 = require('postcss');
+-const transformBubblingAtrule = require('./lib/transform-bubbling-atrule');
+-const transformNestingAtRule  = require('./lib/transform-nesting-atrule');
+-const transformNestingRule    = require('./lib/transform-nesting-rule');
++const postcss   = require('postcss');
++const transform = require('./lib/transform');
+ 
+ // plugin
+ module.exports = postcss.plugin('postcss-nesting', () => {
+ 	return (root) => root.walk(transform);
+ });
+-
+-function transform(node) {
+-	// console.log('walk', [node.type], [node.name || node.selector || node.prop || 'root'], node.nodes ? `length: ${node.nodes.length}` : `value: "${node.value}"`);
+-
+-	if (transformBubblingAtrule.test(node)) {
+-		// conditionally transform a bubbling atrule
+-		transformBubblingAtrule(node);
+-	} else if (transformNestingAtRule.test(node)) {
+-		// conditionally transform a nesting atrule
+-		node = transformNestingAtRule(node); // eslint-disable-line no-param-reassign
+-	} else if (transformNestingRule.test(node)) {
+-		// conditionally transform a nesting rule
+-		transformNestingRule(node);
+-	}
+-
+-}
+diff --git a/lib/transform.js b/lib/transform.js
+new file mode 100644
+index 0000000..df9bd4f
+--- /dev/null
++++ b/lib/transform.js
+@@ -0,0 +1,18 @@
++// tooling
++const transformBubblingAtrule = require('./transform-bubbling-atrule');
++const transformNestingAtRule  = require('./transform-nesting-atrule');
++const transformNestingRule    = require('./transform-nesting-rule');
++
++// conditionally transform a nesting rule
++module.exports = (node) => {
++	if (transformBubblingAtrule.test(node)) {
++		// conditionally transform a bubbling atrule
++		transformBubblingAtrule(node);
++	} else if (transformNestingAtRule.test(node)) {
++		// conditionally transform a nesting atrule
++		transformNestingAtRule(node);
++	} else if (transformNestingRule.test(node)) {
++		// conditionally transform a nesting rule
++		transformNestingRule(node);
++	}
++};
+-- 
+2.33.1
+

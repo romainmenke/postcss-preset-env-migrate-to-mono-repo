@@ -1,0 +1,31 @@
+From 7a2d1a28ea3f20cd3a4e1966ad5e2d4a9efb8713 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 18 Sep 2017 18:48:57 -0400
+Subject: [PATCH 19/34] Add specification to README
+
+---
+ README.md | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index c693b7c..105835b 100644
+--- a/README.md
++++ b/README.md
+@@ -6,7 +6,8 @@
+ [![Licensing][lic-img]][lic-url]
+ [![Gitter Chat][git-img]][git-url]
+ 
+-[PostCSS :dir()] lets you use the `:dir` pseudo-class in CSS.
++[PostCSS :dir()] lets you use the `:dir` pseudo-class in CSS, following the
++[Selectors] specification.
+ 
+ ```css
+ .example:dir(rtl) {
+@@ -223,3 +224,4 @@ original selector.*
+ [Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
+ [PostCSS :dir()]: https://github.com/jonathantneal/postcss-dir-pseudo-class
++[Selectors]: https://drafts.csswg.org/selectors-4/#the-dir-pseudo
+-- 
+2.33.1
+

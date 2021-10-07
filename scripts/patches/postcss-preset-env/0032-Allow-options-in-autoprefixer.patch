@@ -1,0 +1,27 @@
+From a4e7104e8d8cf014c067efbc97c4a20fa1db2fe0 Mon Sep 17 00:00:00 2001
+From: Lysholm <emil.lysholm@gmail.com>
+Date: Tue, 22 May 2018 02:45:21 +0200
+Subject: [PATCH 32/84] Allow options in autoprefixer
+
+---
+ index.js | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index 487b22f..7480e9d 100644
+--- a/index.js
++++ b/index.js
+@@ -18,8 +18,9 @@ export default postcss.plugin('postcss-preset-env', opts => {
+ 			? 5
+ 		: parseInt(opts.stage) || 0
+ 	: 2;
++	const autoprefixerOptions = Object(opts).autoprefixerOptions
+ 
+-	const stagedAutoprefixer = autoprefixer({ browsers });
++	const stagedAutoprefixer = autoprefixer(Object.assign({ browsers }, autoprefixerOptions));
+ 
+ 	// polyfillable features (those with an available postcss plugin)
+ 	const polyfillableFeatures = cssdb.concat(
+-- 
+2.33.1
+

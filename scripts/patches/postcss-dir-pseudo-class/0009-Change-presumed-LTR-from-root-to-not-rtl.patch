@@ -1,0 +1,84 @@
+From 43b41083944aa33b0892314f9d4e14d4a46a59c7 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 24 Jul 2017 21:50:39 -0400
+Subject: [PATCH 09/34] Change presumed LTR from root to not rtl
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+`:root` to `html:not([dir="rtl”]`
+---
+ index.js | 45 +++++++++++++++++++++++++++++++++++----------
+ 1 file changed, 35 insertions(+), 10 deletions(-)
+
+diff --git a/index.js b/index.js
+index 054ed8f..79dc578 100644
+--- a/index.js
++++ b/index.js
+@@ -49,9 +49,10 @@ module.exports = postcss.plugin('postcss-dir-pseudo-class', (opts) => (root) =>
+ 						// conditionally prepend a combinator before inserting the [dir] attribute
+ 						const first = selector.nodes[0];
+ 						const firstIsSpaceCombinator = first && 'combinator' === first.type && ' ' === first.value;
++						const firstIsHtml = first && 'tag' === first.type && 'html' === first.value;
+ 						const firstIsRoot = first && 'pseudo' === first.type && ':root' === first.value;
+ 
+-						if (first && !firstIsRoot && !firstIsSpaceCombinator) {
++						if (first && !firstIsHtml && !firstIsRoot && !firstIsSpaceCombinator) {
+ 							selector.prepend(
+ 								selectorParser.combinator({
+ 									value: ' '
+@@ -65,18 +66,42 @@ module.exports = postcss.plugin('postcss-dir-pseudo-class', (opts) => (root) =>
+ 						// whether that value matches the presumed direction
+ 						const isdir = opts && Object(opts).dir === value;
+ 
+-						selector.prepend(
+-							// prepend :root if the direction is presumed
+-							isdir ? selectorParser.pseudo({
+-								value: ':root'
+-							})
+-							// otherwise, prepend the dir attribute
+-							: selectorParser.attribute({
++						// [dir] attribute
++						const dirAttr = selectorParser.attribute({
++							attribute: 'dir',
++							operator:  '=',
++							value:     `"${ value }"`
++						});
++
++						// not[dir] attribute
++						const notDirAttr = selectorParser.pseudo({
++							value: ':not'
++						});
++
++						notDirAttr.append(
++							selectorParser.attribute({
+ 								attribute: 'dir',
+-								operator: '=',
+-								value: `"${ value }"`
++								operator:  '=',
++								value:     `"${ 'ltr' === value ? 'rtl' : 'ltr' }"`
+ 							})
+ 						);
++
++						if (isdir) {
++							// if the direction is presumed
++							if (firstIsHtml) {
++								// insert :root after html tag
++								selector.insertAfter(first, notDirAttr);
++							} else {
++								// prepend :root
++								selector.prepend(notDirAttr);
++							}
++						} else if (firstIsHtml) {
++							// otherwise, insert dir attribute after html tag
++							selector.insertAfter(first, dirAttr);
++						} else {
++							// otherwise, prepend the dir attribute
++							selector.prepend(dirAttr);
++						}
+ 					}
+ 				});
+ 			});
+-- 
+2.33.1
+

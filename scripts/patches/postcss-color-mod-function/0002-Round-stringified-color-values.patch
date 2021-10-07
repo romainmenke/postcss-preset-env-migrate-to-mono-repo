@@ -1,0 +1,196 @@
+From e55972761317a5acbddae23e1811663d77fd3acd Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 17 Jan 2018 01:18:38 -0500
+Subject: [PATCH 02/29] Round stringified color values
+
+- Round by 4 decimals for all percentages and alpha values
+- Round by 0 decimals for all legacy rgb values
+---
+ lib/color.js                 | 35 +++++++++++++++++++++--------------
+ test/basic.colors.expect.css |  8 ++++----
+ test/basic.expect.css        | 30 +++++++++++++++---------------
+ 3 files changed, 40 insertions(+), 33 deletions(-)
+
+diff --git a/lib/color.js b/lib/color.js
+index 2860f80..587ab0d 100644
+--- a/lib/color.js
++++ b/lib/color.js
+@@ -127,9 +127,9 @@ export default class Color {
+ 		const color      = color2hsl(this.color);
+ 		const isOpaque   = color.alpha === 1;
+ 		const hue        = color.hue;
+-		const saturation = color.saturation * 100;
+-		const lightness  = color.lightness * 100;
+-		const alpha      = color.alpha * 100;
++		const saturation = round(color.saturation * 100, 4);
++		const lightness  = round(color.lightness * 100, 4);
++		const alpha      = round(color.alpha * 100, 4);
+ 
+ 		return `hsl(${hue} ${saturation}% ${lightness}%${isOpaque
+ 			? ''
+@@ -140,9 +140,9 @@ export default class Color {
+ 		const color     = color2hwb(this.color);
+ 		const isOpaque  = color.alpha === 1;
+ 		const hue       = color.hue;
+-		const whiteness = color.whiteness * 100;
+-		const blackness = color.blackness * 100;
+-		const alpha     = color.alpha * 100;
++		const whiteness = round(color.whiteness * 100, 4);
++		const blackness = round(color.blackness * 100, 4);
++		const alpha     = round(color.alpha * 100, 4);
+ 
+ 		return `hwb(${hue} ${whiteness}% ${blackness}%${isOpaque
+ 			? ''
+@@ -152,10 +152,10 @@ export default class Color {
+ 	toRGB() {
+ 		const color    = color2rgb(this.color);
+ 		const isOpaque = color.alpha === 1;
+-		const red      = color.red * 100;
+-		const green    = color.green * 100;
+-		const blue     = color.blue * 100;
+-		const alpha    = color.alpha * 100;
++		const red      = round(color.red * 100, 4);
++		const green    = round(color.green * 100, 4);
++		const blue     = round(color.blue * 100, 4);
++		const alpha    = round(color.alpha * 100, 4);
+ 
+ 		return `rgb(${red}% ${green}% ${blue}%${isOpaque
+ 			? ''
+@@ -166,10 +166,10 @@ export default class Color {
+ 		const color    = color2rgb(this.color);
+ 		const isOpaque = color.alpha === 1;
+ 		const name     = isOpaque ? 'rgb' : 'rgba';
+-		const red      = color.red * 255;
+-		const green    = color.green * 255;
+-		const blue     = color.blue * 255;
+-		const alpha    = color.alpha;
++		const red      = round(color.red * 255, 0);
++		const green    = round(color.green * 255, 0);
++		const blue     = round(color.blue * 255, 0);
++		const alpha    = round(color.alpha, 4);
+ 
+ 		return `${name}(${red}, ${green}, ${blue}${isOpaque
+ 			? ''
+@@ -547,6 +547,13 @@ function lvw2saturation(lightness, value, whiteness) {
+ 	: (value - whiteness) / (2 - value - whiteness);
+ }
+ 
++/* Round to decimal place
++/* ========================================================================== */
++
++function round(value, decimals) {
++	return Number(`${Math.round(`${value}e${decimals}`)}e-${decimals}`);
++}
++
+ /* Match
+ /* ========================================================================== */
+ 
+diff --git a/test/basic.colors.expect.css b/test/basic.colors.expect.css
+index ebe329f..7b05a17 100644
+--- a/test/basic.colors.expect.css
++++ b/test/basic.colors.expect.css
+@@ -23,11 +23,11 @@ test-color-mod {
+ }
+ 
+ test-red-green-blue-alpha-adjuster {
+-	color: rgb(100% 0% 7.8431372549019605%);
++	color: rgb(100% 0% 7.8431%);
+ 	color: rgb(100% 0% 20%);
+-	color: rgb(100% 7.8431372549019605% 0%);
++	color: rgb(100% 7.8431% 0%);
+ 	color: rgb(100% 20% 0%);
+-	color: rgb(92.15686274509804% 0% 0%);
++	color: rgb(92.1569% 0% 0%);
+ 	color: rgb(80% 0% 0%);
+ 	color: rgb(100% 0% 0% / 20%);
+ }
+@@ -92,5 +92,5 @@ test-contrast-adjuster {
+ }
+ 
+ test-combination-adjuster {
+-	color: rgb(34.56764855961519% 17.846405228758172% 44.56764855961519%);
++	color: rgb(34.5676% 17.8464% 44.5676%);
+ }
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index d9bcee7..84fe437 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -27,7 +27,7 @@ test-red-green-blue-alpha-adjuster {
+ 	color: rgb(255, 0, 51);
+ 	color: rgb(255, 20, 0);
+ 	color: rgb(255, 51, 0);
+-	color: rgb(235.00000000000003, 0, 0);
++	color: rgb(235, 0, 0);
+ 	color: rgb(204, 0, 0);
+ 	color: rgba(255, 0, 0, 0.2);
+ }
+@@ -37,7 +37,7 @@ test-rgb-adjuster {
+ 	color: rgb(255, 255, 0);
+ 	color: rgb(0, 0, 0);
+ 	color: rgb(0, 0, 0);
+-	color: rgb(127.5, 0, 0);
++	color: rgb(128, 0, 0);
+ }
+ 
+ test-hue-adjuster {
+@@ -45,20 +45,20 @@ test-hue-adjuster {
+ 	color: rgb(255, 85, 255);
+ 	color: rgb(255, 85, 255);
+ 	color: rgb(255, 85, 255);
+-	color: rgb(0, 0, 84.99999999999993);
+-	color: rgb(0, 0, 84.99999999999993);
++	color: rgb(0, 0, 85);
++	color: rgb(0, 0, 85);
+ 	color: rgb(255, 0, 255);
+ 	color: rgb(255, 0, 255);
+ }
+ 
+ test-lightness-saturation-adjuster {
+ 	color: rgb(102, 0, 102);
+-	color: rgb(255, 101.99999999999997, 255);
++	color: rgb(255, 102, 255);
+ 	color: rgb(153, 0, 153);
+ 	color: rgb(51, 0, 51);
+ 	color: rgb(153, 102, 153);
+ 	color: rgb(255, 0, 255);
+-	color: rgb(229.5, 25.499999999999993, 229.5);
++	color: rgb(230, 25, 230);
+ 	color: rgb(153, 102, 153);
+ }
+ 
+@@ -74,23 +74,23 @@ test-blackness-whiteness-adjuster {
+ }
+ 
+ test-tint-shade-adjuster {
+-	color: rgb(50.999999999999986, 0, 0);
++	color: rgb(51, 0, 0);
+ 	color: rgb(255, 204, 204);
+ }
+ 
+ test-blend-adjuster {
+-	color: rgb(255, 127.5, 0);
+-	color: rgb(255, 127.5, 0);
+-	color: rgb(255, 127.5, 255);
+-	color: rgb(255, 127.5, 0);
++	color: rgb(255, 128, 0);
++	color: rgb(255, 128, 0);
++	color: rgb(255, 128, 255);
++	color: rgb(255, 128, 0);
+ }
+ 
+ test-contrast-adjuster {
+-	color: rgb(191.25, 191.25, 0);
+-	color: rgb(127.5, 127.5, 0);
+-	color: rgb(63.75, 63.75, 0);
++	color: rgb(191, 191, 0);
++	color: rgb(128, 128, 0);
++	color: rgb(64, 64, 0);
+ }
+ 
+ test-combination-adjuster {
+-	color: rgb(88.14750382701874, 45.50833333333334, 113.64750382701874);
++	color: rgb(88, 46, 114);
+ }
+-- 
+2.33.1
+

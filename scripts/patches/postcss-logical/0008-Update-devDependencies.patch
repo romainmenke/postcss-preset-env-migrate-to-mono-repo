@@ -1,0 +1,25 @@
+From 654e5db8e0fa8a0454914ab3759b1901a8f6e5c2 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 19 Aug 2017 20:52:21 -0400
+Subject: [PATCH 08/43] Update devDependencies
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 78da972..f9e7cdb 100644
+--- a/package.json
++++ b/package.json
+@@ -26,7 +26,7 @@
+     "postcss": "^6.0.9"
+   },
+   "devDependencies": {
+-    "eslint": "^4.4.1",
++    "eslint": "^4.5.0",
+     "eslint-config-dev": "2.0.0",
+     "postcss-tape": "2.0.1",
+     "pre-commit": "^1.2.2"
+-- 
+2.33.1
+

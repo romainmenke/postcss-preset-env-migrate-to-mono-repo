@@ -1,0 +1,25 @@
+From 4d07b5951afd316b1b9dcdeeee2e6cfec6ad89d6 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 9 Sep 2017 23:10:16 -0400
+Subject: [PATCH 22/30] Update .gitignore
+
+---
+ .gitignore | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/.gitignore b/.gitignore
+index 0de7b9c..995098a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,5 +1,8 @@
+ node_modules
++package-lock.json
+ .*
++!.appveyor.yml
++!.editorconfig
+ !.gitignore
+ !.tape.js
+ !.travis.yml
+-- 
+2.33.1
+

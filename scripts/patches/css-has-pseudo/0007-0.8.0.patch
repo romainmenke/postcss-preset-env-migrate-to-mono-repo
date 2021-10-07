@@ -1,0 +1,67 @@
+From 4b1a2aad54b117029fd44690ade5dc4195c73e93 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 26 Nov 2018 16:34:22 -0500
+Subject: [PATCH 07/17] 0.8.0
+
+---
+ CHANGELOG.md   | 4 ++++
+ README.md      | 2 +-
+ package.json   | 2 +-
+ src/browser.js | 2 +-
+ 4 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 6c05edc..b0a5152 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to CSS Has Pseudo
+ 
++### 0.8.0 (November 26, 2018)
++
++- Fixed an issue where attribute names were not being properly encoded
++
+ ### 0.7.0 (November 25, 2018)
+ 
+ - Replaced `setImmediate` with `requestAnimationFrame` for future compatibility
+diff --git a/README.md b/README.md
+index 0969d9e..a3b1b0f 100644
+--- a/README.md
++++ b/README.md
+@@ -41,7 +41,7 @@ Next, use your transformed CSS with this script:
+ <script>cssHasPseudo(document)</script>
+ ```
+ 
+-That’s it. The script is 764 bytes and works in all browsers, including
++That’s it. The script is 768 bytes and works in all browsers, including
+ Internet Explorer 11. With a [Mutation Observer polyfill], the script will work
+ down to Internet Explorer 9.
+ 
+diff --git a/package.json b/package.json
+index 3ba81e9..0fde6fc 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "css-has-pseudo",
+-  "version": "0.7.0",
++  "version": "0.8.0",
+   "description": "Style elements relative to other elements in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+diff --git a/src/browser.js b/src/browser.js
+index d471289..095d4e6 100644
+--- a/src/browser.js
++++ b/src/browser.js
+@@ -108,7 +108,7 @@ export default function cssHasPseudo(document) {
+ 				if (selectors) {
+ 					const attributeName = ':' + (selectors[2] ? 'not-' : '') + 'has(' +
+ 						// encode a :has() pseudo selector as an attribute name
+-						selectors[3].replace(/%3A/g, ':').replace(/%5B/g, '[').replace(/%5D/g, ']').replace(/%2C/g, ',') +
++						encodeURIComponent(selectors[3]).replace(/%3A/g, ':').replace(/%5B/g, '[').replace(/%5D/g, ']').replace(/%2C/g, ',') +
+ 					')';
+ 
+ 					observedItems.push({
+-- 
+2.33.1
+

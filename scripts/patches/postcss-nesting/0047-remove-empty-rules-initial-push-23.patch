@@ -1,0 +1,148 @@
+From 87f2c08c20cafcdd3aa99a3a285ee1ebe4f99760 Mon Sep 17 00:00:00 2001
+From: Tom Bremer <tom@tbremer.com>
+Date: Sat, 6 May 2017 10:40:53 -0500
+Subject: [PATCH 47/89] remove-empty-rules initial push (#23)
+
+---
+ index.js              | 14 ++++++++++++++
+ test.js               |  3 +++
+ test/empty.css        | 26 ++++++++++++++++++++++++++
+ test/empty.expect.css | 23 +++++++++++++++++++++++
+ test/media.expect.css | 12 ------------
+ 5 files changed, 66 insertions(+), 12 deletions(-)
+ create mode 100644 test/empty.css
+ create mode 100644 test/empty.expect.css
+
+diff --git a/index.js b/index.js
+index eef9b5a..e0a2cd9 100644
+--- a/index.js
++++ b/index.js
+@@ -81,6 +81,20 @@ module.exports = postcss.plugin('postcss-nesting', function (opts) {
+ 					rule.insertAfterNode = target;
+ 				}
+ 			}
++
++			if (!rule.nodes.length) {
++				rule.remove();
++			} else {
++				rule.nodes.forEach(function (n) {
++					var isRuleOrAtRule = (/rule$/).test(n.type);
++
++					if (!isRuleOrAtRule || n.nodes.length) {
++						return;
++					}
++
++					n.remove();
++				});
++			}
+ 		});
+ 	};
+ });
+diff --git a/test.js b/test.js
+index 7f57984..cc99402 100644
+--- a/test.js
++++ b/test.js
+@@ -11,6 +11,9 @@ var tests = {
+ 		},
+ 		'media': {
+ 			message: 'supports nested media queries'
++		},
++		'empty': {
++			message: 'ensure empty rules are removed'
+ 		}
+ 	}
+ };
+diff --git a/test/empty.css b/test/empty.css
+new file mode 100644
+index 0000000..85fd7b5
+--- /dev/null
++++ b/test/empty.css
+@@ -0,0 +1,26 @@
++a {
++	& b {
++		prop: val;
++	}
++
++	& c {
++		prop: val;
++	}
++}
++
++d {
++	@nest & e {
++		prop: val;
++
++		@nest & f {
++			prop: val;
++		}
++	}
++}
++
++g {
++	prop: val;
++	& h {
++		prop: val
++	}
++}
+diff --git a/test/empty.expect.css b/test/empty.expect.css
+new file mode 100644
+index 0000000..5482c09
+--- /dev/null
++++ b/test/empty.expect.css
+@@ -0,0 +1,23 @@
++a b {
++	prop: val
++}
++
++a c {
++	prop: val
++}
++
++d e {
++	prop: val
++}
++
++d e f {
++	prop: val
++}
++
++g {
++	prop: val
++}
++
++g h {
++	prop: val
++}
+diff --git a/test/media.expect.css b/test/media.expect.css
+index 05858b3..2686f9f 100644
+--- a/test/media.expect.css
++++ b/test/media.expect.css
+@@ -7,9 +7,6 @@
+ 	.main {
+ 		color: white
+ 	}
+-
+-	.main .child {
+-}
+ 	}
+ 
+ 	@media (min-width: 100px) and (max-width: 200px) {
+@@ -26,15 +23,6 @@
+ 	}
+ }
+ 
+-.main {
+-}
+-
+-@media screen, print and speech {
+-
+-	.main {
+-}
+-	}
+-
+ @media screen and (max-width: 300px), screen and (min-aspect-ratio: 16/9), print and speech and (max-width: 300px), print and speech and (min-aspect-ratio: 16/9) {
+ 
+ 	.main {
+-- 
+2.33.1
+

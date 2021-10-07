@@ -1,0 +1,56 @@
+From e76b7ef835ff07b6928d1496a95c7a95a25e02d8 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 2 Jun 2017 12:47:41 -0400
+Subject: [PATCH 04/34] Update Plugin: Support a browserslist
+
+---
+ index.js     | 17 +++++++++++++++++
+ package.json |  1 +
+ 2 files changed, 18 insertions(+)
+
+diff --git a/index.js b/index.js
+index 984d435..ae33357 100644
+--- a/index.js
++++ b/index.js
+@@ -1,9 +1,26 @@
+ // tooling
++const browserslist   = require('browserslist');
+ const postcss        = require('postcss');
+ const selectorParser = require('postcss-selector-parser');
+ 
+ // plugin
+ module.exports = postcss.plugin('postcss-dir-pseudo-class', (opts) => (root) => {
++	// client browser list
++	const clientBrowserList = browserslist(opts && opts.browsers, {
++		path: root.source && root.source.input && root.source.input.file
++	});
++
++	// whether this library is needed
++	const requiresPolyfill = clientBrowserList.some(
++		(clientBrowser) => browserslist('chrome > 0, edge > 0, firefox <= 48, ie > 0, safari > 0').some(
++			(polyfillBrowser) => polyfillBrowser === clientBrowser
++		)
++	);
++
++	if (!requiresPolyfill) {
++		return;
++	}
++
+ 	// walk rules using the :dir pseudo-class
+ 	root.walkRules(/:dir\([^\)]*\)/, (rule) => {
+ 		// update the rule selector
+diff --git a/package.json b/package.json
+index 99348f4..81ed7c7 100644
+--- a/package.json
++++ b/package.json
+@@ -22,6 +22,7 @@
+     "node": ">=4.0.0"
+   },
+   "dependencies": {
++    "browserslist": "^2.1.4",
+     "postcss": "^6.0.1",
+     "postcss-selector-parser": "^2.2.3"
+   },
+-- 
+2.33.1
+

@@ -1,0 +1,196 @@
+From 56dfc2a0c64988593ed8752a8ef9a04045b4d157 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 12 Apr 2020 17:25:17 -0400
+Subject: [PATCH 13/19] 3.0.1
+
+---
+ .gitattributes  |  1 +
+ .gitignore      |  2 +-
+ .rollup.js      |  2 +-
+ .travis.yml     |  1 -
+ CHANGELOG.md    |  4 ++++
+ CONTRIBUTING.md |  2 +-
+ INSTALL.md      |  2 +-
+ README.md       |  6 +++---
+ package.json    | 31 +++++++++++++++++++------------
+ 9 files changed, 31 insertions(+), 20 deletions(-)
+ create mode 100644 .gitattributes
+
+diff --git a/.gitattributes b/.gitattributes
+new file mode 100644
+index 0000000..6313b56
+--- /dev/null
++++ b/.gitattributes
+@@ -0,0 +1 @@
++* text=auto eol=lf
+diff --git a/.gitignore b/.gitignore
+index 66c31f6..5bd3ef6 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,11 +1,11 @@
+ dist
+ node_modules
+-index.*.*
+ package-lock.json
+ *.log*
+ *.result.css
+ .*
+ !.editorconfig
++!.gitattributes
+ !.gitignore
+ !.rollup.js
+ !.tape.js
+diff --git a/.rollup.js b/.rollup.js
+index e4e0035..1fb0d87 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -1,7 +1,7 @@
+ import pkg from './package.json'
+ 
+ export default {
+-    ...pkg.rollup,
++	...pkg.rollup,
+ 	plugins: pkg.rollup.plugins.map(plugin => require(plugin)()),
+ 	onwarn(warning, warn) {
+ 		if (warning.code !== 'UNRESOLVED_IMPORT') warn(warning)
+diff --git a/.travis.yml b/.travis.yml
+index cccb9cf..a9e32cd 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -7,4 +7,3 @@ node_js:
+ 
+ install:
+   - npm install --ignore-scripts
+-  - npm run build
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 2f5ed7b..4cfaa43 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Lab Function
+ 
++### 3.0.1 (April 12, 2020)
++
++- Updated: Ownership moved to CSSTools.
++
+ ### 3.0.0 (April 12, 2020)
+ 
+ - Updated: `postcss-values-parser` to 3.1.1 (major).
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+index bb9debd..1745a22 100644
+--- a/CONTRIBUTING.md
++++ b/CONTRIBUTING.md
+@@ -26,7 +26,7 @@ scope and avoid unrelated commits.
+    cd postcss-lab-function
+ 
+    # Assign the original repo to a remote called "upstream"
+-   git remote add upstream git@github.com:jonathantneal/postcss-lab-function.git
++   git remote add upstream git@github.com:csstools/postcss-lab-function.git
+ 
+    # Install the tools necessary for testing
+    npm install
+diff --git a/INSTALL.md b/INSTALL.md
+index a123e2d..6548478 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -167,6 +167,6 @@ grunt.initConfig({
+ [PostCSS]: https://github.com/postcss/postcss
+ [PostCSS CLI]: https://github.com/postcss/postcss-cli
+ [PostCSS Loader]: https://github.com/postcss/postcss-loader
+-[PostCSS Lab Function]: https://github.com/jonathantneal/postcss-lab-function
++[PostCSS Lab Function]: https://github.com/csstools/postcss-lab-function
+ [React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
+ [React App Rewired]: https://github.com/timarney/react-app-rewired
+diff --git a/README.md b/README.md
+index ca09b5d..5d1f560 100644
+--- a/README.md
++++ b/README.md
+@@ -2,7 +2,7 @@
+ 
+ [<img alt="npm version" src="https://img.shields.io/npm/v/postcss-lab-function.svg" height="20">][npm-url]
+ [<img alt="CSS Standard Status" src="https://cssdb.org/badge/lab-function.svg" height="20">][css-url]
+-[<img alt="build status" src="https://img.shields.io/travis/jonathantneal/postcss-lab-function/master.svg" height="20">][cli-url]
++[<img alt="build status" src="https://img.shields.io/travis/csstools/postcss-lab-function/master.svg" height="20">][cli-url]
+ [<img alt="support chat" src="https://img.shields.io/badge/support-chat-blue.svg" height="20">][git-url]
+ 
+ 
+@@ -83,7 +83,7 @@ postcssLabFunction({ preserve: true })
+ }
+ ```
+ 
+-[cli-url]: https://travis-ci.org/jonathantneal/postcss-lab-function
++[cli-url]: https://travis-ci.org/csstools/postcss-lab-function
+ [css-url]: https://cssdb.org/#lab-function
+ [git-url]: https://gitter.im/postcss/postcss
+ [npm-url]: https://www.npmjs.com/package/postcss-lab-function
+@@ -93,4 +93,4 @@ postcssLabFunction({ preserve: true })
+ [Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
+ [PostCSS Loader]: https://github.com/postcss/postcss-loader
+-[PostCSS Lab Function]: https://github.com/jonathantneal/postcss-lab-function
++[PostCSS Lab Function]: https://github.com/csstools/postcss-lab-function
+diff --git a/package.json b/package.json
+index 877be0b..b420484 100644
+--- a/package.json
++++ b/package.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "postcss-lab-function",
+-  "version": "3.0.0",
++  "version": "3.0.1",
+   "description": "Use lab() and lch() color functions in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-  "repository": "jonathantneal/postcss-lab-function",
+-  "homepage": "https://github.com/jonathantneal/postcss-lab-function#readme",
+-  "bugs": "https://github.com/jonathantneal/postcss-lab-function/issues",
++  "repository": "csstools/postcss-lab-function",
++  "homepage": "https://github.com/csstools/postcss-lab-function#readme",
++  "bugs": "https://github.com/csstools/postcss-lab-function/issues",
+   "main": "dist/index.cjs.js",
+   "module": "dist/index.esm.mjs",
+   "files": [
+@@ -17,6 +17,7 @@
+     "build:watch": "npx rollup -c .rollup.js --watch",
+     "lint": "npx eslint --cache src",
+     "lint:fix": "npx eslint --cache --fix",
++    "pretest": "npm install && npm run build",
+     "test": "npm run lint && npm run tape",
+     "tape": "npx postcss-tape"
+   },
+@@ -37,18 +38,24 @@
+     "rollup": "^2.6.0",
+     "rollup-plugin-babel": "^4.4.0"
+   },
+-  "eslintConfig": {
+-    "parser": "babel-eslint",
+-    "ignorePatterns": [
+-      "dist",
+-      "node_modules"
+-    ]
+-  },
+   "babel": {
+     "presets": [
+-      "@babel/env"
++      [
++        "@babel/env",
++        {
++          "targets": "maintained node versions"
++        }
++      ]
+     ]
+   },
++  "eslintConfig": {
++    "env": {
++      "es6": true,
++      "node": true
++    },
++    "extends": "eslint:recommended",
++    "parser": "babel-eslint"
++  },
+   "rollup": {
+     "input": "src/index.js",
+     "plugins": [
+-- 
+2.33.1
+

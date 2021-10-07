@@ -1,0 +1,27 @@
+From ed433b3f696939b14afbfe336af1b1e7e9d4b044 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 15 May 2018 10:28:29 -0400
+Subject: [PATCH 04/15] Update README.md badges
+
+---
+ README.md | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/README.md b/README.md
+index 50dd3f9..32a562b 100644
+--- a/README.md
++++ b/README.md
+@@ -202,8 +202,8 @@ focusWithin({ replaceWith: '.focus-within' });
+ }
+ ```
+ 
+-[css-img]: https://jonathantneal.github.io/cssdb/badge/focus-within-pseudo-class.svg
+-[css-url]: https://jonathantneal.github.io/cssdb/#focus-within-pseudo-class
++[css-img]: https://cssdb.org/badge/focus-within-pseudo-class.svg
++[css-url]: https://cssdb.org/#focus-within-pseudo-class
+ [cli-img]: https://img.shields.io/travis/jonathantneal/postcss-focus-within.svg
+ [cli-url]: https://travis-ci.org/jonathantneal/postcss-focus-within
+ [git-img]: https://img.shields.io/badge/support-chat-blue.svg
+-- 
+2.33.1
+

@@ -1,0 +1,999 @@
+From 3b8eaa5783d68b1e8032a1e51c7d59727de34cc8 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 6 Dec 2016 14:08:53 -0500
+Subject: [PATCH 17/30] 3.0.0
+
+---
+ .eslintrc                       | 123 --------------------------------
+ .gitignore                      |   3 +-
+ .npmignore                      |   8 ---
+ .tape.js                        |  22 ++++++
+ .travis.yml                     |   4 +-
+ CHANGELOG.md                    |  16 +++--
+ CONTRIBUTING.md                 |  64 +++++++++++++++++
+ LICENSE.md                      | 107 ++++++++++++++++++++++++---
+ README.md                       | 115 ++++++++++++++++++++---------
+ gulpfile.js                     |  18 -----
+ index.js                        |  44 +++++++-----
+ package.json                    |  85 +++++++++++++++-------
+ test/basic.css                  |  12 ++++
+ test/basic.expect.css           |  13 ++++
+ test/basic.w-prefix.expect.css  |  12 ++++
+ test/prefix.css                 |  12 ++++
+ test/prefix.expect.css          |  12 ++++
+ test/prefix.w-prefix.expect.css |  13 ++++
+ test/test.js                    |  65 -----------------
+ 19 files changed, 442 insertions(+), 306 deletions(-)
+ delete mode 100644 .eslintrc
+ delete mode 100644 .npmignore
+ create mode 100644 .tape.js
+ create mode 100644 CONTRIBUTING.md
+ delete mode 100644 gulpfile.js
+ create mode 100644 test/basic.css
+ create mode 100644 test/basic.expect.css
+ create mode 100644 test/basic.w-prefix.expect.css
+ create mode 100644 test/prefix.css
+ create mode 100644 test/prefix.expect.css
+ create mode 100644 test/prefix.w-prefix.expect.css
+ delete mode 100644 test/test.js
+
+diff --git a/.eslintrc b/.eslintrc
+deleted file mode 100644
+index 8e89382..0000000
+--- a/.eslintrc
++++ /dev/null
+@@ -1,123 +0,0 @@
+-{
+-	"rules": {
+-		"no-shadow-restricted-names":  [2],
+-		"computed-property-spacing":   [2],
+-		"no-empty-character-class":    [2],
+-		"no-irregular-whitespace":     [2],
+-		"no-unexpected-multiline":     [2],
+-		"no-multiple-empty-lines":     [2],
+-		"space-return-throw-case":     [2],
+-		"no-constant-condition":       [2],
+-		"no-extra-boolean-cast":       [2],
+-		"no-inner-declarations":       [2],
+-		"no-this-before-super":        [2],
+-		"no-use-before-define":        [2],
+-		"no-array-constructor":        [2],
+-		"object-curly-spacing":        [2, "always"],
+-		"no-floating-decimal":         [2],
+-		"no-warning-comments":         [2],
+-		"handle-callback-err":         [2],
+-		"no-unneeded-ternary":         [2],
+-		"operator-assignment":         [2],
+-		"space-before-blocks":         [2],
+-		"no-native-reassign":          [2],
+-		"no-trailing-spaces":          [2],
+-		"operator-linebreak":          [2, "after"],
+-		"consistent-return":           [2],
+-		"no-duplicate-case":           [2],
+-		"no-invalid-regexp":           [2],
+-		"no-negated-in-lhs":           [2],
+-		"constructor-super":           [2],
+-		"no-nested-ternary":           [2],
+-		"no-extend-native":            [2],
+-		"block-scoped-var":            [2],
+-		"no-control-regex":            [2],
+-		"no-sparse-arrays":            [2],
+-		"no-throw-literal":            [2],
+-		"no-return-assign":            [2],
+-		"no-const-assign":             [2],
+-		"no-class-assign":             [2],
+-		"no-extra-parens":             [2],
+-		"no-regex-spaces":             [2],
+-		"no-implied-eval":             [2],
+-		"no-useless-call":             [2],
+-		"no-self-compare":             [2],
+-		"no-octal-escape":             [2],
+-		"no-new-wrappers":             [2],
+-		"no-process-exit":             [2],
+-		"no-catch-shadow":             [2],
+-		"linebreak-style":             [2],
+-		"space-infix-ops":             [2],
+-		"space-unary-ops":             [2],
+-		"no-func-assign":              [2],
+-		"no-unreachable":              [2],
+-		"accessor-pairs":              [2],
+-		"no-empty-label":              [2],
+-		"no-fallthrough":              [2],
+-		"no-path-concat":              [2],
+-		"no-new-require":              [2],
+-		"no-spaced-func":              [2],
+-		"no-unused-vars":              [2],
+-		"spaced-comment":              [2],
+-		"no-delete-var":               [2],
+-		"comma-spacing":               [2],
+-		"no-extra-semi":               [2],
+-		"no-extra-bind":               [2],
+-		"arrow-spacing":               [2],
+-		"prefer-spread":               [2],
+-		"no-new-object":               [2],
+-		"no-multi-str":                [2],
+-		"semi-spacing":                [2],
+-		"no-lonely-if":                [2],
+-		"dot-notation":                [2],
+-		"dot-location":                [2, "property"],
+-		"comma-dangle":                [2, "never"],
+-		"no-dupe-args":                [2],
+-		"no-dupe-keys":                [2],
+-		"no-ex-assign":                [2],
+-		"no-obj-calls":                [2],
+-		"valid-typeof":                [2],
+-		"default-case":                [2],
+-		"no-redeclare":                [2],
+-		"no-div-regex":                [2],
+-		"no-sequences":                [2],
+-		"no-label-var":                [2],
+-		"comma-style":                 [2],
+-		"brace-style":                 [2],
+-		"no-debugger":                 [2],
+-		"quote-props":                 [2, "as-needed"],
+-		"no-iterator":                 [2],
+-		"no-new-func":                 [2],
+-		"key-spacing":                 [2, { "align": "value" }],
+-		"complexity":                  [2],
+-		"new-parens":                  [2],
+-		"no-eq-null":                  [2],
+-		"no-bitwise":                  [2],
+-		"wrap-iife":                   [2],
+-		"no-caller":                   [2],
+-		"use-isnan":                   [2],
+-		"no-labels":                   [2],
+-		"no-shadow":                   [2],
+-		"camelcase":                   [2],
+-		"eol-last":                    [2],
+-		"no-octal":                    [2],
+-		"no-empty":                    [2],
+-		"no-alert":                    [2],
+-		"no-proto":                    [2],
+-		"no-undef":                    [2],
+-		"no-eval":                     [2],
+-		"no-with":                     [2],
+-		"no-void":                     [2],
+-		"new-cap":                     [2],
+-		"eqeqeq":                      [2],
+-		"no-new":                      [2],
+-		"quotes":                      [2, "single"],
+-		"indent":                      [2, "tab"],
+-		"semi":                        [2, "always"],
+-		"yoda":                        [2, "never"]
+-	},
+-	"env": {
+-		"mocha": true,
+-		"node":  true
+-	}
+-}
+\ No newline at end of file
+diff --git a/.gitignore b/.gitignore
+index 1ca9571..091413e 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,2 +1,3 @@
+-node_modules/
++node_modules
+ npm-debug.log
++test/*.result.css
+diff --git a/.npmignore b/.npmignore
+deleted file mode 100644
+index 1aa2d59..0000000
+--- a/.npmignore
++++ /dev/null
+@@ -1,8 +0,0 @@
+-.gitignore
+-
+-node_modules/
+-
+-test/
+-.travis.yml
+-
+-gulpfile.js
+diff --git a/.tape.js b/.tape.js
+new file mode 100644
+index 0000000..a3959ee
+--- /dev/null
++++ b/.tape.js
+@@ -0,0 +1,22 @@
++module.exports = {
++	'postcss-pseudo-class-any-link': {
++		'basic': {
++			message: 'supports basic usage'
++		},
++		'basic:w-prefix': {
++			message: 'ignores basic usage when { prefix: "x" }',
++			options: {
++				prefix: 'x'
++			}
++		},
++		'prefix': {
++			message: 'supports prefix usage'
++		},
++		'prefix:w-prefix': {
++			message: 'supports prefix usage when { prefix: "x" }',
++			options: {
++				prefix: 'x'
++			}
++		}
++	}
++};
+diff --git a/.travis.yml b/.travis.yml
+index e1bd776..833d09d 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -1,5 +1,3 @@
+-sudo: false
+ language: node_js
+ node_js:
+-  - iojs
+-  - "0.12"
++  - stable
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index d7e43b6..cff52aa 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,23 +1,29 @@
+-## 1.0.0 (2015-09-01)
++# Changes to :any-link
++
++### 3.0.0 (December 5, 2016)
++
++- Updated: boilerplate conventions (Node v6.9.1 LTS)
++
++### 1.0.0 (September 1, 2015)
+ 
+ - Updated: PostCSS 5
+ - Updated: Develop dependencies
+ - Updated: ESLint configuration
+ 
+-## 0.3.0 (2015-06-16)
++### 0.3.0 (June 16, 2015)
+ 
+ - Added: Support for complex uses
+ - Added: Code documentation
+ - Changed: Coding conventions
+ 
+-## 0.2.1 (2015-06-16)
++### 0.2.1 (June 16, 2015)
+ 
+ - Fixed: postcss-selector-parser is included as a dependency
+ 
+-## 0.2.0 (2015-06-15)
++### 0.2.0 (June 15, 2015)
+ 
+ - Changed: use postcss-selector-parser
+ 
+-## 0.1.1 (2015-06-14)
++### 0.1.1 (June 14, 2015)
+ 
+ Initial release
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+new file mode 100644
+index 0000000..d245cc3
+--- /dev/null
++++ b/CONTRIBUTING.md
+@@ -0,0 +1,64 @@
++# Contributing to :any-link
++
++You want to help? You rock! Now, take a moment to be sure your contributions
++make sense to everyone else.
++
++## Reporting Issues
++
++Found a problem? Want a new feature?
++
++- See if your issue or idea has [already been reported].
++- Provide a [reduced test case] or a [live example].
++
++Remember, a bug is a _demonstrable problem_ caused by _our_ code.
++
++## Submitting Pull Requests
++
++Pull requests are the greatest contributions, so be sure they are focused in 
++scope, and do avoid unrelated commits.
++
++1. To begin, [fork this project], clone your fork, and add our upstream.
++	```bash
++	# Clone your fork of the repo into the current directory
++	git clone https://github.com/<your-user>/postcss-pseudo-class-any-link
++	# Navigate to the newly cloned directory
++	cd postcss-pseudo-class-any-link
++	# Assign the original repo to a remote called "upstream"
++	git remote add upstream https://github.com/jonathantneal/postcss-pseudo-class-any-link
++	# Install the tools necessary for development
++	npm install
++	```
++
++2. Create a branch for your feature or fix:
++	```bash
++	# Move into a new branch for a feature
++	git checkout -b feature/thing
++	```
++	```bash
++	# Move into a new branch for a fix
++	git checkout -b fix/something
++	```
++
++3. Be sure your code follows our practices.
++	```bash
++	# Test current code
++	npm run test
++	```
++
++4. Push your branch up to your fork:
++	```bash
++	# Push a feature branch
++	git push origin feature/thing
++	```
++	```bash
++	# Push a fix branch
++	git push origin fix/something
++	```
++
++5. Now [open a pull request] with a clear title and description.
++
++[already been reported]: issues
++[fork this project]:     fork
++[live example]:          http://codepen.io/pen
++[open a pull request]:   https://help.github.com/articles/using-pull-requests/
++[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+diff --git a/LICENSE.md b/LICENSE.md
+index 565f84e..34f902f 100644
+--- a/LICENSE.md
++++ b/LICENSE.md
+@@ -1,15 +1,106 @@
+-# CC0 1.0 Universal License
++# CC0 1.0 Universal
+ 
+-Public Domain Dedication
++## Statement of Purpose
+ 
+-The person(s) who associated a work with this deed has dedicated the work to the public domain by waiving all of his or her rights to the work worldwide under copyright law, including all related and neighboring rights, to the extent allowed by law.
++The laws of most jurisdictions throughout the world automatically confer
++exclusive Copyright and Related Rights (defined below) upon the creator and
++subsequent owner(s) (each and all, an “owner”) of an original work of
++authorship and/or a database (each, a “Work”).
+ 
+-You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.
++Certain owners wish to permanently relinquish those rights to a Work for the
++purpose of contributing to a commons of creative, cultural and scientific works
++(“Commons”) that the public can reliably and without fear of later claims of
++infringement build upon, modify, incorporate in other works, reuse and
++redistribute as freely as possible in any form whatsoever and for any purposes,
++including without limitation commercial purposes. These owners may contribute
++to the Commons to promote the ideal of a free culture and the further
++production of creative, cultural and scientific works, or to gain reputation or
++greater distribution for their Work in part through the use and efforts of
++others.
+ 
+-In no way are the patent or trademark rights of any person affected by CC0, nor are the rights that other persons may have in the work or in how the work is used, such as publicity or privacy rights.
++For these and/or other purposes and motivations, and without any expectation of
++additional consideration or compensation, the person associating CC0 with a
++Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
++and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
++publicly distribute the Work under its terms, with knowledge of his or her
++Copyright and Related Rights in the Work and the meaning and intended legal
++effect of CC0 on those rights.
+ 
+-Unless expressly stated otherwise, the person(s) who associated a work with this deed makes no warranties about the work, and disclaims liability for all uses of the work, to the fullest extent permitted by applicable law.
++1. Copyright and Related Rights. A Work made available under CC0 may be
++	 protected by copyright and related or neighboring rights (“Copyright and
++	 Related Rights”). Copyright and Related Rights include, but are not limited
++	 to, the following:
++	1. the right to reproduce, adapt, distribute, perform, display,
++		 communicate, and translate a Work;
++	2. moral rights retained by the original author(s) and/or performer(s);
++	3. publicity and privacy rights pertaining to a person’s image or likeness
++		 depicted in a Work;
++	4. rights protecting against unfair competition in regards to a Work,
++		 subject to the limitations in paragraph 4(i), below;
++	5. rights protecting the extraction, dissemination, use and reuse of data
++		 in a Work;
++	6. database rights (such as those arising under Directive 96/9/EC of the
++		 European Parliament and of the Council of 11 March 1996 on the legal
++		 protection of databases, and under any national implementation thereof,
++		 including any amended or successor version of such directive); and
++	7. other similar, equivalent or corresponding rights throughout the world
++		 based on applicable law or treaty, and any national implementations
++		 thereof.
+ 
+-When using or citing the work, you should not imply endorsement by the author or the affirmer.
++2. Waiver. To the greatest extent permitted by, but not in contravention of,
++applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++and Related Rights and associated claims and causes of action, whether now
++known or unknown (including existing as well as future claims and causes of
++action), in the Work (i) in all territories worldwide, (ii) for the maximum
++duration provided by applicable law or treaty (including future time
++extensions), (iii) in any current or future medium and for any number of
++copies, and (iv) for any purpose whatsoever, including without limitation
++commercial, advertising or promotional purposes (the “Waiver”). Affirmer makes
++the Waiver for the benefit of each member of the public at large and to the
++detriment of Affirmer’s heirs and successors, fully intending that such Waiver
++shall not be subject to revocation, rescission, cancellation, termination, or
++any other legal or equitable action to disrupt the quiet enjoyment of the Work
++by the public as contemplated by Affirmer’s express Statement of Purpose.
+ 
+-This is a [human-readable summary of the Legal Code](https://creativecommons.org/publicdomain/zero/1.0/) ([read the full text](https://creativecommons.org/publicdomain/zero/1.0/legalcode)).
++3. Public License Fallback. Should any part of the Waiver for any reason be
++judged legally invalid or ineffective under applicable law, then the Waiver
++shall be preserved to the maximum extent permitted taking into account
++Affirmer’s express Statement of Purpose. In addition, to the extent the Waiver
++is so judged Affirmer hereby grants to each affected person a royalty-free, non
++transferable, non sublicensable, non exclusive, irrevocable and unconditional
++license to exercise Affirmer’s Copyright and Related Rights in the Work (i) in
++all territories worldwide, (ii) for the maximum duration provided by applicable
++law or treaty (including future time extensions), (iii) in any current or
++future medium and for any number of copies, and (iv) for any purpose
++whatsoever, including without limitation commercial, advertising or promotional
++purposes (the “License”). The License shall be deemed effective as of the date
++CC0 was applied by Affirmer to the Work. Should any part of the License for any
++reason be judged legally invalid or ineffective under applicable law, such
++partial invalidity or ineffectiveness shall not invalidate the remainder of the
++License, and in such case Affirmer hereby affirms that he or she will not (i)
++exercise any of his or her remaining Copyright and Related Rights in the Work
++or (ii) assert any associated claims and causes of action with respect to the
++Work, in either case contrary to Affirmer’s express Statement of Purpose.
++
++4. Limitations and Disclaimers.
++		1. No trademark or patent rights held by Affirmer are waived, abandoned,
++			 surrendered, licensed or otherwise affected by this document.
++		2. Affirmer offers the Work as-is and makes no representations or
++			 warranties of any kind concerning the Work, express, implied, statutory
++			 or otherwise, including without limitation warranties of title,
++			 merchantability, fitness for a particular purpose, non infringement, or
++			 the absence of latent or other defects, accuracy, or the present or
++			 absence of errors, whether or not discoverable, all to the greatest
++			 extent permissible under applicable law.
++		3. Affirmer disclaims responsibility for clearing rights of other persons
++			 that may apply to the Work or any use thereof, including without
++			 limitation any person’s Copyright and Related Rights in the Work.
++			 Further, Affirmer disclaims responsibility for obtaining any necessary
++			 consents, permissions or other rights required for any use of the Work.
++		4. Affirmer understands and acknowledges that Creative Commons is not a
++			 party to this document and has no duty or obligation with respect to
++			 this CC0 or use of the Work.
++
++For more information, please see
++http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/README.md b/README.md
+index 1c1b68d..8b06851 100644
+--- a/README.md
++++ b/README.md
+@@ -1,8 +1,12 @@
+-# PostCSS Pseudo-Class Any-Link [![Build Status][ci-img]][ci]
++# :any-link <a href="https://github.com/postcss/postcss"><img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right"></a>
+ 
+-<img align="right" width="135" height="95" src="http://postcss.github.io/postcss/logo-leftp.png" title="Philosopher’s stone, logo of PostCSS">
++[![NPM Version][npm-img]][npm-url]
++[![Build Status][cli-img]][cli-url]
++[![Licensing][lic-image]][lic-url]
++[![Changelog][log-image]][log-url]
++[![Gitter Chat][git-image]][git-url]
+ 
+-[PostCSS Pseudo-Class Any-Link] is a [PostCSS] plugin that allows you to use the proposed [`:any-link`] pseudo-class in CSS.
++[:any-link] lets you to use the proposed [`:any-link`] pseudo-class in CSS.
+ 
+ `:any-link` simplifies selectors targeting links, as the naming of `:link` is misleading; it specifically means unvisited links only, rather than all links.
+ 
+@@ -25,32 +29,79 @@ From the [proposal]:
+ 
+ > The [`:any-link`] pseudo-class represents an element that acts as the source anchor of a hyperlink. It matches an element if the element would match [`:link`] or [`:visited`].
+ 
++## Options
++
++**prefix** (string): prepends a prefix (surrounded by dashes) to the pseudo-class, preventing any clash with native syntax.
++
++```js
++{
++	prefix: 'foo' // pseudo-class becomes :-foo-any-link
++}
++```
++
+ ## Usage
+ 
+-You just need to follow these two steps to use [PostCSS Pseudo-Class Any-Link]:
++Add [:any-link] to your build tool:
++
++```bash
++npm install :any-link --save-dev
++```
++
++#### Node
++
++```js
++require(':any-link').process(YOUR_CSS, { /* options */ });
++```
++
++#### PostCSS
++
++Add [PostCSS] to your build tool:
++
++```bash
++npm install postcss --save-dev
++```
++
++Load [:any-link] as a PostCSS plugin:
++
++```js
++postcss([
++	require(':any-link')({ /* options */ })
++]).process(YOUR_CSS, /* options */);
++```
++
++#### Gulp
+ 
+-1. Add [PostCSS] to your build tool.
+-2. Add [PostCSS Pseudo-Class Any-Link] as a PostCSS process.
++Add [Gulp PostCSS] to your build tool:
+ 
+-```sh
+-npm install postcss-pseudo-class-any-link --save-dev
++```bash
++npm install gulp-postcss --save-dev
+ ```
+ 
+-### Node
++Enable [:any-link] within your Gulpfile:
+ 
+ ```js
+-postcss([ require('postcss-pseudo-class-any-link')({ /* options */ }) ])
++var postcss = require('gulp-postcss');
++
++gulp.task('css', function () {
++	return gulp.src('./src/*.css').pipe(
++		postcss([
++			require(':any-link')({ /* options */ })
++		])
++	).pipe(
++		gulp.dest('.')
++	);
++});
+ ```
+ 
+-### Grunt
++#### Grunt
+ 
+ Add [Grunt PostCSS] to your build tool:
+ 
+-```sh
+-npm install postcss-pseudo-class-any-link --save-dev
++```bash
++npm install grunt-postcss --save-dev
+ ```
+ 
+-Enable [PostCSS Pseudo-Class Any-Link] within your Gruntfile:
++Enable [:any-link] within your Gruntfile:
+ 
+ ```js
+ grunt.loadNpmTasks('grunt-postcss');
+@@ -58,27 +109,17 @@ grunt.loadNpmTasks('grunt-postcss');
+ grunt.initConfig({
+ 	postcss: {
+ 		options: {
+-			processors: [
+-				require('postcss-pseudo-class-any-link')({ /* options */ })
++			use: [
++				require(':any-link')({ /* options */ })
+ 			]
+ 		},
+ 		dist: {
+-			src: 'css/*.css'
++			src: '*.css'
+ 		}
+ 	}
+ });
+ ```
+ 
+-### Options
+-
+-**prefix** (string): prepends a prefix (surrounded by dashes) to the pseudo-class, preventing any clash with native syntax.
+-
+-```js
+-{
+-	prefix: 'foo' // pseudo-class becomes :-foo-any-link
+-}
+-```
+-
+ ### Alternatives
+ 
+ Here are a few other ways to simulate the effect of [PostCSS Pseudo-Class Any-Link].
+@@ -99,12 +140,22 @@ Here are a few other ways to simulate the effect of [PostCSS Pseudo-Class Any-Li
+ :link, :visited { /* ... */ }
+ ```
+ 
++[npm-url]: https://www.npmjs.com/package/postcss-pseudo-class-any-link
++[npm-img]: https://img.shields.io/npm/v/postcss-pseudo-class-any-link.svg
++[cli-url]: https://travis-ci.org/jonathantneal/postcss-pseudo-class-any-link
++[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-pseudo-class-any-link.svg
++[lic-url]: LICENSE.md
++[lic-image]: https://img.shields.io/npm/l/postcss-pseudo-class-any-link.svg
++[log-url]: CHANGELOG.md
++[log-image]: https://img.shields.io/badge/changelog-md-blue.svg
++[git-url]: https://gitter.im/postcss/postcss
++[git-image]: https://img.shields.io/badge/chat-gitter-blue.svg
++
++[:any-link]: https://github.com/jonathantneal/postcss-pseudo-class-any-link
+ [`:any-link`]: http://dev.w3.org/csswg/selectors/#any-link-pseudo
+ [`:link`]: http://dev.w3.org/csswg/selectors/#link-pseudo
+ [`:visited`]: http://dev.w3.org/csswg/selectors/#visited-pseudo
+-[ci]: https://travis-ci.org/jonathantneal/postcss-pseudo-class-any-link
+-[ci-img]: https://travis-ci.org/jonathantneal/postcss-pseudo-class-any-link.svg
+-[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+-[PostCSS]: https://github.com/postcss/postcss
+-[PostCSS Pseudo-Class Any-Link]: https://github.com/jonathantneal/postcss-pseudo-class-any-link
+ [proposal]: http://dev.w3.org/csswg/selectors/
++[PostCSS]: https://github.com/postcss/postcss
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+diff --git a/gulpfile.js b/gulpfile.js
+deleted file mode 100644
+index 04d7d79..0000000
+--- a/gulpfile.js
++++ /dev/null
+@@ -1,18 +0,0 @@
+-var gulp = require('gulp');
+-
+-gulp.task('lint', function () {
+-	var eslint = require('gulp-eslint');
+-
+-	return gulp.src(['index.js', 'test/*.js', 'gulpfile.js'])
+-		.pipe(eslint())
+-		.pipe(eslint.format())
+-		.pipe(eslint.failAfterError());
+-});
+-
+-gulp.task('test', function () {
+-	var mocha = require('gulp-mocha');
+-
+-	return gulp.src('test/*.js', { read: false }).pipe(mocha());
+-});
+-
+-gulp.task('default', ['lint', 'test']);
+diff --git a/index.js b/index.js
+index 653f405..2a9c3b7 100644
+--- a/index.js
++++ b/index.js
+@@ -1,29 +1,41 @@
+-var postcss = require('postcss');
+-var postcssSelectorParser = require('postcss-selector-parser');
++// tooling
++const postcss = require('postcss');
++const parser = require('postcss-selector-parser');
+ 
+-module.exports = postcss.plugin('postcss-pseudo-class-any-link', function (opts) {
+-	// cache the any-link value
+-	var valueAnyLink = ':' + (opts && opts.prefix ? '-' + opts.prefix + '-' : '') + 'any-link';
++// plugin
++module.exports = postcss.plugin('postcss-pseudo-class-any-link', ({
++	prefix = ''
++}) => {
++	// dashed prefix
++	const dashedPrefix = prefix ? '-' + prefix + '-' : '';
+ 
+-	return function (css) {
++	// any-link value
++	const anyLinkValue = `:${ dashedPrefix }any-link`;
++
++	// selector pattern
++	const selectorMatch = new RegExp(`${ dashedPrefix }any-link`);
++
++	return (css) => {
+ 		// for each rule
+-		css.walkRules(function (rule) {
+-			var rawSelector = rule.raws.selector && rule.raws.selector.raw || rule.selector;
++		css.walkRules(selectorMatch, (rule) => {
++			const rawSelector = rule.raws.selector && rule.raws.selector.raw || rule.selector;
++
+ 			// workaround for https://github.com/postcss/postcss-selector-parser/issues/28#issuecomment-171910556
+ 			if (rawSelector[rawSelector.length - 1] === ':') {
+ 				return;
+ 			}
++
+ 			// update the selector
+-			rule.selector = postcssSelectorParser(function (selectors) {
++			rule.selector = parser((selectors) => {
+ 				// cache variables
+-				var node;
+-				var nodeIndex;
+-				var selector;
+-				var selectorLink;
+-				var selectorVisited;
++				let node;
++				let nodeIndex;
++				let selector;
++				let selectorLink;
++				let selectorVisited;
+ 
+ 				// cache the selector index
+-				var selectorIndex = -1;
++				let selectorIndex = -1;
+ 
+ 				// for each selector
+ 				while (selector = selectors.nodes[++selectorIndex]) {
+@@ -33,7 +45,7 @@ module.exports = postcss.plugin('postcss-pseudo-class-any-link', function (opts)
+ 					// for each node
+ 					while (node = selector.nodes[++nodeIndex]) {
+ 						// if the node value matches the any-link value
+-						if (node.value === valueAnyLink) {
++						if (node.value === anyLinkValue) {
+ 							// clone the selector
+ 							selectorLink = selector.clone();
+ 							selectorVisited = selector.clone();
+diff --git a/package.json b/package.json
+index 09df941..10ab136 100644
+--- a/package.json
++++ b/package.json
+@@ -1,29 +1,60 @@
+ {
+-	"name": "postcss-pseudo-class-any-link",
+-	"version": "1.0.0",
+-	"description": "Use the proposed :any-link pseudo-class in CSS",
+-	"keywords": ["postcss", "css", "postcss-plugin", "link", "visited", "any-link", "a", "area", "hyperlink", "href"],
+-	"author": "Jonathan Neal <jonathantneal@hotmail.com>",
+-	"license": "CC0-1.0",
+-	"bugs": {
+-		"url": "https://github.com/jonathantneal/postcss-pseudo-class-any-link/issues"
+-	},
+-	"homepage": "https://github.com/jonathantneal/postcss-pseudo-class-any-link",
+-	"repository": {
+-		"type": "git",
+-		"url": "https://github.com/jonathantneal/postcss-pseudo-class-any-link.git"
+-	},
+-	"dependencies": {
+-		"postcss": "^5.0.3",
+-		"postcss-selector-parser": "^1.1.4"
+-	},
+-	"devDependencies": {
+-		"chai": "^3.2.0",
+-		"gulp": "^3.9.0",
+-		"gulp-eslint": "^1.0.0",
+-		"gulp-mocha": "^2.1.3"
+-	},
+-	"scripts": {
+-		"test": "gulp"
+-	}
++  "name": "postcss-pseudo-class-any-link",
++  "version": "3.0.0",
++  "description": "Use the proposed :any-link pseudo-class in CSS",
++  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
++  "license": "CC0-1.0",
++  "repository": "jonathantneal/postcss-pseudo-class-any-link",
++  "homepage": "https://github.com/jonathantneal/postcss-pseudo-class-any-link#readme",
++  "bugs": "https://github.com/jonathantneal/postcss-pseudo-class-any-link/issues",
++  "main": "index.js",
++  "files": [
++    "index.js"
++  ],
++  "scripts": {
++    "lint": "echint && eslint index.js && jscs index.js",
++    "prepublish": "npm test",
++    "tape": "postcss-tape",
++    "test": "npm run lint && postcss-tape"
++  },
++  "engines": {
++    "node": ">=6.9.1"
++  },
++  "dependencies": {
++    "postcss": "^5.2.6",
++    "postcss-selector-parser": "^2.2.2"
++  },
++  "devDependencies": {
++    "echint": "^2.1.0",
++    "echint-config-dev": "1.0.0",
++    "eslint": "^3.11.1",
++    "eslint-config-dev": "1.0.0",
++    "jscs": "^3.0.7",
++    "jscs-config-dev": "1.0.1",
++    "postcss-tape": "1.0.1"
++  },
++  "echint": {
++    "extends": "dev"
++  },
++  "eslintConfig": {
++    "extends": "dev",
++    "parserOptions": {
++      "sourceType": "module"
++    }
++  },
++  "jscsConfig": {
++    "preset": "dev"
++  },
++  "keywords": [
++    "postcss",
++    "css",
++    "postcss-plugin",
++    "link",
++    "visited",
++    "any-link",
++    "a",
++    "area",
++    "hyperlink",
++    "href"
++  ]
+ }
+diff --git a/test/basic.css b/test/basic.css
+new file mode 100644
+index 0000000..e0ca560
+--- /dev/null
++++ b/test/basic.css
+@@ -0,0 +1,12 @@
++:any-link {
++	background: blue;
++}
++
++:any-link,
++ul a:any-link > span {
++	background: blue;
++}
++
++:any-link :any-link {
++	background: blue;
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+new file mode 100644
+index 0000000..806a50e
+--- /dev/null
++++ b/test/basic.expect.css
+@@ -0,0 +1,13 @@
++:link,:visited {
++	background: blue;
++}
++
++:link,:visited,
++ul a:link > span,
++ul a:visited > span {
++	background: blue;
++}
++
++:link :link,:link :visited,:visited :link,:visited :visited {
++	background: blue;
++}
+diff --git a/test/basic.w-prefix.expect.css b/test/basic.w-prefix.expect.css
+new file mode 100644
+index 0000000..e0ca560
+--- /dev/null
++++ b/test/basic.w-prefix.expect.css
+@@ -0,0 +1,12 @@
++:any-link {
++	background: blue;
++}
++
++:any-link,
++ul a:any-link > span {
++	background: blue;
++}
++
++:any-link :any-link {
++	background: blue;
++}
+diff --git a/test/prefix.css b/test/prefix.css
+new file mode 100644
+index 0000000..d8c7ac8
+--- /dev/null
++++ b/test/prefix.css
+@@ -0,0 +1,12 @@
++:-x-any-link {
++	background: blue;
++}
++
++:-x-any-link,
++ul a:-x-any-link > span {
++	background: blue;
++}
++
++:-x-any-link :-x-any-link {
++	background: blue;
++}
+diff --git a/test/prefix.expect.css b/test/prefix.expect.css
+new file mode 100644
+index 0000000..d8c7ac8
+--- /dev/null
++++ b/test/prefix.expect.css
+@@ -0,0 +1,12 @@
++:-x-any-link {
++	background: blue;
++}
++
++:-x-any-link,
++ul a:-x-any-link > span {
++	background: blue;
++}
++
++:-x-any-link :-x-any-link {
++	background: blue;
++}
+diff --git a/test/prefix.w-prefix.expect.css b/test/prefix.w-prefix.expect.css
+new file mode 100644
+index 0000000..806a50e
+--- /dev/null
++++ b/test/prefix.w-prefix.expect.css
+@@ -0,0 +1,13 @@
++:link,:visited {
++	background: blue;
++}
++
++:link,:visited,
++ul a:link > span,
++ul a:visited > span {
++	background: blue;
++}
++
++:link :link,:link :visited,:visited :link,:visited :visited {
++	background: blue;
++}
+diff --git a/test/test.js b/test/test.js
+deleted file mode 100644
+index 08070e5..0000000
+--- a/test/test.js
++++ /dev/null
+@@ -1,65 +0,0 @@
+-var postcss = require('postcss');
+-var expect  = require('chai').expect;
+-
+-var plugin = require('../');
+-
+-var test = function (input, output, opts, done) {
+-	postcss([ plugin(opts) ]).process(input).then(function (result) {
+-		expect(result.css).to.eql(output);
+-		expect(result.warnings()).to.be.empty;
+-		done();
+-	}).catch(function (error) {
+-		done(error);
+-	});
+-};
+-
+-describe('postcss-pseudo-class-any-link', function () {
+-	// standard tests
+-	it(':any-link', function (done) {
+-		test(':any-link { background: blue; }', ':link,:visited { background: blue; }', {}, done);
+-	});
+-
+-	it(':any-link, ul a:any-link > span', function (done) {
+-		test(':any-link, ul a:any-link > span { background: blue; }', ':link,:visited, ul a:link > span, ul a:visited > span { background: blue; }', {}, done);
+-	});
+-
+-	it(':any-link :any-link', function (done) {
+-		test(':any-link :any-link { background: blue; }', ':link :link,:link :visited,:visited :link,:visited :visited { background: blue; }', {}, done);
+-	});
+-
+-	// custom prefix tests
+-	it(':any-link (with "foo" prefix)', function (done) {
+-		test(':any-link { background: blue; }', ':any-link { background: blue; }', { prefix: 'foo' }, done);
+-	});
+-
+-	it(':-foo-any-link (with no prefix)', function (done) {
+-		test(':-foo-any-link { background: blue; }', ':-foo-any-link { background: blue; }', {}, done);
+-	});
+-
+-	it(':-foo-any-link (with "foo" prefix)', function (done) {
+-		test(':-foo-any-link { background: blue; }', ':link,:visited { background: blue; }', { prefix: 'foo' }, done);
+-	});
+-
+-	it(':-foo-any-link, ul a:-foo-any-link > span (with "foo" prefix)', function (done) {
+-		test(':-foo-any-link, ul a:-foo-any-link > span { background: blue; }', ':link,:visited, ul a:link > span, ul a:visited > span { background: blue; }', { prefix: 'foo' }, done);
+-	});
+-
+-	it(':-foo-any-link :-foo-any-link (with "foo" prefix)', function (done) {
+-		test(':-foo-any-link :-foo-any-link { background: blue; }', ':link :link,:link :visited,:visited :link,:visited :visited { background: blue; }', { prefix: 'foo' }, done);
+-	});
+-
+-	it(':any-link transforms to :link and :visited', function (done) {
+-		test('ul a:any-link > span { background: yellow; }', 'ul a:link > span,ul a:visited > span { background: yellow; }', {}, done);
+-	});
+-
+-	it(':any-link remains :any-link { prefix: "foo" }', function (done) {
+-		test('ul a:any-link > span { background: yellow; }', 'ul a:any-link > span { background: yellow; }', {
+-			prefix: 'foo'
+-		}, done);
+-	});
+-
+-	// regression tests
+-	it('--any-link remains --any-link', function (done) {
+-		test('--any-link: { background: blue; }', '--any-link: { background: blue; }', {}, done);
+-	});
+-});
+-- 
+2.33.1
+

@@ -1,0 +1,507 @@
+From a6499dfdd4422dc3b9b15a0078d7264d1d7430a9 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 23 Sep 2018 08:36:00 -0400
+Subject: [PATCH 23/29] 3.0.2
+
+---
+ .tape.js                     |  20 ++++--
+ CHANGELOG.md                 |   4 ++
+ index.js                     |  16 ++++-
+ lib/get-custom-properties.js |  57 +++++++++++++++
+ lib/import-from.js           | 115 ++++++++++++++++++++++++++++++
+ lib/import.js                | 131 -----------------------------------
+ lib/transform.js             |  12 ++--
+ package.json                 |  10 ++-
+ 8 files changed, 215 insertions(+), 150 deletions(-)
+ create mode 100644 lib/get-custom-properties.js
+ create mode 100644 lib/import-from.js
+ delete mode 100644 lib/import.js
+
+diff --git a/.tape.js b/.tape.js
+index 5c34e31..011fdb4 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -46,7 +46,7 @@ module.exports = {
+ 		'import:array-array': {
+ 			message: 'supports { importFrom: [["css", "test/import-root.css" ]] } usage',
+ 			options: {
+-				importFrom: [['css', 'test/import-root.css' ]]
++				importFrom: { from: 'test/import-root.css', type: 'css' }
+ 			},
+ 			expect: 'import.expect.css',
+ 			result: 'import.result.css'
+@@ -70,13 +70,19 @@ module.exports = {
+ 		'import:object': {
+ 			message: 'supports { importFrom: { customProperties: {} } } usage',
+ 			options: {
+-				importFrom: {
+-					customProperties: {
+-						'--color-blue': 'blue',
+-						'--color-red': 'red',
+-						'--color': 'var(--color-blue)'
++				importFrom: [
++					{
++						customProperties: {
++							'--color': 'var(--color-blue)'
++						}
++					},
++					{
++						customProperties: {
++							'--color-blue': 'blue',
++							'--color-red': 'red'
++						}
+ 					}
+-				}
++				]
+ 			},
+ 			expect: 'import.expect.css',
+ 			result: 'import.result.css'
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index f03bb5e..1070eac 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS color-mod() Function
+ 
++### 3.0.2 (September 23, 2018)
++
++- Fixed an incompatibility with other `importFrom` plugins
++
+ ### 3.0.1 (September 18, 2018)
+ 
+ - Fixed an issue with using the `transparent` color keyword
+diff --git a/index.js b/index.js
+index 15e80ec..a42d053 100644
+--- a/index.js
++++ b/index.js
+@@ -1,18 +1,30 @@
+-import { importCustomPropertiesFromSources, importCustomPropertiesFromCSSAST } from './lib/import';
++import getCustomProperties from './lib/get-custom-properties';
++import importCustomPropertiesFromSources from './lib/import-from';
+ import parser from 'postcss-values-parser';
+ import postcss from 'postcss';
+ import transformAST from './lib/transform';
+ 
+ export default postcss.plugin('postcss-color-mod-function', opts => {
++	// how unresolved functions and arguments should be handled (default: "throw")
+ 	const unresolvedOpt = String(Object(opts).unresolved || 'throw').toLowerCase();
++
++	// how transformed colors will be produced in CSS
+ 	const stringifierOpt = Object(opts).stringifier || (color => color.toLegacy());
++
++	// sources to import custom selectors from
+ 	const importFrom = [].concat(Object(opts).importFrom || []);
++
++	//  whether var() within color-mod() should use Custom Properties or var() fallback
+ 	const transformVarsOpt = 'transformVars' in Object(opts) ? opts.transformVars : true;
+ 
++	// promise any custom selectors are imported
+ 	const customPropertiesPromise = importCustomPropertiesFromSources(importFrom);
+ 
+ 	return async (root, result) => {
+-		const customProperties = Object.assign(await customPropertiesPromise, await importCustomPropertiesFromCSSAST(root));
++		const customProperties = Object.assign(
++			await customPropertiesPromise,
++			getCustomProperties(root, { preserve: true })
++		);
+ 
+ 		root.walkDecls(decl => {
+ 			const originalValue = decl.value;
+diff --git a/lib/get-custom-properties.js b/lib/get-custom-properties.js
+new file mode 100644
+index 0000000..62b25cc
+--- /dev/null
++++ b/lib/get-custom-properties.js
+@@ -0,0 +1,57 @@
++import valueParser from 'postcss-values-parser';
++
++// return custom selectors from the css root, conditionally removing them
++export default function getCustomProperties(root, opts) {
++	// initialize custom selectors
++	const customPropertiesFromHtmlElement = {};
++	const customPropertiesFromRootPsuedo = {};
++
++	// for each html or :root rule
++	root.nodes.slice().forEach(rule => {
++		const customPropertiesObject = isHtmlRule(rule)
++			? customPropertiesFromHtmlElement
++		: isRootRule(rule)
++			? customPropertiesFromRootPsuedo
++		: null;
++
++		// for each custom property
++		if (customPropertiesObject) {
++			rule.nodes.slice().forEach(decl => {
++				if (isCustomDecl(decl)) {
++					const { prop } = decl;
++
++					// write the parsed value to the custom property
++					customPropertiesObject[prop] = valueParser(decl.value).parse();
++
++					// conditionally remove the custom property declaration
++					if (!opts.preserve) {
++						decl.remove();
++					}
++				}
++			});
++
++			// conditionally remove the empty html or :root rule
++			if (!opts.preserve && isEmptyParent(rule)) {
++				rule.remove();
++			}
++		}
++	});
++
++	// return all custom properties, preferring :root properties over html properties
++	return { ...customPropertiesFromHtmlElement, ...customPropertiesFromRootPsuedo };
++}
++
++// match html and :root rules
++const htmlSelectorRegExp = /^html$/i;
++const rootSelectorRegExp = /^:root$/i;
++const customPropertyRegExp = /^--[A-z][\w-]*$/;
++
++// whether the node is an html or :root rule
++const isHtmlRule = node => node.type === 'rule' && htmlSelectorRegExp.test(node.selector) && Object(node.nodes).length;
++const isRootRule = node => node.type === 'rule' && rootSelectorRegExp.test(node.selector) && Object(node.nodes).length;
++
++// whether the node is an custom property
++const isCustomDecl = node => node.type === 'decl' && customPropertyRegExp.test(node.prop);
++
++// whether the node is a parent without children
++const isEmptyParent = node => Object(node.nodes).length === 0;
+diff --git a/lib/import-from.js b/lib/import-from.js
+new file mode 100644
+index 0000000..95a7488
+--- /dev/null
++++ b/lib/import-from.js
+@@ -0,0 +1,115 @@
++import fs from 'fs';
++import path from 'path';
++import postcss from 'postcss';
++import getCustomProperties from './get-custom-properties';
++
++/* Import Custom Properties from CSS AST
++/* ========================================================================== */
++
++function importCustomPropertiesFromCSSAST(root) {
++	return getCustomProperties(root, { preserve: true });
++}
++
++/* Import Custom Properties from CSS File
++/* ========================================================================== */
++
++async function importCustomPropertiesFromCSSFile(from) {
++	const css = await readFile(path.resolve(from));
++	const root = postcss.parse(css, { from: path.resolve(from) });
++
++	return importCustomPropertiesFromCSSAST(root);
++}
++
++/* Import Custom Properties from Object
++/* ========================================================================== */
++
++function importCustomPropertiesFromObject(object) {
++	const customProperties = Object.assign(
++		{},
++		Object(object).customProperties || Object(object)['custom-properties']
++	);
++
++	return customProperties;
++}
++
++/* Import Custom Properties from JSON file
++/* ========================================================================== */
++
++async function importCustomPropertiesFromJSONFile(from) {
++	const object = await readJSON(path.resolve(from));
++
++	return importCustomPropertiesFromObject(object);
++}
++
++/* Import Custom Properties from JS file
++/* ========================================================================== */
++
++async function importCustomPropertiesFromJSFile(from) {
++	const object = await import(path.resolve(from));
++
++	return importCustomPropertiesFromObject(object);
++}
++
++/* Import Custom Properties from Sources
++/* ========================================================================== */
++
++export default function importCustomPropertiesFromSources(sources) {
++	return sources.map(source => {
++		if (source instanceof Promise) {
++			return source;
++		} else if (source instanceof Function) {
++			return source();
++		}
++
++		// read the source as an object
++		const opts = source === Object(source) ? source : { from: String(source) };
++
++		// skip objects with Custom Properties
++		if (opts.customProperties || opts['custom-properties']) {
++			return opts
++		}
++
++		// source pathname
++		const from = String(opts.from || '');
++
++		// type of file being read from
++		const type = (opts.type || path.extname(from).slice(1)).toLowerCase();
++
++		return { type, from };
++	}).reduce(async (customProperties, source) => {
++		const { type, from } = await source;
++
++		if (type === 'ast') {
++			return Object.assign(await customProperties, importCustomPropertiesFromCSSAST(from));
++		}
++
++		if (type === 'css') {
++			return Object.assign(await customProperties, await importCustomPropertiesFromCSSFile(from));
++		}
++
++		if (type === 'js') {
++			return Object.assign(await customProperties, await importCustomPropertiesFromJSFile(from));
++		}
++
++		if (type === 'json') {
++			return Object.assign(await customProperties, await importCustomPropertiesFromJSONFile(from));
++		}
++
++		return Object.assign(await customProperties, await importCustomPropertiesFromObject(await source));
++	}, {});
++}
++
++/* Helper utilities
++/* ========================================================================== */
++
++const readFile = from => new Promise((resolve, reject) => {
++	fs.readFile(from, 'utf8', (error, result) => {
++		if (error) {
++			reject(error);
++		} else {
++			resolve(result);
++		}
++	});
++});
++
++const readJSON = async from => JSON.parse(await readFile(from));
+diff --git a/lib/import.js b/lib/import.js
+deleted file mode 100644
+index 47100bd..0000000
+--- a/lib/import.js
++++ /dev/null
+@@ -1,131 +0,0 @@
+-import fs from 'fs';
+-import path from 'path';
+-import postcss from 'postcss';
+-
+-/* Import Custom Properties from CSS AST
+-/* ========================================================================== */
+-
+-export function importCustomPropertiesFromCSSAST(root) {
+-	// custom properties can be written on html or :root
+-	const htmlCustomProperties = {};
+-	const rootCustomProperties = {};
+-
+-	// for each html and :root rule
+-	Object(root.nodes).filter(isHtmlOrRootRule).forEach(({ nodes, selector }) => {
+-		// for each custom property
+-		Object(nodes).filter(isCustomPropertyDecl).forEach(({ prop, value }) => {
+-			// write to the custom properties from either html or :root
+-			const customProperties = matchHtml.test(selector) ? htmlCustomProperties : rootCustomProperties;
+-
+-			customProperties[prop] = value;
+-		});
+-	});
+-
+-	// return all html and :root custom properties, where :root prevails
+-	return Object.assign({}, htmlCustomProperties, rootCustomProperties);
+-}
+-
+-/* Import Custom Properties from CSS File
+-/* ========================================================================== */
+-
+-async function importCustomPropertiesFromCSSFile(from) {
+-	const css = await readFile(path.resolve(from));
+-	const root = postcss.parse(css, { from: path.resolve(from) });
+-
+-	return importCustomPropertiesFromCSSAST(root);
+-}
+-
+-/* Import Custom Properties from Object
+-/* ========================================================================== */
+-
+-function importCustomPropertiesFromObject(object) {
+-	const customProperties = Object.assign({}, Object(object).customProperties || Object(object)['custom-properties']);
+-
+-	return customProperties;
+-}
+-
+-/* Import Custom Properties from JSON file
+-/* ========================================================================== */
+-
+-async function importCustomPropertiesFromJSONFile(from) {
+-	const object = await readJSON(path.resolve(from));
+-
+-	return importCustomPropertiesFromObject(object);
+-}
+-
+-/* Import Custom Properties from JS file
+-/* ========================================================================== */
+-
+-async function importCustomPropertiesFromJSFile(from) {
+-	const object = await import(path.resolve(from));
+-
+-	return importCustomPropertiesFromObject(object);
+-}
+-
+-/* Import Custom Properties from Sources
+-/* ========================================================================== */
+-
+-export function importCustomPropertiesFromSources(sources) {
+-	return sources.map(source => {
+-		if (typeof source === 'string') {
+-			if (isCSSPath(source)) {
+-				return [ 'css', source ]
+-			} else if (isJSPath(source)) {
+-				return [ 'js', source ]
+-			} else if (isJSONPath(source)) {
+-				return [ 'json', source ]
+-			}
+-		}
+-
+-		return Object(source);
+-	}).reduce(async (customProperties, source) => {
+-		const type = source[0];
+-		const from = source[1];
+-
+-		if (type === 'ast') {
+-			return Object.assign(customProperties, importCustomPropertiesFromCSSAST(from));
+-		}
+-
+-		if (type === 'css') {
+-			return Object.assign(customProperties, await importCustomPropertiesFromCSSFile(from));
+-		}
+-
+-		if (type === 'js') {
+-			return Object.assign(customProperties, await importCustomPropertiesFromJSFile(from));
+-		}
+-
+-		if (type === 'json') {
+-			return Object.assign(customProperties, await importCustomPropertiesFromJSONFile(from));
+-		}
+-
+-		return Object.assign(customProperties, importCustomPropertiesFromObject(source));
+-	}, {});
+-}
+-
+-/* Helper utilities
+-/* ========================================================================== */
+-
+-const matchCustomProperty = /^--\w/;
+-const matchHtml = /^html$/i;
+-const matchHtmlOrRoot = /^(html|:root)$/i;
+-const matchCSSPath = /\.\w*css/i;
+-const matchJSPath = /\.\w*js/i;
+-const matchJSONPath = /\.\w*json/i;
+-
+-const isCustomPropertyDecl = node => Object(node).type === 'decl' && matchCustomProperty.test(node.prop);
+-const isHtmlOrRootRule = node => Object(node).type === 'rule' && matchHtmlOrRoot.test(node.selector);
+-const isCSSPath = from => matchCSSPath.test(from);
+-const isJSPath = from => matchJSPath.test(from);
+-const isJSONPath = from => matchJSONPath.test(from);
+-
+-const readFile = from => new Promise((resolve, reject) => {
+-	fs.readFile(from, 'utf8', (error, result) => {
+-		if (error) {
+-			reject(error);
+-		} else {
+-			resolve(result);
+-		}
+-	});
+-});
+-
+-const readJSON = async from => JSON.parse(await readFile(from));
+diff --git a/lib/transform.js b/lib/transform.js
+index 4baa72c..8d1c4da 100644
+--- a/lib/transform.js
++++ b/lib/transform.js
+@@ -43,19 +43,23 @@ function transformVariables(node, opts) {
+ 			]);
+ 
+ 			if (variableName in opts.customProperties) {
+-				let customPropertyValue = String(opts.customProperties[variableName]);
++				let customPropertyValue = opts.customProperties[variableName];
+ 
+ 				if (looseVarMatch.test(customPropertyValue)) {
+-					const rootChildAST = parser(customPropertyValue, { loose: true }).parse();
++					if (typeof customPropertyValue === 'string') {
++						customPropertyValue = parser(customPropertyValue).parse();
++					}
++
++					const rootChildAST = customPropertyValue.clone();
+ 
+ 					transformVariables(rootChildAST, opts);
+ 
+-					customPropertyValue = opts.customProperties[variableName] = String(rootChildAST);
++					customPropertyValue = opts.customProperties[variableName] = rootChildAST;
+ 				}
+ 
+ 				child.replaceWith(parser.word({
+ 					raws: child.raws,
+-					value: customPropertyValue
++					value: String(customPropertyValue)
+ 				}));
+ 			} else if (fallbackNode) {
+ 				transformVariables(fallbackNode, opts);
+diff --git a/package.json b/package.json
+index f63e25b..97aa8dc 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-mod-function",
+-  "version": "3.0.1",
++  "version": "3.0.2",
+   "description": "Modify colors using the color-mod() function in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -18,13 +18,12 @@
+   "scripts": {
+     "prepublishOnly": "npm test",
+     "pretest": "rollup -c .rollup.js --silent",
+-    "test": "echo 'Running tests...'; npm run test:ec && npm run test:js && npm run test:tape",
+-    "test:ec": "echint --ignore index.bundle.js test",
++    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+     "test:js": "eslint *.js lib/*.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+-    "node": ">=4.0.0"
++    "node": ">=6.0.0"
+   },
+   "dependencies": {
+     "@csstools/convert-colors": "^1.4.0",
+@@ -36,12 +35,11 @@
+     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+     "@babel/preset-env": "^7.1.0",
+     "babel-eslint": "^9.0.0",
+-    "echint": "^4.0.1",
+     "eslint": "^5.6.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.0",
++    "rollup": "^0.66.2",
+     "rollup-plugin-babel": "^4.0.3"
+   },
+   "eslintConfig": {
+-- 
+2.33.1
+

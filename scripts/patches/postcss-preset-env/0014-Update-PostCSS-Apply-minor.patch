@@ -1,0 +1,25 @@
+From ac77af58a2bcbebb107a7e554dd55fb5b11b1bf4 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 16 Mar 2018 10:07:20 -0400
+Subject: [PATCH 14/84] Update PostCSS Apply (minor)
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index f31d8d1..24135d3 100644
+--- a/package.json
++++ b/package.json
+@@ -30,7 +30,7 @@
+     "caniuse-lite": "^1.0.30000810",
+     "cssdb": "^1.6.0",
+     "postcss": "^6.0.19",
+-    "postcss-apply": "^0.8.0",
++    "postcss-apply": "^0.9.0",
+     "postcss-attribute-case-insensitive": "^2.0.0",
+     "postcss-color-hex-alpha": "^3.0.0",
+     "postcss-color-mod-function": "^2.4.2",
+-- 
+2.33.1
+

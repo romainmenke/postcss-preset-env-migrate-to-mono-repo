@@ -1,0 +1,246 @@
+From c24f6a68bfc9d3ba61949f433cd0f1c84976d169 Mon Sep 17 00:00:00 2001
+From: Dmitry Semigradsky <semigradskyd@gmail.com>
+Date: Wed, 16 Jun 2021 05:11:06 +0300
+Subject: [PATCH 12/17] Support PostCSS 8 (#8)
+
+* Support PostCSS 8
+
+* use Rule
+
+* use rule.assign
+
+* update implementation
+
+Co-authored-by: romainmenke <romainmenke@gmail.com>
+Co-authored-by: Jonathan Neal <jonathantneal@hotmail.com>
+---
+ .gitignore            |  1 +
+ .rollup.js            |  5 ++-
+ .tape.js              |  2 +-
+ .travis.yml           |  3 +-
+ package.json          | 29 +++++++------
+ src/postcss.js        | 95 +++++++++++++++++++++++--------------------
+ test/basic.expect.css |  5 ---
+ 7 files changed, 73 insertions(+), 67 deletions(-)
+
+diff --git a/.gitignore b/.gitignore
+index 38193b1..b3a3c6d 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -4,6 +4,7 @@ node_modules
+ /index.*
+ /postcss.*
+ package-lock.json
++yarn.lock
+ *.log*
+ *.result.css
+ .*
+diff --git a/.rollup.js b/.rollup.js
+index 53e4f8b..12577f3 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -1,4 +1,4 @@
+-import babel from 'rollup-plugin-babel';
++import babel from '@rollup/plugin-babel';
+ import { terser } from 'rollup-plugin-terser';
+ 
+ const isCLI = String(process.env.NODE_ENV).includes('cli');
+@@ -20,9 +20,10 @@ const output = isCLI
+ 	{ file: 'index.mjs', format: 'esm', sourcemap: true }
+ ];
+ 
+-const targets = isCLI || isPostCSS || !isBrowser ? { node: 8 } : 'last 2 versions, not dead';
++const targets = isCLI || isPostCSS || !isBrowser ? { node: 10 } : 'last 2 versions, not dead';
+ const plugins = [
+ 	babel({
++		babelHelpers: 'bundled',
+ 		presets: [
+ 			['@babel/env', { targets }]
+ 		]
+diff --git a/.tape.js b/.tape.js
+index bb0efca..b944d93 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -8,4 +8,4 @@ module.exports = {
+ 			preserve: false
+ 		}
+ 	}
+-};
++}
+diff --git a/.travis.yml b/.travis.yml
+index 6ebed1d..b17d4a4 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,8 @@
+ language: node_js
+ 
+ node_js:
+-  - 8
++  - 12
++  - 14
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/package.json b/package.json
+index 3fb1c12..1af2085 100644
+--- a/package.json
++++ b/package.json
+@@ -37,23 +37,26 @@
+     "test:postcss": "postcss-tape --plugin postcss.js"
+   },
+   "engines": {
+-    "node": ">=8.0.0"
++    "node": ">= 12"
++  },
++  "peerDependencies": {
++    "postcss": ">= 8.1"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.17",
+-    "postcss-selector-parser": "^6.0.2"
++    "postcss-selector-parser": "^6"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.4.5",
+-    "@babel/preset-env": "^7.4.5",
+-    "babel-eslint": "^10.0.1",
+-    "cross-env": "^5.2.0",
+-    "eslint": "^5.16.0",
+-    "postcss-tape": "^5.0.0",
+-    "pre-commit": "^1.2.2",
+-    "rollup": "^1.14.6",
+-    "rollup-plugin-babel": "^4.3.2",
+-    "rollup-plugin-terser": "^5.0.0"
++    "@babel/core": "7.14.6",
++    "@babel/preset-env": "7.14.5",
++    "@rollup/plugin-babel": "5.3.0",
++    "babel-eslint": "10.0.1",
++    "cross-env": "7.0.3",
++    "eslint": "7.28.0",
++    "postcss": "8.3.4",
++    "postcss-tape": "6.0.1",
++    "pre-commit": "1.2.2",
++    "rollup": "2.51.2",
++    "rollup-plugin-terser": "7.0.2"
+   },
+   "eslintConfig": {
+     "env": {
+diff --git a/src/postcss.js b/src/postcss.js
+index 899bd91..334f954 100644
+--- a/src/postcss.js
++++ b/src/postcss.js
+@@ -1,48 +1,53 @@
+-import parser from 'postcss-selector-parser';
+-import postcss from 'postcss';
+-
+-const selectorRegExp = /:has/;
+-
+-export default postcss.plugin('css-has-pseudo', opts => {
+-	const preserve = Boolean('preserve' in Object(opts) ? opts.preserve : true);
+-
+-	return root => {
+-		root.walkRules(selectorRegExp, rule => {
+-			const modifiedSelector = parser(selectors => {
+-				selectors.walkPseudos(selector => {
+-					if (selector.value === ':has' && selector.nodes) {
+-						const isNotHas = checkIfParentIsNot(selector);
+-						selector.value = isNotHas ? ':not-has' : ':has';
+-
+-						const attribute = parser.attribute({
+-							attribute: encodeURIComponent(String(selector))
+-							.replace(/%3A/g, ':')
+-							.replace(/%5B/g, '[')
+-							.replace(/%5D/g, ']')
+-							.replace(/%2C/g, ',')
+-							.replace(/[():%[\],]/g, '\\$&')
+-						});
+-
+-						if (isNotHas) {
+-							selector.parent.parent.replaceWith(attribute);
+-						} else {
+-							selector.replaceWith(attribute);
+-						}
+-					}
+-				});
+-			}).processSync(rule.selector);
+-
+-			const clone = rule.clone({ selector: modifiedSelector });
+-
+-			if (preserve) {
+-				rule.before(clone);
++import parser from 'postcss-selector-parser'
++
++const creator = (/** @type {{ preserve: true | false }} */ opts) => {
++	opts = typeof opts === 'object' && opts || defaultOptions
++
++	/** Whether the original rule should be preserved. */
++	const shouldPreserve = Boolean('preserve' in opts ? opts.preserve : true)
++
++	return {
++		postcssPlugin: 'css-has-pseudo',
++		Rule: rule => {
++			if (rule.selector.includes(':has(')) {
++				const fallbackSelector = getFallbackSelector(rule.selector)
++
++				if (shouldPreserve) rule.cloneBefore({ selector: fallbackSelector })
++				else rule.assign({ selector: fallbackSelector })
++			}
++		},
++	}
++}
++
++creator.postcss = true
++
++const getFallbackSelector = (/** @type {string} */ selectorText) => parser(selectors => {
++	selectors.walkPseudos(selector => {
++		if (selector.value === ':has' && selector.nodes) {
++			const isNotHas = isParentInNotPseudo(selector)
++
++			selector.value = isNotHas ? ':not-has' : ':has'
++
++			const attribute = parser.attribute({
++				attribute: getEscapedCss(String(selector))
++			})
++
++			if (isNotHas) {
++				selector.parent.parent.replaceWith(attribute)
+ 			} else {
+-				rule.replaceWith(clone);
++				selector.replaceWith(attribute)
+ 			}
+-		});
+-	};
+-});
++		}
++	})
++}).processSync(selectorText)
+ 
+-function checkIfParentIsNot (selector) {
+-	return Object(Object(selector.parent).parent).type === 'pseudo' && selector.parent.parent.value === ':not';
+-}
++/** Default options. */
++const defaultOptions = { preserve: true }
++
++/** Returns the string as an escaped CSS identifier. */
++const getEscapedCss = (/** @type {string} */ value) => encodeURIComponent(value).replace(/%3A/g, ':').replace(/%5B/g, '[').replace(/%5D/g, ']').replace(/%2C/g, ',').replace(/[():%[\],]/g, '\\$&')
++
++/** Returns whether the selector is within a `:not` pseudo-class. */
++const isParentInNotPseudo = (selector) => selector.parent?.parent?.type === 'pseudo' && selector.parent.parent.value === ':not'
++
++export default creator
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 4d7a040..183689f 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -50,8 +50,3 @@ body:not(:has(:focus)) {
+ :ignore-has(:focus) {
+ 	order: 6;
+ }
+-
+-:has-ignore(:focus),
+-:ignore-has(:focus) {
+-	order: 6;
+-}
+-- 
+2.33.1
+

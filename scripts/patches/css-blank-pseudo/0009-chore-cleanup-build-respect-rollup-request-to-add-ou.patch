@@ -1,0 +1,45 @@
+From 40cecacac0c6dcf9045a1298c2aaeddedf833f95 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 16 Sep 2021 10:33:36 -0400
+Subject: [PATCH 09/13] chore: cleanup build (respect rollup request to add
+ output.exports)
+
+---
+ .rollup.js | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/.rollup.js b/.rollup.js
+index e2dc12d..8e95445 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -9,21 +9,21 @@ const targets = isCLI || isPostCSS || !isBrowser ? { node: 10 } : 'last 2 versio
+ 
+ const input = `src/${isCLI ? 'cli' : isPostCSS ? 'postcss' : isLegacy ? 'browser-legacy' : 'browser'}.js`;
+ const output = isCLI
+-	? { file: 'cli.js', format: 'cjs', sourcemap: true, strict: false }
++	? { file: 'cli.js', format: 'cjs', exports: 'default', sourcemap: true, strict: false }
+ : isBrowser && isLegacy
+-	? { file: 'browser-legacy.js', format: 'cjs', sourcemap: true, strict: false }
++	? { file: 'browser-legacy.js', format: 'cjs', exports: 'default', sourcemap: true, strict: false }
+ : isBrowser
+-	? { file: 'browser.js', format: 'cjs', sourcemap: true, strict: false }
++	? { file: 'browser.js', format: 'cjs', exports: 'default', sourcemap: true, strict: false }
+ : isPostCSS
+ 	? [
+-	{ file: 'postcss.js', format: 'cjs', sourcemap: true },
++	{ file: 'postcss.js', format: 'cjs', exports: 'default', sourcemap: true },
+ 	{ file: 'postcss.mjs', format: 'esm', sourcemap: true }
+ ] : isLegacy
+ 	? [
+-	{ file: 'legacy.js', format: 'cjs', sourcemap: true },
++	{ file: 'legacy.js', format: 'cjs', exports: 'default', sourcemap: true },
+ 	{ file: 'legacy.mjs', format: 'esm', sourcemap: true }
+ ] : [
+-	{ file: 'index.js', format: 'cjs', sourcemap: true },
++	{ file: 'index.js', format: 'cjs', exports: 'default', sourcemap: true },
+ 	{ file: 'index.mjs', format: 'esm', sourcemap: true }
+ ];
+ const plugins = [
+-- 
+2.33.1
+
