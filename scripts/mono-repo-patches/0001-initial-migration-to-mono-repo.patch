@@ -1,12 +1,11 @@
-From 02c7faa5c370c32f0c72afd82e8be2324f2d1693 Mon Sep 17 00:00:00 2001
+From 35bcd06c91f7c8924b568f3f857daae2d602ee6a Mon Sep 17 00:00:00 2001
 From: romainmenke <romainmenke@gmail.com>
 Date: Thu, 28 Oct 2021 12:24:08 +0200
-Subject: [PATCH] initial migration to mono repo
+Subject: [PATCH 1/2] initial migration to mono repo
 
  - add workspaces config
  - shared .editorconfig
  - ensure "npm install" succeeds
-
 ---
  .../.editorconfig => .editorconfig            |   0
  .gitignore                                    |   3 +

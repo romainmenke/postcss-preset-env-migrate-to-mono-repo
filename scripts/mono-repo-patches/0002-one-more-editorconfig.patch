@@ -1,0 +1,34 @@
+From 606625401c213feaa453a220b46578e0ec622625 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Thu, 28 Oct 2021 17:46:33 +0200
+Subject: [PATCH 2/2] one more editorconfig
+
+---
+ plugins/convert-colors/.editorconfig | 15 ---------------
+ 1 file changed, 15 deletions(-)
+ delete mode 100644 plugins/convert-colors/.editorconfig
+
+diff --git a/plugins/convert-colors/.editorconfig b/plugins/convert-colors/.editorconfig
+deleted file mode 100644
+index e06d798..0000000
+--- a/plugins/convert-colors/.editorconfig
++++ /dev/null
+@@ -1,15 +0,0 @@
+-root = true
+-
+-[*]
+-charset = utf-8
+-end_of_line = lf
+-indent_style = tab
+-insert_final_newline = true
+-trim_trailing_whitespace = true
+-
+-[*.md]
+-trim_trailing_whitespace = false
+-
+-[*.{json,md,yml}]
+-indent_size = 2
+-indent_style = space
+-- 
+2.33.1
+
