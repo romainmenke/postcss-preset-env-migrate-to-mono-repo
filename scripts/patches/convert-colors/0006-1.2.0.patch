@@ -1,0 +1,43 @@
+From 6436a01ecdf90b3df7cf19dc0a9ae258b095a9c2 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 24 Jan 2018 23:49:07 -0500
+Subject: [PATCH 06/11] 1.2.0
+
+---
+ CHANGELOG.md | 6 +++++-
+ package.json | 2 +-
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index dba0cbe..5763b89 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,8 +1,12 @@
+ # Changes to Convert Colors
+ 
++### 1.2.0 (January 24, 2018)
++
++- Export `rgb2lab`, `lab2rgb`, `hsl2lab`, etc. converters
++
+ ### 1.1.0 (January 22, 2018)
+ 
+-- Export `rgbtohue` converter
++- Export `rgb2hue` converter
+ 
+ ### 1.0.0 (January 21, 2018)
+ 
+diff --git a/package.json b/package.json
+index df95339..8791d9a 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@csstools/convert-colors",
+-  "version": "1.1.0",
++  "version": "1.2.0",
+   "description": "Convert colors between RGB, HSL, and HWB",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

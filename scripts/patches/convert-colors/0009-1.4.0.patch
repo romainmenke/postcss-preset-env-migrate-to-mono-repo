@@ -1,0 +1,965 @@
+From fd2a201643ca9e8a54738164d09b11018713fd5e Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 27 Jan 2018 19:01:54 -0500
+Subject: [PATCH 09/11] 1.4.0
+
+- Add LCH conversions
+- Allow fallbacks in RGB conversions (for gray conversions)
+- Add Lab and LCH tests
+- Simplify test array joining
+- Rename references from "LAB" to "Lab"
+- Place external reference comments at the bottom of a file
+---
+ .tape.js       |  56 ++++++--------
+ CHANGELOG.md   |   8 ++
+ README.md      |  24 ++++--
+ index.js       | 200 ++++++++++++++++++++++++++++++++++++++++++++-----
+ lib/hsl-hsv.js |  11 ++-
+ lib/hwb-hsv.js |  11 ++-
+ lib/lab-lch.js |  31 ++++++++
+ lib/lab-xyz.js |  17 +++--
+ lib/rgb-hsl.js |  21 ++++--
+ lib/rgb-hsv.js |  39 ++++++----
+ lib/rgb-hwb.js |  21 ++++--
+ lib/rgb-xyz.js |  10 +++
+ lib/util.js    |  74 +++++++++---------
+ package.json   |  11 ++-
+ 14 files changed, 404 insertions(+), 130 deletions(-)
+ create mode 100644 lib/lab-lch.js
+
+diff --git a/.tape.js b/.tape.js
+index 7f88031..b5fbb62 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -28,9 +28,9 @@ function test(opts) {
+ 
+ 				if (
+ 					// if the source color has changed
+-					source1.map(Math.round).join(',') !== result1.map(Math.round).join(',') &&
++					source1.map(Math.round).join() !== result1.map(Math.round).join() &&
+ 					// and the converted color has also changed
+-					source2.map(Math.round).join(',') !== result2.map(Math.round).join(',')
++					source2.map(Math.round).join() !== result2.map(Math.round).join()
+ 				) {
+ 					// log the faulty color conversion
+ 					console.log({ [from]: source1, [to]: source2, 'became': result1 });
+@@ -59,77 +59,69 @@ test({
+ 	channel3: { start: 0, stop: 100, increment: 4 }
+ });
+ 
+-// test HSL to RGB conversion
++// test RGB to Lab conversion
+ test({
+-	from: 'hsl', to: 'rgb',
+-	channel1: { start: 0, stop: 359, increment: 1 },
++	from: 'rgb', to: 'lab',
++	channel1: { start: 0, stop: 100, increment: 4 },
+ 	channel2: { start: 0, stop: 100, increment: 4 },
+ 	channel3: { start: 0, stop: 100, increment: 4 }
+ });
+ 
+-// test HSL to HWB conversion
++// test RGB to LCH conversion
+ test({
+-	from: 'hsl', to: 'hwb',
+-	channel1: { start: 0, stop: 359, increment: 1 },
++	from: 'rgb', to: 'lch',
++	channel1: { start: 0, stop: 100, increment: 4 },
+ 	channel2: { start: 0, stop: 100, increment: 4 },
+ 	channel3: { start: 0, stop: 100, increment: 4 }
+ });
+ 
+-// test HWB to RGB conversion
++// test HSL to RGB conversion
+ test({
+-	from: 'hwb', to: 'rgb',
++	from: 'hsl', to: 'rgb',
+ 	channel1: { start: 0, stop: 359, increment: 1 },
+ 	channel2: { start: 0, stop: 100, increment: 4 },
+ 	channel3: { start: 0, stop: 100, increment: 4 }
+-}, 10);
++});
+ 
+-// test HWB to HSL conversion
++// test HSL to HWB conversion
+ test({
+-	from: 'hwb', to: 'hsl',
++	from: 'hsl', to: 'hwb',
+ 	channel1: { start: 0, stop: 359, increment: 1 },
+ 	channel2: { start: 0, stop: 100, increment: 4 },
+ 	channel3: { start: 0, stop: 100, increment: 4 }
+-}, 10);
+-
+-// test RGB to XYZ conversion
+-test({
+-	from: 'rgb', to: 'xyz',
+-	channel1: { start: 0, stop: 100, increment: 4 },
+-	channel2: { start: 0, stop: 100, increment: 4 },
+-	channel3: { start: 0, stop: 100, increment: 4 }
+ });
+ 
+-// test RGB to LAB conversion
++// test HSL to Lab conversion
+ test({
+-	from: 'rgb', to: 'lab',
+-	channel1: { start: 0, stop: 100, increment: 4 },
++	from: 'hsl', to: 'lab',
++	channel1: { start: 0, stop: 359, increment: 1 },
+ 	channel2: { start: 0, stop: 100, increment: 4 },
+ 	channel3: { start: 0, stop: 100, increment: 4 }
+ });
+ 
+-// test HSL to XYZ conversion
++// test HSL to LCH conversion
+ test({
+-	from: 'hsl', to: 'xyz',
++	from: 'hsl', to: 'lch',
+ 	channel1: { start: 0, stop: 359, increment: 1 },
+ 	channel2: { start: 0, stop: 100, increment: 4 },
+ 	channel3: { start: 0, stop: 100, increment: 4 }
+ });
+ 
+-// test HSL to LAB conversion
++// test HWB to RGB conversion
+ test({
+-	from: 'hsl', to: 'lab',
++	from: 'hwb', to: 'rgb',
+ 	channel1: { start: 0, stop: 359, increment: 1 },
+ 	channel2: { start: 0, stop: 100, increment: 4 },
+ 	channel3: { start: 0, stop: 100, increment: 4 }
+-});
++}, 10);
+ 
+-// test HWB to XYZ conversion
++// test HWB to HSL conversion
+ test({
+-	from: 'hwb', to: 'xyz',
++	from: 'hwb', to: 'hsl',
+ 	channel1: { start: 0, stop: 359, increment: 1 },
+ 	channel2: { start: 0, stop: 100, increment: 4 },
+ 	channel3: { start: 0, stop: 100, increment: 4 }
+-});
++}, 10);
+ 
+ // exit with success
+ process.exit(0);
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 23ba347..6628480 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,13 @@
+ # Changes to Convert Colors
+ 
++### 1.4.0 (January 27, 2018)
++
++- Add LCH conversions
++- Allow fallbacks in RGB conversions (for gray conversions)
++- Add Lab and LCH tests
++- Simplify test array joining
++- Rename references from "LAB" to "Lab"
++
+ ### 1.3.0 (January 25, 2018)
+ 
+ - Export all converter combinations of `rgb`, `hsl`, `hwb`, `lab`, `hsv`,
+diff --git a/README.md b/README.md
+index 428c765..41ba111 100644
+--- a/README.md
++++ b/README.md
+@@ -4,7 +4,7 @@
+ [![Linux Build Status][cli-img]][cli-url]
+ [![Windows Build Status][win-img]][win-url]
+ 
+-[Convert Colors] converts colors between RGB, HSL, HWB, LAB, HSV, and XYZ.
++[Convert Colors] converts colors between RGB, HSL, HWB, Lab, LCH, HSV, and XYZ.
+ 
+ ```js
+ import convert from '@csstools/convert-colors';
+@@ -37,32 +37,44 @@ and returning an array of that same color in another color space.
+ - rgb2hsl(r, g, b)
+ - rgb2hwb(r, g, b)
+ - rgb2lab(r, g, b)
++- rgb2lch(r, g, b)
+ - rgb2hsv(r, g, b)
+ - rgb2xyz(r, g, b)
+ - hsl2rgb(h, s, l)
+ - hsl2hwb(h, s, l)
+ - hsl2lab(h, s, l)
++- hsl2lch(h, s, l)
+ - hsl2hsv(h, s, l)
+ - hsl2xyz(h, s, l)
+ - hwb2rgb(h, w, b)
+ - hwb2hsl(h, w, b)
+ - hwb2lab(h, w, b)
++- hwb2lch(h, w, b)
+ - hwb2hsv(h, w, b)
+ - hwb2xyz(h, w, b)
+ - lab2rgb(l, a, b)
+ - lab2hsl(l, a, b)
+ - lab2hwb(l, a, b)
++- lab2lch(l, a, b)
+ - lab2hsv(l, a, b)
+ - lab2xyz(l, a, b)
+-- hsv2rgb(h, s, b)
+-- hsv2hsl(h, s, b)
+-- hsv2hwb(h, s, b)
+-- hsv2lab(h, s, b)
+-- hsv2xyz(h, s, b)
++- lch2rgb(l, c, h)
++- lch2hsl(l, c, h)
++- lch2hwb(l, c, h)
++- lch2lab(l, c, h)
++- lch2hsv(l, c, h)
++- lch2xyz(l, c, h)
++- hsv2rgb(h, s, v)
++- hsv2hsl(h, s, v)
++- hsv2hwb(h, s, v)
++- hsv2lab(h, s, v)
++- hsv2lch(h, s, v)
++- hsv2xyz(h, s, v)
+ - xyz2rgb(x, y, z)
+ - xyz2hsl(x, y, z)
+ - xyz2hwb(x, y, z)
+ - xyz2lab(x, y, z)
++- xyz2lch(x, y, z)
+ - xyz2hsv(x, y, z)
+ 
+ [npm-url]: https://www.npmjs.com/package/@csstools/convert-colors
+diff --git a/index.js b/index.js
+index de9bcfd..15c2ef2 100644
+--- a/index.js
++++ b/index.js
+@@ -5,9 +5,10 @@ import { rgb2xyz, xyz2rgb } from './lib/rgb-xyz';
+ import { hsl2hsv, hsv2hsl } from './lib/hsl-hsv';
+ import { hwb2hsv, hsv2hwb } from './lib/hwb-hsv';
+ import { lab2xyz, xyz2lab } from './lib/lab-xyz';
++import { lab2lch, lch2lab } from './lib/lab-lch';
+ import { rgb2hue } from './lib/util';
+ 
+-/* Convert between RGB and LAB
++/* Convert between RGB and Lab
+ /* ========================================================================== */
+ 
+ function rgb2lab(rgbR, rgbG, rgbB) {
+@@ -24,7 +25,26 @@ function lab2rgb(labL, labA, labB) {
+ 	return [ rgbR, rgbG, rgbB ];
+ }
+ 
+-/* Convert between HWB and HSL
++/* Convert between RGB and LCH
++/* ========================================================================== */
++
++function rgb2lch(rgbR, rgbG, rgbB) {
++	const [ xyzX, xyzY, xyzZ ] = rgb2xyz(rgbR, rgbG, rgbB);
++	const [ labL, labA, labB ] = xyz2lab(xyzX, xyzY, xyzZ);
++	const [ lchL, lchC, lchH ] = lab2lch(labL, labA, labB);
++
++	return [ lchL, lchC, lchH ];
++}
++
++function lch2rgb(lchL, lchC, lchH) {
++	const [ labL, labA, labB ] = lch2lab(lchL, lchC, lchH);
++	const [ xyzX, xyzY, xyzZ ] = lab2xyz(labL, labA, labB);
++	const [ rgbR, rgbG, rgbB ] = xyz2rgb(xyzX, xyzY, xyzZ);
++
++	return [ rgbR, rgbG, rgbB ];
++}
++
++/* Convert between HSL and HWB
+ /* ========================================================================== */
+ 
+ function hwb2hsl(hwbH, hwbW, hwbB) {
+@@ -41,7 +61,7 @@ function hsl2hwb(hslH, hslS, hslL) {
+ 	return [ hslH, hwbW, hwbB ];
+ }
+ 
+-/* Convert between HSL and LAB
++/* Convert between HSL and Lab
+ /* ========================================================================== */
+ 
+ function hsl2lab(hslH, hslS, hslL) {
+@@ -52,10 +72,31 @@ function hsl2lab(hslH, hslS, hslL) {
+ 	return [ labL, labA, labB ];
+ }
+ 
+-function lab2hsl(labL, labA, labB) {
++function lab2hsl(labL, labA, labB, fallbackhue) {
++	const [ xyzX, xyzY, xyzZ ] = lab2xyz(labL, labA, labB);
++	const [ rgbR, rgbG, rgbB ] = xyz2rgb(xyzX, xyzY, xyzZ);
++	const [ hslH, hslS, hslL ] = rgb2hsl(rgbR, rgbG, rgbB, fallbackhue);
++
++	return [ hslH, hslS, hslL ];
++}
++
++/* Convert between HSL and LCH
++/* ========================================================================== */
++
++function hsl2lch(hslH, hslS, hslL) {
++	const [ rgbR, rgbG, rgbB ] = hsl2rgb(hslH, hslS, hslL);
++	const [ xyzX, xyzY, xyzZ ] = rgb2xyz(rgbR, rgbG, rgbB);
++	const [ labL, labA, labB ] = xyz2lab(xyzX, xyzY, xyzZ);
++	const [ lchL, lchC, lchH ] = lab2lch(labL, labA, labB);
++
++	return [ lchL, lchC, lchH ];
++}
++
++function lch2hsl(lchL, lchC, lchH, fallbackhue) {
++	const [ labL, labA, labB ] = lch2lab(lchL, lchC, lchH);
+ 	const [ xyzX, xyzY, xyzZ ] = lab2xyz(labL, labA, labB);
+ 	const [ rgbR, rgbG, rgbB ] = xyz2rgb(xyzX, xyzY, xyzZ);
+-	const [ hslH, hslS, hslL ] = rgb2hsl(rgbR, rgbG, rgbB);
++	const [ hslH, hslS, hslL ] = rgb2hsl(rgbR, rgbG, rgbB, fallbackhue);
+ 
+ 	return [ hslH, hslS, hslL ];
+ }
+@@ -70,14 +111,14 @@ function hsl2xyz(hslH, hslS, hslL) {
+ 	return [ xyzX, xyzY, xyzZ ];
+ }
+ 
+-function xyz2hsl(xyzX, xyzY, xyzZ) {
++function xyz2hsl(xyzX, xyzY, xyzZ, fallbackhue) {
+ 	const [ rgbR, rgbG, rgbB ] = xyz2rgb(xyzX, xyzY, xyzZ);
+-	const [ hslH, hslS, hslL ] = rgb2hsl(rgbR, rgbG, rgbB);
++	const [ hslH, hslS, hslL ] = rgb2hsl(rgbR, rgbG, rgbB, fallbackhue);
+ 
+ 	return [ hslH, hslS, hslL ];
+ }
+ 
+-/* Convert between HWB and LAB
++/* Convert between HWB and Lab
+ /* ========================================================================== */
+ 
+ function hwb2lab(hwbH, hwbW, hwbB) {
+@@ -88,10 +129,31 @@ function hwb2lab(hwbH, hwbW, hwbB) {
+ 	return [ labL, labA, labB ];
+ }
+ 
+-function lab2hwb(labL, labA, labB) {
++function lab2hwb(labL, labA, labB, fallbackhue) {
+ 	const [ xyzX, xyzY, xyzZ ] = lab2xyz(labL, labA, labB);
+ 	const [ rgbR, rgbG, rgbB ] = xyz2rgb(xyzX, xyzY, xyzZ);
+-	const [ hwbH, hwbW, hwbB ] = rgb2hwb(rgbR, rgbG, rgbB);
++	const [ hwbH, hwbW, hwbB ] = rgb2hwb(rgbR, rgbG, rgbB, fallbackhue);
++
++	return [ hwbH, hwbW, hwbB ];
++}
++
++/* Convert between HWB and LCH
++/* ========================================================================== */
++
++function hwb2lch(hwbH, hwbW, hwbB) {
++	const [ rgbR, rgbG, rgbB ] = hwb2rgb(hwbH, hwbW, hwbB);
++	const [ xyzX, xyzY, xyzZ ] = rgb2xyz(rgbR, rgbG, rgbB);
++	const [ labL, labA, labB ] = xyz2lab(xyzX, xyzY, xyzZ);
++	const [ lchL, lchC, lchH ] = lab2lch(labL, labA, labB);
++
++	return [ lchL, lchC, lchH ];
++}
++
++function lch2hwb(lchL, lchC, lchH, fallbackhue) {
++	const [ labL, labA, labB ] = lch2lab(lchL, lchC, lchH);
++	const [ xyzX, xyzY, xyzZ ] = lab2xyz(labL, labA, labB);
++	const [ rgbR, rgbG, rgbB ] = xyz2rgb(xyzX, xyzY, xyzZ);
++	const [ hwbH, hwbW, hwbB ] = rgb2hwb(rgbR, rgbG, rgbB, fallbackhue);
+ 
+ 	return [ hwbH, hwbW, hwbB ];
+ }
+@@ -106,14 +168,14 @@ function hwb2xyz(hwbH, hwbW, hwbB) {
+ 	return [ xyzX, xyzY, xyzZ ];
+ }
+ 
+-function xyz2hwb(xyzX, xyzY, xyzZ) {
++function xyz2hwb(xyzX, xyzY, xyzZ, fallbackhue) {
+ 	const [ rgbR, rgbG, rgbB ] = xyz2rgb(xyzX, xyzY, xyzZ);
+-	const [ hwbH, hwbW, hwbB ] = rgb2hwb(rgbR, rgbG, rgbB);
++	const [ hwbH, hwbW, hwbB ] = rgb2hwb(rgbR, rgbG, rgbB, fallbackhue);
+ 
+ 	return [ hwbH, hwbW, hwbB ];
+ }
+ 
+-/* Convert between HSV and LAB
++/* Convert between HSV and Lab
+ /* ========================================================================== */
+ 
+ function hsv2lab(hsvH, hsvS, hsvV) {
+@@ -124,10 +186,31 @@ function hsv2lab(hsvH, hsvS, hsvV) {
+ 	return [ labL, labA, labB ];
+ }
+ 
+-function lab2hsv(labL, labA, labB) {
++function lab2hsv(labL, labA, labB, fallbackhue) {
+ 	const [ xyzX, xyzY, xyzZ ] = lab2xyz(labL, labA, labB);
+ 	const [ rgbR, rgbG, rgbB ] = xyz2rgb(xyzX, xyzY, xyzZ);
+-	const [ hsvH, hsvS, hsvV ] = rgb2hsv(rgbR, rgbG, rgbB);
++	const [ hsvH, hsvS, hsvV ] = rgb2hsv(rgbR, rgbG, rgbB, fallbackhue);
++
++	return [ hsvH, hsvS, hsvV ];
++}
++
++/* Convert between HSV and LCH
++/* ========================================================================== */
++
++function hsv2lch(hsvH, hsvS, hsvV) {
++	const [ rgbR, rgbG, rgbB ] = hsv2rgb(hsvH, hsvS, hsvV);
++	const [ xyzX, xyzY, xyzZ ] = rgb2xyz(rgbR, rgbG, rgbB);
++	const [ labL, labA, labB ] = xyz2lab(xyzX, xyzY, xyzZ);
++	const [ lchL, lchC, lchH ] = lab2lch(labL, labA, labB);
++
++	return [ lchL, lchC, lchH ];
++}
++
++function lch2hsv(lchL, lchC, lchH, fallbackhue) {
++	const [ labL, labA, labB ] = lch2lab(lchL, lchC, lchH);
++	const [ xyzX, xyzY, xyzZ ] = lab2xyz(labL, labA, labB);
++	const [ rgbR, rgbG, rgbB ] = xyz2rgb(xyzX, xyzY, xyzZ);
++	const [ hsvH, hsvS, hsvV ] = rgb2hsv(rgbR, rgbG, rgbB, fallbackhue);
+ 
+ 	return [ hsvH, hsvS, hsvV ];
+ }
+@@ -142,51 +225,134 @@ function hsv2xyz(hsvH, hsvS, hsvV) {
+ 	return [ xyzX, xyzY, xyzZ ];
+ }
+ 
+-function xyz2hsv(xyzX, xyzY, xyzZ) {
++function xyz2hsv(xyzX, xyzY, xyzZ, fallbackhue) {
+ 	const [ rgbR, rgbG, rgbB ] = xyz2rgb(xyzX, xyzY, xyzZ);
+-	const [ hsvH, hsvS, hsvV ] = rgb2hsv(rgbR, rgbG, rgbB);
++	const [ hsvH, hsvS, hsvV ] = rgb2hsv(rgbR, rgbG, rgbB, fallbackhue);
+ 
+ 	return [ hsvH, hsvS, hsvV ];
+ }
+ 
++/* Convert between XYZ and LCH
++/* ========================================================================== */
++
++function xyz2lch(xyzX, xyzY, xyzZ) {
++	const [ labL, labA, labB ] = xyz2lab(xyzX, xyzY, xyzZ);
++	const [ lchL, lchC, lchH ] = lab2lch(labL, labA, labB);
++
++	return [ lchL, lchC, lchH ];
++}
++
++function lch2xyz(lchL, lchC, lchH) {
++	const [ labL, labA, labB ] = lch2lab(lchL, lchC, lchH);
++	const [ xyzX, xyzY, xyzZ ] = lab2xyz(labL, labA, labB);
++
++	return [ xyzX, xyzY, xyzZ ];
++}
++
+ /* All Conversions
+ /* ========================================================================== */
+ 
++export {
++	rgb2hsl,
++	rgb2hwb,
++	rgb2lab,
++	rgb2lch,
++	rgb2hsv,
++	rgb2xyz,
++
++	hsl2rgb,
++	hsl2hwb,
++	hsl2lab,
++	hsl2lch,
++	hsl2hsv,
++	hsl2xyz,
++
++	hwb2rgb,
++	hwb2hsl,
++	hwb2lab,
++	hwb2lch,
++	hwb2hsv,
++	hwb2xyz,
++
++	lab2rgb,
++	lab2hsl,
++	lab2hwb,
++	lab2lch,
++	lab2hsv,
++	lab2xyz,
++
++	lch2rgb,
++	lch2hsl,
++	lch2hwb,
++	lch2lab,
++	lch2hsv,
++	lch2xyz,
++
++	hsv2rgb,
++	hsv2hsl,
++	hsv2hwb,
++	hsv2lab,
++	hsv2lch,
++	hsv2xyz,
++
++	xyz2rgb,
++	xyz2hsl,
++	xyz2hwb,
++	xyz2lab,
++	xyz2lch,
++	xyz2hsv,
++
++	rgb2hue
++};
++
+ export default {
+ 	rgb2hsl,
+ 	rgb2hwb,
+ 	rgb2lab,
++	rgb2lch,
+ 	rgb2hsv,
+ 	rgb2xyz,
+ 
+ 	hsl2rgb,
+ 	hsl2hwb,
+ 	hsl2lab,
++	hsl2lch,
+ 	hsl2hsv,
+ 	hsl2xyz,
+ 
+ 	hwb2rgb,
+ 	hwb2hsl,
+ 	hwb2lab,
++	hwb2lch,
+ 	hwb2hsv,
+ 	hwb2xyz,
+ 
+ 	lab2rgb,
+ 	lab2hsl,
+ 	lab2hwb,
++	lab2lch,
+ 	lab2hsv,
+ 	lab2xyz,
+ 
++	lch2rgb,
++	lch2hsl,
++	lch2hwb,
++	lch2lab,
++	lch2hsv,
++	lch2xyz,
++
+ 	hsv2rgb,
+ 	hsv2hsl,
+ 	hsv2hwb,
+ 	hsv2lab,
++	hsv2lch,
+ 	hsv2xyz,
+ 
+ 	xyz2rgb,
+ 	xyz2hsl,
+ 	xyz2hwb,
+ 	xyz2lab,
++	xyz2lch,
+ 	xyz2hsv,
+ 
+ 	rgb2hue
+diff --git a/lib/hsl-hsv.js b/lib/hsl-hsv.js
+index ce4708d..cfed85d 100644
+--- a/lib/hsl-hsv.js
++++ b/lib/hsl-hsv.js
+@@ -1,8 +1,6 @@
+ /* Convert between HSL and HSV
+ /* ========================================================================== */
+ 
+-// https://gist.github.com/defims/0ca2ef8832833186ed396a2f8a204117
+-
+ export function hsl2hsv(hslH, hslS, hslL) {
+ 	const hsv1 = hslS * (hslL < 50 ? hslL : 100 - hslL) / 100;
+ 	const hsvS = hsv1 === 0 ? 0 : 2 * hsv1 / (hslL + hsv1) * 100;
+@@ -21,3 +19,12 @@ export function hsv2hsl(hsvH, hsvS, hsvV) {
+ 
+ 	return [ hsvH, hslS, hslV ];
+ }
++
++/*
++
++References
++----------
++
++- https://gist.github.com/defims/0ca2ef8832833186ed396a2f8a204117
++
++/* ========================================================================== */
+diff --git a/lib/hwb-hsv.js b/lib/hwb-hsv.js
+index 25cb9ee..e56ceca 100644
+--- a/lib/hwb-hsv.js
++++ b/lib/hwb-hsv.js
+@@ -1,8 +1,6 @@
+ /* Convert between HWB and HSV
+ /* ========================================================================== */
+ 
+-// https://en.wikipedia.org/wiki/HWB_color_model#Converting_to_and_from_HSV
+-
+ export function hwb2hsv(hwbH, hwbW, hwbB) {
+ 	const [ hsvH, hsvS, hsvV ] = [
+ 		hwbH,
+@@ -22,3 +20,12 @@ export function hsv2hwb(hsvH, hsvS, hsvV) {
+ 
+ 	return [ hwbH, hwbW, hwbB ];
+ }
++
++/*
++
++References
++----------
++
++- https://en.wikipedia.org/wiki/HWB_color_model#Converting_to_and_from_HSV
++
++/* ========================================================================== */
+diff --git a/lib/lab-lch.js b/lib/lab-lch.js
+new file mode 100644
+index 0000000..9628418
+--- /dev/null
++++ b/lib/lab-lch.js
+@@ -0,0 +1,31 @@
++/* Convert between Lab and XYZ
++/* ========================================================================== */
++
++export function lab2lch(labL, labA, labB) {
++	const [ lchC, lchH ] = [
++		Math.sqrt(Math.pow(labA, 2) + Math.pow(labB, 2)), // convert to chroma
++		Math.atan2(labB, labA) * 180 / Math.PI // convert to hue, in degrees
++	];
++
++	return [ labL, lchC, lchH ];
++}
++
++export function lch2lab(lchL, lchC, lchH) {
++	// convert to Lab a and b from the polar form
++	const [ labA, labB ] = [
++		lchC * Math.cos(lchH * Math.PI / 180),
++		lchC * Math.sin(lchH * Math.PI / 180)
++	];
++
++	return [ lchL, labA, labB ];
++}
++
++/*
++
++References
++----------
++
++- https://www.w3.org/TR/css-color-4/#lch-to-lab
++- https://www.w3.org/TR/css-color-4/#color-conversion-code
++
++/* ========================================================================== */
+diff --git a/lib/lab-xyz.js b/lib/lab-xyz.js
+index eddec82..c4dadfd 100644
+--- a/lib/lab-xyz.js
++++ b/lib/lab-xyz.js
+@@ -1,12 +1,8 @@
+ import { epsilon, kappa, wd50X, wd50Y, wd50Z, matrix } from './util';
+ 
+-/* Convert between LAB and XYZ
++/* Convert between Lab and XYZ
+ /* ========================================================================== */
+ 
+-// https://www.w3.org/TR/css-color-4/#rgb-to-lab
+-// https://www.w3.org/TR/css-color-4/#color-conversion-code
+-// https://www.easyrgb.com/en/math.php
+-
+ export function lab2xyz(labL, labA, labB) {
+ 	// compute f, starting with the luminance-related term
+ 	const f2 = (labL + 16) / 116;
+@@ -59,3 +55,14 @@ export function xyz2lab(xyzX, xyzY, xyzZ) {
+ 
+ 	return [ labL, labA, labB ];
+ }
++
++/*
++
++References
++----------
++
++- https://www.w3.org/TR/css-color-4/#rgb-to-lab
++- https://www.w3.org/TR/css-color-4/#color-conversion-code
++- https://www.easyrgb.com/en/math.php
++
++/* ========================================================================== */
+diff --git a/lib/rgb-hsl.js b/lib/rgb-hsl.js
+index 1c169d6..0c8283b 100644
+--- a/lib/rgb-hsl.js
++++ b/lib/rgb-hsl.js
+@@ -3,13 +3,8 @@ import { rgb2hue, rgb2value, rgb2whiteness, hue2rgb } from './util';
+ /* Convert between RGB and HSL
+ /* ========================================================================== */
+ 
+-// https://www.w3.org/TR/css-color-3/#hsl-color
+-// https://www.w3.org/TR/css-color-4/#hsl-to-rgb
+-// https://www.rapidtables.com/convert/color/rgb-to-hsl.html
+-// https://www.rapidtables.com/convert/color/hsl-to-rgb.html
+-
+-export function rgb2hsl(rgbR, rgbG, rgbB) {
+-	const hslH = rgb2hue(rgbR, rgbG, rgbB);
++export function rgb2hsl(rgbR, rgbG, rgbB, fallbackhue) {
++	const hslH = rgb2hue(rgbR, rgbG, rgbB, fallbackhue);
+ 	const hslV = rgb2value(rgbR, rgbG, rgbB);
+ 	const hslW = rgb2whiteness(rgbR, rgbG, rgbB);
+ 
+@@ -41,3 +36,15 @@ export function hsl2rgb(hslH, hslS, hslL) {
+ 
+ 	return [ rgbR, rgbG, rgbB ];
+ }
++
++/*
++
++References
++----------
++
++- https://www.w3.org/TR/css-color-3/#hsl-color
++- https://www.w3.org/TR/css-color-4/#hsl-to-rgb
++- https://www.rapidtables.com/convert/color/rgb-to-hsl.html
++- https://www.rapidtables.com/convert/color/hsl-to-rgb.html
++
++/* ========================================================================== */
+diff --git a/lib/rgb-hsv.js b/lib/rgb-hsv.js
+index 4b93c23..a19026b 100644
+--- a/lib/rgb-hsv.js
++++ b/lib/rgb-hsv.js
+@@ -3,12 +3,10 @@ import { rgb2value, rgb2whiteness, rgb2hue } from './util';
+ /* Convert between RGB and HSV
+ /* ========================================================================== */
+ 
+-// http://alvyray.com/Papers/CG/hsv2rgb.htm
+-
+-export function rgb2hsv(rgbR, rgbG, rgbB) {
++export function rgb2hsv(rgbR, rgbG, rgbB, fallbackhue) {
+ 	const hsvV = rgb2value(rgbR, rgbG, rgbB);
+ 	const hsvW = rgb2whiteness(rgbR, rgbG, rgbB);
+-	const hsvH = rgb2hue(rgbR, rgbG, rgbB);
++	const hsvH = rgb2hue(rgbR, rgbG, rgbB, fallbackhue);
+ 
+ 	// calculate saturation
+ 	const hsvS = hsvV === hsvW ? 0 : (hsvV - hsvW) / hsvV * 100;
+@@ -20,17 +18,30 @@ export function hsv2rgb(hsvH, hsvS, hsvV) {
+ 	const rgbI = Math.floor(hsvH / 60);
+ 
+ 	// calculate rgb parts
+-	const rgbF = (hsvH / 60 - rgbI) & 1 ? hsvH / 60 - rgbI : 1 - hsvH / 60 - rgbI;
++	const rgbF = hsvH / 60 - rgbI & 1 ? hsvH / 60 - rgbI : 1 - hsvH / 60 - rgbI;
+ 	const rgbM = hsvV * (100 - hsvS) / 100;
+ 	const rgbN = hsvV * (100 - hsvS * rgbF) / 100;
+ 
+-	switch (rgbI) {
+-		case 6:
+-		case 0: return [hsvV, rgbN, rgbM];
+-		case 1: return [rgbN, hsvV, rgbM];
+-		case 2: return [rgbM, hsvV, rgbN];
+-		case 3: return [rgbM, rgbN, hsvV];
+-		case 4: return [rgbN, rgbM, hsvV];
+-		case 5: return [hsvV, rgbM, rgbN];
+-	}
++	const [ rgbR, rgbG, rgbB ] = rgbI === 5
++		? [ hsvV, rgbM, rgbN ]
++	: rgbI === 4
++		? [ rgbN, rgbM, hsvV ]
++	: rgbI === 3
++		? [ rgbM, rgbN, hsvV ]
++	: rgbI === 2
++		? [ rgbM, hsvV, rgbN ]
++	: rgbI === 1
++		? [ rgbN, hsvV, rgbM ]
++	: [ hsvV, rgbN, rgbM ];
++
++	return [ rgbR, rgbG, rgbB ];
+ }
++
++/*
++
++References
++----------
++
++- http://alvyray.com/Papers/CG/hsv2rgb.htm
++
++/* ========================================================================== */
+diff --git a/lib/rgb-hwb.js b/lib/rgb-hwb.js
+index 9f68490..c1ff240 100644
+--- a/lib/rgb-hwb.js
++++ b/lib/rgb-hwb.js
+@@ -4,11 +4,8 @@ import { hsl2rgb } from './rgb-hsl';
+ /* Convert between RGB and HWB
+ /* ========================================================================== */
+ 
+-// https://www.w3.org/TR/css-color-4/#hwb-to-rgb
+-// http://alvyray.com/Papers/CG/hwb2rgb.htm
+-
+-export function rgb2hwb(rgbR, rgbG, rgbB) {
+-	const hwbH = rgb2hue(rgbR, rgbG, rgbB);
++export function rgb2hwb(rgbR, rgbG, rgbB, fallbackhue) {
++	const hwbH = rgb2hue(rgbR, rgbG, rgbB, fallbackhue);
+ 	const hwbW = rgb2whiteness(rgbR, rgbG, rgbB);
+ 	const hwbV = rgb2value(rgbR, rgbG, rgbB);
+ 	const hwbB = 100 - hwbV;
+@@ -16,10 +13,20 @@ export function rgb2hwb(rgbR, rgbG, rgbB) {
+ 	return [hwbH, hwbW, hwbB];
+ }
+ 
+-export function hwb2rgb(hwbH, hwbW, hwbB) {
+-	const [ rgbR, rgbG, rgbB ] = hsl2rgb(hwbH, 100, 50).map(
++export function hwb2rgb(hwbH, hwbW, hwbB, fallbackhue) {
++	const [ rgbR, rgbG, rgbB ] = hsl2rgb(hwbH, 100, 50, fallbackhue).map(
+ 		v => v * (100 - hwbW - hwbB) / 100 + hwbW
+ 	);
+ 
+ 	return [ rgbR, rgbG, rgbB ];
+ }
++
++/*
++
++References
++----------
++
++- https://www.w3.org/TR/css-color-4/#hwb-to-rgb
++- http://alvyray.com/Papers/CG/hwb2rgb.htm
++
++/* ========================================================================== */
+diff --git a/lib/rgb-xyz.js b/lib/rgb-xyz.js
+index 43fe61b..b3b5bbf 100644
+--- a/lib/rgb-xyz.js
++++ b/lib/rgb-xyz.js
+@@ -30,3 +30,13 @@ export function xyz2rgb(xyzX, xyzY, xyzZ) {
+ 
+ 	return [ rgbR, rgbG, rgbB ];
+ }
++
++/*
++
++References
++----------
++
++- https://www.w3.org/TR/css-color-4/#rgb-to-lab
++- https://www.w3.org/TR/css-color-4/#color-conversion-code
++
++/* ========================================================================== */
+diff --git a/lib/util.js b/lib/util.js
+index ad66b0f..801b400 100644
+--- a/lib/util.js
++++ b/lib/util.js
+@@ -1,50 +1,52 @@
+ /* Convert between RGB and Hue
+ /* ========================================================================== */
+ 
+-export function rgb2hue(rgbR, rgbG, rgbB) {
++export function rgb2hue(rgbR, rgbG, rgbB, fallbackhue = 0) {
+ 	const value     = rgb2value(rgbR, rgbG, rgbB);
+ 	const whiteness = rgb2whiteness(rgbR, rgbG, rgbB);
+-	const delta = value - whiteness;
+-
+-	// calculate segment
+-	const segment = value === rgbR
+-		? (rgbG - rgbB) / delta
+-	: value === rgbG
+-		? (rgbB - rgbR) / delta
+-	: (rgbR - rgbG) / delta;
+-
+-	// calculate shift
+-	const shift = value === rgbR
+-		? segment < 0
+-			? 360 / 60
+-			: 0 / 60
+-	: value === rgbG
+-		? 120 / 60
+-	: 240 / 60;
+-
+-	// calculate hue
+-	const hue = (segment + shift) * 60 || 0;
+-
+-	return hue;
++	const delta     = value - whiteness;
++
++	if (delta) {
++		// calculate segment
++		const segment = value === rgbR
++			? (rgbG - rgbB) / delta
++		: value === rgbG
++			? (rgbB - rgbR) / delta
++		: (rgbR - rgbG) / delta;
++
++		// calculate shift
++		const shift = value === rgbR
++			? segment < 0
++				? 360 / 60
++				: 0 / 60
++		: value === rgbG
++			? 120 / 60
++		: 240 / 60;
++
++		// calculate hue
++		const hue = (segment + shift) * 60;
++
++		return hue;
++	} else {
++		// otherwise return the fallback hue
++		return fallbackhue;
++	}
+ }
+ 
+ export function hue2rgb(t1, t2, hue) {
+-	// calculate ranged hue
++	// calculate the ranged hue
+ 	const rhue = hue < 0 ? hue + 360 : hue > 360 ? hue - 360 : hue;
+ 
+-	if (rhue * 6 < 360) {
+-		return t1 + (t2 - t1) * rhue / 60;
+-	}
+-
+-	if (rhue * 2 < 360) {
+-		return t2;
+-	}
+-
+-	if (rhue * 3 < 720) {
+-		return t1 + (t2 - t1) * (240 - rhue) / 60;
+-	}
++	// calculate the rgb value
++	const rgb = rhue * 6 < 360
++		? t1 + (t2 - t1) * rhue / 60
++	: rhue * 2 < 360
++		? t2
++	: rhue * 3 < 720
++		? t1 + (t2 - t1) * (240 - rhue) / 60
++	: t1;
+ 
+-	return t1;
++	return rgb;
+ }
+ 
+ /* RGB tooling
+diff --git a/package.json b/package.json
+index fed1de8..c84b33b 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@csstools/convert-colors",
+-  "version": "1.3.0",
++  "version": "1.4.0",
+   "description": "Convert colors between RGB, HSL, and HWB",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -47,10 +47,16 @@
+   "keywords": [
+     "colors",
+     "converts",
++    "conversions",
++    "converting",
+     "css",
+     "rgb",
+     "hsl",
+     "hwb",
++    "lab",
++    "lch",
++    "hsv",
++    "xyz",
+     "red",
+     "green",
+     "blue",
+@@ -58,6 +64,7 @@
+     "saturation",
+     "lightness",
+     "whiteness",
+-    "blackness"
++    "blackness",
++    "cie"
+   ]
+ }
+-- 
+2.33.1
+

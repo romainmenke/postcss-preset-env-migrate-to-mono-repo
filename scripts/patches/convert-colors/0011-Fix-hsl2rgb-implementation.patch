@@ -1,0 +1,39 @@
+From 0995a8e78a7c06da144de0e694d1fb8c8d7d709c Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 31 Jan 2019 08:40:13 -0500
+Subject: [PATCH 11/11] Fix hsl2rgb implementation
+
+---
+ src/rgb-hsv.js | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/src/rgb-hsv.js b/src/rgb-hsv.js
+index ff96cea..81c0b39 100644
+--- a/src/rgb-hsv.js
++++ b/src/rgb-hsv.js
+@@ -43,18 +43,19 @@ export function hsv2rgb(hsvH, hsvS, hsvV) {
+ 	const rgbF = hsvH / 60 - rgbI & 1 ? hsvH / 60 - rgbI : 1 - hsvH / 60 - rgbI;
+ 	const rgbM = hsvV * (100 - hsvS) / 100;
+ 	const rgbN = hsvV * (100 - hsvS * rgbF) / 100;
++	const rgbT = hsvV * (100 - (100 - rgbF) * hsvS / 100) / 100;
+ 
+ 	const [ rgbR, rgbG, rgbB ] = rgbI === 5
+ 		? [ hsvV, rgbM, rgbN ]
+ 	: rgbI === 4
+-		? [ rgbN, rgbM, hsvV ]
++		? [ rgbT, rgbM, hsvV ]
+ 	: rgbI === 3
+ 		? [ rgbM, rgbN, hsvV ]
+ 	: rgbI === 2
+-		? [ rgbM, hsvV, rgbN ]
++		? [ rgbM, hsvV, rgbT ]
+ 	: rgbI === 1
+ 		? [ rgbN, hsvV, rgbM ]
+-	: [ hsvV, rgbN, rgbM ];
++	: [ hsvV, rgbT, rgbM ];
+ 
+ 	return [ rgbR, rgbG, rgbB ];
+ }
+-- 
+2.33.1
+

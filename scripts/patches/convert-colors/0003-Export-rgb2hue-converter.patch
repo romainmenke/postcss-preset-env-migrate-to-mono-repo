@@ -1,0 +1,49 @@
+From 816910ad3c48b9f09042ca9e4286f1073d07a6da Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 22 Jan 2018 11:17:40 -0500
+Subject: [PATCH 03/11] Export rgb2hue converter
+
+---
+ README.md | 6 ++++++
+ index.js  | 3 ++-
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 0921337..823d222 100644
+--- a/README.md
++++ b/README.md
+@@ -17,6 +17,8 @@ convert.hsl2hwb(0, 0, 100); // [ 0, 100, 0 ]
+ 
+ convert.hwb2rgb(0, 100, 0); // [ 0, 0, 100 ]
+ convert.hwb2hsl(0, 100, 0); // [ 0, 0, 100 ]
++
++convert.rgb2hue(0, 0, 100); // 240
+ ```
+ 
+ ## Usage
+@@ -62,6 +64,10 @@ Converts **hue**, **whiteness**, and **blackness** to an array of **red**,
+ Converts **hue**, **whiteness**, and **blackness** to an array of **hue**,
+ **saturation**, and **lightness**.
+ 
++### rgb2hue
++
++Converts **red**, **green**, and **blue** to a **hue**.
++
+ [npm-url]: https://www.npmjs.com/package/@csstools/convert-colors
+ [npm-img]: https://img.shields.io/npm/v/@csstools/convert-colors.svg
+ [cli-url]: https://travis-ci.org/jonathantneal/convert-colors
+diff --git a/index.js b/index.js
+index 7392897..570d4a3 100644
+--- a/index.js
++++ b/index.js
+@@ -294,5 +294,6 @@ export default {
+ 	hwb2hsl: convertHWBtoHSL,
+ 	hwb2hsv: convertHWBtoHSV,
+ 	hsv2hsl: convertHSVtoHSL,
+-	hsv2hwb: convertHSVtoHWB
++	hsv2hwb: convertHSVtoHWB,
++	rgb2hue: convertRGBtoH
+ };
+-- 
+2.33.1
+

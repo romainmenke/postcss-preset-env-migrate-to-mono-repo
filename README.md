@@ -25,6 +25,10 @@ Update these files with new entries :
 - `scripts/get-patches-csstools.sh`
 - `scripts/rewrite-patches-csstools.sh`
 
+- `scripts/apply-patches-jonathantneal.sh`
+- `scripts/get-patches-jonathantneal.sh`
+- `scripts/rewrite-patches-jonathantneal.sh`
+
 ## Start with a clean slate (optional) :
 
 Run `rm -rf ./scripts/patches` and commit this.
@@ -36,7 +40,7 @@ It is more interesting to keep a diff of diffs in between runs.
 
 Inspect `scripts/get-patches.sh` and make sure it does no more or less than you want.
 
-Run : `bash scripts/get-patches-csstools.sh`
+Run : `bash scripts/get-patches-csstools.sh && bash scripts/get-patches-jonathantneal.sh`
 
 ## Patch the patches
 
@@ -44,13 +48,18 @@ Run : `bash scripts/get-patches-csstools.sh`
 
 Inspect `scripts/rewrite-issue-references.js` and make sure it does no more or less than you want.
 
-Run : `bash scripts/rewrite-patches-csstools.sh`
+Run : `bash scripts/rewrite-patches-csstools.sh && bash scripts/rewrite-patches-jonathantneal.sh`
 
 ## Apply patches to new mono repo
 
 Inspect `scripts/apply-patches.sh` and make sure it does no more or less than you want.
 
-Run : `NEW_REPO_LOCATION=<path-to-new-repo-dir> bash ./scripts/apply-patches-csstools.sh`
+Run :
+
+```sh
+NEW_REPO_LOCATION=<path-to-new-repo-dir> bash ./scripts/apply-patches-csstools.sh
+NEW_REPO_LOCATION=<path-to-new-repo-dir> bash ./scripts/apply-patches-jonathantneal.sh
+```
 
 
 ## From Single repo to Mono repo
