@@ -1,7 +1,7 @@
 From 1c879d30fb3f8c5355b538f0565d402ec2e44744 Mon Sep 17 00:00:00 2001
 From: Dmitry Semigradsky <semigradskyd@gmail.com>
 Date: Mon, 21 Sep 2020 16:57:07 +0300
-Subject: [PATCH 15/20] Support PostCSS 8 (#4)
+Subject: [PATCH 15/20] Support PostCSS 8 (csstools/postcss-place#4)
 
 ---
  .rollup.js   |   23 +-

@@ -1,7 +1,7 @@
 From 6fb7668fd18df40a0d1d8e78a5a11512c0afd12a Mon Sep 17 00:00:00 2001
 From: Armano <armano2@users.noreply.github.com>
 Date: Mon, 12 Jul 2021 03:35:27 +0200
-Subject: [PATCH 09/11] feat: upgrade to PostCSS 8 (#11)
+Subject: [PATCH 09/11] feat: upgrade to PostCSS 8 (csstools/postcss-image-set-function#11)
 
 * feat: upgrade to PostCSS 8
 

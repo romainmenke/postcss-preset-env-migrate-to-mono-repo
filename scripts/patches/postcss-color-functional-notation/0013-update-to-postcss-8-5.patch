@@ -1,7 +1,7 @@
 From c4d16ab54cd88f66d50c574396e174e990e45d1b Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Ren=C3=A9e=20Kooi?= <renee@kooi.me>
 Date: Tue, 15 Jun 2021 21:16:54 +0200
-Subject: [PATCH 13/15] update to postcss 8 (#5)
+Subject: [PATCH 13/15] update to postcss 8 (csstools/postcss-color-functional-notation#5)
 
 * update to postcss 8
 

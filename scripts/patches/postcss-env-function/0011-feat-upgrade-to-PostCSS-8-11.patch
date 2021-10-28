@@ -1,7 +1,7 @@
 From 0b6b738a1f72d20e5f7b16c6b99c9f79f935aac5 Mon Sep 17 00:00:00 2001
 From: Armano <armano2@users.noreply.github.com>
 Date: Mon, 15 Mar 2021 04:36:20 +0100
-Subject: [PATCH 11/14] feat: upgrade to PostCSS 8 (#11)
+Subject: [PATCH 11/14] feat: upgrade to PostCSS 8 (csstools/postcss-env-function#11)
 
 ---
  .rollup.js                     |  2 +-

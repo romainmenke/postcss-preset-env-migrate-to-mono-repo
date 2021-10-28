@@ -1,7 +1,7 @@
 From bca18612b3846714916626cf49abb334d0cf1557 Mon Sep 17 00:00:00 2001
 From: Yvain Liechti <yvain_liechti@ultimatesoftware.com>
 Date: Mon, 5 Jul 2021 16:05:57 +0200
-Subject: [PATCH 12/15] update to postCSS 8 (#13)
+Subject: [PATCH 12/15] update to postCSS 8 (csstools/postcss-focus-visible#13)
 
 ---
  INSTALL.md    |  2 +-

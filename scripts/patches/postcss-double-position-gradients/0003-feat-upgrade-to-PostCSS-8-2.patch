@@ -1,7 +1,7 @@
 From b9ca23cebaf0ae4454b189530842ae83eff11ad1 Mon Sep 17 00:00:00 2001
 From: Armano <armano2@users.noreply.github.com>
 Date: Mon, 5 Jul 2021 16:05:23 +0200
-Subject: [PATCH 3/4] feat: upgrade to PostCSS 8 (#2)
+Subject: [PATCH 3/4] feat: upgrade to PostCSS 8 (csstools/postcss-double-position-gradients#2)
 
 ---
  .gitignore                     |  2 --

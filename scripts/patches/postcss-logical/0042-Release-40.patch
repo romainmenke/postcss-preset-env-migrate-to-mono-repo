@@ -1,7 +1,7 @@
 From d55db1b5e5db97d88705706a7edf480362299e7b Mon Sep 17 00:00:00 2001
 From: Jonas Thelemann <e-mail@jonas-thelemann.de>
 Date: Fri, 17 Sep 2021 15:52:15 +0200
-Subject: [PATCH 42/43] Release (#40)
+Subject: [PATCH 42/43] Release (csstools/postcss-logical#40)
 
 * ci: switch to actions
 

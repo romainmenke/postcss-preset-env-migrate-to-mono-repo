@@ -1,7 +1,7 @@
 From c0074ca48d68a52e1331e97dbe522942750cc77c Mon Sep 17 00:00:00 2001
 From: Jonas Thelemann <e-mail@jonas-thelemann.de>
 Date: Fri, 17 Sep 2021 15:32:08 +0200
-Subject: [PATCH 12/15] Release (#9)
+Subject: [PATCH 12/15] Release (csstools/postcss-focus-within#9)
 
 * ci: switch to actions
 

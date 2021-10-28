@@ -1,7 +1,7 @@
 From 89f04548e9e4025a3ccd3b06612c29101a856b15 Mon Sep 17 00:00:00 2001
 From: Jonas Thelemann <e-mail@jonas-thelemann.de>
 Date: Fri, 17 Sep 2021 15:08:35 +0200
-Subject: [PATCH 08/10] Release (#5)
+Subject: [PATCH 08/10] Release (csstools/postcss-gap-properties#5)
 
 * ci: switch to actions
 

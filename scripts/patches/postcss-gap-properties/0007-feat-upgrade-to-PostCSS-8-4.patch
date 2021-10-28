@@ -1,7 +1,7 @@
 From 332595d17a923577075db34e69b9484559cfa0fc Mon Sep 17 00:00:00 2001
 From: Armano <armano2@users.noreply.github.com>
 Date: Tue, 6 Jul 2021 02:07:41 +0200
-Subject: [PATCH 07/10] feat: upgrade to PostCSS 8 (#4)
+Subject: [PATCH 07/10] feat: upgrade to PostCSS 8 (csstools/postcss-gap-properties#4)
 
 ---
  .gitignore   |  1 -

@@ -1,7 +1,7 @@
 From ac780c017591ff1b8e7ae20d285cca2fdc1d7e54 Mon Sep 17 00:00:00 2001
 From: Yvain Liechti <ryuran@gmail.com>
 Date: Mon, 5 Jul 2021 16:09:05 +0200
-Subject: [PATCH 11/15] update to postCSS 8 (#8)
+Subject: [PATCH 11/15] update to postCSS 8 (csstools/postcss-focus-within#8)
 
 ---
  README.md    |  2 +-

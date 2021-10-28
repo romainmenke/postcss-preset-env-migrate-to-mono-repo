@@ -1,7 +1,7 @@
 From 158a265a59fa6763ca48c5272b60b512bfe7c903 Mon Sep 17 00:00:00 2001
 From: Jonas Thelemann <e-mail@jonas-thelemann.de>
 Date: Fri, 17 Sep 2021 16:00:41 +0200
-Subject: [PATCH 19/20] Release (#10)
+Subject: [PATCH 19/20] Release (csstools/postcss-place#10)
 
 * ci: switch to actions
 

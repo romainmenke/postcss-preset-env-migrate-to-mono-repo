@@ -1,7 +1,7 @@
 From 31d00b469328464477c63a8680386beddc7130c8 Mon Sep 17 00:00:00 2001
 From: Romain Menke <11521496+romainmenke@users.noreply.github.com>
 Date: Mon, 12 Jul 2021 03:33:52 +0200
-Subject: [PATCH 6/8] Support PostCSS 8 (#4)
+Subject: [PATCH 6/8] Support PostCSS 8 (csstools/postcss-overflow-shorthand#4)
 
 * Support PostCSS 8
 

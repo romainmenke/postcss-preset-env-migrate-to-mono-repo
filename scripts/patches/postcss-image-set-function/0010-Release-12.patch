@@ -1,7 +1,7 @@
 From a10c7a99cd355fe57ee1fa8dff87ed046477cf1b Mon Sep 17 00:00:00 2001
 From: Jonas Thelemann <e-mail@jonas-thelemann.de>
 Date: Fri, 17 Sep 2021 15:51:57 +0200
-Subject: [PATCH 10/11] Release (#12)
+Subject: [PATCH 10/11] Release (csstools/postcss-image-set-function#12)
 
 * ci: switch to actions
 

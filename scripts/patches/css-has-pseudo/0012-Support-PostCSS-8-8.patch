@@ -1,7 +1,7 @@
 From c24f6a68bfc9d3ba61949f433cd0f1c84976d169 Mon Sep 17 00:00:00 2001
 From: Dmitry Semigradsky <semigradskyd@gmail.com>
 Date: Wed, 16 Jun 2021 05:11:06 +0300
-Subject: [PATCH 12/17] Support PostCSS 8 (#8)
+Subject: [PATCH 12/17] Support PostCSS 8 (csstools/css-has-pseudo#8)
 
 * Support PostCSS 8
 

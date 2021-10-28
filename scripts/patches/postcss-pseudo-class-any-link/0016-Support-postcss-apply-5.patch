@@ -1,13 +1,13 @@
 From 0e8c8d844d51adc164c296c4456627bd2959e147 Mon Sep 17 00:00:00 2001
 From: Texas Toland <texas@appship.it>
 Date: Wed, 29 Jun 2016 14:37:21 -0600
-Subject: [PATCH 16/30] Support postcss-apply (#5)
+Subject: [PATCH 16/30] Support postcss-apply (csstools/postcss-pseudo-class-any-link#5)
 
 * Add failing test
 
 * Pass test
 
-Fix #4. See postcss/postcss-selector-parser#28.
+Fix csstools/postcss-pseudo-class-any-link#4. See postcss/postcss-selector-parser#28.
 ---
  index.js     | 7 ++++++-
  test/test.js | 5 +++++

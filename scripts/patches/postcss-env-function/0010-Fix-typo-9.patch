@@ -1,7 +1,7 @@
 From 7f31fda6012f02e62a7eb81745ca071e9d84da1d Mon Sep 17 00:00:00 2001
 From: Danny Andrews <danny-andrews@users.noreply.github.com>
 Date: Tue, 12 Jan 2021 02:58:56 -0600
-Subject: [PATCH 10/14] Fix typo (#9)
+Subject: [PATCH 10/14] Fix typo (csstools/postcss-env-function#9)
 
 ---
  README.md | 2 +-

@@ -1,7 +1,7 @@
 From 51298aeff4a80a36ba6dc000b2fb68685fd26688 Mon Sep 17 00:00:00 2001
 From: Armano <armano2@users.noreply.github.com>
 Date: Tue, 6 Jul 2021 02:07:32 +0200
-Subject: [PATCH 28/30] feat: upgrade to PostCSS 8 (#11)
+Subject: [PATCH 28/30] feat: upgrade to PostCSS 8 (csstools/postcss-pseudo-class-any-link#11)
 
 ---
  .rollup.js   | 16 ----------------

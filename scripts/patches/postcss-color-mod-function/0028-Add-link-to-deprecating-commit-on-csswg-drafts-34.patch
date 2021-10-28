@@ -1,7 +1,7 @@
 From 19deef4f9ba94c1ad6693d4feab5400ac3053bec Mon Sep 17 00:00:00 2001
 From: Wilhelm Behncke <2522299+grebaldi@users.noreply.github.com>
 Date: Sun, 12 Apr 2020 23:36:35 +0200
-Subject: [PATCH 28/29] Add link to deprecating commit on csswg-drafts (#34)
+Subject: [PATCH 28/29] Add link to deprecating commit on csswg-drafts (csstools/postcss-color-mod-function#34)
 
 To give a bit more explanation for why the `color-mod` function
 has been removed (temporarily) from CSS Color Module Level 4.

@@ -1,7 +1,7 @@
 From 8ef420ddb7ca65880df2a5b998fdc79ab172b714 Mon Sep 17 00:00:00 2001
 From: Adam Argyle <argyle@google.com>
 Date: Fri, 10 Apr 2020 11:10:45 -0700
-Subject: [PATCH 10/19] Use percentage syntax (#3)
+Subject: [PATCH 10/19] Use percentage syntax (csstools/postcss-lab-function#3)
 
 ---
  index.js                            |  5 +++--

@@ -1,7 +1,7 @@
 From 58dad66e9fbcdf050570c1d2ecdd3b088b7c36e3 Mon Sep 17 00:00:00 2001
 From: Jonas Thelemann <e-mail@jonas-thelemann.de>
 Date: Fri, 17 Sep 2021 15:32:04 +0200
-Subject: [PATCH 4/4] Releases (#3)
+Subject: [PATCH 4/4] Releases (csstools/postcss-double-position-gradients#3)
 
 * ci: switch to actions
 

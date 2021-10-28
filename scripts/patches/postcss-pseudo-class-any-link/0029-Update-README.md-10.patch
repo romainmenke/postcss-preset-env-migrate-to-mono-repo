@@ -1,7 +1,7 @@
 From 567f6c2037c8a0955fe3632b0b694dfa34640a7a Mon Sep 17 00:00:00 2001
 From: Dmitry Semigradsky <semigradskyd@gmail.com>
 Date: Sat, 18 Sep 2021 02:46:31 +0300
-Subject: [PATCH 29/30] Update README.md (#10)
+Subject: [PATCH 29/30] Update README.md (csstools/postcss-pseudo-class-any-link#10)
 
 Add cool 'Can I use' table
 ---

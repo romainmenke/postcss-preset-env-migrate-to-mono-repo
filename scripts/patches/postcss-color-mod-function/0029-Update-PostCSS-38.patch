@@ -1,7 +1,7 @@
 From 4411bf4a9f2758395b0ebf2287c81971faa4f6f3 Mon Sep 17 00:00:00 2001
 From: Peiling Jiang <25191575+peilingjiang@users.noreply.github.com>
 Date: Mon, 14 Jun 2021 14:53:13 -0400
-Subject: [PATCH 29/29] Update PostCSS (#38)
+Subject: [PATCH 29/29] Update PostCSS (csstools/postcss-color-mod-function#38)
 
 * migrate to postcss 8.0
 

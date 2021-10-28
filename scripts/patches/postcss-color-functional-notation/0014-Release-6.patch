@@ -1,7 +1,7 @@
 From fc01800aa542d76d6563215a1bb250e1b70915eb Mon Sep 17 00:00:00 2001
 From: Jonas Thelemann <e-mail@jonas-thelemann.de>
 Date: Fri, 17 Sep 2021 15:21:42 +0200
-Subject: [PATCH 14/15] Release (#6)
+Subject: [PATCH 14/15] Release (csstools/postcss-color-functional-notation#6)
 
 * ci: switch to actions
 

@@ -1,7 +1,7 @@
 From b464475275555543b3c73119da85e64931f6e2be Mon Sep 17 00:00:00 2001
 From: Jonas Thelemann <e-mail@jonas-thelemann.de>
 Date: Fri, 17 Sep 2021 15:29:29 +0200
-Subject: [PATCH 33/34] Release (#8)
+Subject: [PATCH 33/34] Release (csstools/postcss-dir-pseudo-class#8)
 
 * ci: switch to actions
 

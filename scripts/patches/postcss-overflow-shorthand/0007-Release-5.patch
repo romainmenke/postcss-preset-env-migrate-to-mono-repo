@@ -1,7 +1,7 @@
 From 6d03733c7edf870eeaca01f1e0267ab7a0057b90 Mon Sep 17 00:00:00 2001
 From: Jonas Thelemann <e-mail@jonas-thelemann.de>
 Date: Fri, 17 Sep 2021 16:00:31 +0200
-Subject: [PATCH 7/8] Release (#5)
+Subject: [PATCH 7/8] Release (csstools/postcss-overflow-shorthand#5)
 
 * ci: switch to actions
 

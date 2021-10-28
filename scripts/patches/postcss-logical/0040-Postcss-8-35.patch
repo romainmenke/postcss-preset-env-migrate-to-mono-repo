@@ -1,7 +1,7 @@
 From d0bab530d50c7df486bf671be306ab503b21a37d Mon Sep 17 00:00:00 2001
 From: Romain Menke <11521496+romainmenke@users.noreply.github.com>
 Date: Mon, 12 Jul 2021 03:34:49 +0200
-Subject: [PATCH 40/43] Postcss 8 (#35)
+Subject: [PATCH 40/43] Postcss 8 (csstools/postcss-logical#35)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

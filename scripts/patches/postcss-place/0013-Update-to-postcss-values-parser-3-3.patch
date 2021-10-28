@@ -1,7 +1,7 @@
 From e457ce244534db2cb563249c9b6aaa75bec596fa Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Radovan=20=C5=A0mitala?= <radovan.smitala@gmail.com>
 Date: Mon, 27 Apr 2020 00:34:14 +0200
-Subject: [PATCH 13/20] Update to postcss-values-parser 3 (#3)
+Subject: [PATCH 13/20] Update to postcss-values-parser 3 (csstools/postcss-place#3)
 
 ---
  CHANGELOG.md |  6 ++++++

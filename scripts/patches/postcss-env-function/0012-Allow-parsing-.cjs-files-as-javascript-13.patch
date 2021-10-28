@@ -1,7 +1,7 @@
 From 21ef77a12d72348c2fef072faf36f88c1724ff06 Mon Sep 17 00:00:00 2001
 From: Ian VanSchooten <ian.vanschooten@gmail.com>
 Date: Thu, 13 May 2021 12:32:10 -0400
-Subject: [PATCH 12/14] Allow parsing `.cjs` files as javascript (#13)
+Subject: [PATCH 12/14] Allow parsing `.cjs` files as javascript (csstools/postcss-env-function#13)
 
 ---
  .tape.js                  | 8 ++++++++

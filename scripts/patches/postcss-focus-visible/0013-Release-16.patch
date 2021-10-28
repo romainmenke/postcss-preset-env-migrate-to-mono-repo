@@ -1,7 +1,7 @@
 From 744fbc18f32c89b3ee2f8e8df798e4cf2e49e7dc Mon Sep 17 00:00:00 2001
 From: Jonas Thelemann <e-mail@jonas-thelemann.de>
 Date: Fri, 17 Sep 2021 15:32:07 +0200
-Subject: [PATCH 13/15] Release (#16)
+Subject: [PATCH 13/15] Release (csstools/postcss-focus-visible#16)
 
 * ci: switch to actions
 
