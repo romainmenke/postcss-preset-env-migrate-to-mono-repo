@@ -1,0 +1,1447 @@
+From 401f8b2f223a0f4729b702c8c34bdba797028784 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Fri, 29 Oct 2021 15:14:32 +0200
+Subject: [PATCH 3/3] add base plugins and hoist dependencies
+
+---
+ .editorconfig                                 |   2 +-
+ .eslintrc.json                                |  11 ++
+ .github/bin/install-and-test-all-packages.sh  |  19 +++
+ .github/workflows/test.yml                    |  37 +++++
+ cli/base-cli/.gitignore                       |  12 ++
+ cli/base-cli/CHANGELOG.md                     |   1 +
+ cli/base-cli/CONTRIBUTING.md                  |  65 +++++++++
+ cli/base-cli/INSTALL.md                       |   3 +
+ cli/base-cli/LICENSE.md                       | 108 +++++++++++++++
+ cli/base-cli/README.md                        |   3 +
+ cli/base-cli/package.json                     |  23 ++++
+ cli/base-cli/src/index.js                     | 130 ++++++++++++++++++
+ cli/postcss-base-plugin-cli/.gitignore        |  12 ++
+ cli/postcss-base-plugin-cli/CHANGELOG.md      |   1 +
+ cli/postcss-base-plugin-cli/CONTRIBUTING.md   |  65 +++++++++
+ cli/postcss-base-plugin-cli/INSTALL.md        |   3 +
+ cli/postcss-base-plugin-cli/LICENSE.md        | 108 +++++++++++++++
+ cli/postcss-base-plugin-cli/README.md         |   3 +
+ cli/postcss-base-plugin-cli/dist/.gitkeep     |   0
+ cli/postcss-base-plugin-cli/package.json      |  34 +++++
+ cli/postcss-base-plugin-cli/src/cli.js        |  16 +++
+ cli/postcss-base-plugin-cli/test/basic.css    |   3 +
+ .../test/basic.expect.css                     |   3 +
+ cli/postcss-base-plugin-cli/test/test.sh      |  28 ++++
+ package.json                                  |  17 ++-
+ plugins/convert-colors/package.json           |   7 +-
+ plugins/postcss-base-plugin/.gitignore        |  12 ++
+ plugins/postcss-base-plugin/.tape.js          |   8 ++
+ plugins/postcss-base-plugin/CHANGELOG.md      |   1 +
+ plugins/postcss-base-plugin/CONTRIBUTING.md   |  65 +++++++++
+ plugins/postcss-base-plugin/INSTALL.md        |   3 +
+ plugins/postcss-base-plugin/LICENSE.md        | 108 +++++++++++++++
+ plugins/postcss-base-plugin/README.md         |   3 +
+ plugins/postcss-base-plugin/dist/.gitkeep     |   0
+ plugins/postcss-base-plugin/package.json      |  41 ++++++
+ plugins/postcss-base-plugin/src/index.js      |  18 +++
+ plugins/postcss-base-plugin/test/basic.css    |   3 +
+ .../postcss-base-plugin/test/basic.expect.css |   3 +
+ plugins/postcss-base-plugin/test/example.css  |   3 +
+ .../test/example.expect.css                   |   3 +
+ .../.github/workflows/test.yml                |  18 ---
+ plugins/postcss-place/.rollup.js              |   2 +-
+ rollup/cli.js                                 |  42 ++++++
+ rollup/default.js                             |  24 ++++
+ 44 files changed, 1044 insertions(+), 27 deletions(-)
+ create mode 100644 .eslintrc.json
+ create mode 100644 .github/bin/install-and-test-all-packages.sh
+ create mode 100644 .github/workflows/test.yml
+ create mode 100644 cli/base-cli/.gitignore
+ create mode 100644 cli/base-cli/CHANGELOG.md
+ create mode 100644 cli/base-cli/CONTRIBUTING.md
+ create mode 100644 cli/base-cli/INSTALL.md
+ create mode 100644 cli/base-cli/LICENSE.md
+ create mode 100644 cli/base-cli/README.md
+ create mode 100644 cli/base-cli/package.json
+ create mode 100644 cli/base-cli/src/index.js
+ create mode 100644 cli/postcss-base-plugin-cli/.gitignore
+ create mode 100644 cli/postcss-base-plugin-cli/CHANGELOG.md
+ create mode 100644 cli/postcss-base-plugin-cli/CONTRIBUTING.md
+ create mode 100644 cli/postcss-base-plugin-cli/INSTALL.md
+ create mode 100644 cli/postcss-base-plugin-cli/LICENSE.md
+ create mode 100644 cli/postcss-base-plugin-cli/README.md
+ create mode 100644 cli/postcss-base-plugin-cli/dist/.gitkeep
+ create mode 100644 cli/postcss-base-plugin-cli/package.json
+ create mode 100644 cli/postcss-base-plugin-cli/src/cli.js
+ create mode 100644 cli/postcss-base-plugin-cli/test/basic.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/basic.expect.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/test.sh
+ create mode 100644 plugins/postcss-base-plugin/.gitignore
+ create mode 100644 plugins/postcss-base-plugin/.tape.js
+ create mode 100644 plugins/postcss-base-plugin/CHANGELOG.md
+ create mode 100644 plugins/postcss-base-plugin/CONTRIBUTING.md
+ create mode 100644 plugins/postcss-base-plugin/INSTALL.md
+ create mode 100644 plugins/postcss-base-plugin/LICENSE.md
+ create mode 100644 plugins/postcss-base-plugin/README.md
+ create mode 100644 plugins/postcss-base-plugin/dist/.gitkeep
+ create mode 100644 plugins/postcss-base-plugin/package.json
+ create mode 100644 plugins/postcss-base-plugin/src/index.js
+ create mode 100644 plugins/postcss-base-plugin/test/basic.css
+ create mode 100644 plugins/postcss-base-plugin/test/basic.expect.css
+ create mode 100644 plugins/postcss-base-plugin/test/example.css
+ create mode 100644 plugins/postcss-base-plugin/test/example.expect.css
+ delete mode 100644 plugins/postcss-dir-pseudo-class/.github/workflows/test.yml
+ create mode 100644 rollup/cli.js
+ create mode 100644 rollup/default.js
+
+diff --git a/.editorconfig b/.editorconfig
+index 40e2967..e06d798 100644
+--- a/.editorconfig
++++ b/.editorconfig
+@@ -10,6 +10,6 @@ trim_trailing_whitespace = true
+ [*.md]
+ trim_trailing_whitespace = false
+ 
+-[{*.{json,md,yml},.*}]
++[*.{json,md,yml}]
+ indent_size = 2
+ indent_style = space
+diff --git a/.eslintrc.json b/.eslintrc.json
+new file mode 100644
+index 0000000..cadcac5
+--- /dev/null
++++ b/.eslintrc.json
+@@ -0,0 +1,11 @@
++{
++  "env": {
++    "es6": true,
++    "node": true
++  },
++  "extends": "eslint:recommended",
++  "parserOptions": {
++    "ecmaVersion": 2020,
++    "sourceType": "module"
++  }
++}
+diff --git a/.github/bin/install-and-test-all-packages.sh b/.github/bin/install-and-test-all-packages.sh
+new file mode 100644
+index 0000000..70d36e7
+--- /dev/null
++++ b/.github/bin/install-and-test-all-packages.sh
+@@ -0,0 +1,19 @@
++set -e
++
++start_dir=$(pwd)
++
++for package in $(ls -d ./cli); do
++	echo "Installing and testing $package"
++	cd $package
++	npm install --ignore-scripts
++	npm test
++	cd $start_dir
++done
++
++for package in $(ls -d ./plugins); do
++	echo "Installing and testing $package"
++	cd $package
++	npm install --ignore-scripts
++	npm test
++	cd $start_dir
++done
+diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
+new file mode 100644
+index 0000000..4109f37
+--- /dev/null
++++ b/.github/workflows/test.yml
+@@ -0,0 +1,37 @@
++name: test
++on:
++  push:
++
++jobs:
++  build:
++    runs-on: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v2
++      - uses: actions/setup-node@v2
++        with:
++          node-version: 16
++
++      - run: npm install --ignore-scripts
++      - run: npm run build --workspaces --if-present
++      - run: npm run test --workspaces --if-present
++
++  test:
++    runs-on: ubuntu-latest
++    strategy:
++      matrix:
++        # All currently supported LTS versions without Workspaces support
++        node: [12, 14]
++    steps:
++      - uses: actions/checkout@v2
++      - uses: actions/setup-node@v2
++        with:
++          node-version: 16
++
++      - run: npm install --ignore-scripts
++      - run: npm run build --workspaces --if-present
++
++      - uses: actions/setup-node@v2
++        with:
++          node-version: ${{ matrix.node }}
++
++      - run: bash ./.github/bin/install-and-test-all-packages.sh
+diff --git a/cli/base-cli/.gitignore b/cli/base-cli/.gitignore
+new file mode 100644
+index 0000000..b59d151
+--- /dev/null
++++ b/cli/base-cli/.gitignore
+@@ -0,0 +1,12 @@
++node_modules
++package-lock.json
++yarn.lock
++*.log*
++*.result.css
++.*
++dist/*
++!.editorconfig
++!.gitignore
++!.gitkeep
++!.rollup.js
++!.tape.js
+diff --git a/cli/base-cli/CHANGELOG.md b/cli/base-cli/CHANGELOG.md
+new file mode 100644
+index 0000000..2475e12
+--- /dev/null
++++ b/cli/base-cli/CHANGELOG.md
+@@ -0,0 +1 @@
++# Changes to PostCSS Base Plugin
+diff --git a/cli/base-cli/CONTRIBUTING.md b/cli/base-cli/CONTRIBUTING.md
+new file mode 100644
+index 0000000..c8bfa79
+--- /dev/null
++++ b/cli/base-cli/CONTRIBUTING.md
+@@ -0,0 +1,65 @@
++# Contributing to PostCSS Base Plugin
++
++You want to help? You rock! Now, take a moment to be sure your contributions
++make sense to everyone else.
++
++## Reporting Issues
++
++Found a problem? Want a new feature?
++
++- See if your issue or idea has [already been reported].
++- Provide a [reduced test case] or a [live example].
++
++Remember, a bug is a _demonstrable problem_ caused by _our_ code.
++
++## Submitting Pull Requests
++
++Pull requests are the greatest contributions, so be sure they are focused in
++scope and avoid unrelated commits.
++
++1. To begin; [fork this project], clone your fork, and add our upstream.
++   ```bash
++   # Clone your fork of the repo into the current directory
++   git clone git@github.com:YOUR_USER/postcss-dir-pseudo-class.git
++
++   # Navigate to the newly cloned directory
++   cd postcss-dir-pseudo-class
++
++   # Assign the original repo to a remote called "upstream"
++   git remote add upstream git@github.com:jonathantneal/postcss-dir-pseudo-class.git
++
++   # Install the tools necessary for testing
++   npm install
++   ```
++
++2. Create a branch for your feature or fix:
++   ```bash
++   # Move into a new branch for your feature
++   git checkout -b feature/thing
++   ```
++   ```bash
++   # Move into a new branch for your fix
++   git checkout -b fix/something
++   ```
++
++3. If your code follows our practices, then push your feature branch:
++   ```bash
++   # Test current code
++   npm test
++   ```
++   ```bash
++   # Push the branch for your new feature
++   git push origin feature/thing
++   ```
++   ```bash
++   # Or, push the branch for your update
++   git push origin update/something
++   ```
++
++That’s it! Now [open a pull request] with a clear title and description.
++
++[already been reported]: issues
++[fork this project]:     fork
++[live example]:          https://codepen.io/pen
++[open a pull request]:   https://help.github.com/articles/using-pull-requests/
++[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+diff --git a/cli/base-cli/INSTALL.md b/cli/base-cli/INSTALL.md
+new file mode 100644
+index 0000000..ceacefa
+--- /dev/null
++++ b/cli/base-cli/INSTALL.md
+@@ -0,0 +1,3 @@
++# Installing PostCSS Base Plugin
++
++<!-- TODO -->
+diff --git a/cli/base-cli/LICENSE.md b/cli/base-cli/LICENSE.md
+new file mode 100644
+index 0000000..0bc1fa7
+--- /dev/null
++++ b/cli/base-cli/LICENSE.md
+@@ -0,0 +1,108 @@
++# CC0 1.0 Universal
++
++## Statement of Purpose
++
++The laws of most jurisdictions throughout the world automatically confer
++exclusive Copyright and Related Rights (defined below) upon the creator and
++subsequent owner(s) (each and all, an “owner”) of an original work of
++authorship and/or a database (each, a “Work”).
++
++Certain owners wish to permanently relinquish those rights to a Work for the
++purpose of contributing to a commons of creative, cultural and scientific works
++(“Commons”) that the public can reliably and without fear of later claims of
++infringement build upon, modify, incorporate in other works, reuse and
++redistribute as freely as possible in any form whatsoever and for any purposes,
++including without limitation commercial purposes. These owners may contribute
++to the Commons to promote the ideal of a free culture and the further
++production of creative, cultural and scientific works, or to gain reputation or
++greater distribution for their Work in part through the use and efforts of
++others.
++
++For these and/or other purposes and motivations, and without any expectation of
++additional consideration or compensation, the person associating CC0 with a
++Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
++and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
++publicly distribute the Work under its terms, with knowledge of his or her
++Copyright and Related Rights in the Work and the meaning and intended legal
++effect of CC0 on those rights.
++
++1. Copyright and Related Rights. A Work made available under CC0 may be
++   protected by copyright and related or neighboring rights (“Copyright and
++   Related Rights”). Copyright and Related Rights include, but are not limited
++   to, the following:
++   1. the right to reproduce, adapt, distribute, perform, display, communicate,
++      and translate a Work;
++   2. moral rights retained by the original author(s) and/or performer(s);
++   3. publicity and privacy rights pertaining to a person’s image or likeness
++      depicted in a Work;
++   4. rights protecting against unfair competition in regards to a Work,
++      subject to the limitations in paragraph 4(i), below;
++   5. rights protecting the extraction, dissemination, use and reuse of data in
++      a Work;
++   6. database rights (such as those arising under Directive 96/9/EC of the
++      European Parliament and of the Council of 11 March 1996 on the legal
++      protection of databases, and under any national implementation thereof,
++      including any amended or successor version of such directive); and
++   7. other similar, equivalent or corresponding rights throughout the world
++      based on applicable law or treaty, and any national implementations
++      thereof.
++
++2. Waiver. To the greatest extent permitted by, but not in contravention of,
++   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++   and Related Rights and associated claims and causes of action, whether now
++   known or unknown (including existing as well as future claims and causes of
++   action), in the Work (i) in all territories worldwide, (ii) for the maximum
++   duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
++   makes the Waiver for the benefit of each member of the public at large and
++   to the detriment of Affirmer’s heirs and successors, fully intending that
++   such Waiver shall not be subject to revocation, rescission, cancellation,
++   termination, or any other legal or equitable action to disrupt the quiet
++   enjoyment of the Work by the public as contemplated by Affirmer’s express
++   Statement of Purpose.
++
++3. Public License Fallback. Should any part of the Waiver for any reason be
++   judged legally invalid or ineffective under applicable law, then the Waiver
++   shall be preserved to the maximum extent permitted taking into account
++   Affirmer’s express Statement of Purpose. In addition, to the extent the
++   Waiver is so judged Affirmer hereby grants to each affected person a
++   royalty-free, non transferable, non sublicensable, non exclusive,
++   irrevocable and unconditional license to exercise Affirmer’s Copyright and
++   Related Rights in the Work (i) in all territories worldwide, (ii) for the
++   maximum duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “License”). The License
++   shall be deemed effective as of the date CC0 was applied by Affirmer to the
++   Work. Should any part of the License for any reason be judged legally
++   invalid or ineffective under applicable law, such partial invalidity or
++   ineffectiveness shall not invalidate the remainder of the License, and in
++   such case Affirmer hereby affirms that he or she will not (i) exercise any
++   of his or her remaining Copyright and Related Rights in the Work or (ii)
++   assert any associated claims and causes of action with respect to the Work,
++   in either case contrary to Affirmer’s express Statement of Purpose.
++
++4. Limitations and Disclaimers.
++   1. No trademark or patent rights held by Affirmer are waived, abandoned,
++      surrendered, licensed or otherwise affected by this document.
++   2. Affirmer offers the Work as-is and makes no representations or warranties
++      of any kind concerning the Work, express, implied, statutory or
++      otherwise, including without limitation warranties of title,
++      merchantability, fitness for a particular purpose, non infringement, or
++      the absence of latent or other defects, accuracy, or the present or
++      absence of errors, whether or not discoverable, all to the greatest
++      extent permissible under applicable law.
++   3. Affirmer disclaims responsibility for clearing rights of other persons
++      that may apply to the Work or any use thereof, including without
++      limitation any person’s Copyright and Related Rights in the Work.
++      Further, Affirmer disclaims responsibility for obtaining any necessary
++      consents, permissions or other rights required for any use of the Work.
++   4. Affirmer understands and acknowledges that Creative Commons is not a
++      party to this document and has no duty or obligation with respect to this
++      CC0 or use of the Work.
++
++For more information, please see
++http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/cli/base-cli/README.md b/cli/base-cli/README.md
+new file mode 100644
+index 0000000..da1c9e4
+--- /dev/null
++++ b/cli/base-cli/README.md
+@@ -0,0 +1,3 @@
++# PostCSS Base Plugin [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
++
++<!-- TODO -->
+diff --git a/cli/base-cli/package.json b/cli/base-cli/package.json
+new file mode 100644
+index 0000000..219e6a2
+--- /dev/null
++++ b/cli/base-cli/package.json
+@@ -0,0 +1,23 @@
++{
++  "name": "@csstools/base-cli",
++  "private": "true",
++  "version": "0.0.0",
++  "description": "A base for CLI versions of plugins",
++  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
++  "license": "CC0-1.0",
++  "engines": {
++    "node": ">=12"
++  },
++  "main": "src/index.js",
++  "files": [
++    "CHANGELOG.md",
++    "INSTALL.md",
++    "LICENSE.md",
++    "README.md",
++    "src/index.js"
++  ],
++  "scripts": {
++    "test": "npm run test:js",
++    "test:js": "eslint src/**/*.js --quiet"
++  }
++}
+diff --git a/cli/base-cli/src/index.js b/cli/base-cli/src/index.js
+new file mode 100644
+index 0000000..9f09316
+--- /dev/null
++++ b/cli/base-cli/src/index.js
+@@ -0,0 +1,130 @@
++import fs from 'fs';
++
++export default function cli(postcss, plugin, helpLogger) {
++	// get process and plugin options from the command line
++	const fileRegExp = /^[\w/.]+$/;
++	const argRegExp = /^--(\w+)=("|')?(.+)\2$/;
++	const relaxedJsonPropRegExp = /(['"])?([a-z0-9A-Z_]+)(['"])?:/g;
++	const relaxedJsonValueRegExp = /("[a-z0-9A-Z_]+":\s*)'?([A-z0-9]+)'?([,}])/g;
++	const argo = process.argv.slice(2).reduce(
++		(object, arg) => {
++			const argMatch = arg.match(argRegExp);
++			const fileMatch = arg.match(fileRegExp);
++
++			if (argMatch) {
++				object[argMatch[1]] = argMatch[3];
++			} else if (fileMatch) {
++				if (object.from === '<stdin>') {
++					object.from = arg;
++				} else if (object.to === '<stdout>') {
++					object.to = arg;
++				}
++			}
++
++			return object;
++		},
++		{ from: '<stdin>', to: '<stdout>', opts: 'null' }
++	);
++
++	// get css from command line arguments or stdin
++	(argo.from === '<stdin>' ? getStdin() : readFile(argo.from))
++		.then(css => {
++			if (!css && (argo.form === '<stdin>' || !argo.from)) {
++				helpLogger();
++				process.exit(0);
++			}
++
++		const pluginOpts = JSON.parse(
++			argo.opts
++			.replace(relaxedJsonPropRegExp, '"$2": ')
++			.replace(relaxedJsonValueRegExp, '$1"$2"$3')
++		);
++		const processOptions = Object.assign({ from: argo.from, to: argo.to || argo.from }, argo.map ? { map: JSON.parse(argo.map) } : {});
++
++		const result = postcss([plugin(pluginOpts)]).process(css, processOptions);
++
++		if (argo.to === '<stdout>') {
++			return result.css;
++		} else {
++			return writeFile(argo.to, result.css).then(
++				() => {
++					console.log(`CSS was written to "${argo.to}"`)
++				}
++			)
++		}
++	}).then(
++		result => {
++			if (result) {
++				process.stdout.write(result);
++			}
++
++			process.exit(0);
++		},
++		error => {
++			console.error(error);
++
++			process.exit(1);
++		}
++	);
++}
++
++function readFile (pathname) {
++	return new Promise((resolve, reject) => {
++		fs.readFile(pathname, 'utf8', (error, data) => {
++			if (error) {
++				reject(error);
++			} else {
++				resolve(data);
++			}
++		});
++	});
++}
++
++function writeFile (pathname, data) {
++	return new Promise((resolve, reject) => {
++		fs.writeFile(pathname, data, (error, content) => {
++			if (error) {
++				reject(error);
++			} else {
++				resolve(content);
++			}
++		});
++	});
++}
++
++function getStdin () {
++	return new Promise(resolve => {
++		let data = '';
++		let timedOut = false;
++		setTimeout(() => {
++			timedOut = true;
++			resolve('');
++		}, 10000);
++
++		if (process.stdin.isTTY) {
++			if (timedOut) {
++				return;
++			}
++
++			resolve(data);
++		} else {
++			process.stdin.setEncoding('utf8');
++
++			process.stdin.on('readable', () => {
++				let chunk;
++
++				while ((chunk = process.stdin.read())) {
++					data += chunk;
++				}
++			});
++
++			process.stdin.on('end', () => {
++				if (timedOut) {
++					return;
++				}
++
++				resolve(data);
++			});
++		}
++	});
++}
+diff --git a/cli/postcss-base-plugin-cli/.gitignore b/cli/postcss-base-plugin-cli/.gitignore
+new file mode 100644
+index 0000000..b59d151
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/.gitignore
+@@ -0,0 +1,12 @@
++node_modules
++package-lock.json
++yarn.lock
++*.log*
++*.result.css
++.*
++dist/*
++!.editorconfig
++!.gitignore
++!.gitkeep
++!.rollup.js
++!.tape.js
+diff --git a/cli/postcss-base-plugin-cli/CHANGELOG.md b/cli/postcss-base-plugin-cli/CHANGELOG.md
+new file mode 100644
+index 0000000..2475e12
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/CHANGELOG.md
+@@ -0,0 +1 @@
++# Changes to PostCSS Base Plugin
+diff --git a/cli/postcss-base-plugin-cli/CONTRIBUTING.md b/cli/postcss-base-plugin-cli/CONTRIBUTING.md
+new file mode 100644
+index 0000000..c8bfa79
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/CONTRIBUTING.md
+@@ -0,0 +1,65 @@
++# Contributing to PostCSS Base Plugin
++
++You want to help? You rock! Now, take a moment to be sure your contributions
++make sense to everyone else.
++
++## Reporting Issues
++
++Found a problem? Want a new feature?
++
++- See if your issue or idea has [already been reported].
++- Provide a [reduced test case] or a [live example].
++
++Remember, a bug is a _demonstrable problem_ caused by _our_ code.
++
++## Submitting Pull Requests
++
++Pull requests are the greatest contributions, so be sure they are focused in
++scope and avoid unrelated commits.
++
++1. To begin; [fork this project], clone your fork, and add our upstream.
++   ```bash
++   # Clone your fork of the repo into the current directory
++   git clone git@github.com:YOUR_USER/postcss-dir-pseudo-class.git
++
++   # Navigate to the newly cloned directory
++   cd postcss-dir-pseudo-class
++
++   # Assign the original repo to a remote called "upstream"
++   git remote add upstream git@github.com:jonathantneal/postcss-dir-pseudo-class.git
++
++   # Install the tools necessary for testing
++   npm install
++   ```
++
++2. Create a branch for your feature or fix:
++   ```bash
++   # Move into a new branch for your feature
++   git checkout -b feature/thing
++   ```
++   ```bash
++   # Move into a new branch for your fix
++   git checkout -b fix/something
++   ```
++
++3. If your code follows our practices, then push your feature branch:
++   ```bash
++   # Test current code
++   npm test
++   ```
++   ```bash
++   # Push the branch for your new feature
++   git push origin feature/thing
++   ```
++   ```bash
++   # Or, push the branch for your update
++   git push origin update/something
++   ```
++
++That’s it! Now [open a pull request] with a clear title and description.
++
++[already been reported]: issues
++[fork this project]:     fork
++[live example]:          https://codepen.io/pen
++[open a pull request]:   https://help.github.com/articles/using-pull-requests/
++[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+diff --git a/cli/postcss-base-plugin-cli/INSTALL.md b/cli/postcss-base-plugin-cli/INSTALL.md
+new file mode 100644
+index 0000000..ceacefa
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/INSTALL.md
+@@ -0,0 +1,3 @@
++# Installing PostCSS Base Plugin
++
++<!-- TODO -->
+diff --git a/cli/postcss-base-plugin-cli/LICENSE.md b/cli/postcss-base-plugin-cli/LICENSE.md
+new file mode 100644
+index 0000000..0bc1fa7
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/LICENSE.md
+@@ -0,0 +1,108 @@
++# CC0 1.0 Universal
++
++## Statement of Purpose
++
++The laws of most jurisdictions throughout the world automatically confer
++exclusive Copyright and Related Rights (defined below) upon the creator and
++subsequent owner(s) (each and all, an “owner”) of an original work of
++authorship and/or a database (each, a “Work”).
++
++Certain owners wish to permanently relinquish those rights to a Work for the
++purpose of contributing to a commons of creative, cultural and scientific works
++(“Commons”) that the public can reliably and without fear of later claims of
++infringement build upon, modify, incorporate in other works, reuse and
++redistribute as freely as possible in any form whatsoever and for any purposes,
++including without limitation commercial purposes. These owners may contribute
++to the Commons to promote the ideal of a free culture and the further
++production of creative, cultural and scientific works, or to gain reputation or
++greater distribution for their Work in part through the use and efforts of
++others.
++
++For these and/or other purposes and motivations, and without any expectation of
++additional consideration or compensation, the person associating CC0 with a
++Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
++and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
++publicly distribute the Work under its terms, with knowledge of his or her
++Copyright and Related Rights in the Work and the meaning and intended legal
++effect of CC0 on those rights.
++
++1. Copyright and Related Rights. A Work made available under CC0 may be
++   protected by copyright and related or neighboring rights (“Copyright and
++   Related Rights”). Copyright and Related Rights include, but are not limited
++   to, the following:
++   1. the right to reproduce, adapt, distribute, perform, display, communicate,
++      and translate a Work;
++   2. moral rights retained by the original author(s) and/or performer(s);
++   3. publicity and privacy rights pertaining to a person’s image or likeness
++      depicted in a Work;
++   4. rights protecting against unfair competition in regards to a Work,
++      subject to the limitations in paragraph 4(i), below;
++   5. rights protecting the extraction, dissemination, use and reuse of data in
++      a Work;
++   6. database rights (such as those arising under Directive 96/9/EC of the
++      European Parliament and of the Council of 11 March 1996 on the legal
++      protection of databases, and under any national implementation thereof,
++      including any amended or successor version of such directive); and
++   7. other similar, equivalent or corresponding rights throughout the world
++      based on applicable law or treaty, and any national implementations
++      thereof.
++
++2. Waiver. To the greatest extent permitted by, but not in contravention of,
++   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++   and Related Rights and associated claims and causes of action, whether now
++   known or unknown (including existing as well as future claims and causes of
++   action), in the Work (i) in all territories worldwide, (ii) for the maximum
++   duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
++   makes the Waiver for the benefit of each member of the public at large and
++   to the detriment of Affirmer’s heirs and successors, fully intending that
++   such Waiver shall not be subject to revocation, rescission, cancellation,
++   termination, or any other legal or equitable action to disrupt the quiet
++   enjoyment of the Work by the public as contemplated by Affirmer’s express
++   Statement of Purpose.
++
++3. Public License Fallback. Should any part of the Waiver for any reason be
++   judged legally invalid or ineffective under applicable law, then the Waiver
++   shall be preserved to the maximum extent permitted taking into account
++   Affirmer’s express Statement of Purpose. In addition, to the extent the
++   Waiver is so judged Affirmer hereby grants to each affected person a
++   royalty-free, non transferable, non sublicensable, non exclusive,
++   irrevocable and unconditional license to exercise Affirmer’s Copyright and
++   Related Rights in the Work (i) in all territories worldwide, (ii) for the
++   maximum duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “License”). The License
++   shall be deemed effective as of the date CC0 was applied by Affirmer to the
++   Work. Should any part of the License for any reason be judged legally
++   invalid or ineffective under applicable law, such partial invalidity or
++   ineffectiveness shall not invalidate the remainder of the License, and in
++   such case Affirmer hereby affirms that he or she will not (i) exercise any
++   of his or her remaining Copyright and Related Rights in the Work or (ii)
++   assert any associated claims and causes of action with respect to the Work,
++   in either case contrary to Affirmer’s express Statement of Purpose.
++
++4. Limitations and Disclaimers.
++   1. No trademark or patent rights held by Affirmer are waived, abandoned,
++      surrendered, licensed or otherwise affected by this document.
++   2. Affirmer offers the Work as-is and makes no representations or warranties
++      of any kind concerning the Work, express, implied, statutory or
++      otherwise, including without limitation warranties of title,
++      merchantability, fitness for a particular purpose, non infringement, or
++      the absence of latent or other defects, accuracy, or the present or
++      absence of errors, whether or not discoverable, all to the greatest
++      extent permissible under applicable law.
++   3. Affirmer disclaims responsibility for clearing rights of other persons
++      that may apply to the Work or any use thereof, including without
++      limitation any person’s Copyright and Related Rights in the Work.
++      Further, Affirmer disclaims responsibility for obtaining any necessary
++      consents, permissions or other rights required for any use of the Work.
++   4. Affirmer understands and acknowledges that Creative Commons is not a
++      party to this document and has no duty or obligation with respect to this
++      CC0 or use of the Work.
++
++For more information, please see
++http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/cli/postcss-base-plugin-cli/README.md b/cli/postcss-base-plugin-cli/README.md
+new file mode 100644
+index 0000000..da1c9e4
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/README.md
+@@ -0,0 +1,3 @@
++# PostCSS Base Plugin [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
++
++<!-- TODO -->
+diff --git a/cli/postcss-base-plugin-cli/dist/.gitkeep b/cli/postcss-base-plugin-cli/dist/.gitkeep
+new file mode 100644
+index 0000000..e69de29
+diff --git a/cli/postcss-base-plugin-cli/package.json b/cli/postcss-base-plugin-cli/package.json
+new file mode 100644
+index 0000000..34d421c
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/package.json
+@@ -0,0 +1,34 @@
++{
++  "name": "@csstools/postcss-base-plugin-cli",
++  "private": "true",
++  "version": "0.0.0",
++  "description": "A base plugin cli",
++  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
++  "license": "CC0-1.0",
++  "engines": {
++    "node": ">=12"
++  },
++  "bin": {
++    "postcss-base-plugin-cli": "dist/cli.js"
++  },
++  "files": [
++    "CHANGELOG.md",
++    "INSTALL.md",
++    "LICENSE.md",
++    "README.md",
++    "dist/cli.js"
++  ],
++  "scripts": {
++    "prepare": "npm run build",
++    "prepublishOnly": "npm run build && npm test",
++    "test": "npm run test:js && npm run test:cli",
++    "test:js": "eslint src/**/*.js --quiet",
++    "test:cli": "bash ./test/test.sh",
++    "build": "rollup -c ../../rollup/cli.js"
++  },
++  "dependencies": {},
++  "devDependencies": {
++    "@csstools/postcss-base-plugin": "*",
++    "postcss": "^8.3.6"
++  }
++}
+diff --git a/cli/postcss-base-plugin-cli/src/cli.js b/cli/postcss-base-plugin-cli/src/cli.js
+new file mode 100644
+index 0000000..c1fa072
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/src/cli.js
+@@ -0,0 +1,16 @@
++import plugin from '@csstools/postcss-base-plugin';
++import cli from '@csstools/base-cli';
++import postcss from 'postcss';
++
++cli(postcss, plugin, logHelpText);
++
++function logHelpText() {
++	console.log([
++		'CSS BasePlugin\n',
++		'  Example plugin\n',
++		'Usage:\n',
++		'  postcss-base-plugin-cli source.css transformed.css',
++		'  postcss-base-plugin-cli --from=source.css --to=transformed.css --opts={}',
++		'  echo "@media (prefers-color-scheme: dark) {}" | postcss-base-plugin-cli\n'
++	].join('\n'));
++}
+diff --git a/cli/postcss-base-plugin-cli/test/basic.css b/cli/postcss-base-plugin-cli/test/basic.css
+new file mode 100644
+index 0000000..cedf0a6
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/basic.css
+@@ -0,0 +1,3 @@
++.foo {
++	color: red;
++}
+diff --git a/cli/postcss-base-plugin-cli/test/basic.expect.css b/cli/postcss-base-plugin-cli/test/basic.expect.css
+new file mode 100644
+index 0000000..cedf0a6
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/basic.expect.css
+@@ -0,0 +1,3 @@
++.foo {
++	color: red;
++}
+diff --git a/cli/postcss-base-plugin-cli/test/test.sh b/cli/postcss-base-plugin-cli/test/test.sh
+new file mode 100644
+index 0000000..12182e5
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/test.sh
+@@ -0,0 +1,28 @@
++set -e
++
++# Zero out result file
++echo '' > ./test/basic.result.css;
++
++# Test with named arguments
++postcss-base-plugin-cli --from=./test/basic.css --to=./test/basic.result.css --opts="{ option: true }"
++
++# Check result
++git --no-pager diff --no-index ./test/basic.expect.css ./test/basic.result.css
++
++# Zero out result file
++echo '' > ./test/basic.result.css;
++
++# Test with unnamed arguments
++postcss-base-plugin-cli ./test/basic.css ./test/basic.result.css
++
++# Check result
++git --no-pager diff --no-index ./test/basic.expect.css ./test/basic.result.css
++
++# Zero out result file
++echo '' > ./test/basic.result.css;
++
++# Test with stdin
++cat ./test/basic.css | postcss-base-plugin-cli > ./test/basic.result.css
++
++# Check result
++git --no-pager diff --no-index ./test/basic.expect.css ./test/basic.result.css
+diff --git a/package.json b/package.json
+index 51e3bb6..b119f6b 100644
+--- a/package.json
++++ b/package.json
+@@ -6,6 +6,21 @@
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+   "workspaces": [
++    "cli/*",
+     "plugins/*"
+-  ]
++  ],
++  "devDependencies": {
++    "@babel/core": "^7.15.8",
++    "@babel/preset-env": "^7.15.8",
++    "@rollup/plugin-babel": "^5.3.0",
++    "@rollup/plugin-commonjs": "^21.0.1",
++    "@rollup/plugin-node-resolve": "^13.0.6",
++    "eslint": "^7.32.0",
++    "rollup": "^2.58.3",
++    "rollup-plugin-terser": "^7.0.2"
++  },
++  "scripts": {
++    "build": "npm run build --workspaces --if-present",
++    "test": "npm run test --workspaces --if-present"
++  }
+ }
+diff --git a/plugins/convert-colors/package.json b/plugins/convert-colors/package.json
+index 384f5e7..d261099 100644
+--- a/plugins/convert-colors/package.json
++++ b/plugins/convert-colors/package.json
+@@ -29,17 +29,12 @@
+     "node": ">=6.0.0"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.2.2",
+-    "@babel/preset-env": "^7.3.1",
+     "docdash": "^1.0.2",
+     "echint": "^4.0.1",
+     "eslint": "^5.12.1",
+     "eslint-config-dev": "^2.0.0",
+     "jsdoc": "^3.5.5",
+-    "pre-commit": "^1.2.2",
+-    "rollup": "^1.1.2",
+-    "rollup-plugin-babel": "^4.3.2",
+-    "rollup-plugin-terser": "^4.0.3"
++    "pre-commit": "^1.2.2"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+diff --git a/plugins/postcss-base-plugin/.gitignore b/plugins/postcss-base-plugin/.gitignore
+new file mode 100644
+index 0000000..b59d151
+--- /dev/null
++++ b/plugins/postcss-base-plugin/.gitignore
+@@ -0,0 +1,12 @@
++node_modules
++package-lock.json
++yarn.lock
++*.log*
++*.result.css
++.*
++dist/*
++!.editorconfig
++!.gitignore
++!.gitkeep
++!.rollup.js
++!.tape.js
+diff --git a/plugins/postcss-base-plugin/.tape.js b/plugins/postcss-base-plugin/.tape.js
+new file mode 100644
+index 0000000..35f9a60
+--- /dev/null
++++ b/plugins/postcss-base-plugin/.tape.js
+@@ -0,0 +1,8 @@
++module.exports = {
++	basic: {
++		message: "supports basic usage",
++	},
++	example: {
++		message: "minimal example",
++	},
++};
+diff --git a/plugins/postcss-base-plugin/CHANGELOG.md b/plugins/postcss-base-plugin/CHANGELOG.md
+new file mode 100644
+index 0000000..2475e12
+--- /dev/null
++++ b/plugins/postcss-base-plugin/CHANGELOG.md
+@@ -0,0 +1 @@
++# Changes to PostCSS Base Plugin
+diff --git a/plugins/postcss-base-plugin/CONTRIBUTING.md b/plugins/postcss-base-plugin/CONTRIBUTING.md
+new file mode 100644
+index 0000000..c8bfa79
+--- /dev/null
++++ b/plugins/postcss-base-plugin/CONTRIBUTING.md
+@@ -0,0 +1,65 @@
++# Contributing to PostCSS Base Plugin
++
++You want to help? You rock! Now, take a moment to be sure your contributions
++make sense to everyone else.
++
++## Reporting Issues
++
++Found a problem? Want a new feature?
++
++- See if your issue or idea has [already been reported].
++- Provide a [reduced test case] or a [live example].
++
++Remember, a bug is a _demonstrable problem_ caused by _our_ code.
++
++## Submitting Pull Requests
++
++Pull requests are the greatest contributions, so be sure they are focused in
++scope and avoid unrelated commits.
++
++1. To begin; [fork this project], clone your fork, and add our upstream.
++   ```bash
++   # Clone your fork of the repo into the current directory
++   git clone git@github.com:YOUR_USER/postcss-dir-pseudo-class.git
++
++   # Navigate to the newly cloned directory
++   cd postcss-dir-pseudo-class
++
++   # Assign the original repo to a remote called "upstream"
++   git remote add upstream git@github.com:jonathantneal/postcss-dir-pseudo-class.git
++
++   # Install the tools necessary for testing
++   npm install
++   ```
++
++2. Create a branch for your feature or fix:
++   ```bash
++   # Move into a new branch for your feature
++   git checkout -b feature/thing
++   ```
++   ```bash
++   # Move into a new branch for your fix
++   git checkout -b fix/something
++   ```
++
++3. If your code follows our practices, then push your feature branch:
++   ```bash
++   # Test current code
++   npm test
++   ```
++   ```bash
++   # Push the branch for your new feature
++   git push origin feature/thing
++   ```
++   ```bash
++   # Or, push the branch for your update
++   git push origin update/something
++   ```
++
++That’s it! Now [open a pull request] with a clear title and description.
++
++[already been reported]: issues
++[fork this project]:     fork
++[live example]:          https://codepen.io/pen
++[open a pull request]:   https://help.github.com/articles/using-pull-requests/
++[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+diff --git a/plugins/postcss-base-plugin/INSTALL.md b/plugins/postcss-base-plugin/INSTALL.md
+new file mode 100644
+index 0000000..ceacefa
+--- /dev/null
++++ b/plugins/postcss-base-plugin/INSTALL.md
+@@ -0,0 +1,3 @@
++# Installing PostCSS Base Plugin
++
++<!-- TODO -->
+diff --git a/plugins/postcss-base-plugin/LICENSE.md b/plugins/postcss-base-plugin/LICENSE.md
+new file mode 100644
+index 0000000..0bc1fa7
+--- /dev/null
++++ b/plugins/postcss-base-plugin/LICENSE.md
+@@ -0,0 +1,108 @@
++# CC0 1.0 Universal
++
++## Statement of Purpose
++
++The laws of most jurisdictions throughout the world automatically confer
++exclusive Copyright and Related Rights (defined below) upon the creator and
++subsequent owner(s) (each and all, an “owner”) of an original work of
++authorship and/or a database (each, a “Work”).
++
++Certain owners wish to permanently relinquish those rights to a Work for the
++purpose of contributing to a commons of creative, cultural and scientific works
++(“Commons”) that the public can reliably and without fear of later claims of
++infringement build upon, modify, incorporate in other works, reuse and
++redistribute as freely as possible in any form whatsoever and for any purposes,
++including without limitation commercial purposes. These owners may contribute
++to the Commons to promote the ideal of a free culture and the further
++production of creative, cultural and scientific works, or to gain reputation or
++greater distribution for their Work in part through the use and efforts of
++others.
++
++For these and/or other purposes and motivations, and without any expectation of
++additional consideration or compensation, the person associating CC0 with a
++Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
++and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
++publicly distribute the Work under its terms, with knowledge of his or her
++Copyright and Related Rights in the Work and the meaning and intended legal
++effect of CC0 on those rights.
++
++1. Copyright and Related Rights. A Work made available under CC0 may be
++   protected by copyright and related or neighboring rights (“Copyright and
++   Related Rights”). Copyright and Related Rights include, but are not limited
++   to, the following:
++   1. the right to reproduce, adapt, distribute, perform, display, communicate,
++      and translate a Work;
++   2. moral rights retained by the original author(s) and/or performer(s);
++   3. publicity and privacy rights pertaining to a person’s image or likeness
++      depicted in a Work;
++   4. rights protecting against unfair competition in regards to a Work,
++      subject to the limitations in paragraph 4(i), below;
++   5. rights protecting the extraction, dissemination, use and reuse of data in
++      a Work;
++   6. database rights (such as those arising under Directive 96/9/EC of the
++      European Parliament and of the Council of 11 March 1996 on the legal
++      protection of databases, and under any national implementation thereof,
++      including any amended or successor version of such directive); and
++   7. other similar, equivalent or corresponding rights throughout the world
++      based on applicable law or treaty, and any national implementations
++      thereof.
++
++2. Waiver. To the greatest extent permitted by, but not in contravention of,
++   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++   and Related Rights and associated claims and causes of action, whether now
++   known or unknown (including existing as well as future claims and causes of
++   action), in the Work (i) in all territories worldwide, (ii) for the maximum
++   duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
++   makes the Waiver for the benefit of each member of the public at large and
++   to the detriment of Affirmer’s heirs and successors, fully intending that
++   such Waiver shall not be subject to revocation, rescission, cancellation,
++   termination, or any other legal or equitable action to disrupt the quiet
++   enjoyment of the Work by the public as contemplated by Affirmer’s express
++   Statement of Purpose.
++
++3. Public License Fallback. Should any part of the Waiver for any reason be
++   judged legally invalid or ineffective under applicable law, then the Waiver
++   shall be preserved to the maximum extent permitted taking into account
++   Affirmer’s express Statement of Purpose. In addition, to the extent the
++   Waiver is so judged Affirmer hereby grants to each affected person a
++   royalty-free, non transferable, non sublicensable, non exclusive,
++   irrevocable and unconditional license to exercise Affirmer’s Copyright and
++   Related Rights in the Work (i) in all territories worldwide, (ii) for the
++   maximum duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “License”). The License
++   shall be deemed effective as of the date CC0 was applied by Affirmer to the
++   Work. Should any part of the License for any reason be judged legally
++   invalid or ineffective under applicable law, such partial invalidity or
++   ineffectiveness shall not invalidate the remainder of the License, and in
++   such case Affirmer hereby affirms that he or she will not (i) exercise any
++   of his or her remaining Copyright and Related Rights in the Work or (ii)
++   assert any associated claims and causes of action with respect to the Work,
++   in either case contrary to Affirmer’s express Statement of Purpose.
++
++4. Limitations and Disclaimers.
++   1. No trademark or patent rights held by Affirmer are waived, abandoned,
++      surrendered, licensed or otherwise affected by this document.
++   2. Affirmer offers the Work as-is and makes no representations or warranties
++      of any kind concerning the Work, express, implied, statutory or
++      otherwise, including without limitation warranties of title,
++      merchantability, fitness for a particular purpose, non infringement, or
++      the absence of latent or other defects, accuracy, or the present or
++      absence of errors, whether or not discoverable, all to the greatest
++      extent permissible under applicable law.
++   3. Affirmer disclaims responsibility for clearing rights of other persons
++      that may apply to the Work or any use thereof, including without
++      limitation any person’s Copyright and Related Rights in the Work.
++      Further, Affirmer disclaims responsibility for obtaining any necessary
++      consents, permissions or other rights required for any use of the Work.
++   4. Affirmer understands and acknowledges that Creative Commons is not a
++      party to this document and has no duty or obligation with respect to this
++      CC0 or use of the Work.
++
++For more information, please see
++http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/plugins/postcss-base-plugin/README.md b/plugins/postcss-base-plugin/README.md
+new file mode 100644
+index 0000000..da1c9e4
+--- /dev/null
++++ b/plugins/postcss-base-plugin/README.md
+@@ -0,0 +1,3 @@
++# PostCSS Base Plugin [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
++
++<!-- TODO -->
+diff --git a/plugins/postcss-base-plugin/dist/.gitkeep b/plugins/postcss-base-plugin/dist/.gitkeep
+new file mode 100644
+index 0000000..e69de29
+diff --git a/plugins/postcss-base-plugin/package.json b/plugins/postcss-base-plugin/package.json
+new file mode 100644
+index 0000000..ac3f2bd
+--- /dev/null
++++ b/plugins/postcss-base-plugin/package.json
+@@ -0,0 +1,41 @@
++{
++  "name": "@csstools/postcss-base-plugin",
++  "private": "true",
++  "version": "0.0.0",
++  "description": "A base plugin",
++  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
++  "license": "CC0-1.0",
++  "engines": {
++    "node": ">=12"
++  },
++  "main": "dist/index.js",
++  "module": "dist/index.mjs",
++  "files": [
++    "CHANGELOG.md",
++    "INSTALL.md",
++    "LICENSE.md",
++    "README.md",
++    "dist/index.js",
++    "dist/index.js.map",
++    "dist/index.mjs",
++    "dist/index.mjs.map"
++  ],
++  "scripts": {
++    "prepublishOnly": "npm run build && npm test",
++    "test": "npm run test:js && npm run test:tape",
++    "test:js": "eslint src/**/*.js --quiet",
++    "test:tape": "postcss-tape",
++    "build": "rollup -c ../../rollup/default.js"
++  },
++  "postcssConfig": {
++    "plugin": "dist/index.js"
++  },
++  "dependencies": {},
++  "devDependencies": {
++    "postcss": "^8.3.6",
++    "postcss-tape": "^6.0.1"
++  },
++  "peerDependencies": {
++    "postcss": "^8.3"
++  }
++}
+diff --git a/plugins/postcss-base-plugin/src/index.js b/plugins/postcss-base-plugin/src/index.js
+new file mode 100644
+index 0000000..2d0336c
+--- /dev/null
++++ b/plugins/postcss-base-plugin/src/index.js
+@@ -0,0 +1,18 @@
++/**
++ * @type {import('postcss').PluginCreator}
++ */
++export default function creator(opts) {
++	const noop = () => { }; /* remove this */
++	noop(opts); /* remove this */
++
++	return {
++		postcssPlugin: 'postcss-base-plugin',
++		Rule(rule) {
++			noop(rule); /* remove this */
++
++			// your plugin here
++		}
++	}
++}
++
++creator.postcss = true;
+diff --git a/plugins/postcss-base-plugin/test/basic.css b/plugins/postcss-base-plugin/test/basic.css
+new file mode 100644
+index 0000000..cedf0a6
+--- /dev/null
++++ b/plugins/postcss-base-plugin/test/basic.css
+@@ -0,0 +1,3 @@
++.foo {
++	color: red;
++}
+diff --git a/plugins/postcss-base-plugin/test/basic.expect.css b/plugins/postcss-base-plugin/test/basic.expect.css
+new file mode 100644
+index 0000000..cedf0a6
+--- /dev/null
++++ b/plugins/postcss-base-plugin/test/basic.expect.css
+@@ -0,0 +1,3 @@
++.foo {
++	color: red;
++}
+diff --git a/plugins/postcss-base-plugin/test/example.css b/plugins/postcss-base-plugin/test/example.css
+new file mode 100644
+index 0000000..cedf0a6
+--- /dev/null
++++ b/plugins/postcss-base-plugin/test/example.css
+@@ -0,0 +1,3 @@
++.foo {
++	color: red;
++}
+diff --git a/plugins/postcss-base-plugin/test/example.expect.css b/plugins/postcss-base-plugin/test/example.expect.css
+new file mode 100644
+index 0000000..cedf0a6
+--- /dev/null
++++ b/plugins/postcss-base-plugin/test/example.expect.css
+@@ -0,0 +1,3 @@
++.foo {
++	color: red;
++}
+diff --git a/plugins/postcss-dir-pseudo-class/.github/workflows/test.yml b/plugins/postcss-dir-pseudo-class/.github/workflows/test.yml
+deleted file mode 100644
+index 4a287db..0000000
+--- a/plugins/postcss-dir-pseudo-class/.github/workflows/test.yml
++++ /dev/null
+@@ -1,18 +0,0 @@
+-name: test
+-on:
+-  push:
+-
+-jobs:
+-  test:
+-    runs-on: ubuntu-latest
+-    strategy:
+-      matrix:
+-        node: [12, 16]
+-    steps:
+-      - uses: actions/checkout@v2
+-      - uses: actions/setup-node@v2
+-        with:
+-          node-version: ${{ matrix.node }}
+-
+-      - run: yarn install --ignore-scripts
+-      - run: yarn run test
+diff --git a/plugins/postcss-place/.rollup.js b/plugins/postcss-place/.rollup.js
+index 4e8adac..8025c82 100644
+--- a/plugins/postcss-place/.rollup.js
++++ b/plugins/postcss-place/.rollup.js
+@@ -14,7 +14,7 @@ export default {
+ 					corejs: 3,
+ 					loose: true,
+ 					modules: false,
+-					targets: { node: 10 },
++					targets: { node: 12 },
+ 					useBuiltIns: 'entry'
+ 				}]
+ 			]
+diff --git a/rollup/cli.js b/rollup/cli.js
+new file mode 100644
+index 0000000..41c1599
+--- /dev/null
++++ b/rollup/cli.js
+@@ -0,0 +1,42 @@
++import babel from '@rollup/plugin-babel';
++import { nodeResolve } from '@rollup/plugin-node-resolve';
++import commonjs from '@rollup/plugin-commonjs';
++import path from 'path';
++
++export default {
++	input: 'src/cli.js',
++	output: [
++		{ file: 'dist/cli.js', format: 'cjs', sourcemap: false, strict: false }
++	],
++	plugins: [
++		nodeResolve({
++			rootDir: path.join(process.cwd(), '..', '..')
++		}),
++		commonjs(),
++		babel({
++			babelHelpers: 'bundled',
++			exclude: 'node_modules/**',
++			presets: [
++				['@babel/preset-env', {
++					corejs: 3,
++					loose: true,
++					modules: false,
++					targets: { node: 12 },
++					useBuiltIns: 'usage'
++				}]
++			]
++		}),
++		addHashBang()
++	]
++}
++
++function addHashBang () {
++	return {
++		name: 'add-hash-bang',
++		renderChunk (code) {
++			const updatedCode = `#!/usr/bin/env node\n\n${code}`;
++
++			return updatedCode;
++		}
++	};
++}
+diff --git a/rollup/default.js b/rollup/default.js
+new file mode 100644
+index 0000000..824334c
+--- /dev/null
++++ b/rollup/default.js
+@@ -0,0 +1,24 @@
++import babel from '@rollup/plugin-babel';
++
++export default {
++	input: 'src/index.js',
++	output: [
++		{ file: 'dist/index.js', format: 'cjs', sourcemap: true, exports: 'default' },
++		{ file: 'dist/index.mjs', format: 'esm', sourcemap: true, exports: 'default' }
++	],
++	plugins: [
++		babel({
++			babelHelpers: 'bundled',
++			exclude: 'node_modules/**',
++			presets: [
++				['@babel/preset-env', {
++					corejs: 3,
++					loose: true,
++					modules: false,
++					targets: { node: 12 },
++					useBuiltIns: 'usage'
++				}]
++			]
++		}),
++	]
++}
+-- 
+2.33.1
+
