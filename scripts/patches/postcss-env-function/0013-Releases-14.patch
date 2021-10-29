@@ -1,7 +1,7 @@
 From 3ac3f737d0368d4e99aa30d060a4d90597d78c54 Mon Sep 17 00:00:00 2001
 From: Jonas Thelemann <e-mail@jonas-thelemann.de>
 Date: Fri, 17 Sep 2021 15:32:05 +0200
-Subject: [PATCH 13/14] Releases (csstools/postcss-env-function#14)
+Subject: [PATCH 13/17] Releases (csstools/postcss-env-function#14)
 
 * ci: switch to actions
 

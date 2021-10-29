@@ -1,7 +1,7 @@
 From c7f2f6c3fa4dc1feac82e5c4bc75aec33ee88e9d Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sat, 28 Apr 2018 15:02:04 -0400
-Subject: [PATCH 01/14] 1.0.0
+Subject: [PATCH 01/17] 1.0.0
 
 ---
  .appveyor.yml              |  18 ++++

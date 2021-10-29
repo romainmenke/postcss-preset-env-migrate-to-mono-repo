@@ -1,7 +1,7 @@
 From 57bfc092647a433f6226e3fde560aa9c99435ff9 Mon Sep 17 00:00:00 2001
 From: Aaron Ballard <aaron.ballard@oildex.com>
 Date: Wed, 15 Aug 2018 16:44:37 -0500
-Subject: [PATCH 02/14] Upgrade PostCSS to 7.0.2
+Subject: [PATCH 02/17] Upgrade PostCSS to 7.0.2
 
 ---
  package.json | 2 +-

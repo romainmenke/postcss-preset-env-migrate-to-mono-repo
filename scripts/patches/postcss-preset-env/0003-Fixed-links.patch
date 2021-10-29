@@ -1,7 +1,7 @@
 From 08b6cab7d78f20cee1b6fbc0006a7167f92a7e56 Mon Sep 17 00:00:00 2001
 From: Evgeny Petukhov <petukhov.yevgeny@gmail.com>
 Date: Fri, 9 Feb 2018 18:14:33 +0300
-Subject: [PATCH 03/84] Fixed links
+Subject: [PATCH 03/90] Fixed links
 
 ---
  README.md | 7 +++++--

@@ -1,7 +1,7 @@
 From 306e3bbf02e8c601a8e0ca79857d6ce53a35a389 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Mon, 1 Jul 2019 08:21:26 -0400
-Subject: [PATCH 06/14] 3.0.0
+Subject: [PATCH 06/17] 3.0.0
 
 * Update packages without breaking local tests
 * Update PostCSS Values Parser

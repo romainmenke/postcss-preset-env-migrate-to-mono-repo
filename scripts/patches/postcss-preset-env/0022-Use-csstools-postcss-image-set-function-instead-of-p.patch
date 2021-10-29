@@ -1,7 +1,7 @@
 From 7b0ff1124b1f031e069fed3f56e694347569cfef Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sun, 18 Mar 2018 19:33:00 -0400
-Subject: [PATCH 22/84] Use @csstools/postcss-image-set-function instead of
+Subject: [PATCH 22/90] Use @csstools/postcss-image-set-function instead of
  postcss-image-set-polyfill
 
 ---

@@ -1,0 +1,408 @@
+From 605426a0b405e7e4a7ae21126517701ee6d6c993 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 28 Oct 2021 07:31:54 -0400
+Subject: [PATCH 16/17] update project configuration
+
+---
+ package.json                  | 31 ++++++++++++++-------
+ src/index.js                  | 24 ++++++++--------
+ src/lib/get-fn-value.js       |  8 +++---
+ src/lib/get-replaced-value.js | 16 +++++------
+ src/lib/import-from.js        | 52 +++++++++++++++++------------------
+ src/lib/is-env-func.js        |  2 +-
+ src/lib/update-env-value.js   | 30 ++++++++++----------
+ src/lib/walk-env-funcs.js     |  8 +++---
+ 8 files changed, 91 insertions(+), 80 deletions(-)
+
+diff --git a/package.json b/package.json
+index e9f00d1..64918ea 100644
+--- a/package.json
++++ b/package.json
+@@ -7,7 +7,7 @@
+   "repository": "csstools/postcss-env-function",
+   "homepage": "https://github.com/csstools/postcss-env-function#readme",
+   "bugs": "https://github.com/csstools/postcss-env-function/issues",
+-  "main": "dist/index.js",
++  "main": "dist/index.cjs",
+   "module": "dist/index.mjs",
+   "files": [
+     "dist"
+@@ -32,15 +32,14 @@
+     "postcss": "^8.3"
+   },
+   "devDependencies": {
+-    "@babel/core": "7.15.5",
+-    "@babel/eslint-parser": "7.15.4",
+-    "@babel/preset-env": "7.15.6",
++    "@babel/core": "7.15.8",
++    "@babel/preset-env": "7.15.8",
+     "@rollup/plugin-babel": "5.3.0",
+-    "eslint": "7.32.0",
++    "eslint": "8.1.0",
+     "postcss": "8.3.6",
+     "postcss-tape": "6.0.1",
+     "pre-commit": "1.2.2",
+-    "rollup": "2.56.3"
++    "rollup": "2.58.3"
+   },
+   "babel": {
+     "presets": [
+@@ -54,11 +53,22 @@
+   },
+   "eslintConfig": {
+     "env": {
+-      "es6": true,
+-      "node": true
++      "es6": true
+     },
+     "extends": "eslint:recommended",
+-    "parser": "@babel/eslint-parser"
++    "parserOptions": {
++      "ecmaVersion": 12,
++      "sourceType": "module",
++      "ecmaFeatures": {
++        "modules": true
++      }
++    },
++    "rules": {
++      "semi": [
++        "error",
++        "never"
++      ]
++    }
+   },
+   "rollup": {
+     "input": "src/index.js",
+@@ -67,7 +77,8 @@
+     ],
+     "output": [
+       {
+-        "file": "dist/index.js",
++        "exports": "default",
++        "file": "dist/index.cjs",
+         "format": "cjs"
+       },
+       {
+diff --git a/src/index.js b/src/index.js
+index d72de31..eb6d4a3 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -1,34 +1,34 @@
+-import getReplacedValue from './lib/get-replaced-value';
+-import importEnvironmentVariablesFromSources from './lib/import-from';
++import getReplacedValue from './lib/get-replaced-value'
++import importEnvironmentVariablesFromSources from './lib/import-from'
+ 
+ /**
+  * @param {{importFrom?: string[]}} opts
+  * @returns {import('postcss').Plugin}
+  */
+-module.exports = function creator(opts) {
++export default function creator(opts) {
+ 	// sources to import environment variables from
+-	const importFrom = [].concat(Object(opts).importFrom || []);
++	const importFrom = [].concat(Object(opts).importFrom || [])
+ 
+ 	// promise any environment variables are imported
+-	const environmentVariablesPromise = importEnvironmentVariablesFromSources(importFrom);
++	const environmentVariablesPromise = importEnvironmentVariablesFromSources(importFrom)
+ 
+ 	return {
+ 		postcssPlugin: 'postcss-env-fn',
+ 		async AtRule(atRule) {
+-			const replacedValue = getReplacedValue(atRule.params, await environmentVariablesPromise);
++			const replacedValue = getReplacedValue(atRule.params, await environmentVariablesPromise)
+ 
+ 			if (replacedValue !== atRule.params) {
+-				atRule.params = replacedValue;
++				atRule.params = replacedValue
+ 			}
+ 		},
+ 		async Declaration(decl) {
+-			const replacedValue = getReplacedValue(decl.value, await environmentVariablesPromise);
++			const replacedValue = getReplacedValue(decl.value, await environmentVariablesPromise)
+ 
+ 			if (replacedValue !== decl.value) {
+-				decl.value = replacedValue;
++				decl.value = replacedValue
+ 			}
+ 		}
+-	};
+-};
++	}
++}
+ 
+-module.exports.postcss = true;
++creator.postcss = true
+diff --git a/src/lib/get-fn-value.js b/src/lib/get-fn-value.js
+index 29880fa..de50942 100644
+--- a/src/lib/get-fn-value.js
++++ b/src/lib/get-fn-value.js
+@@ -1,8 +1,8 @@
+-const dashedMatch = /^--/;
++const dashedMatch = /^--/
+ 
+ // returns the value of a css function as a string
+ export default (node) => {
+-	const value = String(node.nodes);
++	const value = String(node.nodes)
+ 
+-	return dashedMatch.test(value) ? value : undefined;
+-};
++	return dashedMatch.test(value) ? value : undefined
++}
+diff --git a/src/lib/get-replaced-value.js b/src/lib/get-replaced-value.js
+index b411047..e020402 100644
+--- a/src/lib/get-replaced-value.js
++++ b/src/lib/get-replaced-value.js
+@@ -1,6 +1,6 @@
+-import { parse } from 'postcss-values-parser';
+-import updateEnvValue from './update-env-value';
+-import walkEnvFuncs from './walk-env-funcs';
++import { parse } from 'postcss-values-parser'
++import updateEnvValue from './update-env-value'
++import walkEnvFuncs from './walk-env-funcs'
+ 
+ /**
+  * @param {string} originalValue
+@@ -9,14 +9,14 @@ import walkEnvFuncs from './walk-env-funcs';
+  */
+ export default (originalValue, variables) => {
+ 	// get the ast of the original value
+-	const ast = parse(originalValue);
++	const ast = parse(originalValue)
+ 
+ 	// walk all of the css env() functions
+ 	walkEnvFuncs(ast, node => {
+ 		// update the environment value for the css env() function
+-		updateEnvValue(node, variables);
+-	});
++		updateEnvValue(node, variables)
++	})
+ 
+ 	// return the stringified ast
+-	return String(ast);
+-};
++	return String(ast)
++}
+diff --git a/src/lib/import-from.js b/src/lib/import-from.js
+index 5914655..30a0f2b 100644
+--- a/src/lib/import-from.js
++++ b/src/lib/import-from.js
+@@ -1,6 +1,6 @@
+-import fs from 'fs';
+-import path from 'path';
+-import { parse } from 'postcss-values-parser';
++import fs from 'fs'
++import path from 'path'
++import { parse } from 'postcss-values-parser'
+ 
+ /**
+  * Import Custom Properties from Object
+@@ -11,13 +11,13 @@ function importEnvironmentVariablesFromObject(object) {
+ 	const environmentVariables = Object.assign(
+ 		{},
+ 		Object(object).environmentVariables || Object(object)['environment-variables']
+-	);
++	)
+ 
+ 	for (const key in environmentVariables) {
+-		environmentVariables[key] = parse(environmentVariables[key]).nodes;
++		environmentVariables[key] = parse(environmentVariables[key]).nodes
+ 	}
+ 
+-	return environmentVariables;
++	return environmentVariables
+ }
+ 
+ /**
+@@ -26,9 +26,9 @@ function importEnvironmentVariablesFromObject(object) {
+  * @returns {Promise<Record<string, import('postcss-values-parser').Root>>}
+  */
+ async function importEnvironmentVariablesFromJSONFile(from) {
+-	const object = await readJSON(path.resolve(from));
++	const object = await readJSON(path.resolve(from))
+ 
+-	return importEnvironmentVariablesFromObject(object);
++	return importEnvironmentVariablesFromObject(object)
+ }
+ 
+ /**
+@@ -37,9 +37,9 @@ async function importEnvironmentVariablesFromJSONFile(from) {
+  * @returns {Promise<Record<string, import('postcss-values-parser').Root>>}
+  */
+ async function importEnvironmentVariablesFromJSFile(from) {
+-	const object = await import(path.resolve(from));
++	const object = await import(path.resolve(from))
+ 
+-	return importEnvironmentVariablesFromObject(object);
++	return importEnvironmentVariablesFromObject(object)
+ }
+ 
+ /**
+@@ -50,13 +50,13 @@ async function importEnvironmentVariablesFromJSFile(from) {
+ export default function importEnvironmentVariablesFromSources(sources) {
+ 	return sources.map(source => {
+ 		if (source instanceof Promise) {
+-			return source;
++			return source
+ 		} else if (source instanceof Function) {
+-			return source();
++			return source()
+ 		}
+ 
+ 		// read the source as an object
+-		const opts = source === Object(source) ? source : { from: String(source) };
++		const opts = source === Object(source) ? source : { from: String(source) }
+ 
+ 		// skip objects with Custom Properties
+ 		if (opts.environmentVariables || opts['environment-variables']) {
+@@ -64,25 +64,25 @@ export default function importEnvironmentVariablesFromSources(sources) {
+ 		}
+ 
+ 		// source pathname
+-		const from = String(opts.from || '');
++		const from = String(opts.from || '')
+ 
+ 		// type of file being read from
+-		const type = (opts.type || path.extname(from).slice(1)).toLowerCase();
++		const type = (opts.type || path.extname(from).slice(1)).toLowerCase()
+ 
+-		return { type, from };
++		return { type, from }
+ 	}).reduce(async (environmentVariables, source) => {
+-		const { type, from } = await source;
++		const { type, from } = await source
+ 
+ 		if (type === 'js' || type === 'cjs') {
+-			return Object.assign(environmentVariables, await importEnvironmentVariablesFromJSFile(from));
++			return Object.assign(environmentVariables, await importEnvironmentVariablesFromJSFile(from))
+ 		}
+ 
+ 		if (type === 'json') {
+-			return Object.assign(environmentVariables, await importEnvironmentVariablesFromJSONFile(from));
++			return Object.assign(environmentVariables, await importEnvironmentVariablesFromJSONFile(from))
+ 		}
+ 
+-		return Object.assign(environmentVariables, importEnvironmentVariablesFromObject(await source));
+-	}, {});
++		return Object.assign(environmentVariables, importEnvironmentVariablesFromObject(await source))
++	}, {})
+ }
+ 
+ /* Helper utilities
+@@ -95,11 +95,11 @@ export default function importEnvironmentVariablesFromSources(sources) {
+ const readFile = from => new Promise((resolve, reject) => {
+ 	fs.readFile(from, 'utf8', (error, result) => {
+ 		if (error) {
+-			reject(error);
++			reject(error)
+ 		} else {
+-			resolve(result);
++			resolve(result)
+ 		}
+-	});
+-});
++	})
++})
+ 
+-const readJSON = async from => JSON.parse(await readFile(from));
++const readJSON = async from => JSON.parse(await readFile(from))
+diff --git a/src/lib/is-env-func.js b/src/lib/is-env-func.js
+index 12d9146..2e1c3a1 100644
+--- a/src/lib/is-env-func.js
++++ b/src/lib/is-env-func.js
+@@ -1,2 +1,2 @@
+ // returns whether a node is a css env() function
+-export default (node) => node && node.type === 'func' && node.name === 'env';
++export default (node) => node && node.type === 'func' && node.name === 'env'
+diff --git a/src/lib/update-env-value.js b/src/lib/update-env-value.js
+index 1cc2e5d..1ce9d62 100644
+--- a/src/lib/update-env-value.js
++++ b/src/lib/update-env-value.js
+@@ -1,44 +1,44 @@
+-import getFnValue from './get-fn-value';
++import getFnValue from './get-fn-value'
+ 
+ // update a node with an environment value
+ export default (node, variables) => {
+ 	// get the value of a css function as a string
+-	const value = getFnValue(node);
++	const value = getFnValue(node)
+ 
+ 	if (typeof value === 'string' && value in variables) {
+ 		node.replaceWith(
+ 			...asClonedArrayWithBeforeSpacing(variables[value], node.raws.before)
+-		);
++		)
+ 	}
+-};
++}
+ 
+ // return an array with its nodes cloned, preserving the raw
+ const asClonedArrayWithBeforeSpacing = (array, beforeSpacing) => {
+-	const clonedArray = asClonedArray(array, null);
++	const clonedArray = asClonedArray(array, null)
+ 
+ 	if (clonedArray[0]) {
+-		clonedArray[0].raws.before = beforeSpacing;
++		clonedArray[0].raws.before = beforeSpacing
+ 	}
+ 
+-	return clonedArray;
+-};
++	return clonedArray
++}
+ 
+ // return an array with its nodes cloned
+-const asClonedArray = (array, parent) => array.map(node => asClonedNode(node, parent));
++const asClonedArray = (array, parent) => array.map(node => asClonedNode(node, parent))
+ 
+ // return a cloned node
+ const asClonedNode = (node, parent) => {
+-	const cloneNode = new node.constructor(node);
++	const cloneNode = new node.constructor(node)
+ 
+ 	for (const key in node) {
+ 		if (key === 'parent') {
+-			cloneNode.parent = parent;
++			cloneNode.parent = parent
+ 		} else if (Object(node[key]).constructor === Array) {
+-			cloneNode[key] = asClonedArray(node.nodes, cloneNode);
++			cloneNode[key] = asClonedArray(node.nodes, cloneNode)
+ 		} else if (Object(node[key]).constructor === Object) {
+-			cloneNode[key] = Object.assign({}, node[key]);
++			cloneNode[key] = Object.assign({}, node[key])
+ 		}
+ 	}
+ 
+-	return cloneNode;
+-};
++	return cloneNode
++}
+diff --git a/src/lib/walk-env-funcs.js b/src/lib/walk-env-funcs.js
+index 070f30e..e6ad3c9 100644
+--- a/src/lib/walk-env-funcs.js
++++ b/src/lib/walk-env-funcs.js
+@@ -1,14 +1,14 @@
+-import isEnvFunc from './is-env-func';
++import isEnvFunc from './is-env-func'
+ 
+ // walks a node recursively and runs a function using its children
+ export default function walk (node, fn) {
+ 	node.nodes.slice(0).forEach(childNode => {
+ 		if (childNode.nodes) {
+-			walk(childNode, fn);
++			walk(childNode, fn)
+ 		}
+ 
+ 		if (isEnvFunc(childNode)) {
+-			fn(childNode);
++			fn(childNode)
+ 		}
+-	});
++	})
+ }
+-- 
+2.33.1
+

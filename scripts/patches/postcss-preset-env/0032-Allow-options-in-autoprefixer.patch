@@ -1,7 +1,7 @@
 From a4e7104e8d8cf014c067efbc97c4a20fa1db2fe0 Mon Sep 17 00:00:00 2001
 From: Lysholm <emil.lysholm@gmail.com>
 Date: Tue, 22 May 2018 02:45:21 +0200
-Subject: [PATCH 32/84] Allow options in autoprefixer
+Subject: [PATCH 32/90] Allow options in autoprefixer
 
 ---
  index.js | 3 ++-

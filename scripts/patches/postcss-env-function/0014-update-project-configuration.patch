@@ -1,7 +1,7 @@
 From 74fc649861a83b93a1b3af9c5f2274644d6edc27 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Fri, 17 Sep 2021 09:38:38 -0400
-Subject: [PATCH 14/14] update project configuration
+Subject: [PATCH 14/17] update project configuration
 
 ---
  .gitignore |    1 +

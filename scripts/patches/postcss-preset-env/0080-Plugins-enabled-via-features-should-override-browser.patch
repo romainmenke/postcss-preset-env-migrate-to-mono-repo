@@ -1,7 +1,7 @@
 From ca9d4ff2daf34dc0a83f0cb29de087027235e27b Mon Sep 17 00:00:00 2001
 From: Dmitry Semigradsky <semigradskyd@gmail.com>
 Date: Thu, 12 Mar 2020 03:34:47 +0300
-Subject: [PATCH 80/84] Plugins enabled via `features` should override
+Subject: [PATCH 80/90] Plugins enabled via `features` should override
  browserslist (csstools/postcss-preset-env#165)
 
 ---

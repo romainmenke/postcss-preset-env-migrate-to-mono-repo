@@ -1,7 +1,7 @@
 From 755667b5fe65ba8cd540f7086c42b7757965cd58 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Thu, 25 Jun 2020 09:20:58 -0400
-Subject: [PATCH 09/14] Fix README.md documentation
+Subject: [PATCH 09/17] Fix README.md documentation
 
 ---
  README.md | 62 ++++++++++++++++++++++++++++++++++---------------------

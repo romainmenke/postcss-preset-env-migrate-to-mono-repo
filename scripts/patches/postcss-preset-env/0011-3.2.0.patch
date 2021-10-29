@@ -1,7 +1,7 @@
 From b19a75bd479987ee3c4e7da1c28447858e6b3d98 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sun, 18 Feb 2018 18:55:24 -0500
-Subject: [PATCH 11/84] 3.2.0
+Subject: [PATCH 11/90] 3.2.0
 
 ---
  CHANGELOG.md | 4 ++++

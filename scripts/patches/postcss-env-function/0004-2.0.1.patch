@@ -1,7 +1,7 @@
 From 00063ded17b1ccd4c68c676f5fb7a049f69a0aa3 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Tue, 18 Sep 2018 12:02:30 -0400
-Subject: [PATCH 04/14] 2.0.1
+Subject: [PATCH 04/17] 2.0.1
 
 ---
  CHANGELOG.md |  8 ++++++--

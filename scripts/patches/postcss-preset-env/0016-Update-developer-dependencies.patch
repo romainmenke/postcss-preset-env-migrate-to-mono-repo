@@ -1,7 +1,7 @@
 From 5dde535f05868b6ed4e79e595aebf9c182fed7fd Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Fri, 16 Mar 2018 10:08:12 -0400
-Subject: [PATCH 16/84] Update developer dependencies
+Subject: [PATCH 16/90] Update developer dependencies
 
 ---
  package.json | 4 ++--

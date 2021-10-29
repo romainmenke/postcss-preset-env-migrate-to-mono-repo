@@ -1,7 +1,7 @@
 From 03ed59c9a1993da090b3ae55189da72fdf551ea2 Mon Sep 17 00:00:00 2001
 From: Eduard Kyvenko <edu@june.dk>
 Date: Sat, 4 Aug 2018 21:22:31 +0200
-Subject: [PATCH 45/84] Add more docs about autoprefixer
+Subject: [PATCH 45/90] Add more docs about autoprefixer
 
 ---
  README.md | 12 +++++++++++-

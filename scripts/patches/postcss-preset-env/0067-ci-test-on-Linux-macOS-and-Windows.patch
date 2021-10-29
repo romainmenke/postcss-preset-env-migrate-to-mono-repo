@@ -1,7 +1,7 @@
 From bd5775db5663797ee62cd8193593ba52e9c5e277 Mon Sep 17 00:00:00 2001
 From: Daniel Ruf <daniel.ruf@ueberbit.de>
 Date: Tue, 13 Nov 2018 12:46:12 +0100
-Subject: [PATCH 67/84] ci: test on Linux, macOS and Windows
+Subject: [PATCH 67/90] ci: test on Linux, macOS and Windows
 
 ---
  .travis.yml | 5 +++++

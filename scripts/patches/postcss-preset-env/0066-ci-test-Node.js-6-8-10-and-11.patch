@@ -1,7 +1,7 @@
 From 84c570001e7fc076eefe1b9a0cfcc8454d905c26 Mon Sep 17 00:00:00 2001
 From: Daniel Ruf <daniel.ruf@ueberbit.de>
 Date: Tue, 13 Nov 2018 12:45:09 +0100
-Subject: [PATCH 66/84] ci: test Node.js 6, 8, 10 and 11
+Subject: [PATCH 66/90] ci: test Node.js 6, 8, 10 and 11
 
 ---
  .travis.yml | 3 +++
