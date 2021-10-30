@@ -1,7 +1,7 @@
-From 401f8b2f223a0f4729b702c8c34bdba797028784 Mon Sep 17 00:00:00 2001
+From 6fb271d3cb61f56390b2484bc1c637b59c40c5b3 Mon Sep 17 00:00:00 2001
 From: romainmenke <romainmenke@gmail.com>
 Date: Fri, 29 Oct 2021 15:14:32 +0200
-Subject: [PATCH 3/3] add base plugins and hoist dependencies
+Subject: [PATCH 3/4] add base plugins and hoist dependencies
 
 ---
  .editorconfig                                 |   2 +-

@@ -1,7 +1,7 @@
-From 606625401c213feaa453a220b46578e0ec622625 Mon Sep 17 00:00:00 2001
+From 282f1935a3b9c4051e2e8fe5ed5af68214b799d2 Mon Sep 17 00:00:00 2001
 From: romainmenke <romainmenke@gmail.com>
 Date: Thu, 28 Oct 2021 17:46:33 +0200
-Subject: [PATCH 2/3] one more editorconfig
+Subject: [PATCH 2/4] one more editorconfig
 
 ---
  plugins/convert-colors/.editorconfig | 15 ---------------
