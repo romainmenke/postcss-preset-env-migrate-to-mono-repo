@@ -1,7 +1,7 @@
 From 40a25d893caea8ca5cc1032b34f1f90817b33fdf Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Wed, 21 Feb 2018 10:37:35 -0500
-Subject: [PATCH 12/90] 3.2.1
+Subject: [PATCH 12/84] 3.2.1
 
 ---
  CHANGELOG.md |  4 +++

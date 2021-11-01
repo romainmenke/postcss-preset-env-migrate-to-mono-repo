@@ -18,6 +18,7 @@ npm pkg set private=true --workspace="@csstools/base-cli"
 npm pkg set private=true --workspace="@csstools/postcss-base-plugin-cli"
 npm pkg set private=true --workspace="@csstools/postcss-base-plugin"
 
+npm pkg delete scripts.pretest:tape --workspaces
 npm pkg delete scripts.prepublishOnly --workspace="@csstools/base-cli"
 npm pkg delete scripts.stryker --workspace="@csstools/base-cli"
 npm pkg delete scripts.stryker --workspace="@csstools/postcss-base-plugin-cli"

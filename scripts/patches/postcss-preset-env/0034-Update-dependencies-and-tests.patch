@@ -1,7 +1,7 @@
 From 987dd8cdbc8b160809064c0717fd6a0588aa590e Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Mon, 21 May 2018 20:58:32 -0400
-Subject: [PATCH 34/90] Update dependencies and tests
+Subject: [PATCH 34/84] Update dependencies and tests
 
 ---
  .tape.js                           |   8 +

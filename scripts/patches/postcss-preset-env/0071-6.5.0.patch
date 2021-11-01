@@ -1,7 +1,7 @@
 From da616977628f17540138cc84cd8f1501f3e45163 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Wed, 12 Dec 2018 11:16:10 -0500
-Subject: [PATCH 71/90] 6.5.0
+Subject: [PATCH 71/84] 6.5.0
 
 ---
  package.json | 2 +-

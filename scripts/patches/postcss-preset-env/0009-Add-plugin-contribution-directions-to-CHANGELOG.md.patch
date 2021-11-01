@@ -1,7 +1,7 @@
 From bd2eaf95c28bce2dbed901bb89bf2cc2c2933c6c Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sun, 18 Feb 2018 18:29:17 -0500
-Subject: [PATCH 09/90] Add plugin contribution directions to CHANGELOG.md
+Subject: [PATCH 09/84] Add plugin contribution directions to CHANGELOG.md
 
 ---
  CONTRIBUTING.md | 10 ++++++++++

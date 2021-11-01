@@ -1,7 +1,7 @@
 From 77970b30f495d0c74006b18aa83b0f699b887781 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Tue, 26 Jun 2018 10:20:05 -0400
-Subject: [PATCH 40/90] 5.2.1
+Subject: [PATCH 40/84] 5.2.1
 
 ---
  CHANGELOG.md | 5 +++++

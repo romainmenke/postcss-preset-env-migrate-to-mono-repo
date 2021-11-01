@@ -1,7 +1,7 @@
 From 499e144462de4d95866a202655e1930c3b719664 Mon Sep 17 00:00:00 2001
 From: Eduard Kyvenko <duardeco@gmail.com>
 Date: Mon, 20 Aug 2018 16:44:19 +0200
-Subject: [PATCH 46/90] Add configuring section
+Subject: [PATCH 46/84] Add configuring section
 
 ---
  README.md | 32 +++++++++++++++++++++++++++++++-

@@ -1,0 +1,54 @@
+From 9e59c399108044e20385958bbf85cdeefc2cf8fc Mon Sep 17 00:00:00 2001
+From: Nico <nicoqh@users.noreply.github.com>
+Date: Wed, 27 Oct 2021 16:31:28 +0200
+Subject: [PATCH 83/84] docs: use postcss-loader's new postcssOptions (csstools/postcss-preset-env#198)
+
+* docs: use the new postcssOptions
+
+PostCSS options were moved to the `postcssOptions` option.
+
+* use a plugin array in the webpack example
+
+* remove the ident option from the webpack example
+---
+ INSTALL.md | 24 +++++++++++++-----------
+ 1 file changed, 13 insertions(+), 11 deletions(-)
+
+diff --git a/INSTALL.md b/INSTALL.md
+index eb99b82..877f2f3 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -73,17 +73,19 @@ module.exports = {
+         use: [
+           'style-loader',
+           { loader: 'css-loader', options: { importLoaders: 1 } },
+-          { loader: 'postcss-loader', options: {
+-            ident: 'postcss',
+-            plugins: () => [
+-              postcssPresetEnv(/* pluginOptions */)
+-            ]
+-          } }
+-        ]
+-      }
+-    ]
+-  }
+-}
++          {
++            loader: 'postcss-loader',
++            options: {
++              postcssOptions: {
++                plugins: [postcssPresetEnv(/* pluginOptions */)],
++              },
++            },
++          },
++        ],
++      },
++    ],
++  },
++};
+ ```
+ 
+ ## Create React App
+-- 
+2.33.1
+

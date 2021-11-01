@@ -1,7 +1,7 @@
 From 1c2489e2d0e0dea7b7e4a40d9c7967335a9c5b61 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Mon, 22 Oct 2018 11:57:47 -0400
-Subject: [PATCH 61/90] 6.2.0
+Subject: [PATCH 61/84] 6.2.0
 
 ---
  CHANGELOG.md | 5 +++++

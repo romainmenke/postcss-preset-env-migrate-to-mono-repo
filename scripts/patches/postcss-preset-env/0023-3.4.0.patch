@@ -1,7 +1,7 @@
 From 229b0dd80b183ecd6a53d72aad197af64d0458b6 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sun, 18 Mar 2018 19:36:19 -0400
-Subject: [PATCH 23/90] 3.4.0
+Subject: [PATCH 23/84] 3.4.0
 
 ---
  CHANGELOG.md | 6 ++++++

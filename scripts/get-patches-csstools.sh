@@ -1,7 +1,7 @@
 set -e
 
-# sh ./scripts/get-patches.sh postcss-preset-env csstools
-sh ./scripts/get-patches-preset-env.sh
+sh ./scripts/get-patches.sh postcss-preset-env csstools
+# sh ./scripts/get-patches-preset-env.sh
 
 sh ./scripts/get-patches.sh css-blank-pseudo csstools
 sh ./scripts/get-patches.sh css-has-pseudo csstools

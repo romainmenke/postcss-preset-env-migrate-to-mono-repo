@@ -1,7 +1,7 @@
 From d04b6d84f15e089a83063c73ab2b39e57a29db33 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Fri, 23 Nov 2018 09:29:57 -0500
-Subject: [PATCH 65/90] Update dependencies
+Subject: [PATCH 65/84] Update dependencies
 
 ---
  CHANGELOG.md |  6 ++++++

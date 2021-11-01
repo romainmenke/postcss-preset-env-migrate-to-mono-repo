@@ -1,7 +1,7 @@
 From a1064224c5cf810d23968d62e55aee9972c853d2 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Fri, 13 Jul 2018 15:18:05 -0400
-Subject: [PATCH 42/90] 5.2.2
+Subject: [PATCH 42/84] 5.2.2
 
 ---
  CHANGELOG.md |  6 ++++++

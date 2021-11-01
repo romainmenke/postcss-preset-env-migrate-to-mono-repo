@@ -1,7 +1,7 @@
 From 6c148c92bbf0c0646579fbe1217d5379f27ab7a0 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Thu, 5 Apr 2018 14:52:13 -0400
-Subject: [PATCH 25/90] 3.5.0
+Subject: [PATCH 25/84] 3.5.0
 
 ---
  CHANGELOG.md                       |  9 +++++++++
