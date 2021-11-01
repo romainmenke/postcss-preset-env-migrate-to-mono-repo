@@ -1,0 +1,46 @@
+name: test
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # All currently supported LTS versions + latest with workspaces support
+        node: [16, 17]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+
+      - run: npm install --ignore-scripts
+      - run: npm run build --workspaces --if-present
+      - run: npm run test --workspaces --if-present
+      - run: npm run stryker --workspaces --if-present
+        timeout-minutes: 20
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # All currently supported LTS versions without workspaces support
+        node: [12, 14]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: 'npm'
+
+      - run: npm install --ignore-scripts
+      - run: npm run build --workspaces --if-present
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+
+      - run: bash ./.github/bin/install-and-test-all-packages.sh
