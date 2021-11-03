@@ -1,7 +1,7 @@
 From 5e2fc78841acecad555b42eeec52ff4d0074ed24 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Mon, 18 Sep 2017 13:09:45 -0400
-Subject: [PATCH 65/89] Update devDependencies
+Subject: [PATCH 65/95] Update devDependencies
 
 ---
  package.json | 4 ++--

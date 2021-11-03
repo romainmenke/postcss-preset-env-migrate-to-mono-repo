@@ -1,7 +1,7 @@
 From 8c13c72dc60cd8894d8d14e8339a911730c72759 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Mon, 18 Sep 2017 13:20:07 -0400
-Subject: [PATCH 67/89] Normalize CHANGELOG
+Subject: [PATCH 67/95] Normalize CHANGELOG
 
 ---
  CHANGELOG.md | 12 ++++++------

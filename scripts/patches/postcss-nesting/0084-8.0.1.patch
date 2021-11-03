@@ -1,7 +1,7 @@
 From 69da21c407d319b10524098832423435f73318e4 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sat, 1 May 2021 22:42:03 -0400
-Subject: [PATCH 84/89] 8.0.1
+Subject: [PATCH 84/95] 8.0.1
 
 ---
  CHANGELOG.md | 4 ++++

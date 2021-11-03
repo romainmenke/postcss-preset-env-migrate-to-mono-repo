@@ -1,22 +1,22 @@
-From 7c5b8f781a95ea1d6505181df0e8d62902531bb5 Mon Sep 17 00:00:00 2001
+From a874aae2792c2109ad57307ad866f76854c183fd Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
-Date: Wed, 27 Oct 2021 10:25:44 -0400
-Subject: [PATCH 89/95] 9.0.0
+Date: Wed, 3 Nov 2021 08:35:32 -0400
+Subject: [PATCH 95/95] 9.0.1
 
 ---
  package.json | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/package.json b/package.json
-index 439ed2b..6dffc2b 100644
+index 415e091..4cbe011 100644
 --- a/package.json
 +++ b/package.json
 @@ -2,7 +2,7 @@
    "name": "postcss-nesting",
    "description": "Nest rules inside each other in CSS",
    "license": "CC0-1.0",
--  "version": "8.0.1",
-+  "version": "9.0.0",
+-  "version": "9.0.0",
++  "version": "9.0.1",
    "type": "module",
    "main": "postcss-8-nesting/postcss-nesting.cjs",
    "module": "postcss-8-nesting/postcss-nesting.mjs",

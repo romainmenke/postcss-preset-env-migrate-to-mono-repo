@@ -1,7 +1,7 @@
 From efc8b3d51591e642a5ed5735bcc8fe3088827614 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sat, 1 May 2021 22:23:41 -0400
-Subject: [PATCH 83/89] fix: cjs build
+Subject: [PATCH 83/95] fix: cjs build
 
 ---
  .bin/build.js                                 | 85 ++++++++++++++-----

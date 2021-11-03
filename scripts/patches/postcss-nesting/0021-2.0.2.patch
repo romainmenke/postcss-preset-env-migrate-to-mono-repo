@@ -1,7 +1,7 @@
 From e1ae8c0f1c9bbe48634da0d2953dd60570ac2356 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Wed, 16 Sep 2015 03:22:28 -0400
-Subject: [PATCH 21/89] 2.0.2
+Subject: [PATCH 21/95] 2.0.2
 
 ---
  CHANGELOG.md | 4 ++++

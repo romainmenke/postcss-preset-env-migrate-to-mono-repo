@@ -1,0 +1,25 @@
+From a576e329e2506d183aadc79fa4c05421d58f2c71 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 3 Nov 2021 07:56:04 -0400
+Subject: [PATCH 91/95] update devDependencies
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 2cb6b4d..ad34c27 100644
+--- a/package.json
++++ b/package.json
+@@ -44,7 +44,7 @@
+     "test:tape": "node .bin/test-tape.js"
+   },
+   "devDependencies": {
+-    "esbuild": "0.13.9",
++    "esbuild": "0.13.12",
+     "eslint": "8.1.0",
+     "eslint-config-dev": "2.0.0",
+     "nodemon": "2.0.14",
+-- 
+2.33.1
+

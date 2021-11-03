@@ -1,7 +1,7 @@
 From 13dc1d395f6a04e1ddbc67f3de00e9b8f61e8d6a Mon Sep 17 00:00:00 2001
 From: Maxime Thirouin <m@moox.io>
 Date: Wed, 17 Jun 2015 18:58:35 +0200
-Subject: [PATCH 08/89] More clear short description in the README
+Subject: [PATCH 08/95] More clear short description in the README
 
 Close csstools/postcss-nesting#1
 ---

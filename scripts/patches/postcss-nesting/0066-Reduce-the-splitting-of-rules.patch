@@ -1,7 +1,7 @@
 From 8de8fc8e9a3d7d106c971084a7590dd9e20d7d3a Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Mon, 18 Sep 2017 13:12:56 -0400
-Subject: [PATCH 66/89] Reduce the splitting of rules
+Subject: [PATCH 66/95] Reduce the splitting of rules
 
 ---
  lib/get-closest-rule.js         | 12 ++++++++++++

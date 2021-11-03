@@ -1,0 +1,1433 @@
+From 2ee61c4cec16dfade01a1b00b89a69a73ac007d2 Mon Sep 17 00:00:00 2001
+From: Romain Menke <11521496+romainmenke@users.noreply.github.com>
+Date: Wed, 3 Nov 2021 12:48:48 +0100
+Subject: [PATCH 90/95] fix spec issues (csstools/postcss-nesting#88)
+
+* fix spec issues
+
+* also fix nesting rules
+
+* one more test
+
+* cleanup
+
+* more fixes :
+
+- fix csstools/postcss-nesting#87
+- add test to ensure that csstools/postcss-nesting#85 was fixed
+
+* update CI
+---
+ .bin/test-tape.js                             |   1 +
+ .github/workflows/test.yml                    |  24 ++
+ .gitignore                                    |   1 +
+ .travis.yml                                   |   7 -
+ package.json                                  |   2 +-
+ src/lib/merge-selectors.js                    |  35 +-
+ .../mixing-nesting-rules-and-declarations.js  |  46 ++
+ src/lib/nest-rule-within-rule.js              |   3 +-
+ src/lib/rule-within-rule.js                   |   3 +-
+ src/lib/valid-selector.js                     |   5 -
+ src/postcss-8-nesting.js                      |   4 +-
+ test/at-rule.css                              |  51 +++
+ test/at-rule.expect.css                       |  37 ++
+ test/basic.css                                |  13 +
+ test/basic.expect.css                         |  42 +-
+ test/complex.expect.css                       |   7 +-
+ test/direct.expect.css                        |  18 +-
+ test/empty.expect.css                         |   6 -
+ test/ignore.expect.css                        |  16 +-
+ test/spec-examples.css                        | 397 ++++++++++++++++++
+ test/spec-examples.expect.css                 | 393 +++++++++++++++++
+ 21 files changed, 1038 insertions(+), 73 deletions(-)
+ create mode 100644 .github/workflows/test.yml
+ delete mode 100644 .travis.yml
+ create mode 100644 src/lib/mixing-nesting-rules-and-declarations.js
+ create mode 100644 test/spec-examples.css
+ create mode 100644 test/spec-examples.expect.css
+
+diff --git a/.bin/test-tape.js b/.bin/test-tape.js
+index 23f1659..7717e18 100644
+--- a/.bin/test-tape.js
++++ b/.bin/test-tape.js
+@@ -18,6 +18,7 @@ export default async function tape() {
+ 	failures += await test('supports nested @media', { basename: 'media' })
+ 	failures += await test('ignores invalid entries', { basename: 'ignore' })
+ 	failures += await test('supports complex entries', { basename: 'complex' })
++	failures += await test('supports all spec examples', { basename: 'spec-examples' })
+ 
+ 	let mixinPlugin = () => {
+ 		return {
+diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
+new file mode 100644
+index 0000000..ded8311
+--- /dev/null
++++ b/.github/workflows/test.yml
+@@ -0,0 +1,24 @@
++name: test
++on:
++  push:
++
++jobs:
++  build:
++    runs-on: ubuntu-latest
++    strategy:
++      matrix:
++        node: [12, 14, 16]
++    steps:
++      - uses: actions/checkout@v2
++      - uses: actions/setup-node@v2
++        with:
++          node-version: 16
++
++      - run: npm install --ignore-scripts
++      - run: npm run build
++
++      - uses: actions/setup-node@v2
++        with:
++          node-version: ${{ matrix.node }}
++      - run: npm install --ignore-scripts
++      - run: npm run test
+diff --git a/.gitignore b/.gitignore
+index 1611041..27eda45 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -9,6 +9,7 @@ yarn.lock
+ !.bin
+ !.editorconfig
+ !.gitignore
++!.github
+ !.rollup.js
+ !.tape.js
+ !.travis.yml
+diff --git a/.travis.yml b/.travis.yml
+deleted file mode 100644
+index 6366011..0000000
+--- a/.travis.yml
++++ /dev/null
+@@ -1,7 +0,0 @@
+-# https://docs.travis-ci.com/user/travis-lint
+-
+-language: node_js
+-
+-node_js:
+-  - 12
+-  - 14
+diff --git a/package.json b/package.json
+index 6dffc2b..2cb6b4d 100644
+--- a/package.json
++++ b/package.json
+@@ -55,7 +55,7 @@
+     "node >= 12"
+   ],
+   "engines": {
+-    "node": "12 - 16"
++    "node": ">= 12"
+   },
+   "eslintConfig": {
+     "extends": "eslint:recommended",
+diff --git a/src/lib/merge-selectors.js b/src/lib/merge-selectors.js
+index 79f3dd1..eeedba1 100644
+--- a/src/lib/merge-selectors.js
++++ b/src/lib/merge-selectors.js
+@@ -1,14 +1,27 @@
+-import { complex, replaceable } from './valid-selector.js'
++import { replaceable } from './valid-selector.js'
+ 
+ export default function mergeSelectors(fromSelectors, toSelectors) {
+-	return fromSelectors.reduce(
+-		(selectors, fromSelector) => selectors.concat(
+-			toSelectors.map(
+-				(toSelector) => complex.test(toSelector)
+-					? toSelector.replace(replaceable, `:is(${fromSelector})`)
+-				: toSelector.replace(replaceable, fromSelector)
+-			)
+-		),
+-		[]
+-	)
++	return toSelectors.map((toSelector) => {
++		let needsIsOnFromSelector = false
++
++		if (fromSelectors.length > 1) {
++			needsIsOnFromSelector = true
++		}
++
++		// foo &foo foo & baz -> foo &:is(foo) foo & baz
++		toSelector = toSelector.replace(/&((?:[\w-_|])(?:[^\s,{]*))/g, (match, p1) => {
++			return `&:is(${p1})`
++		})
++
++		// foo& -> foo:is(&)
++		if (fromSelectors.length === 1 && /^(?:[\w-_|])/.test(fromSelectors[0])) {
++			toSelector = toSelector.replace(/([\w-_|]+)(?:&)/g, (match, p1) => {
++				return `${p1}:is(&)`
++			})
++		}
++
++		return needsIsOnFromSelector
++				? toSelector.replace(replaceable, `:is(${fromSelectors.join(', ')})`)
++				: toSelector.replace(replaceable, fromSelectors.join(', '))
++	})
+ }
+diff --git a/src/lib/mixing-nesting-rules-and-declarations.js b/src/lib/mixing-nesting-rules-and-declarations.js
+new file mode 100644
+index 0000000..2975f2d
+--- /dev/null
++++ b/src/lib/mixing-nesting-rules-and-declarations.js
+@@ -0,0 +1,46 @@
++// see : https://www.w3.org/TR/css-nesting-1/#mixing
++export default function ensureCorrectMixingOfNestingRulesAndDeclarations(node) {
++	const hasNestedChildren = node.some((child) => {
++		return child.type === 'atrule' || child.type === 'rule'
++	})
++
++	if (!hasNestedChildren) {
++		return
++	}
++
++	// Clone with only declarations
++	const clone = node.cloneBefore()
++
++	let encounteredNestedRule = false
++	clone.each((child) => {
++		if (child.type === 'atrule' || child.type === 'rule') {
++			encounteredNestedRule = true
++			child.remove()
++			return
++		}
++
++		if (encounteredNestedRule) {
++			// declarations after nesting rules are not allowed
++			child.remove()
++			return
++		}
++	})
++
++	if (clone.nodes.length === 0) {
++		clone.remove()
++	}
++
++	// Remove all declarations and preserve nesting rules
++	encounteredNestedRule = false
++	node.each((child) => {
++		if (child.type === 'atrule' || child.type === 'rule') {
++			return
++		}
++
++		child.remove()
++	})
++
++	if (node.nodes.length === 0) {
++		node.remove()
++	}
++}
+diff --git a/src/lib/nest-rule-within-rule.js b/src/lib/nest-rule-within-rule.js
+index c100b46..bd995cc 100644
+--- a/src/lib/nest-rule-within-rule.js
++++ b/src/lib/nest-rule-within-rule.js
+@@ -2,7 +2,6 @@ import { comma } from './list.js'
+ import shiftNodesBeforeParent from './shift-nodes-before-parent.js'
+ import cleanupParent from './cleanup-parent.js'
+ import mergeSelectors from './merge-selectors.js'
+-import validSelector from './valid-selector.js'
+ import walk from './walk.js'
+ 
+ export default function transformNestRuleWithinRule(node) {
+@@ -25,4 +24,4 @@ export default function transformNestRuleWithinRule(node) {
+ 	walk(rule)
+ }
+ 
+-export const isNestRuleWithinRule = (node) => node.type === 'atrule' && node.name === 'nest' && Object(node.parent).type === 'rule' && comma(node.params).every((selector) => selector.split('&').length >= 2 && validSelector.test(selector))
++export const isNestRuleWithinRule = (node) => node.type === 'atrule' && node.name === 'nest' && Object(node.parent).type === 'rule' && comma(node.params).every((selector) => selector.split('&').length >= 2 && selector.indexOf('|') === -1)
+diff --git a/src/lib/rule-within-rule.js b/src/lib/rule-within-rule.js
+index 3c96613..01d2374 100644
+--- a/src/lib/rule-within-rule.js
++++ b/src/lib/rule-within-rule.js
+@@ -1,7 +1,6 @@
+ import shiftNodesBeforeParent from './shift-nodes-before-parent.js'
+ import cleanupParent from './cleanup-parent.js'
+ import mergeSelectors from './merge-selectors.js'
+-import validSelector from './valid-selector.js'
+ 
+ export default function transformRuleWithinRule(node) {
+ 	// move previous siblings and the node to before the parent
+@@ -21,4 +20,4 @@ export default function transformRuleWithinRule(node) {
+ 	cleanupParent(parent)
+ }
+ 
+-export const isRuleWithinRule = (node) => node.type === 'rule' && Object(node.parent).type === 'rule' && node.selectors.every((selector) => selector.trim().lastIndexOf('&') === 0 && validSelector.test(selector))
++export const isRuleWithinRule = (node) => node.type === 'rule' && Object(node.parent).type === 'rule' && node.selectors.every((selector) => selector.trim().indexOf('&') === 0 && selector.indexOf('|') === -1)
+diff --git a/src/lib/valid-selector.js b/src/lib/valid-selector.js
+index 0766960..648b290 100644
+--- a/src/lib/valid-selector.js
++++ b/src/lib/valid-selector.js
+@@ -1,7 +1,2 @@
+-// a valid selector is an ampersand followed by a non-word character or nothing
+-export default /&(?:[^\w-|]|$)/
+-
+-export const complex = /&[^]*&/
+-
+ export const replaceable = /&/g
+ 
+diff --git a/src/postcss-8-nesting.js b/src/postcss-8-nesting.js
+index 3454c01..d6a2bc5 100644
+--- a/src/postcss-8-nesting.js
++++ b/src/postcss-8-nesting.js
+@@ -1,9 +1,11 @@
++import ensureCorrectMixingOfNestingRulesAndDeclarations from './lib/mixing-nesting-rules-and-declarations.js'
+ import walk from './lib/walk.js'
+ 
+ export default function postcssNesting() {
+ 	return {
+ 		postcssPlugin: 'postcss-nesting',
+-		RuleExit(rule) {
++		Rule(rule) {
++			ensureCorrectMixingOfNestingRulesAndDeclarations(rule)
+ 			walk(rule)
+ 		},
+ 	}
+diff --git a/test/at-rule.css b/test/at-rule.css
+index a9406c4..bcb8d5b 100644
+--- a/test/at-rule.css
++++ b/test/at-rule.css
+@@ -28,3 +28,54 @@ a {
+ 		order: 5;
+ 	}
+ }
++
++.foo {
++	@nest &h1 {
++		color: red;
++	}
++}
++
++.foo {
++	@nest &h1, &h2 {
++		color: red;
++	}
++}
++
++.foo {
++	@nest &.bar {
++		color: red;
++	}
++}
++
++
++.foo {
++	@nest &.bar, &.baz {
++		color: red;
++	}
++}
++
++h1 {
++	@nest .foo& {
++		color: blue;
++	}
++}
++
++h1 {
++	@nest .foo& .baz & {
++		color: blue;
++	}
++}
++
++h1 {
++	@nest .foo&, .bar& {
++		color: blue;
++	}
++}
++
++article {
++	color: blue;
++
++	@nest :where(&) {
++		color: red;
++	}
++}
+diff --git a/test/at-rule.expect.css b/test/at-rule.expect.css
+index e14978c..9c051bd 100644
+--- a/test/at-rule.expect.css
++++ b/test/at-rule.expect.css
+@@ -28,3 +28,40 @@ a d {
+ a e {
+ 		order: 5
+ }
++
++.foo:is(h1) {
++		color: red
++}
++
++.foo:is(h1), .foo:is(h2) {
++		color: red
++}
++
++.foo.bar {
++		color: red
++}
++
++
++.foo.bar, .foo.baz {
++		color: red
++}
++
++.foo:is(h1) {
++		color: blue
++}
++
++.foo:is(h1) .baz h1 {
++		color: blue
++}
++
++.foo:is(h1), .bar:is(h1) {
++		color: blue
++}
++
++article {
++	color: blue
++}
++
++:where(article) {
++		color: red
++}
+diff --git a/test/basic.css b/test/basic.css
+index dbd84ef..55f6aac 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -46,3 +46,16 @@ a {
+ 		}
+ 	}
+ }
++
++.foo {
++	&h1,
++	&h2 {
++		color: red;
++	}
++}
++
++li {
++	&+& {
++		background: red;
++	}
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 759fdf0..927dcd7 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -1,62 +1,74 @@
+ a {
+ 	order: 1
+ }
++
+ @media screen, print {
+-	a {
++
++a {
+ 		order: 2
+ }
+ 	}
++
+ @media screen and (min-width: 480px), print and (min-width: 480px) {
+-	a {
++
++a {
+ 			order: 3
+ }
+ 		}
++
+ @media screen, print {
+-	a {
++
++a {
+ 
+ 		order: 4
+ }
+ 	}
+-a {
+ 
+-	order: 5;
+-	order: 6
+-}
+ a b {
+ 		order: 7;
+ 	}
++
+ a b c {
+ 			order: 8;
+ 		}
++
+ a b {
+ 
+ 		order: 9;
+ 	}
+-a {
+ 
+-	order: 10
+-}
+ body a {
+ 		order: 11
+ }
++
+ html body a {
+ 			order: 12
+ }
++
+ body a {
+ 
+ 		order: 13
+ }
+-a {
+ 
+-	order: 14
+-}
+ @media screen {
+-	a {
++
++a {
+ 		order: 15
+ }
+ 	}
++
+ @media screen and (min-width: 480px) {
+-	a {
++
++a {
+ 			order: 16
+ }
+ 		}
++
++.foo:is(h1),
++	.foo:is(h2) {
++		color: red;
++	}
++
++li+li {
++		background: red;
++	}
+diff --git a/test/complex.expect.css b/test/complex.expect.css
+index 6557492..4550979 100644
+--- a/test/complex.expect.css
++++ b/test/complex.expect.css
+@@ -1,7 +1,6 @@
+ body > p, body > ul {
+-	margin: 0;
+-
+-	& ~ & {
++	margin: 0
++}
++:is(body > p, body > ul) ~ :is(body > p, body > ul) {
+ 		margin-top: 0;
+ 	}
+-}
+diff --git a/test/direct.expect.css b/test/direct.expect.css
+index fad601f..80a987b 100644
+--- a/test/direct.expect.css
++++ b/test/direct.expect.css
+@@ -1,30 +1,24 @@
+ a, b {
+ 	order: 1;
+ }
+-a c, a d, b c, b d {
++:is(a, b) c, :is(a, b) d {
+ 		order: 2;
+ 	}
+-a c e, a c f, a d e, a d f, b c e, b c f, b d e, b d f {
++:is(:is(a, b) c, :is(a, b) d) e, :is(:is(a, b) c, :is(a, b) d) f {
+ 			order: 3;
+ 		}
+-a c, a d, b c, b d {
++:is(a, b) c, :is(a, b) d {
+ 		order: 4;
+ 	}
+-a, b {
+-	order: 5;
+-}
+ a, b {
+ 	order: 1;
+ }
+-a c, a d, b c, b d {
++:is(a, b) c, :is(a, b) d {
+ 		order: 2;
+ }
+-a c e, a c f, a d e, a d f, b c e, b c f, b d e, b d f {
++:is(:is(a, b) c, :is(a, b) d) e, :is(:is(a, b) c, :is(a, b) d) f {
+ 			order: 3;
+ }
+-a c, a d, b c, b d {
++:is(a, b) c, :is(a, b) d {
+ 		order: 4;
+ }
+-a, b {
+-	order: 5;
+-}
+diff --git a/test/empty.expect.css b/test/empty.expect.css
+index a23b4e2..86e0b96 100644
+--- a/test/empty.expect.css
++++ b/test/empty.expect.css
+@@ -11,9 +11,6 @@ d e {
+ f g {
+ 		order: 4;
+ 	}
+-f {
+-	order: 5;
+-}
+ a b c {
+ 			order: 1
+ }
+@@ -26,6 +23,3 @@ d e {
+ f g {
+ 		order: 4;
+ }
+-f {
+-	order: 5;
+-}
+diff --git a/test/ignore.expect.css b/test/ignore.expect.css
+index 133a2e7..2738441 100644
+--- a/test/ignore.expect.css
++++ b/test/ignore.expect.css
+@@ -1,5 +1,7 @@
+ a, b {
+-	order: 1;
++	order: 1
++}
++a, b {
+ 	c, d {
+ 		order: 2;
+ 	}
+@@ -7,13 +9,13 @@ a, b {
+ & e {
+ 	order: 3;
+ }
+-f {
+-	&g {
++f:is(g) {
+ 		order: 5;
+ 	}
++a, b {
++	order: 1
+ }
+ a, b {
+-	order: 1;
+ 	@nest c, d {
+ 		order: 2;
+ 	}
+@@ -21,10 +23,10 @@ a, b {
+ @nest & e {
+ 	order: 3;
+ }
++f:is(h) {
++		order: 5
++}
+ f {
+-	@nest &h {
+-		order: 5;
+-	}
+ 	@nest &|i {
+ 		order: 6;
+ 	}
+diff --git a/test/spec-examples.css b/test/spec-examples.css
+new file mode 100644
+index 0000000..15dc8ba
+--- /dev/null
++++ b/test/spec-examples.css
+@@ -0,0 +1,397 @@
++/* https://www.w3.org/TR/css-nesting-1/ */
++
++/* Example 2 */
++
++table.colortable {
++	& td {
++		text-align: center;
++
++		&.c {
++			text-transform: uppercase
++		}
++
++		&:first-child,
++		&:first-child+td {
++			border: 1px solid black
++		}
++	}
++
++	& th {
++		text-align: center;
++		background: black;
++		color: white;
++	}
++}
++
++/* Example 3 */
++/* & can be used on its own */
++.foo {
++	color: blue;
++
++	&>.bar {
++		color: red;
++	}
++}
++
++/* equivalent to
++  .foo { color: blue; }
++  .foo > .bar { color: red; }
++*/
++
++
++/* or in a compound selector,
++   refining the parent’s selector */
++.foo {
++	color: blue;
++
++	&.bar {
++		color: red;
++	}
++}
++
++/* equivalent to
++  .foo { color: blue; }
++  .foo.bar { color: red; }
++*/
++
++/* multiple selectors in the list must all
++   start with & */
++.foo,
++.bar {
++	color: blue;
++
++	&+.baz,
++	&.qux {
++		color: red;
++	}
++}
++
++/* equivalent to
++  .foo, .bar { color: blue; }
++  :is(.foo, .bar) + .baz,
++  :is(.foo, .bar).qux { color: red; }
++*/
++
++/* & can be used multiple times in a single selector */
++.foo {
++	color: blue;
++
++	& .bar & .baz & .qux {
++		color: red;
++	}
++}
++
++/* equivalent to
++  .foo { color: blue; }
++  .foo .bar .foo .baz .foo .qux { color: red; }
++*/
++
++/* Somewhat silly, but can be used all on its own, as well. */
++.foo {
++	color: blue;
++
++	& {
++		padding: 2ch;
++	}
++}
++
++/* equivalent to
++  .foo { color: blue; }
++  .foo { padding: 2ch; }
++
++  // or
++
++  .foo {
++    color: blue;
++    padding: 2ch;
++  }
++*/
++
++/* Again, silly, but can even be doubled up. */
++.foo {
++	color: blue;
++
++	&& {
++		padding: 2ch;
++	}
++}
++
++/* equivalent to
++  .foo { color: blue; }
++  .foo.foo { padding: 2ch; }
++*/
++
++/* The parent selector can be arbitrarily complicated */
++.error,
++#404 {
++	&:hover>.baz {
++		color: red;
++	}
++}
++
++/* equivalent to
++  :is(.error, #404):hover > .baz { color: red; }
++*/
++
++/* As can the nested selector */
++.foo {
++	&:is(.bar, &.baz) {
++		color: red;
++	}
++}
++
++/* equivalent to
++  .foo:is(.bar, .foo.baz) { color: red; }
++*/
++
++/* Multiple levels of nesting "stack up" the selectors */
++figure {
++	margin: 0;
++
++	&>figcaption {
++		background: hsl(0 0% 0% / 50%);
++
++		&>p {
++			font-size: .9rem;
++		}
++	}
++}
++
++/* equivalent to
++  figure { margin: 0; }
++  figure > figcaption { background: hsl(0 0% 0% / 50%); }
++  figure > figcaption > p { font-size: .9rem; }
++*/
++
++/* No concatenation */
++.foo {
++	color: blue;
++
++	&__bar {
++		color: red;
++	}
++}
++
++/* No & at all */
++.foo {
++	color: blue;
++
++	.bar {
++		color: red;
++	}
++}
++
++/* & isn’t the first simple selector */
++.foo {
++	color: blue;
++
++	.bar& {
++		color: red;
++	}
++}
++
++/* & isn’t the first selector of every one in the list */
++.foo,
++.bar {
++	color: blue;
++
++	&+.baz,
++	.qux {
++		color: red;
++	}
++}
++
++/* Example 4 */
++.foo {
++	color: red;
++
++	@nest &>.bar {
++		color: blue;
++	}
++}
++
++/* equivalent to
++  .foo { color: red; }
++  .foo > .bar { color: blue; }
++*/
++
++.foo {
++	color: red;
++
++	@nest .parent & {
++		color: blue;
++	}
++}
++
++/* equivalent to
++  .foo { color: red; }
++  .parent .foo { color: blue; }
++*/
++
++.foo {
++	color: red;
++
++	@nest :not(&) {
++		color: blue;
++	}
++}
++
++/* equivalent to
++  .foo { color: red; }
++  :not(.foo) { color: blue; }
++*/
++
++.foo {
++	color: red;
++
++	@nest .bar {
++		color: blue;
++	}
++}
++
++/* Invalid because there’s no nesting selector */
++
++.foo {
++	color: red;
++
++	@nest & .bar,
++	.baz {
++		color: blue;
++	}
++}
++
++/* Invalid because not all selectors in the list
++  contain a nesting selector */
++
++/* Example 5 */
++.foo {
++	color: blue;
++
++	@nest .bar & {
++		color: red;
++
++		&.baz {
++			color: green;
++		}
++	}
++}
++
++/* equivalent to
++  .foo { color: blue; }
++  .bar .foo { color: red; }
++  .bar .foo.baz { color: green; }
++*/
++
++/* Example 6 */
++/* Properties can be directly used */
++.foo {
++	display: grid;
++
++	@media (orientation: landscape) {
++		grid-auto-flow: column;
++	}
++}
++
++/* equivalent to
++  .foo { display: grid; }
++
++  @media (orientation: landscape) {
++    & {
++      grid-auto-flow: column;
++    }
++  }
++*/
++
++/* finally equivalent to
++  .foo { display: grid; }
++
++  @media (orientation: landscape) {
++    .foo {
++      grid-auto-flow: column;
++    }
++  }
++*/
++
++/* Conditionals can be further nested */
++.foo {
++	display: grid;
++
++	@media (orientation: landscape) {
++		grid-auto-flow: column;
++
++		@media (min-inline-size > 1024px) {
++			max-inline-size: 1024px;
++		}
++	}
++}
++
++/* equivalent to
++  .foo { display: grid; }
++
++  @media (orientation: landscape) {
++    .foo {
++      grid-auto-flow: column;
++    }
++  }
++
++  @media (orientation: landscape) and (min-inline-size > 1024px) {
++    .foo {
++      max-inline-size: 1024px;
++    }
++  }
++*/
++
++.foo {
++	color: red;
++
++	@media (min-width: 480px) {
++
++		& h1,
++		h2 {
++			color: blue;
++		}
++	}
++}
++
++/* Invalid because not all selectors in the list
++  contain a nesting selector */
++
++.foo {
++	color: red;
++
++	@nest @media (min-width: 480px) {
++		& {
++			color: blue;
++		}
++	}
++}
++
++/* Invalid because @nest expects a selector prelude,
++  instead a conditional group rule was provided */
++
++/* Example 7 */
++article {
++	color: green;
++
++	& {
++		color: blue;
++	}
++
++	color: red;
++}
++
++article {
++	color: green;
++
++	& {
++		color: blue;
++	}
++
++	color: red;
++
++	&.foo {
++		color: yellow;
++	}
++
++	/* valid! */
++}
+diff --git a/test/spec-examples.expect.css b/test/spec-examples.expect.css
+new file mode 100644
+index 0000000..b9a69be
+--- /dev/null
++++ b/test/spec-examples.expect.css
+@@ -0,0 +1,393 @@
++/* https://www.w3.org/TR/css-nesting-1/ */
++
++/* Example 2 */
++
++table.colortable td {
++		text-align: center
++	}
++
++table.colortable td.c {
++			text-transform: uppercase
++		}
++
++table.colortable td:first-child,
++		table.colortable td:first-child+td {
++			border: 1px solid black
++		}
++
++table.colortable th {
++		text-align: center;
++		background: black;
++		color: white;
++	}
++
++/* Example 3 */
++/* & can be used on its own */
++.foo {
++	color: blue
++}
++.foo>.bar {
++		color: red;
++	}
++
++/* equivalent to
++  .foo { color: blue; }
++  .foo > .bar { color: red; }
++*/
++
++
++/* or in a compound selector,
++   refining the parent’s selector */
++.foo {
++	color: blue
++}
++.foo.bar {
++		color: red;
++	}
++
++/* equivalent to
++  .foo { color: blue; }
++  .foo.bar { color: red; }
++*/
++
++/* multiple selectors in the list must all
++   start with & */
++.foo,
++.bar {
++	color: blue
++}
++:is(.foo, .bar)+.baz,
++	:is(.foo, .bar).qux {
++		color: red;
++	}
++
++/* equivalent to
++  .foo, .bar { color: blue; }
++  :is(.foo, .bar) + .baz,
++  :is(.foo, .bar).qux { color: red; }
++*/
++
++/* & can be used multiple times in a single selector */
++.foo {
++	color: blue
++}
++.foo .bar .foo .baz .foo .qux {
++		color: red;
++	}
++
++/* equivalent to
++  .foo { color: blue; }
++  .foo .bar .foo .baz .foo .qux { color: red; }
++*/
++
++/* Somewhat silly, but can be used all on its own, as well. */
++.foo {
++	color: blue
++}
++.foo {
++		padding: 2ch;
++	}
++
++/* equivalent to
++  .foo { color: blue; }
++  .foo { padding: 2ch; }
++
++  // or
++
++  .foo {
++    color: blue;
++    padding: 2ch;
++  }
++*/
++
++/* Again, silly, but can even be doubled up. */
++.foo {
++	color: blue
++}
++.foo.foo {
++		padding: 2ch;
++	}
++
++/* equivalent to
++  .foo { color: blue; }
++  .foo.foo { padding: 2ch; }
++*/
++
++/* The parent selector can be arbitrarily complicated */
++:is(.error, #404):hover>.baz {
++		color: red;
++	}
++
++/* equivalent to
++  :is(.error, #404):hover > .baz { color: red; }
++*/
++
++/* As can the nested selector */
++.foo:is(.bar, .foo.baz) {
++		color: red;
++	}
++
++/* equivalent to
++  .foo:is(.bar, .foo.baz) { color: red; }
++*/
++
++/* Multiple levels of nesting "stack up" the selectors */
++figure {
++	margin: 0
++}
++figure>figcaption {
++		background: hsl(0 0% 0% / 50%)
++	}
++figure>figcaption>p {
++			font-size: .9rem;
++		}
++
++/* equivalent to
++  figure { margin: 0; }
++  figure > figcaption { background: hsl(0 0% 0% / 50%); }
++  figure > figcaption > p { font-size: .9rem; }
++*/
++
++/* No concatenation */
++.foo {
++	color: blue
++}
++.foo:is(__bar) {
++		color: red;
++	}
++
++/* No & at all */
++.foo {
++	color: blue
++}
++.foo {
++
++	.bar {
++		color: red;
++	}
++}
++
++/* & isn’t the first simple selector */
++.foo {
++	color: blue
++}
++.foo {
++
++	.bar& {
++		color: red;
++	}
++}
++
++/* & isn’t the first selector of every one in the list */
++.foo,
++.bar {
++	color: blue
++}
++.foo,
++.bar {
++
++	&+.baz,
++	.qux {
++		color: red;
++	}
++}
++
++/* Example 4 */
++.foo {
++	color: red
++}
++.foo>.bar {
++		color: blue
++}
++
++/* equivalent to
++  .foo { color: red; }
++  .foo > .bar { color: blue; }
++*/
++
++.foo {
++	color: red
++}
++
++.parent .foo {
++		color: blue
++}
++
++/* equivalent to
++  .foo { color: red; }
++  .parent .foo { color: blue; }
++*/
++
++.foo {
++	color: red
++}
++
++:not(.foo) {
++		color: blue
++}
++
++/* equivalent to
++  .foo { color: red; }
++  :not(.foo) { color: blue; }
++*/
++
++.foo {
++	color: red
++}
++
++.foo {
++
++	@nest .bar {
++		color: blue;
++	}
++}
++
++/* Invalid because there’s no nesting selector */
++
++.foo {
++	color: red
++}
++
++.foo {
++
++	@nest & .bar,
++	.baz {
++		color: blue;
++	}
++}
++
++/* Invalid because not all selectors in the list
++  contain a nesting selector */
++
++/* Example 5 */
++.foo {
++	color: blue
++}
++.bar .foo {
++		color: red
++}
++.bar .foo.baz {
++			color: green;
++		}
++
++/* equivalent to
++  .foo { color: blue; }
++  .bar .foo { color: red; }
++  .bar .foo.baz { color: green; }
++*/
++
++/* Example 6 */
++/* Properties can be directly used */
++.foo {
++	display: grid
++}
++@media (orientation: landscape) {
++.foo {
++		grid-auto-flow: column
++}
++	}
++
++/* equivalent to
++  .foo { display: grid; }
++
++  @media (orientation: landscape) {
++    & {
++      grid-auto-flow: column;
++    }
++  }
++*/
++
++/* finally equivalent to
++  .foo { display: grid; }
++
++  @media (orientation: landscape) {
++    .foo {
++      grid-auto-flow: column;
++    }
++  }
++*/
++
++/* Conditionals can be further nested */
++.foo {
++	display: grid
++}
++@media (orientation: landscape) {
++.foo {
++		grid-auto-flow: column
++}
++	}
++@media (orientation: landscape) and (min-inline-size > 1024px) {
++.foo {
++			max-inline-size: 1024px
++}
++		}
++
++/* equivalent to
++  .foo { display: grid; }
++
++  @media (orientation: landscape) {
++    .foo {
++      grid-auto-flow: column;
++    }
++  }
++
++  @media (orientation: landscape) and (min-inline-size > 1024px) {
++    .foo {
++      max-inline-size: 1024px;
++    }
++  }
++*/
++
++.foo {
++	color: red
++}
++
++@media (min-width: 480px) {
++
++.foo {
++
++		& h1,
++		h2 {
++			color: blue;
++		}
++}
++	}
++
++/* Invalid because not all selectors in the list
++  contain a nesting selector */
++
++.foo {
++	color: red
++}
++
++.foo {
++
++	@nest @media (min-width: 480px) {
++		& {
++			color: blue;
++		}
++	}
++}
++
++/* Invalid because @nest expects a selector prelude,
++  instead a conditional group rule was provided */
++
++/* Example 7 */
++article {
++	color: green;
++}
++article {
++		color: blue;
++	}
++
++article {
++	color: green
++}
++
++article {
++		color: blue;
++	}
++
++article.foo {
++		color: yellow;
++	}
+-- 
+2.33.1
+

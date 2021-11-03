@@ -1,7 +1,7 @@
 From 30f97f1a5a747ab6836b9909f8ccc5a4211e12bc Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Tue, 27 Apr 2021 02:51:54 -0400
-Subject: [PATCH 82/89] docs: Update build badge
+Subject: [PATCH 82/95] docs: Update build badge
 
 ---
  README.md | 4 ++--

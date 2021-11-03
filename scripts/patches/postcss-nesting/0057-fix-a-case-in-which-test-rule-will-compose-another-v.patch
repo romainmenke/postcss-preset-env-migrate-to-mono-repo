@@ -1,7 +1,7 @@
 From 6a093745e8cc7cb9e57eb498bdaba7f84ad4b46a Mon Sep 17 00:00:00 2001
 From: Junliang Huang <JLHwung@users.noreply.github.com>
 Date: Sun, 20 Aug 2017 00:53:18 +0800
-Subject: [PATCH 57/89] fix: a case in which test rule will compose another
+Subject: [PATCH 57/95] fix: a case in which test rule will compose another
  valid CSS qualified name (csstools/postcss-nesting#44)
 
 To be nest-containing, any nesting selector must composed with other selectors into a valid complex selectors. However, the current implementation will turn

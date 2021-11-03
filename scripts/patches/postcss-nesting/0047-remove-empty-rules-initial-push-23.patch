@@ -1,7 +1,7 @@
 From 87f2c08c20cafcdd3aa99a3a285ee1ebe4f99760 Mon Sep 17 00:00:00 2001
 From: Tom Bremer <tom@tbremer.com>
 Date: Sat, 6 May 2017 10:40:53 -0500
-Subject: [PATCH 47/89] remove-empty-rules initial push (csstools/postcss-nesting#23)
+Subject: [PATCH 47/95] remove-empty-rules initial push (csstools/postcss-nesting#23)
 
 ---
  index.js              | 14 ++++++++++++++

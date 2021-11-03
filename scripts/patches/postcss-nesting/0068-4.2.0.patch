@@ -1,7 +1,7 @@
 From 524d34e297c6805566fd76b57097e42abd78324c Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Tue, 19 Sep 2017 08:37:56 -0400
-Subject: [PATCH 68/89] 4.2.0
+Subject: [PATCH 68/95] 4.2.0
 
 ---
  CHANGELOG.md | 4 ++++

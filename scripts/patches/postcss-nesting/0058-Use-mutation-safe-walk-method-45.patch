@@ -1,7 +1,7 @@
 From 7eacf48b27dd0ccaec9591bc5a9026705c3e7a0c Mon Sep 17 00:00:00 2001
 From: Junliang Huang <JLHwung@users.noreply.github.com>
 Date: Sun, 20 Aug 2017 00:53:33 +0800
-Subject: [PATCH 58/89] Use mutation-safe walk method (csstools/postcss-nesting#45)
+Subject: [PATCH 58/95] Use mutation-safe walk method (csstools/postcss-nesting#45)
 
 * test: add at-rule test case
 
