@@ -1,0 +1,216 @@
+From 8594977c488625026e2d9630ef9afe4fa06eae39 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Wed, 3 Nov 2021 10:04:14 +0100
+Subject: [PATCH 3/4] wip
+
+---
+ cli/base-cli/package.json                     |  7 --
+ cli/base-cli/src/args.mjs                     |  5 +-
+ cli/base-cli/src/index.mjs                    | 77 ++++++++++++++++++-
+ cli/base-cli/stryker.conf.json                |  2 +-
+ cli/postcss-base-plugin-cli/src/cli.js        | 32 ++++----
+ plugins/postcss-base-plugin/stryker.conf.json |  2 +-
+ 6 files changed, 95 insertions(+), 30 deletions(-)
+
+diff --git a/cli/base-cli/package.json b/cli/base-cli/package.json
+index 691b0cd..8fe5c19 100644
+--- a/cli/base-cli/package.json
++++ b/cli/base-cli/package.json
+@@ -9,13 +9,6 @@
+     "node": ">=12"
+   },
+   "main": "src/index.mjs",
+-  "files": [
+-    "CHANGELOG.md",
+-    "INSTALL.md",
+-    "LICENSE.md",
+-    "README.md",
+-    "src/index.js"
+-  ],
+   "scripts": {
+     "test": "npm run test:lint && npm run test:js",
+     "test:lint": "eslint src/**/*.mjs --quiet",
+diff --git a/cli/base-cli/src/args.mjs b/cli/base-cli/src/args.mjs
+index f738264..959633e 100644
+--- a/cli/base-cli/src/args.mjs
++++ b/cli/base-cli/src/args.mjs
+@@ -107,9 +107,9 @@ export function parseArguments(args, allowedPluginOpts, helpLogger) {
+ 		delete parsedArgs.output;
+ 	}
+ 
+-	if (!parsedArgs.replace && parsedArgs.inputs.length > 1 && !parsedArgs.outputDir) {
++	if (parsedArgs.inputs.length > 1 && parsedArgs.output) {
+ 		// Stryker disable next-line all
+-		console.warn(`specify "--dir" and omit "--output" when processing multiple inputs`);
++		console.warn(`omit "--output" when processing multiple inputs`);
+ 		// Stryker disable next-line all
+ 		helpLogger();
+ 		return false;
+@@ -124,6 +124,7 @@ export function parseArguments(args, allowedPluginOpts, helpLogger) {
+ 	}
+ 
+ 	let parsedPluginOpts = {};
++	// Stryker disable next-line ConditionalExpression
+ 	if (pluginOpts) {
+ 		try {
+ 			parsedPluginOpts = JSON.parse(pluginOpts);
+diff --git a/cli/base-cli/src/index.mjs b/cli/base-cli/src/index.mjs
+index 78b5604..28f8e62 100644
+--- a/cli/base-cli/src/index.mjs
++++ b/cli/base-cli/src/index.mjs
+@@ -2,7 +2,49 @@ import fs from 'fs';
+ import path from 'path';
+ import { parseArguments } from './args.mjs';
+ 
+-export default function cli(postcss, plugin, allowedPluginOpts, helpLogger) {
++export function helpTextLogger(name, description, exampleOptions = null) {
++	let pluginOptions = [];
++	if (exampleOptions) {
++		const longestPluginOptionLength = Math.max(...Object.keys(exampleOptions).map((x) => x.length));
++		const spaces = new Array(longestPluginOptionLength).fill(' ').join('');
++		if (spaces.length) {
++			pluginOptions = [
++				'\nPlugin Options:',
++				...Object.keys(exampleOptions).map((option) => {
++					return `  ${(option + spaces).slice(0, spaces.length)}  ${typeof exampleOptions[option]}`
++				})
++			];
++
++			pluginOptions.push(
++			`\n${JSON.stringify(exampleOptions, null, 2)}`
++			)
++		}
++	}
++
++	const allHelp = [
++		`${name}\n`,
++		`  ${description}\n`,
++		'Usage:',
++		'  postcss-base-plugin-cli [input.css] [OPTIONS] [-o|--output output.css]',
++		'  postcss-base-plugin-cli <input.css>... [OPTIONS] --dir <output-directory>',
++		'  postcss-base-plugin-cli <input.css>... [OPTIONS] --replace',
++		'\nOptions:',
++		'  -o, --output          Output file',
++		'  -d, --dir             Output directory',
++		'  -r, --replace         Replace (overwrite) the input file',
++		'  -p, --plugin-options  Stringified JSON object with plugin options',
++	]
++
++	if (pluginOptions.length > 0) {
++		allHelp.push(...pluginOptions);
++	}
++
++	return () => {
++		console.log(allHelp.join('\n'));
++	}
++}
++
++export function cli(postcss, plugin, allowedPluginOpts, helpLogger) {
+ 	// get process and plugin options from the command line
+ 	const argo = parseArguments(process.argv.slice(2), allowedPluginOpts, helpLogger)
+ 	if (!argo) {
+@@ -64,6 +106,39 @@ export default function cli(postcss, plugin, allowedPluginOpts, helpLogger) {
+ 		});
+ 	}
+ 
++	if (argo.stdout) {
++		const outputs = argo.inputs.map((input) => {
++			return {
++				input: input,
++				result: null,
++			}
++		});
++
++		return Promise.all(argo.inputs.map((input) => {
++			return readFile(input).then((css) => {
++				const result = postcss([plugin(argo.pluginOptions)]).process(css, {
++					from: input,
++					to: 'stdout',
++					map: argo.map,
++				});
++
++				return result.css;
++			}).then((result) => {
++				outputs.find((output) => output.input === input).result = result;
++			}).catch((error) => {
++				console.error(error);
++
++				process.exit(1);
++			});
++		})).then(() => {
++			outputs.forEach((output) => {
++				process.stdout.write(output.result);
++			});
++
++			process.exit(0);
++		});
++	}
++
+ 	return Promise.all(argo.inputs.map((input) => {
+ 		let output = argo.output;
+ 		if (argo.outputDir) {
+diff --git a/cli/base-cli/stryker.conf.json b/cli/base-cli/stryker.conf.json
+index 2743eab..fefe947 100644
+--- a/cli/base-cli/stryker.conf.json
++++ b/cli/base-cli/stryker.conf.json
+@@ -1,5 +1,5 @@
+ {
+-  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
++  "$schema": "../../node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+   "mutate": [
+     "src/args.mjs"
+   ],
+diff --git a/cli/postcss-base-plugin-cli/src/cli.js b/cli/postcss-base-plugin-cli/src/cli.js
+index 36a3dd5..5935a96 100644
+--- a/cli/postcss-base-plugin-cli/src/cli.js
++++ b/cli/postcss-base-plugin-cli/src/cli.js
+@@ -1,21 +1,17 @@
+ import plugin from '@csstools/postcss-base-plugin';
+-import cli from '@csstools/base-cli';
++import { cli, helpTextLogger } from '@csstools/base-cli';
+ import postcss from 'postcss';
+ 
+-cli(postcss, plugin, ['option'], logHelpText);
+-
+-function logHelpText() {
+-	console.log([
+-		'CSS BasePlugin\n',
+-		'  Example plugin\n',
+-		'Usage:',
+-		'  postcss-base-plugin-cli [input.css] [OPTIONS] [-o|--output output.css]',
+-		'  postcss-base-plugin-cli <input.css>... [OPTIONS] --dir <output-directory>',
+-		'  postcss-base-plugin-cli <input.css>... [OPTIONS] --replace',
+-		'\nOptions:',
+-		'  -o, --output          Output file',
+-		'  -d, --dir             Output directory',
+-		'  -r, --replace         Replace (overwrite) the input file',
+-		'  -p, --plugin-options  Stringified JSON object with plugin options',
+-	].join('\n'));
+-}
++cli(
++	postcss,
++	plugin,
++	['option', 'another_option'],
++	helpTextLogger(
++		'Base Plugin',
++		'An example plugin CLI',
++		{
++			option: 'Some option',
++			another_option: true,
++		}
++	)
++);
+diff --git a/plugins/postcss-base-plugin/stryker.conf.json b/plugins/postcss-base-plugin/stryker.conf.json
+index 4b80b28..6f976ff 100644
+--- a/plugins/postcss-base-plugin/stryker.conf.json
++++ b/plugins/postcss-base-plugin/stryker.conf.json
+@@ -1,5 +1,5 @@
+ {
+-  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
++  "$schema": "../../node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+   "mutate": [
+     "src/**/*.js"
+   ],
+-- 
+2.33.1
+

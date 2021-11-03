@@ -1,0 +1,964 @@
+From fc58e3dc0b3b9ebf57ba3114163bb0c4b50841f3 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Wed, 3 Nov 2021 17:56:00 +0100
+Subject: [PATCH 4/4] use typescript
+
+---
+ .eslintrc.json                                |  21 ++-
+ .gitignore                                    |   1 +
+ cli/base-cli/package.json                     |  15 +-
+ cli/base-cli/src/{args.mjs => args.ts}        |  40 +++--
+ cli/base-cli/src/{index.mjs => index.ts}      |  23 +--
+ cli/base-cli/stryker.conf.json                |   6 +-
+ cli/base-cli/test/test.mjs                    | 150 ++++++++++++------
+ cli/base-cli/tsconfig.json                    |   7 +
+ cli/postcss-base-plugin-cli/package.json      |   4 +-
+ .../src/{cli.js => cli.ts}                    |   0
+ cli/postcss-base-plugin-cli/test/test.sh      |   8 +-
+ cli/postcss-base-plugin-cli/tsconfig.json     |   9 ++
+ package.json                                  |   8 +-
+ plugins/postcss-base-plugin/package.json      |   5 +-
+ plugins/postcss-base-plugin/src/index.js      |  18 ---
+ plugins/postcss-base-plugin/src/index.ts      |  18 +++
+ plugins/postcss-base-plugin/stryker.conf.json |   5 +-
+ plugins/postcss-base-plugin/tsconfig.json     |   9 ++
+ rollup/cli.ts.js                              |  44 +++++
+ rollup/default.ts.js                          |  26 +++
+ tsconfig.json                                 |  11 ++
+ 21 files changed, 326 insertions(+), 102 deletions(-)
+ rename cli/base-cli/src/{args.mjs => args.ts} (80%)
+ rename cli/base-cli/src/{index.mjs => index.ts} (86%)
+ create mode 100644 cli/base-cli/tsconfig.json
+ rename cli/postcss-base-plugin-cli/src/{cli.js => cli.ts} (100%)
+ create mode 100644 cli/postcss-base-plugin-cli/tsconfig.json
+ delete mode 100644 plugins/postcss-base-plugin/src/index.js
+ create mode 100644 plugins/postcss-base-plugin/src/index.ts
+ create mode 100644 plugins/postcss-base-plugin/tsconfig.json
+ create mode 100644 rollup/cli.ts.js
+ create mode 100644 rollup/default.ts.js
+ create mode 100644 tsconfig.json
+
+diff --git a/.eslintrc.json b/.eslintrc.json
+index cadcac5..bf2419d 100644
+--- a/.eslintrc.json
++++ b/.eslintrc.json
+@@ -7,5 +7,24 @@
+   "parserOptions": {
+     "ecmaVersion": 2020,
+     "sourceType": "module"
+-  }
++  },
++  "overrides": [
++		{
++			"files": [
++				"**/*.ts"
++			],
++			"extends": [
++				"plugin:@typescript-eslint/eslint-recommended",
++				"plugin:@typescript-eslint/recommended"
++			],
++			"parser": "@typescript-eslint/parser",
++			"plugins": [
++				"@typescript-eslint"
++			],
++			"rules": {
++				"no-shadow": "off",
++				"@typescript-eslint/no-shadow": "error"
++			}
++		}
++	]
+ }
+diff --git a/.gitignore b/.gitignore
+index 73a3c86..54c98d8 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -2,3 +2,4 @@ node_modules
+ package-lock.json
+ yarn.lock
+ reports
++.stryker-tmp
+diff --git a/cli/base-cli/package.json b/cli/base-cli/package.json
+index 8fe5c19..9a4a2bc 100644
+--- a/cli/base-cli/package.json
++++ b/cli/base-cli/package.json
+@@ -5,14 +5,23 @@
+   "description": "A base for CLI versions of plugins",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
++  "type": "module",
+   "engines": {
+     "node": ">=12"
+   },
+-  "main": "src/index.mjs",
++  "main": "./dist/index.js",
++  "files": [
++    "dist"
++  ],
++  "types": "./dist/index.d.ts",
+   "scripts": {
+     "test": "npm run test:lint && npm run test:js",
+-    "test:lint": "eslint src/**/*.mjs --quiet",
++    "test:lint": "eslint src/**/*.ts --quiet",
+     "test:js": "node ./test/test.mjs",
+-    "stryker": "stryker run --logLevel error"
++    "stryker": "stryker run --logLevel error",
++    "build": "tsc"
++  },
++  "peerDependencies": {
++    "postcss": "^8.3.6"
+   }
+ }
+diff --git a/cli/base-cli/src/args.mjs b/cli/base-cli/src/args.ts
+similarity index 80%
+rename from cli/base-cli/src/args.mjs
+rename to cli/base-cli/src/args.ts
+index 959633e..b331265 100644
+--- a/cli/base-cli/src/args.mjs
++++ b/cli/base-cli/src/args.ts
+@@ -1,4 +1,19 @@
+-export function parseArguments(args, allowedPluginOpts, helpLogger) {
++export type Arguments = {
++	stdin: boolean,
++	stdout: boolean,
++	inputs: Array<string>,
++	output: string | null,
++	outputDir: string | null,
++	map: boolean,
++	replace: boolean,
++	pluginOptions: Record<string, unknown>,
++}
++
++export enum SignalValue {
++	InvalidArguments = 'INVALID_ARGUMENTS'
++}
++
++export function parseArguments(args: Array<string>, allowedPluginOpts: Array<string>, helpLogger: () => void): Arguments | SignalValue {
+ 	// Stryker disable next-line all
+ 	const fileRegExp = /^[\w/.]+$/;
+ 	// Stryker disable next-line all
+@@ -23,10 +38,15 @@ export function parseArguments(args, allowedPluginOpts, helpLogger) {
+ 		return !!x;
+ 	});
+ 
+-	const parsedArgs = {
++	const parsedArgs: Arguments = {
++		stdin: false,
++		stdout: false,
++		output: null,
++		outputDir: null,
+ 		inputs: [],
+-		pluginOptions: {},
+ 		map: false,
++		replace: false,
++		pluginOptions: {},
+ 	};
+ 
+ 	let pluginOpts = null;
+@@ -94,17 +114,17 @@ export function parseArguments(args, allowedPluginOpts, helpLogger) {
+ 				console.warn(`unknown argument : ${arg}`);
+ 				// Stryker disable next-line all
+ 				helpLogger();
+-				return false;
++				return SignalValue.InvalidArguments;
+ 		}
+ 	}
+ 
+ 	if (parsedArgs.replace) {
+-		delete parsedArgs.output;
+-		delete parsedArgs.outputDir;
++		parsedArgs.output = null;
++		parsedArgs.outputDir = null;
+ 	}
+ 
+ 	if (parsedArgs.outputDir) {
+-		delete parsedArgs.output;
++		parsedArgs.output = null;
+ 	}
+ 
+ 	if (parsedArgs.inputs.length > 1 && parsedArgs.output) {
+@@ -112,7 +132,7 @@ export function parseArguments(args, allowedPluginOpts, helpLogger) {
+ 		console.warn(`omit "--output" when processing multiple inputs`);
+ 		// Stryker disable next-line all
+ 		helpLogger();
+-		return false;
++		return SignalValue.InvalidArguments;
+ 	}
+ 
+ 	if (parsedArgs.inputs.length === 0) {
+@@ -133,7 +153,7 @@ export function parseArguments(args, allowedPluginOpts, helpLogger) {
+ 			console.warn(`plugin options must be valid JSON`);
+ 			// Stryker disable next-line all
+ 			helpLogger();
+-			return false;
++			return SignalValue.InvalidArguments;
+ 		}
+ 	}
+ 
+@@ -146,7 +166,7 @@ export function parseArguments(args, allowedPluginOpts, helpLogger) {
+ 			console.warn(`unknown plugin option : ${key}`);
+ 			// Stryker disable next-line all
+ 			helpLogger();
+-			return false;
++			return SignalValue.InvalidArguments;
+ 		}
+ 	}
+ 
+diff --git a/cli/base-cli/src/index.mjs b/cli/base-cli/src/index.ts
+similarity index 86%
+rename from cli/base-cli/src/index.mjs
+rename to cli/base-cli/src/index.ts
+index 28f8e62..01cf2f3 100644
+--- a/cli/base-cli/src/index.mjs
++++ b/cli/base-cli/src/index.ts
+@@ -1,8 +1,9 @@
+ import fs from 'fs';
+ import path from 'path';
+-import { parseArguments } from './args.mjs';
++import { parseArguments, SignalValue } from './args';
++import type { Postcss, PluginCreator } from 'postcss';
+ 
+-export function helpTextLogger(name, description, exampleOptions = null) {
++export function helpTextLogger(name: string, description: string, exampleOptions: Record<string, unknown>|null = null) {
+ 	let pluginOptions = [];
+ 	if (exampleOptions) {
+ 		const longestPluginOptionLength = Math.max(...Object.keys(exampleOptions).map((x) => x.length));
+@@ -44,10 +45,12 @@ export function helpTextLogger(name, description, exampleOptions = null) {
+ 	}
+ }
+ 
+-export function cli(postcss, plugin, allowedPluginOpts, helpLogger) {
++type PluginCreatorOptions = Record<string, unknown> | null;
++
++export function cli(postcss: Postcss, plugin: PluginCreator<PluginCreatorOptions>, allowedPluginOpts: Array<string>, helpLogger: () => void) {
+ 	// get process and plugin options from the command line
+ 	const argo = parseArguments(process.argv.slice(2), allowedPluginOpts, helpLogger)
+-	if (!argo) {
++	if (argo === SignalValue.InvalidArguments) {
+ 		process.exit(1);
+ 	}
+ 
+@@ -77,7 +80,7 @@ export function cli(postcss, plugin, allowedPluginOpts, helpLogger) {
+ 	}
+ 
+ 	if (argo.stdin) {
+-		let output = argo.ouput;
++		let output = argo.output;
+ 		if (!output && argo.outputDir) {
+ 			output = path.join(argo.outputDir, 'output.css');
+ 		}
+@@ -166,7 +169,7 @@ export function cli(postcss, plugin, allowedPluginOpts, helpLogger) {
+ 	}));
+ }
+ 
+-function readFile (pathname) {
++function readFile (pathname: string): Promise<string> {
+ 	return new Promise((resolve, reject) => {
+ 		fs.readFile(pathname, 'utf8', (error, data) => {
+ 			if (error) {
+@@ -178,19 +181,19 @@ function readFile (pathname) {
+ 	});
+ }
+ 
+-function writeFile (pathname, data) {
++function writeFile (pathname: string, data: string): Promise<void> {
+ 	return new Promise((resolve, reject) => {
+-		fs.writeFile(pathname, data, (error, content) => {
++		fs.writeFile(pathname, data, (error) => {
+ 			if (error) {
+ 				reject(error);
+ 			} else {
+-				resolve(content);
++				resolve();
+ 			}
+ 		});
+ 	});
+ }
+ 
+-function getStdin () {
++function getStdin(): Promise<string> {
+ 	return new Promise(resolve => {
+ 		let data = '';
+ 		let timedOut = false;
+diff --git a/cli/base-cli/stryker.conf.json b/cli/base-cli/stryker.conf.json
+index fefe947..2c2f436 100644
+--- a/cli/base-cli/stryker.conf.json
++++ b/cli/base-cli/stryker.conf.json
+@@ -1,7 +1,7 @@
+ {
+   "$schema": "../../node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+   "mutate": [
+-    "src/args.mjs"
++    "src/args.ts"
+   ],
+   "testRunner": "command",
+   "coverageAnalysis": "perTest",
+@@ -9,9 +9,11 @@
+   "commandRunner": {
+     "command": "npm run test:js"
+   },
++  "buildCommand": "npm run build",
+   "thresholds": {
+     "high": 100,
+     "low": 100,
+     "break": 100
+-  }
++  },
++  "inPlace": true
+ }
+diff --git a/cli/base-cli/test/test.mjs b/cli/base-cli/test/test.mjs
+index 8d7618f..f39deb2 100644
+--- a/cli/base-cli/test/test.mjs
++++ b/cli/base-cli/test/test.mjs
+@@ -1,6 +1,6 @@
+ 'use strict';
+ import assert from 'assert';
+-import { parseArguments } from '../src/args.mjs';
++import { parseArguments } from '../dist/args.js';
+ 
+ const argumentParsingCases = [
+ 	{
+@@ -8,11 +8,14 @@ const argumentParsingCases = [
+ 		args: [],
+ 		allowedPluginOpts: [],
+ 		expected: {
++			stdin: true,
++			stdout: true,
++			output: null,
++			outputDir: null,
+ 			inputs: [],
+-			pluginOptions: {},
+ 			map: false,
+-			stdin: true,
+-			stdout: true
++			replace: false,
++			pluginOptions: {}
+ 		}
+ 	},
+ 	{
+@@ -23,7 +26,7 @@ const argumentParsingCases = [
+ 			'../baz/bar.css'
+ 		],
+ 		allowedPluginOpts: [],
+-		expected: false
++		expected: 'INVALID_ARGUMENTS'
+ 	},
+ 	{
+ 		message: "with input files at the end (m)",
+@@ -33,7 +36,7 @@ const argumentParsingCases = [
+ 			'../baz/bar.css'
+ 		],
+ 		allowedPluginOpts: [],
+-		expected: false
++		expected: 'INVALID_ARGUMENTS'
+ 	},
+ 	{
+ 		message: "with input files at the end (r)",
+@@ -43,7 +46,7 @@ const argumentParsingCases = [
+ 			'../baz/bar.css'
+ 		],
+ 		allowedPluginOpts: [],
+-		expected: false
++		expected: 'INVALID_ARGUMENTS'
+ 	},
+ 	{
+ 		message: "with input files at the end (d)",
+@@ -53,7 +56,7 @@ const argumentParsingCases = [
+ 			'../baz/bar.css'
+ 		],
+ 		allowedPluginOpts: [],
+-		expected: false
++		expected: 'INVALID_ARGUMENTS'
+ 	},
+ 	{
+ 		message: "with input files at the end (p)",
+@@ -64,7 +67,7 @@ const argumentParsingCases = [
+ 			'../baz/bar.css'
+ 		],
+ 		allowedPluginOpts: ['an_option'],
+-		expected: false
++		expected: 'INVALID_ARGUMENTS'
+ 	},
+ 	{
+ 		message: "with input files in the middle",
+@@ -75,7 +78,7 @@ const argumentParsingCases = [
+ 			"-m"
+ 		],
+ 		allowedPluginOpts: [],
+-		expected: false
++		expected: 'INVALID_ARGUMENTS'
+ 	},
+ 	{
+ 		message: "all values",
+@@ -95,10 +98,14 @@ const argumentParsingCases = [
+ 			"an_option"
+ 		],
+ 		expected: {
++			stdin: false,
++			stdout: false,
++			output: null,
++			outputDir: null,
+ 			inputs: [ './foo.css', '../baz/bar.css' ],
+-			pluginOptions: { an_option: false },
+ 			map: true,
+-			replace: true
++			replace: true,
++			pluginOptions: { an_option: false }
+ 		}
+ 	},
+ 	{
+@@ -106,10 +113,14 @@ const argumentParsingCases = [
+ 		args: ['./foo.css'],
+ 		allowedPluginOpts: [],
+ 		expected: {
++			stdin: false,
++			stdout: true,
++			output: null,
++			outputDir: null,
+ 			inputs: ['./foo.css'],
+-			pluginOptions: {},
+ 			map: false,
+-			stdout: true
++			replace: false,
++			pluginOptions: {}
+ 		}
+ 	},
+ 	{
+@@ -117,45 +128,53 @@ const argumentParsingCases = [
+ 		args: ['./foo.css', '-p', '{ "an_option": true }'],
+ 		allowedPluginOpts: ['an_option'],
+ 		expected: {
+-			inputs: ['./foo.css'],
+-			pluginOptions: { an_option: true },
++			stdin: false,
++			stdout: true,
++			output: null,
++			outputDir: null,
++			inputs: [ './foo.css' ],
+ 			map: false,
+-			stdout: true
++			replace: false,
++			pluginOptions: { an_option: true }
+ 		}
+ 	},
+ 	{
+ 		message: "an unknown option",
+ 		args: ['./foo.css', '-p', '{ "an_option": true }'],
+ 		allowedPluginOpts: [],
+-		expected: false
++		expected: 'INVALID_ARGUMENTS'
+ 	},
+ 	{
+ 		message: "an unknown argument",
+ 		args: ['./foo.css', '-x', 'y'],
+ 		allowedPluginOpts: [],
+-		expected: false
++		expected: 'INVALID_ARGUMENTS'
+ 	},
+ 	{
+ 		message: "invalid json",
+ 		args: ['./foo.css', '-p', '{ an_option: true }'],
+ 		allowedPluginOpts: [],
+-		expected: false
++		expected: 'INVALID_ARGUMENTS'
+ 	},
+ 	{
+ 		message: "multiple inputs with --output option",
+ 		args: ['./foo.css', './fooz.css', '-o', './baz.css'],
+ 		allowedPluginOpts: [],
+-		expected: false
++		expected: 'INVALID_ARGUMENTS'
+ 	},
+ 	{
+ 		message: "multiple inputs with --dir option, but also with --output",
+ 		args: ['./foo.css', './fooz.css', '-o', './baz.css', '-d', './baz/'],
+ 		allowedPluginOpts: [],
+ 		expected: {
++			stdin: false,
++			stdout: false,
++			output: null,
++			outputDir: './baz/',
+ 			inputs: [ './foo.css', './fooz.css' ],
+-			pluginOptions: {},
+ 			map: false,
+-			outputDir: './baz/'
++			replace: false,
++			pluginOptions: {}
+ 		}
+ 	},
+ 	{
+@@ -163,11 +182,14 @@ const argumentParsingCases = [
+ 		args: ['-o', './baz.css', '-d', './baz/'],
+ 		allowedPluginOpts: [],
+ 		expected: {
++			stdin: true,
++			stdout: false,
++			output: null,
++			outputDir: './baz/',
+ 			inputs: [],
+-			pluginOptions: {},
+ 			map: false,
+-			outputDir: './baz/',
+-			stdin: true
++			replace: false,
++			pluginOptions: {}
+ 		}
+ 	},
+ 	{
+@@ -175,10 +197,14 @@ const argumentParsingCases = [
+ 		args: ['./foo.css', './fooz.css', '-r', "foo"],
+ 		allowedPluginOpts: [],
+ 		expected: {
++			stdin: false,
++			stdout: false,
++			output: null,
++			outputDir: null,
+ 			inputs: [ './foo.css', './fooz.css' ],
+-			pluginOptions: {},
+ 			map: false,
+-			replace: true
++			replace: true,
++			pluginOptions: {}
+ 		}
+ 	},
+ 	{
+@@ -186,10 +212,14 @@ const argumentParsingCases = [
+ 		args: ['./foo.css', '-o', 'foo'],
+ 		allowedPluginOpts: [],
+ 		expected: {
++			stdin: false,
++			stdout: false,
++			output: 'foo',
++			outputDir: null,
+ 			inputs: [ './foo.css' ],
+-			pluginOptions: {},
+ 			map: false,
+-			output: 'foo'
++			replace: false,
++			pluginOptions: {}
+ 		}
+ 	},
+ 	{
+@@ -197,10 +227,14 @@ const argumentParsingCases = [
+ 		args: ['./foo.css', '-o=foo'],
+ 		allowedPluginOpts: [],
+ 		expected: {
++			stdin: false,
++			stdout: false,
++			output: 'foo',
++			outputDir: null,
+ 			inputs: [ './foo.css' ],
+-			pluginOptions: {},
+ 			map: false,
+-			output: 'foo'
++			replace: false,
++			pluginOptions: {}
+ 		}
+ 	},
+ 	{
+@@ -208,10 +242,14 @@ const argumentParsingCases = [
+ 		args: ['./foo.css', '--output=foo'],
+ 		allowedPluginOpts: [],
+ 		expected: {
++			stdin: false,
++			stdout: false,
++			output: 'foo',
++			outputDir: null,
+ 			inputs: [ './foo.css' ],
+-			pluginOptions: {},
+ 			map: false,
+-			output: 'foo'
++			replace: false,
++			pluginOptions: {}
+ 		}
+ 	},
+ 	{
+@@ -219,10 +257,14 @@ const argumentParsingCases = [
+ 		args: ['./foo.css', '-m'],
+ 		allowedPluginOpts: [],
+ 		expected: {
++			stdin: false,
++			stdout: true,
++			output: null,
++			outputDir: null,
+ 			inputs: [ './foo.css' ],
+-			pluginOptions: {},
+ 			map: true,
+-			stdout: true
++			replace: false,
++			pluginOptions: {}
+ 		}
+ 	},
+ 	{
+@@ -230,10 +272,14 @@ const argumentParsingCases = [
+ 		args: ['./foo.css', '--map'],
+ 		allowedPluginOpts: [],
+ 		expected: {
++			stdin: false,
++			stdout: true,
++			output: null,
++			outputDir: null,
+ 			inputs: [ './foo.css' ],
+-			pluginOptions: {},
+ 			map: true,
+-			stdout: true
++			replace: false,
++			pluginOptions: {}
+ 		}
+ 	},
+ 	{
+@@ -241,32 +287,44 @@ const argumentParsingCases = [
+ 		args: ['./foo.css', '-m', 'foo'],
+ 		allowedPluginOpts: [],
+ 		expected: {
++			stdin: false,
++			stdout: true,
++			output: null,
++			outputDir: null,
+ 			inputs: [ './foo.css' ],
+-			pluginOptions: {},
+ 			map: true,
+-			stdout: true
+-		}
++			replace: false,
++			pluginOptions: {}
++		},
+ 	},
+ 	{
+ 		message: "long flag map with invalid trailer",
+ 		args: ['./foo.css', '--map', 'foo'],
+ 		allowedPluginOpts: [],
+ 		expected: {
++			stdin: false,
++			stdout: true,
++			output: null,
++			outputDir: null,
+ 			inputs: [ './foo.css' ],
+-			pluginOptions: {},
+ 			map: true,
+-			stdout: true
++			replace: false,
++			pluginOptions: {}
+ 		}
+ 	},
+ 	{
+ 		message: "long flag map with valid trailer",
+ 		args: ['./foo.css', '--map', '--replace', '--dir', './baz/'],
+ 		allowedPluginOpts: [],
+-			expected: {
++		expected: {
++			stdin: false,
++			stdout: false,
++			output: null,
++			outputDir: null,
+ 			inputs: [ './foo.css' ],
+-			pluginOptions: {},
+ 			map: true,
+-			replace: true
++			replace: true,
++			pluginOptions: {}
+ 		}
+ 	}
+ ];
+diff --git a/cli/base-cli/tsconfig.json b/cli/base-cli/tsconfig.json
+new file mode 100644
+index 0000000..f775a95
+--- /dev/null
++++ b/cli/base-cli/tsconfig.json
+@@ -0,0 +1,7 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "outDir": "dist"
++  },
++  "include": ["./src/**/*"]
++}
+diff --git a/cli/postcss-base-plugin-cli/package.json b/cli/postcss-base-plugin-cli/package.json
+index 43bfce2..a03fb75 100644
+--- a/cli/postcss-base-plugin-cli/package.json
++++ b/cli/postcss-base-plugin-cli/package.json
+@@ -22,11 +22,11 @@
+     "prepare": "npm run build",
+     "prepublishOnly": "npm run build --if-present && npm run test",
+     "test": "npm run test:js && npm run test:cli",
+-    "test:js": "eslint src/**/*.js --quiet",
++    "test:js": "eslint src/**/*.ts --quiet",
+     "test:cli": "bash ./test/test.sh",
+     "fuzz": "bash ./test/fuzz.sh",
+     "fuzz:build-expect": "BUILD_EXPECT_FILES=true bash ./test/fuzz.sh",
+-    "build": "rollup -c ../../rollup/cli.js"
++    "build": "rollup -c ../../rollup/cli.ts.js"
+   },
+   "devDependencies": {
+     "@csstools/base-cli": "^0.1.0",
+diff --git a/cli/postcss-base-plugin-cli/src/cli.js b/cli/postcss-base-plugin-cli/src/cli.ts
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/src/cli.js
+rename to cli/postcss-base-plugin-cli/src/cli.ts
+diff --git a/cli/postcss-base-plugin-cli/test/test.sh b/cli/postcss-base-plugin-cli/test/test.sh
+index df944b9..7a211d5 100644
+--- a/cli/postcss-base-plugin-cli/test/test.sh
++++ b/cli/postcss-base-plugin-cli/test/test.sh
+@@ -3,8 +3,8 @@ set -e
+ # Zero out result file
+ echo '' > ./test/basic.result.css;
+ 
+-# Test with named arguments
+-postcss-base-plugin-cli ./test/basic.css --output=./test/basic.result.css -p='{ "option": true }'
++# Test with long flag
++postcss-base-plugin-cli ./test/basic.css --output=./test/basic.result.css --plugin-options='{ "option": true }'
+ 
+ # Check result
+ git --no-pager diff --no-index --word-diff ./test/basic.expect.css ./test/basic.result.css
+@@ -12,8 +12,8 @@ git --no-pager diff --no-index --word-diff ./test/basic.expect.css ./test/basic.
+ # Zero out result file
+ echo '' > ./test/basic.result.css;
+ 
+-# Test with unnamed arguments
+-postcss-base-plugin-cli ./test/basic.css --output=./test/basic.result.css
++# Test with short flags
++postcss-base-plugin-cli ./test/basic.css -o ./test/basic.result.css -p '{ "option": true }'
+ 
+ # Check result
+ git --no-pager diff --no-index --word-diff ./test/basic.expect.css ./test/basic.result.css
+diff --git a/cli/postcss-base-plugin-cli/tsconfig.json b/cli/postcss-base-plugin-cli/tsconfig.json
+new file mode 100644
+index 0000000..68a2606
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/tsconfig.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "outDir": "dist",
++    "declarationDir": "."
++  },
++  "include": ["./src/**/*"],
++  "exclude": ["dist"],
++}
+diff --git a/package.json b/package.json
+index 351bb3b..88369fe 100644
+--- a/package.json
++++ b/package.json
+@@ -15,10 +15,14 @@
+     "@rollup/plugin-babel": "^5.3.0",
+     "@rollup/plugin-commonjs": "^21.0.1",
+     "@rollup/plugin-node-resolve": "^13.0.6",
++    "@rollup/plugin-typescript": "^8.3.0",
+     "@stryker-mutator/core": "^5.4.1",
+-    "eslint": "^7.32.0",
++    "eslint": "^8.1.0",
+     "rollup": "^2.58.3",
+-    "rollup-plugin-terser": "^7.0.2"
++    "rollup-plugin-terser": "^7.0.2",
++    "tslib": "^2.3.1",
++    "typescript": "^4.4.4",
++    "@typescript-eslint/eslint-plugin": "^5.3.0"
+   },
+   "scripts": {
+     "build": "npm run build --workspaces --if-present",
+diff --git a/plugins/postcss-base-plugin/package.json b/plugins/postcss-base-plugin/package.json
+index be88030..0fd17bb 100644
+--- a/plugins/postcss-base-plugin/package.json
++++ b/plugins/postcss-base-plugin/package.json
+@@ -20,12 +20,13 @@
+     "dist/index.mjs",
+     "dist/index.mjs.map"
+   ],
++  "types": "./dist/index.d.ts",
+   "scripts": {
+     "prepublishOnly": "npm run build --if-present && npm run test",
+     "test": "npm run test:js && npm run test:tape",
+-    "test:js": "eslint src/**/*.js --quiet",
++    "test:js": "eslint src/**/*.ts --quiet",
+     "test:tape": "postcss-tape",
+-    "build": "rollup -c ../../rollup/default.js",
++    "build": "rollup -c ../../rollup/default.ts.js",
+     "stryker": "stryker run --logLevel error"
+   },
+   "postcssConfig": {
+diff --git a/plugins/postcss-base-plugin/src/index.js b/plugins/postcss-base-plugin/src/index.js
+deleted file mode 100644
+index ce6acca..0000000
+--- a/plugins/postcss-base-plugin/src/index.js
++++ /dev/null
+@@ -1,18 +0,0 @@
+-/**
+- * @type {import('postcss').PluginCreator}
+- */
+-export default function creator(opts) {
+-	const noop = () => { }; /* remove this */
+-	noop(opts); /* remove this */
+-
+-	return {
+-		postcssPlugin: 'postcss-base-plugin',
+-		Declaration(decl) {
+-			if (decl.value === 'red') {
+-				decl.value = 'blue';
+-			}
+-		}
+-	}
+-}
+-
+-creator.postcss = true;
+diff --git a/plugins/postcss-base-plugin/src/index.ts b/plugins/postcss-base-plugin/src/index.ts
+new file mode 100644
+index 0000000..75fcd12
+--- /dev/null
++++ b/plugins/postcss-base-plugin/src/index.ts
+@@ -0,0 +1,18 @@
++import type { PluginCreator } from 'postcss';
++
++// eslint-disable-next-line @typescript-eslint/no-unused-vars
++const creator: PluginCreator<null> = (opts) => {
++	return {
++		postcssPlugin: 'postcss-base-plugin',
++		Declaration(decl) {
++			if (decl.value === 'red') {
++				decl.value = 'blue';
++			}
++		}
++	}
++}
++
++creator.postcss = true;
++
++export default creator;
++
+diff --git a/plugins/postcss-base-plugin/stryker.conf.json b/plugins/postcss-base-plugin/stryker.conf.json
+index 6f976ff..091dc74 100644
+--- a/plugins/postcss-base-plugin/stryker.conf.json
++++ b/plugins/postcss-base-plugin/stryker.conf.json
+@@ -1,7 +1,7 @@
+ {
+   "$schema": "../../node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+   "mutate": [
+-    "src/**/*.js"
++    "src/**/*.ts"
+   ],
+   "buildCommand": "npm run build",
+   "testRunner": "command",
+@@ -14,5 +14,6 @@
+     "high": 100,
+     "low": 100,
+     "break": 100
+-  }
++  },
++  "inPlace": true
+ }
+diff --git a/plugins/postcss-base-plugin/tsconfig.json b/plugins/postcss-base-plugin/tsconfig.json
+new file mode 100644
+index 0000000..68a2606
+--- /dev/null
++++ b/plugins/postcss-base-plugin/tsconfig.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.json",
++  "compilerOptions": {
++    "outDir": "dist",
++    "declarationDir": "."
++  },
++  "include": ["./src/**/*"],
++  "exclude": ["dist"],
++}
+diff --git a/rollup/cli.ts.js b/rollup/cli.ts.js
+new file mode 100644
+index 0000000..49d9cef
+--- /dev/null
++++ b/rollup/cli.ts.js
+@@ -0,0 +1,44 @@
++import babel from '@rollup/plugin-babel';
++import commonjs from '@rollup/plugin-commonjs';
++import path from 'path';
++import typescript from '@rollup/plugin-typescript';
++import { nodeResolve } from '@rollup/plugin-node-resolve';
++
++export default {
++	input: 'src/cli.ts',
++	output: [
++		{ file: 'dist/cli.js', format: 'cjs', sourcemap: false, strict: false }
++	],
++	plugins: [
++		typescript({ tsconfig: './tsconfig.json' }),
++		nodeResolve({
++			rootDir: path.join(process.cwd(), '..', '..')
++		}),
++		commonjs(),
++		babel({
++			babelHelpers: 'bundled',
++			exclude: 'node_modules/**',
++			presets: [
++				['@babel/preset-env', {
++					corejs: 3,
++					loose: true,
++					modules: false,
++					targets: { node: 12 },
++					useBuiltIns: 'usage'
++				}]
++			]
++		}),
++		addHashBang()
++	]
++}
++
++function addHashBang () {
++	return {
++		name: 'add-hash-bang',
++		renderChunk (code) {
++			const updatedCode = `#!/usr/bin/env node\n\n${code}`;
++
++			return updatedCode;
++		}
++	};
++}
+diff --git a/rollup/default.ts.js b/rollup/default.ts.js
+new file mode 100644
+index 0000000..0d20b62
+--- /dev/null
++++ b/rollup/default.ts.js
+@@ -0,0 +1,26 @@
++import babel from '@rollup/plugin-babel';
++import typescript from '@rollup/plugin-typescript';
++
++export default {
++	input: 'src/index.ts',
++	output: [
++		{ file: 'dist/index.js', format: 'cjs', sourcemap: true, exports: 'default' },
++		{ file: 'dist/index.mjs', format: 'esm', sourcemap: true, exports: 'default' }
++	],
++	plugins: [
++		typescript({ tsconfig: './tsconfig.json' }),
++		babel({
++			babelHelpers: 'bundled',
++			exclude: 'node_modules/**',
++			presets: [
++				['@babel/preset-env', {
++					corejs: 3,
++					loose: true,
++					modules: false,
++					targets: { node: 12 },
++					useBuiltIns: 'usage'
++				}]
++			]
++		}),
++	]
++}
+diff --git a/tsconfig.json b/tsconfig.json
+new file mode 100644
+index 0000000..a56e57b
+--- /dev/null
++++ b/tsconfig.json
+@@ -0,0 +1,11 @@
++{
++  "compilerOptions": {
++    "moduleResolution": "node",
++    "allowJs": false,
++    "target": "es6",
++    "lib": ["es6"],
++    "allowSyntheticDefaultImports": true,
++    "module": "es6",
++    "declaration": true
++  }
++}
+-- 
+2.33.1
+
