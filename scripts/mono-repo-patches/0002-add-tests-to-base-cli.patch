@@ -1,7 +1,7 @@
 From 74ae251ab52201987f1e23fe125844280cd60798 Mon Sep 17 00:00:00 2001
 From: romainmenke <romainmenke@gmail.com>
 Date: Tue, 2 Nov 2021 19:18:29 +0100
-Subject: [PATCH 2/6] add tests to base-cli
+Subject: [PATCH 2/7] add tests to base-cli
 
 ---
  cli/base-cli/package.json                |   8 +-

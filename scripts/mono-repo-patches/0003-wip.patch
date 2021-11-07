@@ -1,7 +1,7 @@
 From 2f8fb2670076d689a8d03d2df440423b5216abb4 Mon Sep 17 00:00:00 2001
 From: romainmenke <romainmenke@gmail.com>
 Date: Wed, 3 Nov 2021 10:04:14 +0100
-Subject: [PATCH 3/6] wip
+Subject: [PATCH 3/7] wip
 
 ---
  cli/base-cli/package.json                     |  7 --
