@@ -1,7 +1,7 @@
-From fc58e3dc0b3b9ebf57ba3114163bb0c4b50841f3 Mon Sep 17 00:00:00 2001
+From c5661cbdbb75cbe7c6207e16615b9c402d385de2 Mon Sep 17 00:00:00 2001
 From: romainmenke <romainmenke@gmail.com>
 Date: Wed, 3 Nov 2021 17:56:00 +0100
-Subject: [PATCH 4/4] use typescript
+Subject: [PATCH 4/6] use typescript
 
 ---
  .eslintrc.json                                |  21 ++-
