@@ -1,0 +1,525 @@
+From 9125dd3d55b1d825e64d9ea247334550930fcc69 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Sat, 13 Nov 2021 09:44:25 +0100
+Subject: [PATCH 4/4] wip
+
+---
+ cli/postcss-base-plugin-cli/package.json               | 4 ++--
+ packages/base-cli/package.json                         | 2 +-
+ packages/convert-colors/package.json                   | 4 ++--
+ packages/generate-test-cases/package.json              | 4 ++--
+ plugin-packs/postcss-preset-env/package.json           | 4 ++--
+ plugins/css-blank-pseudo/package.json                  | 4 ++--
+ plugins/css-has-pseudo/package.json                    | 4 ++--
+ plugins/css-prefers-color-scheme/package.json          | 4 ++--
+ plugins/postcss-base-plugin/package.json               | 4 ++--
+ plugins/postcss-color-functional-notation/package.json | 4 ++--
+ plugins/postcss-color-mod-function/package.json        | 4 ++--
+ plugins/postcss-dir-pseudo-class/package.json          | 4 ++--
+ plugins/postcss-double-position-gradients/package.json | 4 ++--
+ plugins/postcss-env-function/package.json              | 4 ++--
+ plugins/postcss-focus-visible/package.json             | 4 ++--
+ plugins/postcss-focus-within/package.json              | 4 ++--
+ plugins/postcss-gap-properties/package.json            | 4 ++--
+ plugins/postcss-image-set-function/package.json        | 4 ++--
+ plugins/postcss-lab-function/package.json              | 4 ++--
+ plugins/postcss-logical/package.json                   | 4 ++--
+ plugins/postcss-nesting/package.json                   | 4 ++--
+ plugins/postcss-overflow-shorthand/package.json        | 4 ++--
+ plugins/postcss-place/package.json                     | 4 ++--
+ plugins/postcss-pseudo-class-any-link/package.json     | 4 ++--
+ 24 files changed, 47 insertions(+), 47 deletions(-)
+
+diff --git a/cli/postcss-base-plugin-cli/package.json b/cli/postcss-base-plugin-cli/package.json
+index 68024d7..161611c 100644
+--- a/cli/postcss-base-plugin-cli/package.json
++++ b/cli/postcss-base-plugin-cli/package.json
+@@ -6,7 +6,7 @@
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "bin": {
+     "postcss-base-plugin-cli": "dist/cli.js"
+@@ -20,7 +20,7 @@
+   ],
+   "scripts": {
+     "prepare": "npm run build",
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "test": "npm run test:js && npm run test:cli",
+     "test:js": "eslint src/**/*.ts",
+     "test:cli": "bash ./test/test.sh",
+diff --git a/packages/base-cli/package.json b/packages/base-cli/package.json
+index 1a7e13b..7730b13 100644
+--- a/packages/base-cli/package.json
++++ b/packages/base-cli/package.json
+@@ -7,7 +7,7 @@
+   "license": "CC0-1.0",
+   "type": "module",
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "main": "./dist/index.js",
+   "files": [
+diff --git a/packages/convert-colors/package.json b/packages/convert-colors/package.json
+index a6e03b2..e1db364 100644
+--- a/packages/convert-colors/package.json
++++ b/packages/convert-colors/package.json
+@@ -18,7 +18,7 @@
+   "scripts": {
+     "build": "rollup -c .rollup.js --silent",
+     "docs": "jsdoc -c .jsdocrc -d .gh-pages",
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "pretest": "npm run build",
+     "test": "npm run test:ec && npm run test:js && npm run test:tape",
+     "test:ec": "echint test",
+@@ -27,7 +27,7 @@
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "devDependencies": {
+     "docdash": "^1.0.2",
+diff --git a/packages/generate-test-cases/package.json b/packages/generate-test-cases/package.json
+index 9934291..f9df75b 100644
+--- a/packages/generate-test-cases/package.json
++++ b/packages/generate-test-cases/package.json
+@@ -7,10 +7,10 @@
+   "license": "CC0-1.0",
+   "scripts": {
+     "generate": "node ./index.js",
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   }
+ }
+diff --git a/plugin-packs/postcss-preset-env/package.json b/plugin-packs/postcss-preset-env/package.json
+index cd30568..64a7844 100644
+--- a/plugin-packs/postcss-preset-env/package.json
++++ b/plugin-packs/postcss-preset-env/package.json
+@@ -17,14 +17,14 @@
+   ],
+   "scripts": {
+     "build": "rollup -c .rollup.js --silent",
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "test": "npm run test:js && npm run test:tape",
+     "test:js": "eslint src/*.js src/lib/*.js src/patch/*.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape",
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "dependencies": {
+     "autoprefixer": "^9.6.1",
+diff --git a/plugins/css-blank-pseudo/package.json b/plugins/css-blank-pseudo/package.json
+index 7c1964d..a09d5a4 100644
+--- a/plugins/css-blank-pseudo/package.json
++++ b/plugins/css-blank-pseudo/package.json
+@@ -35,7 +35,7 @@
+     "build:cli": "cross-env NODE_ENV=cli rollup --config .rollup.js --silent",
+     "build:postcss": "cross-env NODE_ENV=postcss rollup --config .rollup.js --silent",
+     "build:node": "rollup --config .rollup.js --silent && cross-env NODE_ENV=legacy rollup --config .rollup.js --silent",
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "pretest:postcss": "npm run build:postcss",
+     "test": "npm run test:js && npm run test:postcss",
+     "test:js": "eslint src/{*,**/*}.js --cache --ignore-path .gitignore --quiet",
+@@ -43,7 +43,7 @@
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "peerDependencies": {
+     "postcss": "^8.3"
+diff --git a/plugins/css-has-pseudo/package.json b/plugins/css-has-pseudo/package.json
+index dfbfbe5..42a3191 100644
+--- a/plugins/css-has-pseudo/package.json
++++ b/plugins/css-has-pseudo/package.json
+@@ -30,7 +30,7 @@
+     "build:cli": "cross-env NODE_ENV=cli rollup --config .rollup.js --silent",
+     "build:postcss": "cross-env NODE_ENV=postcss rollup --config .rollup.js --silent",
+     "build:node": "rollup --config .rollup.js --silent",
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "pretest:postcss": "npm run build:postcss",
+     "test": "npm run test:js && npm run test:postcss",
+     "test:js": "eslint src/{*,**/*}.js --cache --ignore-path .gitignore --quiet",
+@@ -38,7 +38,7 @@
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "peerDependencies": {
+     "postcss": ">=8.3"
+diff --git a/plugins/css-prefers-color-scheme/package.json b/plugins/css-prefers-color-scheme/package.json
+index 571dd73..a7dccc3 100644
+--- a/plugins/css-prefers-color-scheme/package.json
++++ b/plugins/css-prefers-color-scheme/package.json
+@@ -31,7 +31,7 @@
+     "build:browser:min": "cross-env NODE_ENV=browser:min rollup --config .rollup.js --silent",
+     "build:node": "rollup --config .rollup.js --silent",
+     "build:postcss": "cross-env NODE_ENV=postcss rollup --config .rollup.js --silent",
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "pretest": "npm run build",
+     "test": "npm run test:js && npm run test:tape",
+     "test:js": "eslint src/{*,**/*}.js --cache --ignore-path .gitignore --quiet",
+@@ -39,7 +39,7 @@
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "peerDependencies": {
+     "postcss": "^8.3"
+diff --git a/plugins/postcss-base-plugin/package.json b/plugins/postcss-base-plugin/package.json
+index 0fd17bb..96ba192 100644
+--- a/plugins/postcss-base-plugin/package.json
++++ b/plugins/postcss-base-plugin/package.json
+@@ -6,7 +6,7 @@
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "main": "dist/index.js",
+   "module": "dist/index.mjs",
+@@ -22,7 +22,7 @@
+   ],
+   "types": "./dist/index.d.ts",
+   "scripts": {
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "test": "npm run test:js && npm run test:tape",
+     "test:js": "eslint src/**/*.ts --quiet",
+     "test:tape": "postcss-tape",
+diff --git a/plugins/postcss-color-functional-notation/package.json b/plugins/postcss-color-functional-notation/package.json
+index 41f75a0..7f253b0 100644
+--- a/plugins/postcss-color-functional-notation/package.json
++++ b/plugins/postcss-color-functional-notation/package.json
+@@ -20,11 +20,11 @@
+     "pretest": "npm install && npm run build",
+     "test": "npm run lint && npm run tape",
+     "tape": "npx postcss-tape",
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "dependencies": {
+     "postcss-values-parser": "6.0.0"
+diff --git a/plugins/postcss-color-mod-function/package.json b/plugins/postcss-color-mod-function/package.json
+index 46bfb1b..347545e 100644
+--- a/plugins/postcss-color-mod-function/package.json
++++ b/plugins/postcss-color-mod-function/package.json
+@@ -16,7 +16,7 @@
+     "index.es.mjs.map"
+   ],
+   "scripts": {
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "pretest": "rollup -c .rollup.js --silent",
+     "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+     "test:js": "eslint *.js lib/*.js --cache --ignore-path .gitignore --quiet",
+@@ -24,7 +24,7 @@
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "dependencies": {
+     "@csstools/convert-colors": "^1.4.0",
+diff --git a/plugins/postcss-dir-pseudo-class/package.json b/plugins/postcss-dir-pseudo-class/package.json
+index 8dd5922..fd82205 100644
+--- a/plugins/postcss-dir-pseudo-class/package.json
++++ b/plugins/postcss-dir-pseudo-class/package.json
+@@ -11,7 +11,7 @@
+     "index.js"
+   ],
+   "scripts": {
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+     "test:ec": "echint --ignore index.*.js test",
+     "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+@@ -19,7 +19,7 @@
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "dependencies": {
+     "postcss-selector-parser": "6.0.6"
+diff --git a/plugins/postcss-double-position-gradients/package.json b/plugins/postcss-double-position-gradients/package.json
+index 19c1c7c..ef9115a 100644
+--- a/plugins/postcss-double-position-gradients/package.json
++++ b/plugins/postcss-double-position-gradients/package.json
+@@ -9,7 +9,7 @@
+   "bugs": "https://github.com/csstools/postcss-double-position-gradients/issues",
+   "main": "index.js",
+   "scripts": {
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "lint": "eslint *.js --cache",
+     "lint:fix": "eslint *.js --cache --fix",
+     "test": "npm run lint && npm run tape",
+@@ -17,7 +17,7 @@
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "dependencies": {
+     "postcss-values-parser": "6.0.0"
+diff --git a/plugins/postcss-env-function/package.json b/plugins/postcss-env-function/package.json
+index cb67e8a..c87e2af 100644
+--- a/plugins/postcss-env-function/package.json
++++ b/plugins/postcss-env-function/package.json
+@@ -20,11 +20,11 @@
+     "pretest": "npm run build",
+     "test": "npm run lint && npm run tape",
+     "tape": "postcss-tape",
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "dependencies": {
+     "postcss-values-parser": "6.0.1"
+diff --git a/plugins/postcss-focus-visible/package.json b/plugins/postcss-focus-visible/package.json
+index 8298ddd..a446dab 100644
+--- a/plugins/postcss-focus-visible/package.json
++++ b/plugins/postcss-focus-visible/package.json
+@@ -26,13 +26,13 @@
+     "lint": "npx eslint --cache src",
+     "lint:fix": "npx eslint --cache --fix",
+     "pretest": "npm install && npm run build",
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "test": "npm run lint && npm run tape",
+     "tape": "npx postcss-tape",
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "peerDependencies": {
+     "postcss": "^8.3"
+diff --git a/plugins/postcss-focus-within/package.json b/plugins/postcss-focus-within/package.json
+index c761915..545f8ad 100644
+--- a/plugins/postcss-focus-within/package.json
++++ b/plugins/postcss-focus-within/package.json
+@@ -25,14 +25,14 @@
+     "build:watch": "npx rollup -c .rollup.js --watch",
+     "lint": "npx eslint --cache src",
+     "lint:fix": "npx eslint --cache --fix",
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "pretest": "npm install && npm run build",
+     "test": "npm run lint && npm run tape",
+     "tape": "npx postcss-tape",
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "peerDependencies": {
+     "postcss": "^8.3"
+diff --git a/plugins/postcss-gap-properties/package.json b/plugins/postcss-gap-properties/package.json
+index bcd3147..2eccc38 100644
+--- a/plugins/postcss-gap-properties/package.json
++++ b/plugins/postcss-gap-properties/package.json
+@@ -9,14 +9,14 @@
+   "bugs": "https://github.com/jonathantneal/postcss-gap-properties/issues",
+   "main": "index.js",
+   "scripts": {
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+     "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape",
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "devDependencies": {
+     "eslint": "7.32.0",
+diff --git a/plugins/postcss-image-set-function/package.json b/plugins/postcss-image-set-function/package.json
+index fe7c69e..a74d43a 100644
+--- a/plugins/postcss-image-set-function/package.json
++++ b/plugins/postcss-image-set-function/package.json
+@@ -12,14 +12,14 @@
+     "lib/"
+   ],
+   "scripts": {
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+     "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape",
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "dependencies": {
+     "postcss-values-parser": "6.0.0"
+diff --git a/plugins/postcss-lab-function/package.json b/plugins/postcss-lab-function/package.json
+index e8972d1..763a93b 100644
+--- a/plugins/postcss-lab-function/package.json
++++ b/plugins/postcss-lab-function/package.json
+@@ -20,11 +20,11 @@
+     "pretest": "npm install && npm run build",
+     "test": "npm run lint && npm run tape",
+     "tape": "npx postcss-tape",
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "dependencies": {
+     "@csstools/convert-colors": "2.0.0",
+diff --git a/plugins/postcss-logical/package.json b/plugins/postcss-logical/package.json
+index d471e4c..11fb136 100644
+--- a/plugins/postcss-logical/package.json
++++ b/plugins/postcss-logical/package.json
+@@ -17,14 +17,14 @@
+   ],
+   "scripts": {
+     "build": "rollup --config .rollup.js --silent",
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "test": "npm run test:js && npm run test:tape",
+     "test:js": "eslint src/{*,**/*}.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape",
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "peerDependencies": {
+     "postcss": "^8.3"
+diff --git a/plugins/postcss-nesting/package.json b/plugins/postcss-nesting/package.json
+index d91ea28..5789d3c 100644
+--- a/plugins/postcss-nesting/package.json
++++ b/plugins/postcss-nesting/package.json
+@@ -37,7 +37,7 @@
+     "postcss-8-nesting"
+   ],
+   "scripts": {
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "build": "node .bin/build.js",
+     "test": "node .bin/test.js",
+     "test:lint": "node .bin/test-lint.js",
+@@ -56,7 +56,7 @@
+     "node >= 12"
+   ],
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "eslintConfig": {
+     "extends": "eslint:recommended",
+diff --git a/plugins/postcss-overflow-shorthand/package.json b/plugins/postcss-overflow-shorthand/package.json
+index c3fc8ce..479cf76 100644
+--- a/plugins/postcss-overflow-shorthand/package.json
++++ b/plugins/postcss-overflow-shorthand/package.json
+@@ -16,7 +16,7 @@
+     "index.esm.mjs.map"
+   ],
+   "scripts": {
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "pretest": "rollup -c .rollup.js --silent",
+     "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+     "test:ec": "echint --ignore index.*.js test",
+@@ -25,7 +25,7 @@
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "peerDependencies": {
+     "postcss": "^8.3"
+diff --git a/plugins/postcss-place/package.json b/plugins/postcss-place/package.json
+index 338209f..66e6c26 100755
+--- a/plugins/postcss-place/package.json
++++ b/plugins/postcss-place/package.json
+@@ -20,11 +20,11 @@
+     "pretest": "npm install && npm run build",
+     "test": "npm run lint && npm run tape",
+     "tape": "npx postcss-tape",
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "dependencies": {
+     "postcss-values-parser": "6.0.0"
+diff --git a/plugins/postcss-pseudo-class-any-link/package.json b/plugins/postcss-pseudo-class-any-link/package.json
+index 1b5c271..472f072 100644
+--- a/plugins/postcss-pseudo-class-any-link/package.json
++++ b/plugins/postcss-pseudo-class-any-link/package.json
+@@ -9,14 +9,14 @@
+   "bugs": "https://github.com/jonathantneal/postcss-pseudo-class-any-link/issues",
+   "main": "index.js",
+   "scripts": {
+-    "prepublishOnly": "npm run build --if-present && npm run test",
++    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "test": "npm run test:js && npm run test:tape",
+     "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape",
+     "stryker": "stryker run --logLevel error"
+   },
+   "engines": {
+-    "node": ">=12"
++    "node": "^12 || ^14 || >=16"
+   },
+   "peerDependencies": {
+     "postcss": "^8.3"
+-- 
+2.33.1
+

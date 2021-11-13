@@ -1,7 +1,7 @@
-From ee26ea32889e5c7ab92d05bc4a33d149e1a07d51 Mon Sep 17 00:00:00 2001
+From 9031ed4badff27c8f867fbb2eb1a37143b1980e7 Mon Sep 17 00:00:00 2001
 From: romainmenke <romainmenke@gmail.com>
 Date: Sat, 13 Nov 2021 09:30:58 +0100
-Subject: [PATCH 3/3] wip
+Subject: [PATCH 3/4] wip
 
 ---
  .eslintrc.json                               |    41 +-
