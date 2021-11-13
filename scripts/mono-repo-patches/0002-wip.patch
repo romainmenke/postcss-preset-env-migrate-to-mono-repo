@@ -1,0 +1,867 @@
+From 86337113c9cecc88e565c268f78ddf113260abc1 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Fri, 12 Nov 2021 13:18:42 +0100
+Subject: [PATCH 2/3] wip
+
+---
+ cli/postcss-base-plugin-cli/.gitignore        |  1 +
+ cli/postcss-base-plugin-cli/src/cli.ts        |  4 +-
+ .../test/basic.color.expect.css               |  5 ++
+ .../test/basic.expect.css                     |  2 +
+ .../test/basic.external-map.expect.css        |  5 ++
+ .../test/basic.external-map.expect.css.map    |  1 +
+ .../test/basic.failure.expect.css             |  0
+ .../test/basic.no-map.expect.css              |  3 +
+ .../test/basic.replace.css                    |  5 ++
+ .../test/basic.replace.expect.css             |  5 ++
+ .../test/basic.stdin.expect.css               |  5 ++
+ cli/postcss-base-plugin-cli/test/out/a.css    |  5 ++
+ .../test/out/a.css.map                        |  1 +
+ .../test/out/a.expect.css                     |  5 ++
+ .../test/out/a.expect.css.map                 |  1 +
+ cli/postcss-base-plugin-cli/test/out/b.css    |  5 ++
+ .../test/out/b.css.map                        |  1 +
+ .../test/out/b.expect.css                     |  5 ++
+ .../test/out/b.expect.css.map                 |  1 +
+ .../test/out/concatenated.css                 |  6 ++
+ .../test/out/concatenated.expect.css          |  6 ++
+ cli/postcss-base-plugin-cli/test/src/a.css    |  3 +
+ cli/postcss-base-plugin-cli/test/src/b.css    |  3 +
+ cli/postcss-base-plugin-cli/test/test.sh      | 82 +++++++++++++++++--
+ packages/base-cli/package.json                |  3 +-
+ packages/base-cli/src/args.ts                 | 19 ++++-
+ packages/base-cli/src/index.ts                | 66 ++++++++++-----
+ packages/base-cli/test/test.mjs               | 81 +++++++++++++++---
+ packages/generate-test-cases/index.js         |  2 +-
+ plugins/postcss-base-plugin/.tape.js          |  6 ++
+ plugins/postcss-base-plugin/src/index.ts      |  8 +-
+ .../test/basic.color.expect.css               |  7 ++
+ 32 files changed, 300 insertions(+), 52 deletions(-)
+ create mode 100644 cli/postcss-base-plugin-cli/test/basic.color.expect.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/basic.external-map.expect.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/basic.external-map.expect.css.map
+ create mode 100644 cli/postcss-base-plugin-cli/test/basic.failure.expect.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/basic.no-map.expect.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/basic.replace.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/basic.replace.expect.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/basic.stdin.expect.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/out/a.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/out/a.css.map
+ create mode 100644 cli/postcss-base-plugin-cli/test/out/a.expect.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/out/a.expect.css.map
+ create mode 100644 cli/postcss-base-plugin-cli/test/out/b.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/out/b.css.map
+ create mode 100644 cli/postcss-base-plugin-cli/test/out/b.expect.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/out/b.expect.css.map
+ create mode 100644 cli/postcss-base-plugin-cli/test/out/concatenated.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/out/concatenated.expect.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/src/a.css
+ create mode 100644 cli/postcss-base-plugin-cli/test/src/b.css
+ create mode 100644 plugins/postcss-base-plugin/test/basic.color.expect.css
+
+diff --git a/cli/postcss-base-plugin-cli/.gitignore b/cli/postcss-base-plugin-cli/.gitignore
+index b59d151..f61e95c 100644
+--- a/cli/postcss-base-plugin-cli/.gitignore
++++ b/cli/postcss-base-plugin-cli/.gitignore
+@@ -3,6 +3,7 @@ package-lock.json
+ yarn.lock
+ *.log*
+ *.result.css
++*.result.css.map
+ .*
+ dist/*
+ !.editorconfig
+diff --git a/cli/postcss-base-plugin-cli/src/cli.ts b/cli/postcss-base-plugin-cli/src/cli.ts
+index 5935a96..5e893e7 100644
+--- a/cli/postcss-base-plugin-cli/src/cli.ts
++++ b/cli/postcss-base-plugin-cli/src/cli.ts
+@@ -5,12 +5,12 @@ import postcss from 'postcss';
+ cli(
+ 	postcss,
+ 	plugin,
+-	['option', 'another_option'],
++	['color', 'another_option'],
+ 	helpTextLogger(
+ 		'Base Plugin',
+ 		'An example plugin CLI',
+ 		{
+-			option: 'Some option',
++			color: 'A CSS color',
+ 			another_option: true,
+ 		}
+ 	)
+diff --git a/cli/postcss-base-plugin-cli/test/basic.color.expect.css b/cli/postcss-base-plugin-cli/test/basic.color.expect.css
+new file mode 100644
+index 0000000..93f6b52
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/basic.color.expect.css
+@@ -0,0 +1,5 @@
++.foo {
++	color: purple;
++}
++
++/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImJhc2ljLmNzcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQTtDQUNDLGFBQVU7QUFDWCIsImZpbGUiOiJiYXNpYy5jb2xvci5yZXN1bHQuY3NzIiwic291cmNlc0NvbnRlbnQiOlsiLmZvbyB7XG5cdGNvbG9yOiByZWQ7XG59XG4iXX0= */
+diff --git a/cli/postcss-base-plugin-cli/test/basic.expect.css b/cli/postcss-base-plugin-cli/test/basic.expect.css
+index c47fa33..3f6f0d3 100644
+--- a/cli/postcss-base-plugin-cli/test/basic.expect.css
++++ b/cli/postcss-base-plugin-cli/test/basic.expect.css
+@@ -1,3 +1,5 @@
+ .foo {
+ 	color: blue;
+ }
++
++/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImJhc2ljLmNzcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQTtDQUNDLFdBQVU7QUFDWCIsImZpbGUiOiJiYXNpYy5yZXN1bHQuY3NzIiwic291cmNlc0NvbnRlbnQiOlsiLmZvbyB7XG5cdGNvbG9yOiByZWQ7XG59XG4iXX0= */
+diff --git a/cli/postcss-base-plugin-cli/test/basic.external-map.expect.css b/cli/postcss-base-plugin-cli/test/basic.external-map.expect.css
+new file mode 100644
+index 0000000..b8aaa92
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/basic.external-map.expect.css
+@@ -0,0 +1,5 @@
++.foo {
++	color: blue;
++}
++
++/*# sourceMappingURL=basic.external-map.result.css.map */
+\ No newline at end of file
+diff --git a/cli/postcss-base-plugin-cli/test/basic.external-map.expect.css.map b/cli/postcss-base-plugin-cli/test/basic.external-map.expect.css.map
+new file mode 100644
+index 0000000..bc2c797
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/basic.external-map.expect.css.map
+@@ -0,0 +1 @@
++{"version":3,"sources":["../stdin"],"names":[],"mappings":"AAAA;CACC,WAAU;AACX","file":"basic.external-map.result.css","sourcesContent":[".foo {\n\tcolor: red;\n}\n"]}
+\ No newline at end of file
+diff --git a/cli/postcss-base-plugin-cli/test/basic.failure.expect.css b/cli/postcss-base-plugin-cli/test/basic.failure.expect.css
+new file mode 100644
+index 0000000..e69de29
+diff --git a/cli/postcss-base-plugin-cli/test/basic.no-map.expect.css b/cli/postcss-base-plugin-cli/test/basic.no-map.expect.css
+new file mode 100644
+index 0000000..c47fa33
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/basic.no-map.expect.css
+@@ -0,0 +1,3 @@
++.foo {
++	color: blue;
++}
+diff --git a/cli/postcss-base-plugin-cli/test/basic.replace.css b/cli/postcss-base-plugin-cli/test/basic.replace.css
+new file mode 100644
+index 0000000..49bc111
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/basic.replace.css
+@@ -0,0 +1,5 @@
++.foo {
++	color: blue;
++}
++
++/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImJhc2ljLnJlcGxhY2UuY3NzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBO0NBQ0MsV0FBVTtBQUNYIiwiZmlsZSI6ImJhc2ljLnJlcGxhY2UuY3NzIiwic291cmNlc0NvbnRlbnQiOlsiLmZvbyB7XG5cdGNvbG9yOiByZWQ7XG59XG4iXX0= */
+diff --git a/cli/postcss-base-plugin-cli/test/basic.replace.expect.css b/cli/postcss-base-plugin-cli/test/basic.replace.expect.css
+new file mode 100644
+index 0000000..49bc111
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/basic.replace.expect.css
+@@ -0,0 +1,5 @@
++.foo {
++	color: blue;
++}
++
++/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImJhc2ljLnJlcGxhY2UuY3NzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBO0NBQ0MsV0FBVTtBQUNYIiwiZmlsZSI6ImJhc2ljLnJlcGxhY2UuY3NzIiwic291cmNlc0NvbnRlbnQiOlsiLmZvbyB7XG5cdGNvbG9yOiByZWQ7XG59XG4iXX0= */
+diff --git a/cli/postcss-base-plugin-cli/test/basic.stdin.expect.css b/cli/postcss-base-plugin-cli/test/basic.stdin.expect.css
+new file mode 100644
+index 0000000..7def140
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/basic.stdin.expect.css
+@@ -0,0 +1,5 @@
++.foo {
++	color: blue;
++}
++
++/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInN0ZGluIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBO0NBQ0MsV0FBVTtBQUNYIiwiZmlsZSI6InN0ZG91dCIsInNvdXJjZXNDb250ZW50IjpbIi5mb28ge1xuXHRjb2xvcjogcmVkO1xufVxuIl19 */
+diff --git a/cli/postcss-base-plugin-cli/test/out/a.css b/cli/postcss-base-plugin-cli/test/out/a.css
+new file mode 100644
+index 0000000..60e2001
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/out/a.css
+@@ -0,0 +1,5 @@
++.foo {
++	color: blue;
++}
++
++/*# sourceMappingURL=a.css.map */
+\ No newline at end of file
+diff --git a/cli/postcss-base-plugin-cli/test/out/a.css.map b/cli/postcss-base-plugin-cli/test/out/a.css.map
+new file mode 100644
+index 0000000..d5c8b6f
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/out/a.css.map
+@@ -0,0 +1 @@
++{"version":3,"sources":["../src/a.css"],"names":[],"mappings":"AAAA;CACC,WAAU;AACX","file":"a.css","sourcesContent":[".foo {\n\tcolor: red;\n}\n"]}
+\ No newline at end of file
+diff --git a/cli/postcss-base-plugin-cli/test/out/a.expect.css b/cli/postcss-base-plugin-cli/test/out/a.expect.css
+new file mode 100644
+index 0000000..60e2001
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/out/a.expect.css
+@@ -0,0 +1,5 @@
++.foo {
++	color: blue;
++}
++
++/*# sourceMappingURL=a.css.map */
+\ No newline at end of file
+diff --git a/cli/postcss-base-plugin-cli/test/out/a.expect.css.map b/cli/postcss-base-plugin-cli/test/out/a.expect.css.map
+new file mode 100644
+index 0000000..d5c8b6f
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/out/a.expect.css.map
+@@ -0,0 +1 @@
++{"version":3,"sources":["../src/a.css"],"names":[],"mappings":"AAAA;CACC,WAAU;AACX","file":"a.css","sourcesContent":[".foo {\n\tcolor: red;\n}\n"]}
+\ No newline at end of file
+diff --git a/cli/postcss-base-plugin-cli/test/out/b.css b/cli/postcss-base-plugin-cli/test/out/b.css
+new file mode 100644
+index 0000000..ac091fa
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/out/b.css
+@@ -0,0 +1,5 @@
++.baz {
++	color: blue;
++}
++
++/*# sourceMappingURL=b.css.map */
+\ No newline at end of file
+diff --git a/cli/postcss-base-plugin-cli/test/out/b.css.map b/cli/postcss-base-plugin-cli/test/out/b.css.map
+new file mode 100644
+index 0000000..0a97ca2
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/out/b.css.map
+@@ -0,0 +1 @@
++{"version":3,"sources":["../src/b.css"],"names":[],"mappings":"AAAA;CACC,WAAU;AACX","file":"b.css","sourcesContent":[".baz {\n\tcolor: red;\n}\n"]}
+\ No newline at end of file
+diff --git a/cli/postcss-base-plugin-cli/test/out/b.expect.css b/cli/postcss-base-plugin-cli/test/out/b.expect.css
+new file mode 100644
+index 0000000..ac091fa
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/out/b.expect.css
+@@ -0,0 +1,5 @@
++.baz {
++	color: blue;
++}
++
++/*# sourceMappingURL=b.css.map */
+\ No newline at end of file
+diff --git a/cli/postcss-base-plugin-cli/test/out/b.expect.css.map b/cli/postcss-base-plugin-cli/test/out/b.expect.css.map
+new file mode 100644
+index 0000000..0a97ca2
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/out/b.expect.css.map
+@@ -0,0 +1 @@
++{"version":3,"sources":["../src/b.css"],"names":[],"mappings":"AAAA;CACC,WAAU;AACX","file":"b.css","sourcesContent":[".baz {\n\tcolor: red;\n}\n"]}
+\ No newline at end of file
+diff --git a/cli/postcss-base-plugin-cli/test/out/concatenated.css b/cli/postcss-base-plugin-cli/test/out/concatenated.css
+new file mode 100644
+index 0000000..80726df
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/out/concatenated.css
+@@ -0,0 +1,6 @@
++.foo {
++	color: blue;
++}
++.baz {
++	color: blue;
++}
+diff --git a/cli/postcss-base-plugin-cli/test/out/concatenated.expect.css b/cli/postcss-base-plugin-cli/test/out/concatenated.expect.css
+new file mode 100644
+index 0000000..80726df
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/out/concatenated.expect.css
+@@ -0,0 +1,6 @@
++.foo {
++	color: blue;
++}
++.baz {
++	color: blue;
++}
+diff --git a/cli/postcss-base-plugin-cli/test/src/a.css b/cli/postcss-base-plugin-cli/test/src/a.css
+new file mode 100644
+index 0000000..cedf0a6
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/src/a.css
+@@ -0,0 +1,3 @@
++.foo {
++	color: red;
++}
+diff --git a/cli/postcss-base-plugin-cli/test/src/b.css b/cli/postcss-base-plugin-cli/test/src/b.css
+new file mode 100644
+index 0000000..5f24351
+--- /dev/null
++++ b/cli/postcss-base-plugin-cli/test/src/b.css
+@@ -0,0 +1,3 @@
++.baz {
++	color: red;
++}
+diff --git a/cli/postcss-base-plugin-cli/test/test.sh b/cli/postcss-base-plugin-cli/test/test.sh
+index 6093ea0..9087b8f 100644
+--- a/cli/postcss-base-plugin-cli/test/test.sh
++++ b/cli/postcss-base-plugin-cli/test/test.sh
+@@ -4,25 +4,91 @@ set -e
+ echo '' > ./test/basic.result.css;
+ 
+ # Test with long flag
+-postcss-base-plugin-cli ./test/basic.css --output ./test/basic.result.css --plugin-options '{ "option": true }'
++postcss-base-plugin-cli ./test/basic.css --output ./test/basic.result.css
+ 
+ # Check result
+ git --no-pager diff --no-index --word-diff ./test/basic.expect.css ./test/basic.result.css
+ 
++# Reset result file
++cat ./test/basic.css > ./test/basic.replace.css;
++
++# Test replace
++postcss-base-plugin-cli ./test/basic.replace.css -r
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/basic.replace.css ./test/basic.replace.expect.css
++
+ # Zero out result file
+-echo '' > ./test/basic.result.css;
++echo '' > ./test/basic.color.result.css;
+ 
+-# Test with short flags
+-postcss-base-plugin-cli ./test/basic.css -o ./test/basic.result.css -p '{ "option": true }'
++# Test with short flags and plugin option
++postcss-base-plugin-cli ./test/basic.css -o ./test/basic.color.result.css -p '{ "color": "purple" }'
+ 
+ # Check result
+-git --no-pager diff --no-index --word-diff ./test/basic.expect.css ./test/basic.result.css
++git --no-pager diff --no-index --word-diff ./test/basic.color.expect.css ./test/basic.color.result.css
+ 
+ # Zero out result file
+-echo '' > ./test/basic.result.css;
++echo '' > ./test/basic.stdin.result.css;
+ 
+ # Test with stdin
+-cat ./test/basic.css | postcss-base-plugin-cli > ./test/basic.result.css
++cat ./test/basic.css | postcss-base-plugin-cli > ./test/basic.stdin.result.css
+ 
+ # Check result
+-git --no-pager diff --no-index --word-diff ./test/basic.expect.css ./test/basic.result.css
++git --no-pager diff --no-index --word-diff ./test/basic.stdin.expect.css ./test/basic.stdin.result.css
++
++# Zero out result file
++echo '' > ./test/basic.no-map.result.css;
++
++# Test source maps
++postcss-base-plugin-cli ./test/basic.css --no-map  -o ./test/basic.no-map.result.css
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/basic.no-map.expect.css ./test/basic.no-map.result.css
++
++# Zero out result file
++echo '' > ./test/basic.external-map.result.css;
++echo '' > ./test/basic.external-map.result.css.map;
++
++# Test source maps
++cat ./test/basic.css | postcss-base-plugin-cli --map  -o ./test/basic.external-map.result.css
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/basic.external-map.expect.css ./test/basic.external-map.result.css
++git --no-pager diff --no-index --word-diff ./test/basic.external-map.expect.css.map ./test/basic.external-map.result.css.map
++
++# Zero out result file
++echo '' > ./test/out/a.css
++echo '' > ./test/out/a.css.map
++echo '' > ./test/out/b.css
++echo '' > ./test/out/b.css.map
++
++# Test source maps
++postcss-base-plugin-cli ./test/src/a.css ./test/src/b.css -m -d ./test/out/
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/out/a.css ./test/out/a.expect.css
++git --no-pager diff --no-index --word-diff ./test/out/a.css.map ./test/out/a.expect.css.map
++git --no-pager diff --no-index --word-diff ./test/out/b.css ./test/out/b.expect.css
++git --no-pager diff --no-index --word-diff ./test/out/b.css.map ./test/out/b.expect.css.map
++
++# Zero out result file
++echo '' > ./test/out/concatenated.css
++
++# Test concat
++postcss-base-plugin-cli ./test/src/a.css ./test/src/b.css > ./test/out/concatenated.css
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/out/concatenated.css ./test/out/concatenated.expect.css
++
++# Dump some content
++echo 'foo' > ./test/basic.failure.result.css
++
++# Test with incorrect arugments
++if postcss-base-plugin-cli ./test/basic.css --does-not-exist > ./test/basic.failure.result.css; then
++  echo 'Test should have failed';
++	exit 1;
++else
++	# Check result
++	git --no-pager diff --no-index --word-diff ./test/basic.failure.result.css ./test/basic.failure.expect.css
++fi
++
+diff --git a/packages/base-cli/package.json b/packages/base-cli/package.json
+index 6c8e83c..1a7e13b 100644
+--- a/packages/base-cli/package.json
++++ b/packages/base-cli/package.json
+@@ -18,7 +18,8 @@
+     "test": "npm run test:lint && npm run test:js",
+     "test:lint": "eslint src/**/*.ts --quiet",
+     "test:js": "node ./test/test.mjs",
+-    "build": "tsc"
++    "build": "tsc",
++    "stryker": "stryker run --logLevel error"
+   },
+   "peerDependencies": {
+     "postcss": "^8.3.6"
+diff --git a/packages/base-cli/src/args.ts b/packages/base-cli/src/args.ts
+index cf2e4de..cfb1435 100644
+--- a/packages/base-cli/src/args.ts
++++ b/packages/base-cli/src/args.ts
+@@ -4,7 +4,8 @@ export type Arguments = {
+ 	inputs: Array<string>,
+ 	output: string | null,
+ 	outputDir: string | null,
+-	map: boolean,
++	externalMap: boolean,
++	inlineMap: boolean,
+ 	replace: boolean,
+ 	pluginOptions: Record<string, unknown>,
+ }
+@@ -26,7 +27,8 @@ export function parseArguments(args: Array<string>, allowedPluginOpts: Array<str
+ 		output: null,
+ 		outputDir: null,
+ 		inputs: [],
+-		map: false,
++		inlineMap: true,
++		externalMap: false,
+ 		replace: false,
+ 		pluginOptions: {},
+ 	};
+@@ -50,7 +52,14 @@ export function parseArguments(args: Array<string>, allowedPluginOpts: Array<str
+ 
+ 			case '-m':
+ 			case '--map':
+-				parsedArgs.map = true;
++				parsedArgs.externalMap = true;
++				parsedArgs.inlineMap = false;
++				encounteredFlagsOrArgs = true;
++				break;
++
++			case '--no-map':
++				parsedArgs.externalMap = false;
++				parsedArgs.inlineMap = false;
+ 				encounteredFlagsOrArgs = true;
+ 				break;
+ 
+@@ -121,6 +130,10 @@ export function parseArguments(args: Array<string>, allowedPluginOpts: Array<str
+ 		parsedArgs.stdout = true;
+ 	}
+ 
++	if (parsedArgs.stdout) {
++		parsedArgs.externalMap = false;
++	}
++
+ 	let parsedPluginOpts = {};
+ 	// Stryker disable next-line ConditionalExpression
+ 	if (pluginOpts) {
+diff --git a/packages/base-cli/src/index.ts b/packages/base-cli/src/index.ts
+index 46d5254..11092fc 100644
+--- a/packages/base-cli/src/index.ts
++++ b/packages/base-cli/src/index.ts
+@@ -33,6 +33,8 @@ export function helpTextLogger(name: string, description: string, exampleOptions
+ 		'  -o, --output          Output file',
+ 		'  -d, --dir             Output directory',
+ 		'  -r, --replace         Replace (overwrite) the input file',
++		'  -m, --map             Create an external sourcemap',
++		'  --no-map              Disable the default inline sourcemaps',
+ 		'  -p, --plugin-options  Stringified JSON object with plugin options',
+ 	]
+ 
+@@ -64,16 +66,16 @@ export function cli(postcss: Postcss, plugin: PluginCreator<PluginCreatorOptions
+ 			const result = postcss([plugin(argo.pluginOptions)]).process(css, {
+ 				from: 'stdin',
+ 				to: 'stdout',
+-				map: argo.map,
++				map: argo.inlineMap ? { inline: true } : false,
+ 			});
+ 
+ 			return result.css;
+ 		}).then((result) => {
+-			process.stdout.write(result);
++			process.stdout.write(result + (argo.inlineMap ? '\n' : ''));
+ 
+ 			process.exit(0);
+ 		}).catch((error) => {
+-			console.error(error);
++			console.error(process.env.DEBUG ? error : error.message);
+ 
+ 			process.exit(1);
+ 		});
+@@ -94,16 +96,26 @@ export function cli(postcss: Postcss, plugin: PluginCreator<PluginCreatorOptions
+ 			const result = postcss([plugin(argo.pluginOptions)]).process(css, {
+ 				from: 'stdin',
+ 				to: output,
+-				map: argo.map,
++				map: (argo.inlineMap || argo.externalMap) ? { inline: argo.inlineMap } : false,
+ 			});
+ 
+-			return writeFile(output, result.css);
++			if (argo.externalMap && result.map) {
++				return Promise.all([
++					writeFile(output, result.css),
++					writeFile(`${output}.map`, result.map.toString()),
++				]).then(() => {
++					console.log(`CSS was written to "${path.normalize(output)}"`)
++					return;
++				});
++			}
++
++			return writeFile(output, result.css + (argo.inlineMap ? '\n' : ''));
+ 		}).then(() => {
+-			console.log(`CSS was written to "${output}"`)
++			console.log(`CSS was written to "${path.normalize(output)}"`)
+ 
+ 			process.exit(0);
+ 		}).catch((error) => {
+-			console.error(error);
++			console.error(process.env.DEBUG ? error : error.message);
+ 
+ 			process.exit(1);
+ 		});
+@@ -122,16 +134,12 @@ export function cli(postcss: Postcss, plugin: PluginCreator<PluginCreatorOptions
+ 				const result = postcss([plugin(argo.pluginOptions)]).process(css, {
+ 					from: input,
+ 					to: 'stdout',
+-					map: argo.map,
++					map: false,
+ 				});
+ 
+ 				return result.css;
+ 			}).then((result) => {
+ 				outputs.find((output) => output.input === input).result = result;
+-			}).catch((error) => {
+-				console.error(error);
+-
+-				process.exit(1);
+ 			});
+ 		})).then(() => {
+ 			outputs.forEach((output) => {
+@@ -139,6 +147,10 @@ export function cli(postcss: Postcss, plugin: PluginCreator<PluginCreatorOptions
+ 			});
+ 
+ 			process.exit(0);
++		}).catch((error) => {
++			console.error(process.env.DEBUG ? error : error.message);
++
++			process.exit(1);
+ 		});
+ 	}
+ 
+@@ -148,25 +160,35 @@ export function cli(postcss: Postcss, plugin: PluginCreator<PluginCreatorOptions
+ 			output = path.join(argo.outputDir, path.basename(input));
+ 		}
+ 		if (argo.replace) {
+-			argo.output = input;
++			output = input;
+ 		}
+ 
+ 		return readFile(input).then((css) => {
+-			const result = postcss([plugin(argo.pluginOptions)]).process(css, {
++			return postcss([plugin(argo.pluginOptions)]).process(css, {
+ 				from: input,
+ 				to: output,
+-				map: argo.map,
++				map: (argo.inlineMap || argo.externalMap) ? { inline: argo.inlineMap } : false,
+ 			});
++		}).then((result) => {
++			if (argo.externalMap && result.map) {
++				return Promise.all([
++					writeFile(output, result.css),
++					writeFile(`${output}.map`, result.map.toString()),
++				]).then(() => {
++					console.log(`CSS was written to "${path.normalize(output)}"`)
++					return;
++				});
++			}
+ 
+-			return writeFile(output, result.css).then(() => {
+-				console.log(`CSS was written to "${output}"`)
++			return writeFile(output, result.css + (argo.inlineMap ? '\n' : '')).then(() => {
++				console.log(`CSS was written to "${path.normalize(output)}"`)
+ 			})
+-		}).catch((error) => {
+-			console.error(error);
+-
+-			process.exit(1);
+ 		});
+-	}));
++	})).catch((error) => {
++		console.error(process.env.DEBUG ? error : error.message);
++
++		process.exit(1);
++	});
+ }
+ 
+ function readFile (pathname: string): Promise<string> {
+diff --git a/packages/base-cli/test/test.mjs b/packages/base-cli/test/test.mjs
+index 7ab4bfc..dae5cc8 100644
+--- a/packages/base-cli/test/test.mjs
++++ b/packages/base-cli/test/test.mjs
+@@ -13,7 +13,8 @@ const argumentParsingCases = [
+ 			output: null,
+ 			outputDir: null,
+ 			inputs: [],
+-			map: false,
++			inlineMap: true,
++			externalMap: false,
+ 			replace: false,
+ 			pluginOptions: {}
+ 		}
+@@ -49,6 +50,16 @@ const argumentParsingCases = [
+ 		allowedPluginOpts: [],
+ 		expected: 'INVALID_ARGUMENTS'
+ 	},
++	{
++		message: "with input files at the end (no-map)",
++		args: [
++			'--no-map',
++			'./foo.css',
++			'../baz/bar.css'
++		],
++		allowedPluginOpts: [],
++		expected: 'INVALID_ARGUMENTS'
++	},
+ 	{
+ 		message: "with input files at the end (r)",
+ 		args: [
+@@ -94,7 +105,7 @@ const argumentParsingCases = [
+ 		expected: 'INVALID_ARGUMENTS'
+ 	},
+ 	{
+-		message: "all values",
++		message: "all arguments",
+ 		args: [
+ 			'./foo.css',
+ 			'../baz/bar.css',
+@@ -103,6 +114,7 @@ const argumentParsingCases = [
+ 			"--dir",
+ 			"'dir'",
+ 			"-m",
++			"--no-map",
+ 			"--replace",
+ 			"",
+ 			"-p",
+@@ -119,7 +131,8 @@ const argumentParsingCases = [
+ 			output: null,
+ 			outputDir: null,
+ 			inputs: [ './foo.css', '../baz/bar.css' ],
+-			map: true,
++			inlineMap: false,
++			externalMap: false,
+ 			replace: true,
+ 			pluginOptions: { an_option: false }
+ 		}
+@@ -134,7 +147,8 @@ const argumentParsingCases = [
+ 			output: null,
+ 			outputDir: null,
+ 			inputs: ['./foo.css'],
+-			map: false,
++			inlineMap: true,
++			externalMap: false,
+ 			replace: false,
+ 			pluginOptions: {}
+ 		}
+@@ -149,7 +163,8 @@ const argumentParsingCases = [
+ 			output: null,
+ 			outputDir: null,
+ 			inputs: [ './foo.css' ],
+-			map: false,
++			inlineMap: true,
++			externalMap: false,
+ 			replace: false,
+ 			pluginOptions: { an_option: true }
+ 		}
+@@ -188,7 +203,8 @@ const argumentParsingCases = [
+ 			output: null,
+ 			outputDir: './baz/',
+ 			inputs: [ './foo.css', './fooz.css' ],
+-			map: false,
++			inlineMap: true,
++			externalMap: false,
+ 			replace: false,
+ 			pluginOptions: {}
+ 		}
+@@ -203,7 +219,8 @@ const argumentParsingCases = [
+ 			output: null,
+ 			outputDir: './baz/',
+ 			inputs: [],
+-			map: false,
++			inlineMap: true,
++			externalMap: false,
+ 			replace: false,
+ 			pluginOptions: {}
+ 		}
+@@ -218,7 +235,8 @@ const argumentParsingCases = [
+ 			output: null,
+ 			outputDir: null,
+ 			inputs: [ './foo.css', './fooz.css' ],
+-			map: false,
++			inlineMap: true,
++			externalMap: false,
+ 			replace: true,
+ 			pluginOptions: {}
+ 		}
+@@ -233,7 +251,8 @@ const argumentParsingCases = [
+ 			output: 'foo',
+ 			outputDir: null,
+ 			inputs: [ './foo.css' ],
+-			map: false,
++			inlineMap: true,
++			externalMap: false,
+ 			replace: false,
+ 			pluginOptions: {}
+ 		}
+@@ -248,7 +267,8 @@ const argumentParsingCases = [
+ 			output: 'foo',
+ 			outputDir: null,
+ 			inputs: [ './foo.css' ],
+-			map: false,
++			inlineMap: true,
++			externalMap: false,
+ 			replace: false,
+ 			pluginOptions: {}
+ 		}
+@@ -263,7 +283,24 @@ const argumentParsingCases = [
+ 			output: null,
+ 			outputDir: null,
+ 			inputs: [ './foo.css' ],
+-			map: true,
++			inlineMap: false,
++			externalMap: false,
++			replace: false,
++			pluginOptions: {}
++		}
++	},
++	{
++		message: "short flag m with output",
++		args: ['./foo.css', '-m', '-o', './output.css'],
++		allowedPluginOpts: [],
++		expected: {
++			stdin: false,
++			stdout: false,
++			output: './output.css',
++			outputDir: null,
++			inputs: [ './foo.css' ],
++			inlineMap: false,
++			externalMap: true,
+ 			replace: false,
+ 			pluginOptions: {}
+ 		}
+@@ -278,7 +315,24 @@ const argumentParsingCases = [
+ 			output: null,
+ 			outputDir: null,
+ 			inputs: [ './foo.css' ],
+-			map: true,
++			inlineMap: false,
++			externalMap: false,
++			replace: false,
++			pluginOptions: {}
++		}
++	},
++	{
++		message: "long flag map with output",
++		args: ['./foo.css', '--map', '-o', './output.css'],
++		allowedPluginOpts: [],
++		expected: {
++			stdin: false,
++			stdout: false,
++			output: './output.css',
++			outputDir: null,
++			inputs: [ './foo.css' ],
++			inlineMap: false,
++			externalMap: true,
+ 			replace: false,
+ 			pluginOptions: {}
+ 		}
+@@ -305,7 +359,8 @@ const argumentParsingCases = [
+ 			output: null,
+ 			outputDir: null,
+ 			inputs: [ './foo.css' ],
+-			map: true,
++			inlineMap: false,
++			externalMap: true,
+ 			replace: true,
+ 			pluginOptions: {}
+ 		}
+diff --git a/packages/generate-test-cases/index.js b/packages/generate-test-cases/index.js
+index e9188b5..609ef10 100644
+--- a/packages/generate-test-cases/index.js
++++ b/packages/generate-test-cases/index.js
+@@ -28,7 +28,7 @@ main();
+ function main() {
+ 	switch (genType) {
+ 		case 'selector':
+-			fs.writeFileSync(path.join(pluginDir, 'test', 'generated.css'), process.argv.slice(4).map((selector) => {
++			fs.writeFileSync(path.join(pluginDir, 'test', 'generated-selector-cases.css'), process.argv.slice(4).map((selector) => {
+ 				return generateSelectorTestCases(selector)
+ 			}).join('\n'));
+ 			break;
+diff --git a/plugins/postcss-base-plugin/.tape.js b/plugins/postcss-base-plugin/.tape.js
+index 35f9a60..fbfc1bd 100644
+--- a/plugins/postcss-base-plugin/.tape.js
++++ b/plugins/postcss-base-plugin/.tape.js
+@@ -2,6 +2,12 @@ module.exports = {
+ 	basic: {
+ 		message: "supports basic usage",
+ 	},
++	'basic:color': {
++		message: "supports { color: '<a color>' }",
++		options: {
++			color: 'purple'
++		}
++	},
+ 	example: {
+ 		message: "minimal example",
+ 	},
+diff --git a/plugins/postcss-base-plugin/src/index.ts b/plugins/postcss-base-plugin/src/index.ts
+index 75fcd12..4db9616 100644
+--- a/plugins/postcss-base-plugin/src/index.ts
++++ b/plugins/postcss-base-plugin/src/index.ts
+@@ -1,12 +1,16 @@
+ import type { PluginCreator } from 'postcss';
+ 
+ // eslint-disable-next-line @typescript-eslint/no-unused-vars
+-const creator: PluginCreator<null> = (opts) => {
++const creator: PluginCreator<null> = (opts?: { color: string }) => {
+ 	return {
+ 		postcssPlugin: 'postcss-base-plugin',
+ 		Declaration(decl) {
+ 			if (decl.value === 'red') {
+-				decl.value = 'blue';
++				if (opts?.color) {
++					decl.value = opts.color;
++				} else {
++					decl.value = 'blue';
++				}
+ 			}
+ 		}
+ 	}
+diff --git a/plugins/postcss-base-plugin/test/basic.color.expect.css b/plugins/postcss-base-plugin/test/basic.color.expect.css
+new file mode 100644
+index 0000000..041b1da
+--- /dev/null
++++ b/plugins/postcss-base-plugin/test/basic.color.expect.css
+@@ -0,0 +1,7 @@
++.foo {
++	color: purple;
++}
++
++.baz {
++	color: green;
++}
+-- 
+2.33.1
+
