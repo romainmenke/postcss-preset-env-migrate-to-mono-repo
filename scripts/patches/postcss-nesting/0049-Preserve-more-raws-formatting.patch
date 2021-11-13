@@ -1,7 +1,7 @@
 From bb1e77219245ba920797fa844e1128e8563a2be0 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sat, 20 May 2017 21:13:11 -0400
-Subject: [PATCH 49/95] Preserve more raws formatting
+Subject: [PATCH 49/96] Preserve more raws formatting
 
 ---
  lib/clean-node.js                | 6 +++++-

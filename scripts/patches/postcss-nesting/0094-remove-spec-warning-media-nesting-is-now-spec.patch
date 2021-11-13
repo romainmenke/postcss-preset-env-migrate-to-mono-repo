@@ -1,7 +1,7 @@
 From 9ccd9b13d82e06352301ed284592cf6962a9ea46 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Wed, 3 Nov 2021 08:34:50 -0400
-Subject: [PATCH 94/95] remove spec warning, media nesting is now spec
+Subject: [PATCH 94/96] remove spec warning, media nesting is now spec
 
 ---
  README.md | 5 -----

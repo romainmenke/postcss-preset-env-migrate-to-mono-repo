@@ -1,7 +1,7 @@
 From ed6da54914635f13147218b6e047cdbd5b4f3f16 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sat, 20 Feb 2016 23:00:45 -0500
-Subject: [PATCH 41/95] Use explicit indexOf
+Subject: [PATCH 41/96] Use explicit indexOf
 
 ---
  index.js | 4 ++--

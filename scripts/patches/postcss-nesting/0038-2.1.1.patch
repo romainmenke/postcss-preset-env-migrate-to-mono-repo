@@ -1,7 +1,7 @@
 From 08bcbc85735d370fc912d61ce1109dd8451a75fc Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sun, 3 Jan 2016 23:56:45 -0500
-Subject: [PATCH 38/95] 2.1.1
+Subject: [PATCH 38/96] 2.1.1
 
 ---
  .editorconfig                         |  8 ++--

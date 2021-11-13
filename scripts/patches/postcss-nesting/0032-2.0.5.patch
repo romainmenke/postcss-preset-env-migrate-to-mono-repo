@@ -1,7 +1,7 @@
 From ff04ca4e069851b0bb4bbcfca23bb1d2d7f77920 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Mon, 12 Oct 2015 09:34:41 -0400
-Subject: [PATCH 32/95] 2.0.5
+Subject: [PATCH 32/96] 2.0.5
 
 - Updated: Nested rules source map to the parent rule
 - Updated: PostCSS 5.0.9

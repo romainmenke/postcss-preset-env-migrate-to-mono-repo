@@ -1,7 +1,7 @@
 From 4b783f94345cde3e21322e27e30696d28f0796f3 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sat, 20 May 2017 21:16:32 -0400
-Subject: [PATCH 54/95] Update .travis.yml
+Subject: [PATCH 54/96] Update .travis.yml
 
 ---
  .travis.yml | 4 ++++

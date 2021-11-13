@@ -1,7 +1,7 @@
 From c857ccf4f7cf8205222574cd9e9267e4c0023b71 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Tue, 19 Sep 2017 09:59:58 -0400
-Subject: [PATCH 70/95] Move transform into its own function
+Subject: [PATCH 70/96] Move transform into its own function
 
 ---
  index.js         | 22 ++--------------------

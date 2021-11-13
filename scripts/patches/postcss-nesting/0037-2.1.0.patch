@@ -1,7 +1,7 @@
 From 658b8b7e5b76c49a4d7752f3136247a2173b5b7a Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sun, 3 Jan 2016 23:41:09 -0500
-Subject: [PATCH 37/95] 2.1.0
+Subject: [PATCH 37/96] 2.1.0
 
 ---
  CHANGELOG.md                    |  4 ++++

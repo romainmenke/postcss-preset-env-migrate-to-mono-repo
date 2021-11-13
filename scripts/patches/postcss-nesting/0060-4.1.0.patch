@@ -1,7 +1,7 @@
 From 4d16c8425dc4b2189de3481deedc29652b01214f Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sat, 19 Aug 2017 13:03:54 -0400
-Subject: [PATCH 60/95] 4.1.0
+Subject: [PATCH 60/96] 4.1.0
 
 ---
  CHANGELOG.md | 6 ++++++

@@ -1,7 +1,7 @@
 From 410cfc7f7a3fb1b5307f475a0a16eab522153ee1 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Mon, 22 May 2017 13:25:08 -0400
-Subject: [PATCH 56/95] 4.0.1
+Subject: [PATCH 56/96] 4.0.1
 
 ---
  CHANGELOG.md | 4 ++++

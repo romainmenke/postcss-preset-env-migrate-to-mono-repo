@@ -1,7 +1,7 @@
 From 9dab9a6a1c9eea890f331cb971687fe6fb216e3b Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sat, 19 Aug 2017 13:01:29 -0400
-Subject: [PATCH 59/95] Use spaces in Markdown files
+Subject: [PATCH 59/96] Use spaces in Markdown files
 
 Use spaces within Markdown files
 ---

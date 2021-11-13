@@ -1,7 +1,7 @@
 From 82979ea90270602ba190a9aa3e18a3a1a8aa8028 Mon Sep 17 00:00:00 2001
 From: Daniel Swensson <DanielSwensson@users.noreply.github.com>
 Date: Tue, 2 Mar 2021 14:28:37 +0100
-Subject: [PATCH 79/95] Support postcss 8 (csstools/postcss-nesting#72)
+Subject: [PATCH 79/96] Support postcss 8 (csstools/postcss-nesting#72)
 
 * Support postcss 8
 

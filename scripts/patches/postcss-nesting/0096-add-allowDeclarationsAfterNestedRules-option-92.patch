@@ -1,0 +1,252 @@
+From 930f49e67584533b6d1fad7aea8127507383a1ed Mon Sep 17 00:00:00 2001
+From: Romain Menke <11521496+romainmenke@users.noreply.github.com>
+Date: Fri, 12 Nov 2021 15:13:30 +0100
+Subject: [PATCH 96/96] add `allowDeclarationsAfterNestedRules` option (csstools/postcss-nesting#92)
+
+* add allowDeclarationsAfterNestedRules option
+
+* Update package.json
+---
+ .bin/test-tape.js                             |  6 +-
+ README.md                                     | 59 +++++++++++++++++++
+ src/postcss-8-nesting.js                      | 12 +++-
+ ...g-nested-rules-and-declarations-legacy.css | 19 ++++++
+ ...d-rules-and-declarations-legacy.expect.css | 25 ++++++++
+ ...ing-nested-rules-and-declarations-spec.css | 19 ++++++
+ ...ted-rules-and-declarations-spec.expect.css | 15 +++++
+ 7 files changed, 151 insertions(+), 4 deletions(-)
+ create mode 100644 test/mixing-nested-rules-and-declarations-legacy.css
+ create mode 100644 test/mixing-nested-rules-and-declarations-legacy.expect.css
+ create mode 100644 test/mixing-nested-rules-and-declarations-spec.css
+ create mode 100644 test/mixing-nested-rules-and-declarations-spec.expect.css
+
+diff --git a/.bin/test-tape.js b/.bin/test-tape.js
+index 7717e18..dc62d25 100644
+--- a/.bin/test-tape.js
++++ b/.bin/test-tape.js
+@@ -19,6 +19,8 @@ export default async function tape() {
+ 	failures += await test('ignores invalid entries', { basename: 'ignore' })
+ 	failures += await test('supports complex entries', { basename: 'complex' })
+ 	failures += await test('supports all spec examples', { basename: 'spec-examples' })
++	failures += await test('supports spec compliant mixing of nested rules and declarations', { basename: 'mixing-nested-rules-and-declarations-spec' })
++	failures += await test('supports legacy mixing of nested rules and declarations', { basename: 'mixing-nested-rules-and-declarations-legacy', pluginOptions: { allowDeclarationsAfterNestedRules: true } })
+ 
+ 	let mixinPlugin = () => {
+ 		return {
+@@ -37,13 +39,13 @@ export default async function tape() {
+ }
+ 
+ async function test(name, init, ...plugins) {
+-	const { basename } = Object(init)
++	const { basename, pluginOptions } = Object(init)
+ 
+ 	let sourceUrl = new URL(`test/${basename}.css`, workingUrl)
+ 	let expectUrl = new URL(`test/${basename}.expect.css`, workingUrl)
+ 	let resultUrl = new URL(`test/${basename}.result.css`, workingUrl)
+ 
+-	plugins.unshift(plugin)
++	plugins.unshift(plugin(pluginOptions))
+ 
+ 	let sourceCss = await fs.readFile(sourceUrl, 'utf8')
+ 	let expectCss = await fs.readFile(expectUrl, 'utf8')
+diff --git a/README.md b/README.md
+index 039a14e..f90c941 100644
+--- a/README.md
++++ b/README.md
+@@ -71,6 +71,65 @@ import postcssNesting from "https://deno.land/x/postcss_nesting/mod.js";
+ await postcss([postcssNesting]).process(YOUR_CSS /*, processOptions */);
+ ```
+ 
++## Options
++
++### allowDeclarationsAfterNestedRules
++
++The [specification](https://www.w3.org/TR/css-nesting-1/#mixing) does not allow declarations after nested rules.
++This was previously supported by this plugin and can be re-enabled with `allowDeclarationsAfterNestedRules`.
++
++Before :
++
++```css
++a {
++  color: red;
++
++  & b {
++    color: white;
++  }
++
++  padding: 20px;
++}
++```
++
++After **without** the option :
++
++```js
++postcssNesting()
++```
++
++```css
++a {
++  color: red;
++}
++
++a b {
++  color: white;
++}
++```
++
++After **with** the option :
++
++```js
++postcssNesting({
++  allowDeclarationsAfterNestedRules: true
++})
++```
++
++```css
++a {
++  color: red;
++}
++
++a b {
++  color: white;
++}
++
++a {
++  padding: 20px;
++}
++```
++
+ [cli-img]: https://img.shields.io/travis/csstools/postcss-nesting.svg
+ [cli-url]: https://travis-ci.org/csstools/postcss-nesting
+ [css-img]: https://cssdb.org/badge/nesting-rules.svg
+diff --git a/src/postcss-8-nesting.js b/src/postcss-8-nesting.js
+index d6a2bc5..e7c6a73 100644
+--- a/src/postcss-8-nesting.js
++++ b/src/postcss-8-nesting.js
+@@ -1,11 +1,19 @@
+ import ensureCorrectMixingOfNestingRulesAndDeclarations from './lib/mixing-nesting-rules-and-declarations.js'
+ import walk from './lib/walk.js'
+ 
+-export default function postcssNesting() {
++/**
++ * @param {{allowDeclarationsAfterNestedRules?: boolean}} opts
++ * @returns {import('postcss').Plugin}
++ */
++export default function postcssNesting(opts) {
++	const allowDeclarationsAfterNestedRules = Object(opts).allowDeclarationsAfterNestedRules || false
++
+ 	return {
+ 		postcssPlugin: 'postcss-nesting',
+ 		Rule(rule) {
+-			ensureCorrectMixingOfNestingRulesAndDeclarations(rule)
++			if (!allowDeclarationsAfterNestedRules) {
++				ensureCorrectMixingOfNestingRulesAndDeclarations(rule)
++			}
+ 			walk(rule)
+ 		},
+ 	}
+diff --git a/test/mixing-nested-rules-and-declarations-legacy.css b/test/mixing-nested-rules-and-declarations-legacy.css
+new file mode 100644
+index 0000000..6b88ed4
+--- /dev/null
++++ b/test/mixing-nested-rules-and-declarations-legacy.css
+@@ -0,0 +1,19 @@
++a {
++	order: 1;
++
++	& b {
++		order: 2;
++	}
++
++	order: 3;
++}
++
++a {
++	order: 4;
++
++	@nest b & {
++		order: 5;
++	}
++
++	order: 6;
++}
+diff --git a/test/mixing-nested-rules-and-declarations-legacy.expect.css b/test/mixing-nested-rules-and-declarations-legacy.expect.css
+new file mode 100644
+index 0000000..00cba8f
+--- /dev/null
++++ b/test/mixing-nested-rules-and-declarations-legacy.expect.css
+@@ -0,0 +1,25 @@
++a {
++	order: 1;
++}
++
++a b {
++		order: 2;
++	}
++
++a {
++
++	order: 3;
++}
++
++a {
++	order: 4;
++}
++
++b a {
++		order: 5;
++}
++
++a {
++
++	order: 6;
++}
+diff --git a/test/mixing-nested-rules-and-declarations-spec.css b/test/mixing-nested-rules-and-declarations-spec.css
+new file mode 100644
+index 0000000..6b88ed4
+--- /dev/null
++++ b/test/mixing-nested-rules-and-declarations-spec.css
+@@ -0,0 +1,19 @@
++a {
++	order: 1;
++
++	& b {
++		order: 2;
++	}
++
++	order: 3;
++}
++
++a {
++	order: 4;
++
++	@nest b & {
++		order: 5;
++	}
++
++	order: 6;
++}
+diff --git a/test/mixing-nested-rules-and-declarations-spec.expect.css b/test/mixing-nested-rules-and-declarations-spec.expect.css
+new file mode 100644
+index 0000000..d96af15
+--- /dev/null
++++ b/test/mixing-nested-rules-and-declarations-spec.expect.css
+@@ -0,0 +1,15 @@
++a {
++	order: 1;
++}
++
++a b {
++		order: 2;
++	}
++
++a {
++	order: 4;
++}
++
++b a {
++		order: 5;
++}
+-- 
+2.33.1
+
