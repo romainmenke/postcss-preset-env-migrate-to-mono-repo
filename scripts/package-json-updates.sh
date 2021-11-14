@@ -13,12 +13,18 @@ npm pkg set license="CC0-1.0" --workspaces
 npm pkg set scripts.prepublishOnly="npm run build --if-present && npm run test --if-present" --workspaces
 npm pkg set scripts.stryker="stryker run --logLevel error" --workspaces
 
+npm pkg delete repository --workspaces
+npm pkg set repository.type="git" --workspaces
+npm pkg set repository.url="https://github.com/csstools/postcss-plugins.git" --workspaces
+npm pkg set repository.directory="<TODO>" --workspaces
+
 npm pkg set private=true
 npm pkg set private=true --workspace="@csstools/base-cli"
 npm pkg set private=true --workspace="@csstools/postcss-base-plugin-cli"
 npm pkg set private=true --workspace="@csstools/postcss-base-plugin"
 
 npm pkg delete scripts.pretest:tape --workspaces
+npm pkg delete eslintConfig --workspaces
 npm pkg delete scripts.prepublishOnly --workspace="@csstools/base-cli"
 npm pkg delete scripts.stryker --workspace="@csstools/postcss-base-plugin-cli"
 

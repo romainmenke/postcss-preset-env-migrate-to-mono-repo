@@ -1,0 +1,22 @@
+From 44b6a6148bbd3a09d1ada90523cee22411e6f3c8 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Sat, 13 Nov 2021 11:19:28 +0100
+Subject: [PATCH 7/9] wip
+
+---
+ packages/convert-colors/.gitignore | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/convert-colors/.gitignore b/packages/convert-colors/.gitignore
+index ca9a7b7..37010e2 100644
+--- a/packages/convert-colors/.gitignore
++++ b/packages/convert-colors/.gitignore
+@@ -1,4 +1,4 @@
+ node_modules
+ package-lock.json
+ yarn.lock
+-# dist/*
++dist/*
+-- 
+2.33.1
+
