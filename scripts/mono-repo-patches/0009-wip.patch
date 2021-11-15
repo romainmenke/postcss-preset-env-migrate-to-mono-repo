@@ -1,7 +1,7 @@
 From 46b1f5c75560c756f37de6b0b21906e6f3de4598 Mon Sep 17 00:00:00 2001
 From: romainmenke <romainmenke@gmail.com>
 Date: Sun, 14 Nov 2021 15:46:29 +0100
-Subject: [PATCH 9/9] wip
+Subject: [PATCH 09/10] wip
 
 ---
  plugins/postcss-lab-function/src/color.ts     |    47 +-

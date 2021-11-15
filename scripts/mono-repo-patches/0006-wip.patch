@@ -1,7 +1,7 @@
 From 082cac09a80c5540e5abce8cc142ebeaa9646736 Mon Sep 17 00:00:00 2001
 From: romainmenke <romainmenke@gmail.com>
 Date: Sat, 13 Nov 2021 11:19:22 +0100
-Subject: [PATCH 6/9] wip
+Subject: [PATCH 06/10] wip
 
 ---
  packages/convert-colors/.gitignore         |  4 ++++

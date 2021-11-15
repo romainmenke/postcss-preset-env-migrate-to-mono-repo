@@ -1,0 +1,391 @@
+From 1926613049b6bdc1512102584e213e5abf25ba41 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Mon, 15 Nov 2021 08:48:51 +0100
+Subject: [PATCH 10/10] wip
+
+---
+ plugins/postcss-lab-function/src/index.ts     | 23 ++++++++++--
+ .../src/on-css-function.ts                    | 37 ++++++++-----------
+ plugins/postcss-lab-function/test/basic.css   |  2 +
+ .../test/basic.expect.css                     | 14 ++++---
+ .../test/basic.preserve-true.expect.css       | 13 ++++---
+ .../test/manual/variables.html                | 33 ++++++++++++-----
+ .../postcss-lab-function/test/variables.css   |  6 +++
+ .../test/variables.expect.css                 |  6 +++
+ .../test/variables.preserve-true.expect.css   | 11 +++++-
+ 9 files changed, 97 insertions(+), 48 deletions(-)
+
+diff --git a/plugins/postcss-lab-function/src/index.ts b/plugins/postcss-lab-function/src/index.ts
+index 43d928f..8dad77a 100644
+--- a/plugins/postcss-lab-function/src/index.ts
++++ b/plugins/postcss-lab-function/src/index.ts
+@@ -6,7 +6,7 @@ import onCSSFunction from './on-css-function';
+ import type { PluginCreator } from 'postcss';
+ 
+ /** Transform lab() and lch() functions in CSS. */
+-	const postcssPlugin: PluginCreator<{ preserve: boolean }> = (opts?: { preserve: boolean }) => {
++const postcssPlugin: PluginCreator<{ preserve: boolean }> = (opts?: { preserve: boolean }) => {
+ 	const preserve = 'preserve' in Object(opts) ? Boolean(opts.preserve) : false;
+ 
+ 	return {
+@@ -31,14 +31,31 @@ import type { PluginCreator } from 'postcss';
+ 
+ 			if (preserve && decl.variable) {
+ 				const parent = decl.parent;
+-				const atSupports = postcss.atRule({ name: 'supports', params: '(color: lab(0% 0 0)) and (color: lch(0% 0 0))', source: decl.source });
++				const atSupportsParams = '(color: lab(0% 0 0)) and (color: lch(0% 0 0))';
++				const atSupports = postcss.atRule({ name: 'supports', params: atSupportsParams, source: decl.source });
+ 
+ 				const parentClone = parent.clone();
+ 				parentClone.removeAll();
+ 
+ 				parentClone.append(decl.clone());
+ 				atSupports.append(parentClone);
+-				parent.after(atSupports);
++
++				// Ensure correct order of @supports rules
++				// Find the last one created by us or the current parent and insert after.
++				let insertAfter = parent;
++				let nextInsertAfter = parent.next();
++				while (
++					insertAfter &&
++					nextInsertAfter &&
++					nextInsertAfter.type === 'atrule' &&
++					nextInsertAfter.name === 'supports' &&
++					nextInsertAfter.params === atSupportsParams
++				) {
++					insertAfter = nextInsertAfter;
++					nextInsertAfter = nextInsertAfter.next();
++				}
++
++				insertAfter.after(atSupports);
+ 
+ 				decl.value = modifiedValue;
+ 			} else if (preserve) {
+diff --git a/plugins/postcss-lab-function/src/on-css-function.ts b/plugins/postcss-lab-function/src/on-css-function.ts
+index 9b99b37..d0b2086 100644
+--- a/plugins/postcss-lab-function/src/on-css-function.ts
++++ b/plugins/postcss-lab-function/src/on-css-function.ts
+@@ -5,7 +5,6 @@ import { labToSRgb, lchToSRgb } from './color';
+ function onCSSFunction(node: Func) {
+ 	const name = node.name;
+ 	const rawNodes = node.nodes;
+-
+ 	if (name !== 'lab' && name !== 'lch') {
+ 		return;
+ 	}
+@@ -21,6 +20,10 @@ function onCSSFunction(node: Func) {
+ 		return;
+ 	}
+ 
++	if (rawNodes.length > 3 && (!nodes.slash || !nodes.alpha)) {
++		return;
++	}
++
+ 	// rename the Color function to `rgb`
+ 	node.name = 'rgb';
+ 
+@@ -96,6 +99,10 @@ function isCalcNode(node): node is Func {
+ 	return node && node.type === 'func' && node.name === 'calc';
+ }
+ 
++function isVarNode(node): node is Func {
++	return node && node.type === 'func' && node.name === 'var';
++}
++
+ function isSlashNode(node): node is Operator {
+ 	return node && node.type === 'operator' && node.value === '/';
+ }
+@@ -128,12 +135,15 @@ function lchFunctionContents(nodes): Lch|null {
+ 	};
+ 
+ 	normalizeHueNode(out.h);
++	if (out.h.unit !== '') {
++		return null;
++	}
+ 
+ 	if (isSlashNode(nodes[3])) {
+ 		out.slash = nodes[3];
+ 	}
+ 
+-	if ((isNumericNodePercentageOrNumber(nodes[4]) || isCalcNode(nodes[4]))) {
++	if ((isNumericNodePercentageOrNumber(nodes[4]) || isCalcNode(nodes[4]) || isVarNode(nodes[4]))) {
+ 		out.alpha = nodes[4];
+ 	}
+ 
+@@ -195,18 +205,14 @@ function channelNodes(x: Lch | Lab): [Numeric, Numeric, Numeric] {
+ }
+ 
+ function transformAlpha(node: Func, slashNode: Operator | undefined, alphaNode: Numeric | Func | undefined) {
+-	if (!slashNode && !alphaNode) {
++	if (!slashNode || !alphaNode) {
+ 		return;
+ 	}
+ 
+-	if (!alphaNode) {
+-		slashNode.remove();
+-		return;
+-	}
++	node.name = 'rgba';
++	slashNode.replaceWith(commaNode.clone());
+ 
+ 	if (!isNumericNode(alphaNode)) {
+-		node.name = 'rgba';
+-		slashNode.replaceWith(commaNode.clone());
+ 		return;
+ 	}
+ 
+@@ -215,17 +221,6 @@ function transformAlpha(node: Func, slashNode: Operator | undefined, alphaNode:
+ 		alphaNode.value = String(parseFloat(alphaNode.value) / 100);
+ 		alphaNode.unit = '';
+ 	}
+-
+-	// if the color is fully opaque (i.e. the Alpha channel is `1`)
+-	if (alphaNode.value === '1') {
+-		// remove the Slash and Alpha channel
+-		slashNode.remove();
+-		alphaNode.remove();
+-		return;
+-	}
+-
+-	node.name = 'rgba';
+-	slashNode.replaceWith(commaNode.clone());
+ }
+ 
+ function normalizeHueNode(node: Numeric) {
+@@ -250,7 +245,5 @@ function normalizeHueNode(node: Numeric) {
+ 			node.unit = '';
+ 			node.value = (parseFloat(node.value) * 360).toString();
+ 			return;
+-		default:
+-			break;
+ 	}
+ }
+diff --git a/plugins/postcss-lab-function/test/basic.css b/plugins/postcss-lab-function/test/basic.css
+index 4ce68e1..7263bb0 100644
+--- a/plugins/postcss-lab-function/test/basic.css
++++ b/plugins/postcss-lab-function/test/basic.css
+@@ -5,6 +5,7 @@
+ 	color: lab(40% 56.6 39 / 100%);
+ 	color: lab(40% 56.6 39 / 50%);
+ 	color: lab(100% 50 0);
++	color: lab(100% 50 0 foo);
+ }
+ 
+ .test-lch {
+@@ -26,6 +27,7 @@
+ 	color: lch(100% 50 0.125turn);
+ 	color: lch(100% 50 50grad);
+ 	color: lch(100% 50 0.785398rad);
++	color: lch(100% 50 0.785398unknown);
+ }
+ 
+ .test-alpha {
+diff --git a/plugins/postcss-lab-function/test/basic.expect.css b/plugins/postcss-lab-function/test/basic.expect.css
+index e61cc74..f9fcfd5 100644
+--- a/plugins/postcss-lab-function/test/basic.expect.css
++++ b/plugins/postcss-lab-function/test/basic.expect.css
+@@ -1,17 +1,18 @@
+ .test-lab {
+ 	color: rgb(179, 35, 35);
+-	color: rgb(179, 35, 35);
++	color: rgba(179, 35, 35, 1);
+ 	color: rgba(179, 35, 35, .5);
+-	color: rgb(179, 35, 35);
++	color: rgba(179, 35, 35, 1);
+ 	color: rgba(179, 35, 35, 0.5);
+ 	color: rgb(255, 216, 255);
++	color: lab(100% 50 0 foo);
+ }
+ 
+ .test-lch {
+ 	color: rgb(179, 35, 35);
+-	color: rgb(179, 35, 35);
++	color: rgba(179, 35, 35, 1);
+ 	color: rgba(179, 35, 35, .5);
+-	color: rgb(179, 35, 35);
++	color: rgba(179, 35, 35, 1);
+ 	color: rgba(179, 35, 35, 0.5);
+ 	color: rgb(255, 216, 255);
+ 
+@@ -26,13 +27,14 @@
+ 	color: rgb(255, 228, 188);
+ 	color: rgb(255, 228, 188);
+ 	color: rgb(255, 228, 188);
++	color: lch(100% 50 0.785398unknown);
+ }
+ 
+ .test-alpha {
+-	color: rgb(6, 3, 4);
++	color: rgba(6, 3, 4, 1);
+ 	color: rgba(6, 3, 4, calc( 33 / 22 ));
+ 	color: rgba(6, 3, 4, calc( 20% * 5 ));
+-	color: rgb(6, 3, 4);
++	color: lch(1% 1 1 /);
+ }
+ 
+ .test-ignore {
+diff --git a/plugins/postcss-lab-function/test/basic.preserve-true.expect.css b/plugins/postcss-lab-function/test/basic.preserve-true.expect.css
+index 3948cf0..d3f5221 100644
+--- a/plugins/postcss-lab-function/test/basic.preserve-true.expect.css
++++ b/plugins/postcss-lab-function/test/basic.preserve-true.expect.css
+@@ -1,26 +1,27 @@
+ .test-lab {
+ 	color: rgb(179, 35, 35);
+ 	color: lab(40% 56.6 39);
+-	color: rgb(179, 35, 35);
++	color: rgba(179, 35, 35, 1);
+ 	color: lab(40% 56.6 39 / 1);
+ 	color: rgba(179, 35, 35, .5);
+ 	color: lab(40% 56.6 39 / .5);
+-	color: rgb(179, 35, 35);
++	color: rgba(179, 35, 35, 1);
+ 	color: lab(40% 56.6 39 / 100%);
+ 	color: rgba(179, 35, 35, 0.5);
+ 	color: lab(40% 56.6 39 / 50%);
+ 	color: rgb(255, 216, 255);
+ 	color: lab(100% 50 0);
++	color: lab(100% 50 0 foo);
+ }
+ 
+ .test-lch {
+ 	color: rgb(179, 35, 35);
+ 	color: lch(40% 68.735435 34.568626);
+-	color: rgb(179, 35, 35);
++	color: rgba(179, 35, 35, 1);
+ 	color: lch(40% 68.735435 34.568626 / 1);
+ 	color: rgba(179, 35, 35, .5);
+ 	color: lch(40% 68.735435 34.568626 / .5);
+-	color: rgb(179, 35, 35);
++	color: rgba(179, 35, 35, 1);
+ 	color: lch(40% 68.735435 34.568626 / 100%);
+ 	color: rgba(179, 35, 35, 0.5);
+ 	color: lch(40% 68.735435 34.568626 / 50%);
+@@ -50,16 +51,16 @@
+ 	color: lch(100% 50 50grad);
+ 	color: rgb(255, 228, 188);
+ 	color: lch(100% 50 0.785398rad);
++	color: lch(100% 50 0.785398unknown);
+ }
+ 
+ .test-alpha {
+-	color: rgb(6, 3, 4);
++	color: rgba(6, 3, 4, 1);
+ 	color: lch(1% 1 1 / 1);
+ 	color: rgba(6, 3, 4, calc( 33 / 22 ));
+ 	color: lch(1% 1 1 / calc( 33 / 22 ));
+ 	color: rgba(6, 3, 4, calc( 20% * 5 ));
+ 	color: lch(1% 1 1 / calc( 20% * 5 ));
+-	color: rgb(6, 3, 4);
+ 	color: lch(1% 1 1 /);
+ }
+ 
+diff --git a/plugins/postcss-lab-function/test/manual/variables.html b/plugins/postcss-lab-function/test/manual/variables.html
+index 74c5eb2..ade2cfa 100644
+--- a/plugins/postcss-lab-function/test/manual/variables.html
++++ b/plugins/postcss-lab-function/test/manual/variables.html
+@@ -7,23 +7,36 @@
+ 	<title>Document</title>
+ 
+ 	<style>
++	:root {
++		--firebrick: rgb(179, 35, 35);
++		--firebrick-a50: rgba(179, 34, 35, 0.5);
++
++		--opacity-50: 0.5;
++		--firebrick-a50-var: rgba(179, 34, 35, var(--opacity-50));
++	}
++	@supports (color: lab(0% 0 0)) and (color: lch(0% 0 0)) {
++		:root {
++			--firebrick-a50-var: lch(40% 68.8 34.5 / var(--opacity-50));
++		}
++	}
++	@supports (color: lab(0% 0 0)) and (color: lch(0% 0 0)) {
+ 		:root {
+-	--firebrick: rgb(179, 35, 35);
+-	--firebrick-a50: rgba(179, 34, 35, 0.5);
+-}@supports (color: lab(0% 0 0)) and (color: lch(0% 0 0)) {:root {
+-	--firebrick-a50: lch(40% 68.8 34.5 / 50%);
+-}
+-}@supports (color: lab(0% 0 0)) and (color: lch(0% 0 0)) {:root {
+-	--firebrick: lab(40% 56.6 39);
+-}
+-}
++			--firebrick-a50: lch(40% 68.8 34.5 / 50%);
++		}
++	}
++	@supports (color: lab(0% 0 0)) and (color: lch(0% 0 0)) {
++		:root {
++			--firebrick: lab(40% 56.6 39);
++		}
++	}
++
+ 
+ 
+ 
+ 
+ 		html,
+ 		body {
+-			background-color: var(--firebrick);
++			background-color: var(--firebrick-a50-var);
+ 			width: 100vw;
+ 			height: 100vh;
+ 			padding: 0;
+diff --git a/plugins/postcss-lab-function/test/variables.css b/plugins/postcss-lab-function/test/variables.css
+index 629f357..431d3e5 100644
+--- a/plugins/postcss-lab-function/test/variables.css
++++ b/plugins/postcss-lab-function/test/variables.css
+@@ -1,4 +1,10 @@
+ :root {
+ 	--firebrick: lab(40% 56.6 39);
+ 	--firebrick-a50: lch(40% 68.8 34.5 / 50%);
++
++	--opacity-50: 0.5;
++	--firebrick-a50-var: lch(40% 68.8 34.5 / var(--opacity-50));
++
++	--fifty: 50;
++	--firebrick-var: lch(40% var(--fifty) 34.5 / var(--opacity-50));
+ }
+diff --git a/plugins/postcss-lab-function/test/variables.expect.css b/plugins/postcss-lab-function/test/variables.expect.css
+index 2a8f01d..cce748d 100644
+--- a/plugins/postcss-lab-function/test/variables.expect.css
++++ b/plugins/postcss-lab-function/test/variables.expect.css
+@@ -1,4 +1,10 @@
+ :root {
+ 	--firebrick: rgb(179, 35, 35);
+ 	--firebrick-a50: rgba(179, 34, 35, 0.5);
++
++	--opacity-50: 0.5;
++	--firebrick-a50-var: rgba(179, 34, 35, var(--opacity-50));
++
++	--fifty: 50;
++	--firebrick-var: lch(40% var(--fifty) 34.5 / var(--opacity-50));
+ }
+diff --git a/plugins/postcss-lab-function/test/variables.preserve-true.expect.css b/plugins/postcss-lab-function/test/variables.preserve-true.expect.css
+index 776e4d4..9509517 100644
+--- a/plugins/postcss-lab-function/test/variables.preserve-true.expect.css
++++ b/plugins/postcss-lab-function/test/variables.preserve-true.expect.css
+@@ -1,10 +1,19 @@
+ :root {
+ 	--firebrick: rgb(179, 35, 35);
+ 	--firebrick-a50: rgba(179, 34, 35, 0.5);
++
++	--opacity-50: 0.5;
++	--firebrick-a50-var: rgba(179, 34, 35, var(--opacity-50));
++
++	--fifty: 50;
++	--firebrick-var: lch(40% var(--fifty) 34.5 / var(--opacity-50));
++}@supports (color: lab(0% 0 0)) and (color: lch(0% 0 0)) {:root {
++	--firebrick: lab(40% 56.6 39);
++}
+ }@supports (color: lab(0% 0 0)) and (color: lch(0% 0 0)) {:root {
+ 	--firebrick-a50: lch(40% 68.8 34.5 / 50%);
+ }
+ }@supports (color: lab(0% 0 0)) and (color: lch(0% 0 0)) {:root {
+-	--firebrick: lab(40% 56.6 39);
++	--firebrick-a50-var: lch(40% 68.8 34.5 / var(--opacity-50));
+ }
+ }
+-- 
+2.33.1
+
