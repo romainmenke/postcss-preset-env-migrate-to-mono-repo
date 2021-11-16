@@ -1,7 +1,7 @@
 From ddd0295efb12c1cfbfea29855d494f6abe2cdafa Mon Sep 17 00:00:00 2001
 From: romainmenke <romainmenke@gmail.com>
 Date: Fri, 12 Nov 2021 13:18:42 +0100
-Subject: [PATCH 02/10] wip
+Subject: [PATCH 02/11] wip
 
 ---
  cli/postcss-base-plugin-cli/.gitignore        |  1 +

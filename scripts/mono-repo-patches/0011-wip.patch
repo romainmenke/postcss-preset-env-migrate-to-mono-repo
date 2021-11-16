@@ -1,0 +1,1675 @@
+From fb8a640f6030c284c10f6f72c18c5a0a2229fe45 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Tue, 16 Nov 2021 18:21:58 +0100
+Subject: [PATCH 11/11] wip
+
+---
+ .github/bin/install-and-test-all-packages.sh  |   9 --
+ .github/workflows/test.yml                    |   4 +-
+ cli/postcss-base-plugin-cli/.gitignore        |  13 --
+ cli/postcss-base-plugin-cli/CHANGELOG.md      |   1 -
+ cli/postcss-base-plugin-cli/CONTRIBUTING.md   |  65 ----------
+ cli/postcss-base-plugin-cli/INSTALL.md        |   3 -
+ cli/postcss-base-plugin-cli/LICENSE.md        | 108 ----------------
+ cli/postcss-base-plugin-cli/README.md         |   3 -
+ cli/postcss-base-plugin-cli/dist/.gitkeep     |   0
+ cli/postcss-base-plugin-cli/package.json      |  38 ------
+ .../test/basic.external-map.expect.css.map    |   1 -
+ cli/postcss-base-plugin-cli/test/test.sh      |  93 --------------
+ cli/postcss-base-plugin-cli/tsconfig.json     |   9 --
+ cli/postcss-lab-function-cli/.gitignore       |  13 --
+ cli/postcss-lab-function-cli/LICENSE.md       | 108 ----------------
+ cli/postcss-lab-function-cli/README.md        |  24 ----
+ cli/postcss-lab-function-cli/dist/.gitkeep    |   0
+ cli/postcss-lab-function-cli/package.json     |  38 ------
+ cli/postcss-lab-function-cli/test/test.sh     |  19 ---
+ cli/postcss-lab-function-cli/tsconfig.json    |   9 --
+ package-lock.json                             |  46 +++----
+ package.json                                  |   3 +-
+ packages/base-cli/package.json                |   2 +-
+ packages/base-cli/src/index.ts                |   5 +-
+ plugins/postcss-base-plugin/package.json      |  18 ++-
+ .../postcss-base-plugin}/src/cli.ts           |   2 -
+ .../test/cli}/basic.color.expect.css          |   0
+ .../postcss-base-plugin/test/cli}/basic.css   |   0
+ .../test/cli}/basic.expect.css                |   0
+ .../test/cli}/basic.external-map.expect.css   |   0
+ .../cli/basic.external-map.expect.css.map     |   1 +
+ .../test/cli}/basic.failure.expect.css        |   0
+ .../test/cli}/basic.no-map.expect.css         |   0
+ .../test/cli}/basic.replace.css               |   0
+ .../test/cli}/basic.replace.expect.css        |   0
+ .../test/cli}/basic.stdin.expect.css          |   0
+ .../postcss-base-plugin/test/cli}/out/a.css   |   0
+ .../test/cli}/out/a.css.map                   |   0
+ .../test/cli}/out/a.expect.css                |   0
+ .../test/cli}/out/a.expect.css.map            |   0
+ .../postcss-base-plugin/test/cli}/out/b.css   |   0
+ .../test/cli}/out/b.css.map                   |   0
+ .../test/cli}/out/b.expect.css                |   0
+ .../test/cli}/out/b.expect.css.map            |   0
+ .../test/cli}/out/concatenated.css            |   0
+ .../test/cli}/out/concatenated.expect.css     |   0
+ .../postcss-base-plugin/test/cli}/src/a.css   |   0
+ .../postcss-base-plugin/test/cli}/src/b.css   |   0
+ plugins/postcss-base-plugin/test/cli/test.sh  |  93 ++++++++++++++
+ plugins/postcss-lab-function/package.json     |  14 ++-
+ .../postcss-lab-function}/src/cli.ts          |   4 +-
+ .../postcss-lab-function/test/cli}/basic.css  |   0
+ .../test/cli}/basic.expect.css                |   0
+ .../test/cli}/basic.expect.css.map            |   0
+ plugins/postcss-lab-function/test/cli/test.sh |  19 +++
+ rollup/cli.js                                 |  44 -------
+ rollup/cli.ts.js                              |  46 -------
+ rollup/default.js                             | 119 ++++++++++++------
+ rollup/default.ts.js                          | 114 +++++++++++------
+ 59 files changed, 318 insertions(+), 770 deletions(-)
+ delete mode 100644 cli/postcss-base-plugin-cli/.gitignore
+ delete mode 100644 cli/postcss-base-plugin-cli/CHANGELOG.md
+ delete mode 100644 cli/postcss-base-plugin-cli/CONTRIBUTING.md
+ delete mode 100644 cli/postcss-base-plugin-cli/INSTALL.md
+ delete mode 100644 cli/postcss-base-plugin-cli/LICENSE.md
+ delete mode 100644 cli/postcss-base-plugin-cli/README.md
+ delete mode 100644 cli/postcss-base-plugin-cli/dist/.gitkeep
+ delete mode 100644 cli/postcss-base-plugin-cli/package.json
+ delete mode 100644 cli/postcss-base-plugin-cli/test/basic.external-map.expect.css.map
+ delete mode 100644 cli/postcss-base-plugin-cli/test/test.sh
+ delete mode 100644 cli/postcss-base-plugin-cli/tsconfig.json
+ delete mode 100644 cli/postcss-lab-function-cli/.gitignore
+ delete mode 100644 cli/postcss-lab-function-cli/LICENSE.md
+ delete mode 100644 cli/postcss-lab-function-cli/README.md
+ delete mode 100644 cli/postcss-lab-function-cli/dist/.gitkeep
+ delete mode 100644 cli/postcss-lab-function-cli/package.json
+ delete mode 100644 cli/postcss-lab-function-cli/test/test.sh
+ delete mode 100644 cli/postcss-lab-function-cli/tsconfig.json
+ rename {cli/postcss-base-plugin-cli => plugins/postcss-base-plugin}/src/cli.ts (88%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/basic.color.expect.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/basic.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/basic.expect.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/basic.external-map.expect.css (100%)
+ create mode 100644 plugins/postcss-base-plugin/test/cli/basic.external-map.expect.css.map
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/basic.failure.expect.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/basic.no-map.expect.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/basic.replace.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/basic.replace.expect.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/basic.stdin.expect.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/out/a.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/out/a.css.map (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/out/a.expect.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/out/a.expect.css.map (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/out/b.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/out/b.css.map (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/out/b.expect.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/out/b.expect.css.map (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/out/concatenated.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/out/concatenated.expect.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/src/a.css (100%)
+ rename {cli/postcss-base-plugin-cli/test => plugins/postcss-base-plugin/test/cli}/src/b.css (100%)
+ create mode 100644 plugins/postcss-base-plugin/test/cli/test.sh
+ rename {cli/postcss-lab-function-cli => plugins/postcss-lab-function}/src/cli.ts (71%)
+ rename {cli/postcss-lab-function-cli/test => plugins/postcss-lab-function/test/cli}/basic.css (100%)
+ rename {cli/postcss-lab-function-cli/test => plugins/postcss-lab-function/test/cli}/basic.expect.css (100%)
+ rename {cli/postcss-lab-function-cli/test => plugins/postcss-lab-function/test/cli}/basic.expect.css.map (100%)
+ create mode 100644 plugins/postcss-lab-function/test/cli/test.sh
+ delete mode 100644 rollup/cli.js
+ delete mode 100644 rollup/cli.ts.js
+
+diff --git a/.github/bin/install-and-test-all-packages.sh b/.github/bin/install-and-test-all-packages.sh
+index 2d6e878..0513d5f 100644
+--- a/.github/bin/install-and-test-all-packages.sh
++++ b/.github/bin/install-and-test-all-packages.sh
+@@ -28,12 +28,3 @@ for package in $(ls -d ./plugin-packs); do
+ 	npm test
+ 	cd $start_dir
+ done
+-
+-
+-for package in $(ls -d ./cli); do
+-	echo "Installing and testing $package"
+-	cd $package
+-	npm install --ignore-scripts
+-	npm test
+-	cd $start_dir
+-done
+diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
+index fc8ac77..22c4a4a 100644
+--- a/.github/workflows/test.yml
++++ b/.github/workflows/test.yml
+@@ -57,5 +57,5 @@ jobs:
+       - run: npm run build --workspaces --if-present
+ 
+       - run: |
+-          npm run build --workspace="@csstools/base-cli" --workspace="@csstools/postcss-base-plugin" --workspace="@csstools/postcss-base-plugin-cli"
+-          npm run test --workspace="@csstools/base-cli" --workspace="@csstools/postcss-base-plugin-cli"
++          npm run build --workspace="@csstools/base-cli" --workspace="@csstools/postcss-base-plugin"
++          npm run test --workspace="@csstools/base-cli" --workspace="@csstools/postcss-base-plugin"
+diff --git a/cli/postcss-base-plugin-cli/.gitignore b/cli/postcss-base-plugin-cli/.gitignore
+deleted file mode 100644
+index f61e95c..0000000
+--- a/cli/postcss-base-plugin-cli/.gitignore
++++ /dev/null
+@@ -1,13 +0,0 @@
+-node_modules
+-package-lock.json
+-yarn.lock
+-*.log*
+-*.result.css
+-*.result.css.map
+-.*
+-dist/*
+-!.editorconfig
+-!.gitignore
+-!.gitkeep
+-!.rollup.js
+-!.tape.js
+diff --git a/cli/postcss-base-plugin-cli/CHANGELOG.md b/cli/postcss-base-plugin-cli/CHANGELOG.md
+deleted file mode 100644
+index 2475e12..0000000
+--- a/cli/postcss-base-plugin-cli/CHANGELOG.md
++++ /dev/null
+@@ -1 +0,0 @@
+-# Changes to PostCSS Base Plugin
+diff --git a/cli/postcss-base-plugin-cli/CONTRIBUTING.md b/cli/postcss-base-plugin-cli/CONTRIBUTING.md
+deleted file mode 100644
+index c8bfa79..0000000
+--- a/cli/postcss-base-plugin-cli/CONTRIBUTING.md
++++ /dev/null
+@@ -1,65 +0,0 @@
+-# Contributing to PostCSS Base Plugin
+-
+-You want to help? You rock! Now, take a moment to be sure your contributions
+-make sense to everyone else.
+-
+-## Reporting Issues
+-
+-Found a problem? Want a new feature?
+-
+-- See if your issue or idea has [already been reported].
+-- Provide a [reduced test case] or a [live example].
+-
+-Remember, a bug is a _demonstrable problem_ caused by _our_ code.
+-
+-## Submitting Pull Requests
+-
+-Pull requests are the greatest contributions, so be sure they are focused in
+-scope and avoid unrelated commits.
+-
+-1. To begin; [fork this project], clone your fork, and add our upstream.
+-   ```bash
+-   # Clone your fork of the repo into the current directory
+-   git clone git@github.com:YOUR_USER/postcss-dir-pseudo-class.git
+-
+-   # Navigate to the newly cloned directory
+-   cd postcss-dir-pseudo-class
+-
+-   # Assign the original repo to a remote called "upstream"
+-   git remote add upstream git@github.com:jonathantneal/postcss-dir-pseudo-class.git
+-
+-   # Install the tools necessary for testing
+-   npm install
+-   ```
+-
+-2. Create a branch for your feature or fix:
+-   ```bash
+-   # Move into a new branch for your feature
+-   git checkout -b feature/thing
+-   ```
+-   ```bash
+-   # Move into a new branch for your fix
+-   git checkout -b fix/something
+-   ```
+-
+-3. If your code follows our practices, then push your feature branch:
+-   ```bash
+-   # Test current code
+-   npm test
+-   ```
+-   ```bash
+-   # Push the branch for your new feature
+-   git push origin feature/thing
+-   ```
+-   ```bash
+-   # Or, push the branch for your update
+-   git push origin update/something
+-   ```
+-
+-That’s it! Now [open a pull request] with a clear title and description.
+-
+-[already been reported]: issues
+-[fork this project]:     fork
+-[live example]:          https://codepen.io/pen
+-[open a pull request]:   https://help.github.com/articles/using-pull-requests/
+-[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+diff --git a/cli/postcss-base-plugin-cli/INSTALL.md b/cli/postcss-base-plugin-cli/INSTALL.md
+deleted file mode 100644
+index ceacefa..0000000
+--- a/cli/postcss-base-plugin-cli/INSTALL.md
++++ /dev/null
+@@ -1,3 +0,0 @@
+-# Installing PostCSS Base Plugin
+-
+-<!-- TODO -->
+diff --git a/cli/postcss-base-plugin-cli/LICENSE.md b/cli/postcss-base-plugin-cli/LICENSE.md
+deleted file mode 100644
+index 0bc1fa7..0000000
+--- a/cli/postcss-base-plugin-cli/LICENSE.md
++++ /dev/null
+@@ -1,108 +0,0 @@
+-# CC0 1.0 Universal
+-
+-## Statement of Purpose
+-
+-The laws of most jurisdictions throughout the world automatically confer
+-exclusive Copyright and Related Rights (defined below) upon the creator and
+-subsequent owner(s) (each and all, an “owner”) of an original work of
+-authorship and/or a database (each, a “Work”).
+-
+-Certain owners wish to permanently relinquish those rights to a Work for the
+-purpose of contributing to a commons of creative, cultural and scientific works
+-(“Commons”) that the public can reliably and without fear of later claims of
+-infringement build upon, modify, incorporate in other works, reuse and
+-redistribute as freely as possible in any form whatsoever and for any purposes,
+-including without limitation commercial purposes. These owners may contribute
+-to the Commons to promote the ideal of a free culture and the further
+-production of creative, cultural and scientific works, or to gain reputation or
+-greater distribution for their Work in part through the use and efforts of
+-others.
+-
+-For these and/or other purposes and motivations, and without any expectation of
+-additional consideration or compensation, the person associating CC0 with a
+-Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
+-and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
+-publicly distribute the Work under its terms, with knowledge of his or her
+-Copyright and Related Rights in the Work and the meaning and intended legal
+-effect of CC0 on those rights.
+-
+-1. Copyright and Related Rights. A Work made available under CC0 may be
+-   protected by copyright and related or neighboring rights (“Copyright and
+-   Related Rights”). Copyright and Related Rights include, but are not limited
+-   to, the following:
+-   1. the right to reproduce, adapt, distribute, perform, display, communicate,
+-      and translate a Work;
+-   2. moral rights retained by the original author(s) and/or performer(s);
+-   3. publicity and privacy rights pertaining to a person’s image or likeness
+-      depicted in a Work;
+-   4. rights protecting against unfair competition in regards to a Work,
+-      subject to the limitations in paragraph 4(i), below;
+-   5. rights protecting the extraction, dissemination, use and reuse of data in
+-      a Work;
+-   6. database rights (such as those arising under Directive 96/9/EC of the
+-      European Parliament and of the Council of 11 March 1996 on the legal
+-      protection of databases, and under any national implementation thereof,
+-      including any amended or successor version of such directive); and
+-   7. other similar, equivalent or corresponding rights throughout the world
+-      based on applicable law or treaty, and any national implementations
+-      thereof.
+-
+-2. Waiver. To the greatest extent permitted by, but not in contravention of,
+-   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
+-   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
+-   and Related Rights and associated claims and causes of action, whether now
+-   known or unknown (including existing as well as future claims and causes of
+-   action), in the Work (i) in all territories worldwide, (ii) for the maximum
+-   duration provided by applicable law or treaty (including future time
+-   extensions), (iii) in any current or future medium and for any number of
+-   copies, and (iv) for any purpose whatsoever, including without limitation
+-   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
+-   makes the Waiver for the benefit of each member of the public at large and
+-   to the detriment of Affirmer’s heirs and successors, fully intending that
+-   such Waiver shall not be subject to revocation, rescission, cancellation,
+-   termination, or any other legal or equitable action to disrupt the quiet
+-   enjoyment of the Work by the public as contemplated by Affirmer’s express
+-   Statement of Purpose.
+-
+-3. Public License Fallback. Should any part of the Waiver for any reason be
+-   judged legally invalid or ineffective under applicable law, then the Waiver
+-   shall be preserved to the maximum extent permitted taking into account
+-   Affirmer’s express Statement of Purpose. In addition, to the extent the
+-   Waiver is so judged Affirmer hereby grants to each affected person a
+-   royalty-free, non transferable, non sublicensable, non exclusive,
+-   irrevocable and unconditional license to exercise Affirmer’s Copyright and
+-   Related Rights in the Work (i) in all territories worldwide, (ii) for the
+-   maximum duration provided by applicable law or treaty (including future time
+-   extensions), (iii) in any current or future medium and for any number of
+-   copies, and (iv) for any purpose whatsoever, including without limitation
+-   commercial, advertising or promotional purposes (the “License”). The License
+-   shall be deemed effective as of the date CC0 was applied by Affirmer to the
+-   Work. Should any part of the License for any reason be judged legally
+-   invalid or ineffective under applicable law, such partial invalidity or
+-   ineffectiveness shall not invalidate the remainder of the License, and in
+-   such case Affirmer hereby affirms that he or she will not (i) exercise any
+-   of his or her remaining Copyright and Related Rights in the Work or (ii)
+-   assert any associated claims and causes of action with respect to the Work,
+-   in either case contrary to Affirmer’s express Statement of Purpose.
+-
+-4. Limitations and Disclaimers.
+-   1. No trademark or patent rights held by Affirmer are waived, abandoned,
+-      surrendered, licensed or otherwise affected by this document.
+-   2. Affirmer offers the Work as-is and makes no representations or warranties
+-      of any kind concerning the Work, express, implied, statutory or
+-      otherwise, including without limitation warranties of title,
+-      merchantability, fitness for a particular purpose, non infringement, or
+-      the absence of latent or other defects, accuracy, or the present or
+-      absence of errors, whether or not discoverable, all to the greatest
+-      extent permissible under applicable law.
+-   3. Affirmer disclaims responsibility for clearing rights of other persons
+-      that may apply to the Work or any use thereof, including without
+-      limitation any person’s Copyright and Related Rights in the Work.
+-      Further, Affirmer disclaims responsibility for obtaining any necessary
+-      consents, permissions or other rights required for any use of the Work.
+-   4. Affirmer understands and acknowledges that Creative Commons is not a
+-      party to this document and has no duty or obligation with respect to this
+-      CC0 or use of the Work.
+-
+-For more information, please see
+-http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/cli/postcss-base-plugin-cli/README.md b/cli/postcss-base-plugin-cli/README.md
+deleted file mode 100644
+index da1c9e4..0000000
+--- a/cli/postcss-base-plugin-cli/README.md
++++ /dev/null
+@@ -1,3 +0,0 @@
+-# PostCSS Base Plugin [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
+-
+-<!-- TODO -->
+diff --git a/cli/postcss-base-plugin-cli/dist/.gitkeep b/cli/postcss-base-plugin-cli/dist/.gitkeep
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/cli/postcss-base-plugin-cli/package.json b/cli/postcss-base-plugin-cli/package.json
+deleted file mode 100644
+index 147b7cd..0000000
+--- a/cli/postcss-base-plugin-cli/package.json
++++ /dev/null
+@@ -1,38 +0,0 @@
+-{
+-  "name": "@csstools/postcss-base-plugin-cli",
+-  "private": "true",
+-  "version": "0.0.0",
+-  "description": "A base plugin cli",
+-  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+-  "license": "CC0-1.0",
+-  "engines": {
+-    "node": "^12 || ^14 || >=16"
+-  },
+-  "bin": {
+-    "postcss-base-plugin-cli": "dist/cli.js"
+-  },
+-  "files": [
+-    "CHANGELOG.md",
+-    "INSTALL.md",
+-    "LICENSE.md",
+-    "README.md",
+-    "dist/cli.js"
+-  ],
+-  "scripts": {
+-    "build": "rollup -c ../../rollup/cli.ts.js",
+-    "lint": "eslint src/**/*.ts",
+-    "prepare": "npm run build",
+-    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+-    "test": "bash ./test/test.sh"
+-  },
+-  "devDependencies": {
+-    "@csstools/base-cli": "^0.1.0",
+-    "@csstools/postcss-base-plugin": "*",
+-    "postcss": "^8.3.6"
+-  },
+-  "repository": {
+-    "type": "git",
+-    "url": "https://github.com/csstools/postcss-plugins.git",
+-    "directory": "<TODO>"
+-  }
+-}
+diff --git a/cli/postcss-base-plugin-cli/test/basic.external-map.expect.css.map b/cli/postcss-base-plugin-cli/test/basic.external-map.expect.css.map
+deleted file mode 100644
+index bc2c797..0000000
+--- a/cli/postcss-base-plugin-cli/test/basic.external-map.expect.css.map
++++ /dev/null
+@@ -1 +0,0 @@
+-{"version":3,"sources":["../stdin"],"names":[],"mappings":"AAAA;CACC,WAAU;AACX","file":"basic.external-map.result.css","sourcesContent":[".foo {\n\tcolor: red;\n}\n"]}
+\ No newline at end of file
+diff --git a/cli/postcss-base-plugin-cli/test/test.sh b/cli/postcss-base-plugin-cli/test/test.sh
+deleted file mode 100644
+index 93aceb2..0000000
+--- a/cli/postcss-base-plugin-cli/test/test.sh
++++ /dev/null
+@@ -1,93 +0,0 @@
+-set -e
+-
+-# Zero out result file
+-echo '' > ./test/basic.result.css;
+-
+-# Test with long flag
+-postcss-base-plugin-cli ./test/basic.css --output ./test/basic.result.css
+-
+-# Check result
+-git --no-pager diff --no-index --word-diff ./test/basic.expect.css ./test/basic.result.css
+-
+-# Reset result file
+-cat ./test/basic.css > ./test/basic.replace.css;
+-
+-# Test replace
+-postcss-base-plugin-cli ./test/basic.replace.css -r
+-
+-# Check result
+-git --no-pager diff --no-index --word-diff ./test/basic.replace.css ./test/basic.replace.expect.css
+-
+-# Zero out result file
+-echo '' > ./test/basic.color.result.css;
+-
+-# Test with short flags and plugin option
+-postcss-base-plugin-cli ./test/basic.css -o ./test/basic.color.result.css -p '{ "color": "purple" }'
+-
+-# Check result
+-git --no-pager diff --no-index --word-diff ./test/basic.color.expect.css ./test/basic.color.result.css
+-
+-# Zero out result file
+-echo '' > ./test/basic.stdin.result.css;
+-
+-# Test with stdin
+-cat ./test/basic.css | postcss-base-plugin-cli > ./test/basic.stdin.result.css
+-
+-# Check result
+-git --no-pager diff --no-index --word-diff ./test/basic.stdin.expect.css ./test/basic.stdin.result.css
+-
+-# Zero out result file
+-echo '' > ./test/basic.no-map.result.css;
+-
+-# Test source maps
+-postcss-base-plugin-cli ./test/basic.css --no-map  -o ./test/basic.no-map.result.css
+-
+-# Check result
+-git --no-pager diff --no-index --word-diff ./test/basic.no-map.expect.css ./test/basic.no-map.result.css
+-
+-# Zero out result file
+-echo '' > ./test/basic.external-map.result.css;
+-echo '' > ./test/basic.external-map.result.css.map;
+-
+-# Test source maps
+-cat ./test/basic.css | postcss-base-plugin-cli --map  -o ./test/basic.external-map.result.css
+-
+-# Check result
+-git --no-pager diff --no-index --word-diff ./test/basic.external-map.expect.css ./test/basic.external-map.result.css
+-git --no-pager diff --no-index --word-diff ./test/basic.external-map.expect.css.map ./test/basic.external-map.result.css.map
+-
+-# Zero out result file
+-echo '' > ./test/out/a.css
+-echo '' > ./test/out/a.css.map
+-echo '' > ./test/out/b.css
+-echo '' > ./test/out/b.css.map
+-
+-# Test source maps
+-postcss-base-plugin-cli ./test/src/a.css ./test/src/b.css -m -d ./test/out/
+-
+-# Check result
+-git --no-pager diff --no-index --word-diff ./test/out/a.css ./test/out/a.expect.css
+-git --no-pager diff --no-index --word-diff ./test/out/a.css.map ./test/out/a.expect.css.map
+-git --no-pager diff --no-index --word-diff ./test/out/b.css ./test/out/b.expect.css
+-git --no-pager diff --no-index --word-diff ./test/out/b.css.map ./test/out/b.expect.css.map
+-
+-# Zero out result file
+-echo '' > ./test/out/concatenated.css
+-
+-# Test concat
+-postcss-base-plugin-cli ./test/src/a.css ./test/src/b.css > ./test/out/concatenated.css
+-
+-# Check result
+-git --no-pager diff --no-index --word-diff ./test/out/concatenated.css ./test/out/concatenated.expect.css
+-
+-# Dump some content
+-echo 'foo' > ./test/basic.failure.result.css
+-
+-# Test with incorrect arugments
+-if postcss-base-plugin-cli ./test/basic.css --does-not-exist > ./test/basic.failure.result.css; then
+-  echo 'Test should have failed';
+-	exit 1;
+-else
+-	# Check result
+-	git --no-pager diff --no-index --word-diff ./test/basic.failure.result.css ./test/basic.failure.expect.css
+-fi
+diff --git a/cli/postcss-base-plugin-cli/tsconfig.json b/cli/postcss-base-plugin-cli/tsconfig.json
+deleted file mode 100644
+index 68a2606..0000000
+--- a/cli/postcss-base-plugin-cli/tsconfig.json
++++ /dev/null
+@@ -1,9 +0,0 @@
+-{
+-  "extends": "../../tsconfig.json",
+-  "compilerOptions": {
+-    "outDir": "dist",
+-    "declarationDir": "."
+-  },
+-  "include": ["./src/**/*"],
+-  "exclude": ["dist"],
+-}
+diff --git a/cli/postcss-lab-function-cli/.gitignore b/cli/postcss-lab-function-cli/.gitignore
+deleted file mode 100644
+index f61e95c..0000000
+--- a/cli/postcss-lab-function-cli/.gitignore
++++ /dev/null
+@@ -1,13 +0,0 @@
+-node_modules
+-package-lock.json
+-yarn.lock
+-*.log*
+-*.result.css
+-*.result.css.map
+-.*
+-dist/*
+-!.editorconfig
+-!.gitignore
+-!.gitkeep
+-!.rollup.js
+-!.tape.js
+diff --git a/cli/postcss-lab-function-cli/LICENSE.md b/cli/postcss-lab-function-cli/LICENSE.md
+deleted file mode 100644
+index 0bc1fa7..0000000
+--- a/cli/postcss-lab-function-cli/LICENSE.md
++++ /dev/null
+@@ -1,108 +0,0 @@
+-# CC0 1.0 Universal
+-
+-## Statement of Purpose
+-
+-The laws of most jurisdictions throughout the world automatically confer
+-exclusive Copyright and Related Rights (defined below) upon the creator and
+-subsequent owner(s) (each and all, an “owner”) of an original work of
+-authorship and/or a database (each, a “Work”).
+-
+-Certain owners wish to permanently relinquish those rights to a Work for the
+-purpose of contributing to a commons of creative, cultural and scientific works
+-(“Commons”) that the public can reliably and without fear of later claims of
+-infringement build upon, modify, incorporate in other works, reuse and
+-redistribute as freely as possible in any form whatsoever and for any purposes,
+-including without limitation commercial purposes. These owners may contribute
+-to the Commons to promote the ideal of a free culture and the further
+-production of creative, cultural and scientific works, or to gain reputation or
+-greater distribution for their Work in part through the use and efforts of
+-others.
+-
+-For these and/or other purposes and motivations, and without any expectation of
+-additional consideration or compensation, the person associating CC0 with a
+-Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
+-and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
+-publicly distribute the Work under its terms, with knowledge of his or her
+-Copyright and Related Rights in the Work and the meaning and intended legal
+-effect of CC0 on those rights.
+-
+-1. Copyright and Related Rights. A Work made available under CC0 may be
+-   protected by copyright and related or neighboring rights (“Copyright and
+-   Related Rights”). Copyright and Related Rights include, but are not limited
+-   to, the following:
+-   1. the right to reproduce, adapt, distribute, perform, display, communicate,
+-      and translate a Work;
+-   2. moral rights retained by the original author(s) and/or performer(s);
+-   3. publicity and privacy rights pertaining to a person’s image or likeness
+-      depicted in a Work;
+-   4. rights protecting against unfair competition in regards to a Work,
+-      subject to the limitations in paragraph 4(i), below;
+-   5. rights protecting the extraction, dissemination, use and reuse of data in
+-      a Work;
+-   6. database rights (such as those arising under Directive 96/9/EC of the
+-      European Parliament and of the Council of 11 March 1996 on the legal
+-      protection of databases, and under any national implementation thereof,
+-      including any amended or successor version of such directive); and
+-   7. other similar, equivalent or corresponding rights throughout the world
+-      based on applicable law or treaty, and any national implementations
+-      thereof.
+-
+-2. Waiver. To the greatest extent permitted by, but not in contravention of,
+-   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
+-   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
+-   and Related Rights and associated claims and causes of action, whether now
+-   known or unknown (including existing as well as future claims and causes of
+-   action), in the Work (i) in all territories worldwide, (ii) for the maximum
+-   duration provided by applicable law or treaty (including future time
+-   extensions), (iii) in any current or future medium and for any number of
+-   copies, and (iv) for any purpose whatsoever, including without limitation
+-   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
+-   makes the Waiver for the benefit of each member of the public at large and
+-   to the detriment of Affirmer’s heirs and successors, fully intending that
+-   such Waiver shall not be subject to revocation, rescission, cancellation,
+-   termination, or any other legal or equitable action to disrupt the quiet
+-   enjoyment of the Work by the public as contemplated by Affirmer’s express
+-   Statement of Purpose.
+-
+-3. Public License Fallback. Should any part of the Waiver for any reason be
+-   judged legally invalid or ineffective under applicable law, then the Waiver
+-   shall be preserved to the maximum extent permitted taking into account
+-   Affirmer’s express Statement of Purpose. In addition, to the extent the
+-   Waiver is so judged Affirmer hereby grants to each affected person a
+-   royalty-free, non transferable, non sublicensable, non exclusive,
+-   irrevocable and unconditional license to exercise Affirmer’s Copyright and
+-   Related Rights in the Work (i) in all territories worldwide, (ii) for the
+-   maximum duration provided by applicable law or treaty (including future time
+-   extensions), (iii) in any current or future medium and for any number of
+-   copies, and (iv) for any purpose whatsoever, including without limitation
+-   commercial, advertising or promotional purposes (the “License”). The License
+-   shall be deemed effective as of the date CC0 was applied by Affirmer to the
+-   Work. Should any part of the License for any reason be judged legally
+-   invalid or ineffective under applicable law, such partial invalidity or
+-   ineffectiveness shall not invalidate the remainder of the License, and in
+-   such case Affirmer hereby affirms that he or she will not (i) exercise any
+-   of his or her remaining Copyright and Related Rights in the Work or (ii)
+-   assert any associated claims and causes of action with respect to the Work,
+-   in either case contrary to Affirmer’s express Statement of Purpose.
+-
+-4. Limitations and Disclaimers.
+-   1. No trademark or patent rights held by Affirmer are waived, abandoned,
+-      surrendered, licensed or otherwise affected by this document.
+-   2. Affirmer offers the Work as-is and makes no representations or warranties
+-      of any kind concerning the Work, express, implied, statutory or
+-      otherwise, including without limitation warranties of title,
+-      merchantability, fitness for a particular purpose, non infringement, or
+-      the absence of latent or other defects, accuracy, or the present or
+-      absence of errors, whether or not discoverable, all to the greatest
+-      extent permissible under applicable law.
+-   3. Affirmer disclaims responsibility for clearing rights of other persons
+-      that may apply to the Work or any use thereof, including without
+-      limitation any person’s Copyright and Related Rights in the Work.
+-      Further, Affirmer disclaims responsibility for obtaining any necessary
+-      consents, permissions or other rights required for any use of the Work.
+-   4. Affirmer understands and acknowledges that Creative Commons is not a
+-      party to this document and has no duty or obligation with respect to this
+-      CC0 or use of the Work.
+-
+-For more information, please see
+-http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/cli/postcss-lab-function-cli/README.md b/cli/postcss-lab-function-cli/README.md
+deleted file mode 100644
+index 37a16e6..0000000
+--- a/cli/postcss-lab-function-cli/README.md
++++ /dev/null
+@@ -1,24 +0,0 @@
+-# PostCSS Lab Function CLI [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
+-
+-```
+-npx @csstools/postcss-lab-function-cli inputs.css --output output.css
+-```
+-
+-```
+-PostCSS Lab function
+-
+-  Convert lab() to rgb()
+-
+-Usage:
+-  postcss-lab-function-cli [input.css] [OPTIONS] [-o|--output output.css]
+-  postcss-lab-function-cli <input.css>... [OPTIONS] --dir <output-directory>
+-  postcss-lab-function-cli <input.css>... [OPTIONS] --replace
+-
+-Options:
+-  -o, --output          Output file
+-  -d, --dir             Output directory
+-  -r, --replace         Replace (overwrite) the input file
+-  -m, --map             Create an external sourcemap
+-  --no-map              Disable the default inline sourcemaps
+-  -p, --plugin-options  Stringified JSON object with plugin options
+-```
+diff --git a/cli/postcss-lab-function-cli/dist/.gitkeep b/cli/postcss-lab-function-cli/dist/.gitkeep
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/cli/postcss-lab-function-cli/package.json b/cli/postcss-lab-function-cli/package.json
+deleted file mode 100644
+index 13e6dfc..0000000
+--- a/cli/postcss-lab-function-cli/package.json
++++ /dev/null
+@@ -1,38 +0,0 @@
+-{
+-  "name": "@csstools/postcss-lab-function-cli",
+-  "private": "true",
+-  "version": "0.0.0",
+-  "description": "A cli for postcss-lab-function",
+-  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+-  "license": "CC0-1.0",
+-  "engines": {
+-    "node": "^12 || ^14 || >=16"
+-  },
+-  "bin": {
+-    "postcss-lab-function-cli": "dist/cli.js"
+-  },
+-  "files": [
+-    "CHANGELOG.md",
+-    "INSTALL.md",
+-    "LICENSE.md",
+-    "README.md",
+-    "dist/cli.js"
+-  ],
+-  "scripts": {
+-    "build": "rollup -c ../../rollup/cli.ts.js",
+-    "lint": "eslint src/**/*.ts",
+-    "prepare": "npm run build",
+-    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+-    "test": "bash ./test/test.sh"
+-  },
+-  "devDependencies": {
+-    "@csstools/base-cli": "^0.1.0",
+-    "postcss-lab-function": "^4.0.0",
+-    "postcss": "^8.3.6"
+-  },
+-  "repository": {
+-    "type": "git",
+-    "url": "https://github.com/csstools/postcss-plugins.git",
+-    "directory": "cli/postcss-lab-function-cli"
+-  }
+-}
+diff --git a/cli/postcss-lab-function-cli/test/test.sh b/cli/postcss-lab-function-cli/test/test.sh
+deleted file mode 100644
+index 9d89386..0000000
+--- a/cli/postcss-lab-function-cli/test/test.sh
++++ /dev/null
+@@ -1,19 +0,0 @@
+-set -e
+-
+-# Zero out result file
+-echo '' > ./test/basic.result.css;
+-
+-# Test with long flag
+-postcss-lab-function-cli ./test/basic.css --output ./test/basic.result.css
+-
+-# Check result
+-git --no-pager diff --no-index --word-diff ./test/basic.expect.css ./test/basic.result.css
+-
+-# Zero out result file
+-echo '' > ./test/basic.result.css.map;
+-
+-# Test with long flag
+-postcss-lab-function-cli ./test/basic.css -m --output ./test/basic.result.css
+-
+-# Check result
+-git --no-pager diff --no-index --word-diff ./test/basic.expect.css.map ./test/basic.result.css.map
+diff --git a/cli/postcss-lab-function-cli/tsconfig.json b/cli/postcss-lab-function-cli/tsconfig.json
+deleted file mode 100644
+index 68a2606..0000000
+--- a/cli/postcss-lab-function-cli/tsconfig.json
++++ /dev/null
+@@ -1,9 +0,0 @@
+-{
+-  "extends": "../../tsconfig.json",
+-  "compilerOptions": {
+-    "outDir": "dist",
+-    "declarationDir": "."
+-  },
+-  "include": ["./src/**/*"],
+-  "exclude": ["dist"],
+-}
+diff --git a/package-lock.json b/package-lock.json
+index 2339f69..283a1c9 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -33,6 +33,7 @@
+     "cli/postcss-base-plugin-cli": {
+       "name": "@csstools/postcss-base-plugin-cli",
+       "version": "0.0.0",
++      "extraneous": true,
+       "license": "CC0-1.0",
+       "bin": {
+         "postcss-base-plugin-cli": "dist/cli.js"
+@@ -49,6 +50,7 @@
+     "cli/postcss-lab-function-cli": {
+       "name": "@csstools/postcss-lab-function-cli",
+       "version": "0.0.0",
++      "extraneous": true,
+       "license": "CC0-1.0",
+       "bin": {
+         "postcss-lab-function-cli": "dist/cli.js"
+@@ -1694,14 +1696,6 @@
+       "resolved": "plugins/postcss-base-plugin",
+       "link": true
+     },
+-    "node_modules/@csstools/postcss-base-plugin-cli": {
+-      "resolved": "cli/postcss-base-plugin-cli",
+-      "link": true
+-    },
+-    "node_modules/@csstools/postcss-lab-function-cli": {
+-      "resolved": "cli/postcss-lab-function-cli",
+-      "link": true
+-    },
+     "node_modules/@eslint/eslintrc": {
+       "version": "1.0.4",
+       "resolved": "https://registry.npmjs.org/@eslint/eslintrc/-/eslintrc-1.0.4.tgz",
+@@ -8254,11 +8248,11 @@
+       "name": "@csstools/base-cli",
+       "version": "0.1.0",
+       "license": "CC0-1.0",
++      "dependencies": {
++        "postcss": "^8.3.6"
++      },
+       "engines": {
+         "node": "^12 || ^14 || >=16"
+-      },
+-      "peerDependencies": {
+-        "postcss": "^8.3.6"
+       }
+     },
+     "packages/convert-colors": {
+@@ -11206,7 +11200,11 @@
+       "name": "@csstools/postcss-base-plugin",
+       "version": "0.0.0",
+       "license": "CC0-1.0",
++      "bin": {
++        "postcss-base-plugin": "dist/cli.mjs"
++      },
+       "devDependencies": {
++        "@csstools/base-cli": "^0.1.0",
+         "postcss": "^8.3.6",
+         "postcss-tape": "^6.0.1"
+       },
+@@ -16228,7 +16226,11 @@
+       "dependencies": {
+         "postcss-values-parser": "6.0.0"
+       },
++      "bin": {
++        "postcss-lab-function": "dist/cli.mjs"
++      },
+       "devDependencies": {
++        "@csstools/base-cli": "^0.1.0",
+         "postcss": "^8.3.6",
+         "postcss-tape": "^6.0.1"
+       },
+@@ -20069,7 +20071,9 @@
+     },
+     "@csstools/base-cli": {
+       "version": "file:packages/base-cli",
+-      "requires": {}
++      "requires": {
++        "postcss": "^8.3.6"
++      }
+     },
+     "@csstools/generate-test-cases": {
+       "version": "file:packages/generate-test-cases"
+@@ -20077,6 +20081,7 @@
+     "@csstools/postcss-base-plugin": {
+       "version": "file:plugins/postcss-base-plugin",
+       "requires": {
++        "@csstools/base-cli": "^0.1.0",
+         "postcss": "^8.3.6",
+         "postcss-tape": "^6.0.1"
+       },
+@@ -20090,22 +20095,6 @@
+         }
+       }
+     },
+-    "@csstools/postcss-base-plugin-cli": {
+-      "version": "file:cli/postcss-base-plugin-cli",
+-      "requires": {
+-        "@csstools/base-cli": "^0.1.0",
+-        "@csstools/postcss-base-plugin": "*",
+-        "postcss": "^8.3.6"
+-      }
+-    },
+-    "@csstools/postcss-lab-function-cli": {
+-      "version": "file:cli/postcss-lab-function-cli",
+-      "requires": {
+-        "@csstools/base-cli": "^0.1.0",
+-        "postcss": "^8.3.6",
+-        "postcss-lab-function": "^4.0.0"
+-      }
+-    },
+     "@eslint/eslintrc": {
+       "version": "1.0.4",
+       "resolved": "https://registry.npmjs.org/@eslint/eslintrc/-/eslintrc-1.0.4.tgz",
+@@ -28596,6 +28585,7 @@
+     "postcss-lab-function": {
+       "version": "file:plugins/postcss-lab-function",
+       "requires": {
++        "@csstools/base-cli": "^0.1.0",
+         "postcss": "^8.3.6",
+         "postcss-tape": "^6.0.1",
+         "postcss-values-parser": "6.0.0"
+diff --git a/package.json b/package.json
+index c943da9..c3fa5d4 100644
+--- a/package.json
++++ b/package.json
+@@ -8,8 +8,7 @@
+   "workspaces": [
+     "packages/*",
+     "plugins/*",
+-    "plugin-packs/*",
+-    "cli/*"
++    "plugin-packs/*"
+   ],
+   "devDependencies": {
+     "@babel/core": "^7.15.8",
+diff --git a/packages/base-cli/package.json b/packages/base-cli/package.json
+index b5a6b5a..329273a 100644
+--- a/packages/base-cli/package.json
++++ b/packages/base-cli/package.json
+@@ -20,7 +20,7 @@
+     "stryker": "stryker run --logLevel error",
+     "test": "node ./test/test.mjs"
+   },
+-  "peerDependencies": {
++  "dependencies": {
+     "postcss": "^8.3.6"
+   },
+   "repository": {
+diff --git a/packages/base-cli/src/index.ts b/packages/base-cli/src/index.ts
+index bb053c5..a95312e 100644
+--- a/packages/base-cli/src/index.ts
++++ b/packages/base-cli/src/index.ts
+@@ -1,13 +1,14 @@
+ import fs from 'fs';
+ import path from 'path';
+ import { parseArguments, SignalValue } from './args';
+-import type { Postcss, PluginCreator } from 'postcss';
++import postcss from 'postcss';
++import type { PluginCreator } from 'postcss';
+ 
+ export * from './help';
+ 
+ type PluginCreatorOptions = Record<string, unknown> | null;
+ 
+-export function cli(postcss: Postcss, plugin: PluginCreator<PluginCreatorOptions>, allowedPluginOpts: Array<string>, helpLogger: () => void) {
++export function cli(plugin: PluginCreator<PluginCreatorOptions>, allowedPluginOpts: Array<string>, helpLogger: () => void) {
+ 	// get process and plugin options from the command line
+ 	const argo = parseArguments(process.argv.slice(2), allowedPluginOpts, helpLogger);
+ 	if (argo === SignalValue.InvalidArguments) {
+diff --git a/plugins/postcss-base-plugin/package.json b/plugins/postcss-base-plugin/package.json
+index 536bc40..3787fdf 100644
+--- a/plugins/postcss-base-plugin/package.json
++++ b/plugins/postcss-base-plugin/package.json
+@@ -8,30 +8,28 @@
+   "engines": {
+     "node": "^12 || ^14 || >=16"
+   },
+-  "main": "dist/index.js",
++  "main": "dist/index.cjs",
+   "module": "dist/index.mjs",
++  "types": "dist/index.d.ts",
+   "files": [
+     "CHANGELOG.md",
+     "INSTALL.md",
+     "LICENSE.md",
+     "README.md",
+-    "dist/index.js",
+-    "dist/index.js.map",
+-    "dist/index.mjs",
+-    "dist/index.mjs.map"
++    "dist"
+   ],
+-  "types": "./dist/index.d.ts",
++  "bin": {
++    "postcss-base-plugin": "dist/cli.mjs"
++  },
+   "scripts": {
+     "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "lint": "eslint src/**/*.ts",
+-    "test": "postcss-tape",
++    "test": "postcss-tape && bash ./test/cli/test.sh",
+     "build": "rollup -c ../../rollup/default.ts.js",
+     "stryker": "stryker run --logLevel error"
+   },
+-  "postcssConfig": {
+-    "plugin": "dist/index.js"
+-  },
+   "devDependencies": {
++    "@csstools/base-cli": "^0.1.0",
+     "postcss": "^8.3.6",
+     "postcss-tape": "^6.0.1"
+   },
+diff --git a/cli/postcss-base-plugin-cli/src/cli.ts b/plugins/postcss-base-plugin/src/cli.ts
+similarity index 88%
+rename from cli/postcss-base-plugin-cli/src/cli.ts
+rename to plugins/postcss-base-plugin/src/cli.ts
+index 899f20a..2248ecf 100644
+--- a/cli/postcss-base-plugin-cli/src/cli.ts
++++ b/plugins/postcss-base-plugin/src/cli.ts
+@@ -1,9 +1,7 @@
+ import plugin from '@csstools/postcss-base-plugin';
+ import { cli, helpTextLogger } from '@csstools/base-cli';
+-import postcss from 'postcss';
+ 
+ cli(
+-	postcss,
+ 	plugin,
+ 	['color', 'another_option'],
+ 	helpTextLogger(
+diff --git a/cli/postcss-base-plugin-cli/test/basic.color.expect.css b/plugins/postcss-base-plugin/test/cli/basic.color.expect.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/basic.color.expect.css
+rename to plugins/postcss-base-plugin/test/cli/basic.color.expect.css
+diff --git a/cli/postcss-base-plugin-cli/test/basic.css b/plugins/postcss-base-plugin/test/cli/basic.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/basic.css
+rename to plugins/postcss-base-plugin/test/cli/basic.css
+diff --git a/cli/postcss-base-plugin-cli/test/basic.expect.css b/plugins/postcss-base-plugin/test/cli/basic.expect.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/basic.expect.css
+rename to plugins/postcss-base-plugin/test/cli/basic.expect.css
+diff --git a/cli/postcss-base-plugin-cli/test/basic.external-map.expect.css b/plugins/postcss-base-plugin/test/cli/basic.external-map.expect.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/basic.external-map.expect.css
+rename to plugins/postcss-base-plugin/test/cli/basic.external-map.expect.css
+diff --git a/plugins/postcss-base-plugin/test/cli/basic.external-map.expect.css.map b/plugins/postcss-base-plugin/test/cli/basic.external-map.expect.css.map
+new file mode 100644
+index 0000000..8f8e733
+--- /dev/null
++++ b/plugins/postcss-base-plugin/test/cli/basic.external-map.expect.css.map
+@@ -0,0 +1 @@
++{"version":3,"sources":["../../stdin"],"names":[],"mappings":"AAAA;CACC,WAAU;AACX","file":"basic.external-map.result.css","sourcesContent":[".foo {\n\tcolor: red;\n}\n"]}
+\ No newline at end of file
+diff --git a/cli/postcss-base-plugin-cli/test/basic.failure.expect.css b/plugins/postcss-base-plugin/test/cli/basic.failure.expect.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/basic.failure.expect.css
+rename to plugins/postcss-base-plugin/test/cli/basic.failure.expect.css
+diff --git a/cli/postcss-base-plugin-cli/test/basic.no-map.expect.css b/plugins/postcss-base-plugin/test/cli/basic.no-map.expect.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/basic.no-map.expect.css
+rename to plugins/postcss-base-plugin/test/cli/basic.no-map.expect.css
+diff --git a/cli/postcss-base-plugin-cli/test/basic.replace.css b/plugins/postcss-base-plugin/test/cli/basic.replace.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/basic.replace.css
+rename to plugins/postcss-base-plugin/test/cli/basic.replace.css
+diff --git a/cli/postcss-base-plugin-cli/test/basic.replace.expect.css b/plugins/postcss-base-plugin/test/cli/basic.replace.expect.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/basic.replace.expect.css
+rename to plugins/postcss-base-plugin/test/cli/basic.replace.expect.css
+diff --git a/cli/postcss-base-plugin-cli/test/basic.stdin.expect.css b/plugins/postcss-base-plugin/test/cli/basic.stdin.expect.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/basic.stdin.expect.css
+rename to plugins/postcss-base-plugin/test/cli/basic.stdin.expect.css
+diff --git a/cli/postcss-base-plugin-cli/test/out/a.css b/plugins/postcss-base-plugin/test/cli/out/a.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/out/a.css
+rename to plugins/postcss-base-plugin/test/cli/out/a.css
+diff --git a/cli/postcss-base-plugin-cli/test/out/a.css.map b/plugins/postcss-base-plugin/test/cli/out/a.css.map
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/out/a.css.map
+rename to plugins/postcss-base-plugin/test/cli/out/a.css.map
+diff --git a/cli/postcss-base-plugin-cli/test/out/a.expect.css b/plugins/postcss-base-plugin/test/cli/out/a.expect.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/out/a.expect.css
+rename to plugins/postcss-base-plugin/test/cli/out/a.expect.css
+diff --git a/cli/postcss-base-plugin-cli/test/out/a.expect.css.map b/plugins/postcss-base-plugin/test/cli/out/a.expect.css.map
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/out/a.expect.css.map
+rename to plugins/postcss-base-plugin/test/cli/out/a.expect.css.map
+diff --git a/cli/postcss-base-plugin-cli/test/out/b.css b/plugins/postcss-base-plugin/test/cli/out/b.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/out/b.css
+rename to plugins/postcss-base-plugin/test/cli/out/b.css
+diff --git a/cli/postcss-base-plugin-cli/test/out/b.css.map b/plugins/postcss-base-plugin/test/cli/out/b.css.map
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/out/b.css.map
+rename to plugins/postcss-base-plugin/test/cli/out/b.css.map
+diff --git a/cli/postcss-base-plugin-cli/test/out/b.expect.css b/plugins/postcss-base-plugin/test/cli/out/b.expect.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/out/b.expect.css
+rename to plugins/postcss-base-plugin/test/cli/out/b.expect.css
+diff --git a/cli/postcss-base-plugin-cli/test/out/b.expect.css.map b/plugins/postcss-base-plugin/test/cli/out/b.expect.css.map
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/out/b.expect.css.map
+rename to plugins/postcss-base-plugin/test/cli/out/b.expect.css.map
+diff --git a/cli/postcss-base-plugin-cli/test/out/concatenated.css b/plugins/postcss-base-plugin/test/cli/out/concatenated.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/out/concatenated.css
+rename to plugins/postcss-base-plugin/test/cli/out/concatenated.css
+diff --git a/cli/postcss-base-plugin-cli/test/out/concatenated.expect.css b/plugins/postcss-base-plugin/test/cli/out/concatenated.expect.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/out/concatenated.expect.css
+rename to plugins/postcss-base-plugin/test/cli/out/concatenated.expect.css
+diff --git a/cli/postcss-base-plugin-cli/test/src/a.css b/plugins/postcss-base-plugin/test/cli/src/a.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/src/a.css
+rename to plugins/postcss-base-plugin/test/cli/src/a.css
+diff --git a/cli/postcss-base-plugin-cli/test/src/b.css b/plugins/postcss-base-plugin/test/cli/src/b.css
+similarity index 100%
+rename from cli/postcss-base-plugin-cli/test/src/b.css
+rename to plugins/postcss-base-plugin/test/cli/src/b.css
+diff --git a/plugins/postcss-base-plugin/test/cli/test.sh b/plugins/postcss-base-plugin/test/cli/test.sh
+new file mode 100644
+index 0000000..15dc35b
+--- /dev/null
++++ b/plugins/postcss-base-plugin/test/cli/test.sh
+@@ -0,0 +1,93 @@
++set -e
++
++# Zero out result file
++echo '' > ./test/cli/basic.result.css;
++
++# Test with long flag
++postcss-base-plugin ./test/cli/basic.css --output ./test/cli/basic.result.css
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/cli/basic.expect.css ./test/cli/basic.result.css
++
++# Reset result file
++cat ./test/cli/basic.css > ./test/cli/basic.replace.css;
++
++# Test replace
++postcss-base-plugin ./test/cli/basic.replace.css -r
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/cli/basic.replace.css ./test/cli/basic.replace.expect.css
++
++# Zero out result file
++echo '' > ./test/cli/basic.color.result.css;
++
++# Test with short flags and plugin option
++postcss-base-plugin ./test/cli/basic.css -o ./test/cli/basic.color.result.css -p '{ "color": "purple" }'
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/cli/basic.color.expect.css ./test/cli/basic.color.result.css
++
++# Zero out result file
++echo '' > ./test/cli/basic.stdin.result.css;
++
++# Test with stdin
++cat ./test/cli/basic.css | postcss-base-plugin > ./test/cli/basic.stdin.result.css
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/cli/basic.stdin.expect.css ./test/cli/basic.stdin.result.css
++
++# Zero out result file
++echo '' > ./test/cli/basic.no-map.result.css;
++
++# Test source maps
++postcss-base-plugin ./test/cli/basic.css --no-map  -o ./test/cli/basic.no-map.result.css
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/cli/basic.no-map.expect.css ./test/cli/basic.no-map.result.css
++
++# Zero out result file
++echo '' > ./test/cli/basic.external-map.result.css;
++echo '' > ./test/cli/basic.external-map.result.css.map;
++
++# Test source maps
++cat ./test/cli/basic.css | postcss-base-plugin --map  -o ./test/cli/basic.external-map.result.css
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/cli/basic.external-map.expect.css ./test/cli/basic.external-map.result.css
++git --no-pager diff --no-index --word-diff ./test/cli/basic.external-map.expect.css.map ./test/cli/basic.external-map.result.css.map
++
++# Zero out result file
++echo '' > ./test/cli/out/a.css
++echo '' > ./test/cli/out/a.css.map
++echo '' > ./test/cli/out/b.css
++echo '' > ./test/cli/out/b.css.map
++
++# Test source maps
++postcss-base-plugin ./test/cli/src/a.css ./test/cli/src/b.css -m -d ./test/cli/out/
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/cli/out/a.css ./test/cli/out/a.expect.css
++git --no-pager diff --no-index --word-diff ./test/cli/out/a.css.map ./test/cli/out/a.expect.css.map
++git --no-pager diff --no-index --word-diff ./test/cli/out/b.css ./test/cli/out/b.expect.css
++git --no-pager diff --no-index --word-diff ./test/cli/out/b.css.map ./test/cli/out/b.expect.css.map
++
++# Zero out result file
++echo '' > ./test/cli/out/concatenated.css
++
++# Test concat
++postcss-base-plugin ./test/cli/src/a.css ./test/cli/src/b.css > ./test/cli/out/concatenated.css
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/cli/out/concatenated.css ./test/cli/out/concatenated.expect.css
++
++# Dump some content
++echo 'foo' > ./test/cli/basic.failure.result.css
++
++# Test with incorrect arugments
++if postcss-base-plugin ./test/cli/basic.css --does-not-exist > ./test/cli/basic.failure.result.css; then
++  echo 'Test should have failed';
++	exit 1;
++else
++	# Check result
++	git --no-pager diff --no-index --word-diff ./test/cli/basic.failure.result.css ./test/cli/basic.failure.expect.css
++fi
+diff --git a/plugins/postcss-lab-function/package.json b/plugins/postcss-lab-function/package.json
+index 3d71f64..27141fe 100644
+--- a/plugins/postcss-lab-function/package.json
++++ b/plugins/postcss-lab-function/package.json
+@@ -6,16 +6,23 @@
+   "license": "CC0-1.0",
+   "homepage": "https://github.com/csstools/postcss-lab-function#readme",
+   "bugs": "https://github.com/csstools/postcss-lab-function/issues",
+-  "main": "dist/index.js",
++  "main": "dist/index.cjs",
+   "module": "dist/index.mjs",
+   "types": "./dist/index.d.ts",
+   "files": [
++    "CHANGELOG.md",
++    "INSTALL.md",
++    "LICENSE.md",
++    "README.md",
+     "dist"
+   ],
++  "bin": {
++    "postcss-lab-function": "dist/cli.mjs"
++  },
+   "scripts": {
+     "prepublishOnly": "npm run build --if-present && npm run test --if-present",
+     "lint": "eslint src/**/*.js",
+-    "test": "postcss-tape",
++    "test": "postcss-tape && bash ./test/cli/test.sh",
+     "build": "rollup -c ../../rollup/default.ts.js",
+     "stryker": "stryker run --logLevel error"
+   },
+@@ -26,6 +33,7 @@
+     "postcss-values-parser": "6.0.0"
+   },
+   "devDependencies": {
++    "@csstools/base-cli": "^0.1.0",
+     "postcss": "^8.3.6",
+     "postcss-tape": "^6.0.1"
+   },
+@@ -53,6 +61,6 @@
+   "repository": {
+     "type": "git",
+     "url": "https://github.com/csstools/postcss-plugins.git",
+-    "directory": "<TODO>"
++    "directory": "plugins/postcss-lab-function"
+   }
+ }
+diff --git a/cli/postcss-lab-function-cli/src/cli.ts b/plugins/postcss-lab-function/src/cli.ts
+similarity index 71%
+rename from cli/postcss-lab-function-cli/src/cli.ts
+rename to plugins/postcss-lab-function/src/cli.ts
+index f621a10..049255e 100644
+--- a/cli/postcss-lab-function-cli/src/cli.ts
++++ b/plugins/postcss-lab-function/src/cli.ts
+@@ -1,9 +1,7 @@
+-import plugin from 'postcss-lab-function';
++import plugin from './index';
+ import { cli, helpTextLogger } from '@csstools/base-cli';
+-import postcss from 'postcss';
+ 
+ cli(
+-	postcss,
+ 	plugin,
+ 	['color', 'another_option'],
+ 	helpTextLogger(
+diff --git a/cli/postcss-lab-function-cli/test/basic.css b/plugins/postcss-lab-function/test/cli/basic.css
+similarity index 100%
+rename from cli/postcss-lab-function-cli/test/basic.css
+rename to plugins/postcss-lab-function/test/cli/basic.css
+diff --git a/cli/postcss-lab-function-cli/test/basic.expect.css b/plugins/postcss-lab-function/test/cli/basic.expect.css
+similarity index 100%
+rename from cli/postcss-lab-function-cli/test/basic.expect.css
+rename to plugins/postcss-lab-function/test/cli/basic.expect.css
+diff --git a/cli/postcss-lab-function-cli/test/basic.expect.css.map b/plugins/postcss-lab-function/test/cli/basic.expect.css.map
+similarity index 100%
+rename from cli/postcss-lab-function-cli/test/basic.expect.css.map
+rename to plugins/postcss-lab-function/test/cli/basic.expect.css.map
+diff --git a/plugins/postcss-lab-function/test/cli/test.sh b/plugins/postcss-lab-function/test/cli/test.sh
+new file mode 100644
+index 0000000..02b9612
+--- /dev/null
++++ b/plugins/postcss-lab-function/test/cli/test.sh
+@@ -0,0 +1,19 @@
++set -e
++
++# Zero out result file
++echo '' > ./test/cli/basic.result.css;
++
++# Test with long flag
++postcss-lab-function ./test/cli/basic.css --output ./test/cli/basic.result.css
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/cli/basic.expect.css ./test/cli/basic.result.css
++
++# Zero out result file
++echo '' > ./test/cli/basic.result.css.map;
++
++# Test with long flag
++postcss-lab-function ./test/cli/basic.css -m --output ./test/cli/basic.result.css
++
++# Check result
++git --no-pager diff --no-index --word-diff ./test/cli/basic.expect.css.map ./test/cli/basic.result.css.map
+diff --git a/rollup/cli.js b/rollup/cli.js
+deleted file mode 100644
+index 3171958..0000000
+--- a/rollup/cli.js
++++ /dev/null
+@@ -1,44 +0,0 @@
+-import babel from '@rollup/plugin-babel';
+-import commonjs from '@rollup/plugin-commonjs';
+-import path from 'path';
+-import { nodeResolve } from '@rollup/plugin-node-resolve';
+-import { terser } from 'rollup-plugin-terser';
+-
+-export default {
+-	input: 'src/cli.js',
+-	output: [
+-		{ file: 'dist/cli.js', format: 'cjs', sourcemap: false },
+-	],
+-	plugins: [
+-		commonjs(),
+-		nodeResolve({
+-			rootDir: path.join(process.cwd(), '..', '..'),
+-		}),
+-		babel({
+-			babelHelpers: 'bundled',
+-			exclude: 'node_modules/**',
+-			presets: [
+-				['@babel/preset-env', {
+-					corejs: 3,
+-					loose: true,
+-					modules: false,
+-					targets: { node: 12 },
+-					useBuiltIns: 'usage',
+-				}],
+-			],
+-		}),
+-		terser(),
+-		addHashBang(),
+-	],
+-};
+-
+-function addHashBang () {
+-	return {
+-		name: 'add-hash-bang',
+-		renderChunk (code) {
+-			const updatedCode = `#!/usr/bin/env node\n\n${code}`;
+-
+-			return updatedCode;
+-		},
+-	};
+-}
+diff --git a/rollup/cli.ts.js b/rollup/cli.ts.js
+deleted file mode 100644
+index 6999de5..0000000
+--- a/rollup/cli.ts.js
++++ /dev/null
+@@ -1,46 +0,0 @@
+-import babel from '@rollup/plugin-babel';
+-import commonjs from '@rollup/plugin-commonjs';
+-import path from 'path';
+-import typescript from '@rollup/plugin-typescript';
+-import { nodeResolve } from '@rollup/plugin-node-resolve';
+-import { terser } from 'rollup-plugin-terser';
+-
+-export default {
+-	input: 'src/cli.ts',
+-	output: [
+-		{ file: 'dist/cli.js', format: 'cjs', sourcemap: false },
+-	],
+-	plugins: [
+-		typescript({ tsconfig: './tsconfig.json' }),
+-		commonjs(),
+-		nodeResolve({
+-			rootDir: path.join(process.cwd(), '..', '..'),
+-		}),
+-		babel({
+-			babelHelpers: 'bundled',
+-			exclude: 'node_modules/**',
+-			presets: [
+-				['@babel/preset-env', {
+-					corejs: 3,
+-					loose: true,
+-					modules: false,
+-					targets: { node: 12 },
+-					useBuiltIns: 'usage',
+-				}],
+-			],
+-		}),
+-		terser(),
+-		addHashBang(),
+-	],
+-};
+-
+-function addHashBang () {
+-	return {
+-		name: 'add-hash-bang',
+-		renderChunk (code) {
+-			const updatedCode = `#!/usr/bin/env node\n\n${code}`;
+-
+-			return updatedCode;
+-		},
+-	};
+-}
+diff --git a/rollup/default.js b/rollup/default.js
+index 108053b..0c816de 100644
+--- a/rollup/default.js
++++ b/rollup/default.js
+@@ -4,41 +4,88 @@ import path from 'path';
+ import { nodeResolve } from '@rollup/plugin-node-resolve';
+ import { terser } from 'rollup-plugin-terser';
+ 
+-export default {
+-	input: 'src/index.js',
+-	output: [
+-		{ file: 'dist/index.js', format: 'cjs', sourcemap: true, exports: 'auto' },
+-		{ file: 'dist/index.mjs', format: 'esm', sourcemap: true, exports: 'auto' },
+-	],
+-	onwarn: (warning) => {
+-		// Silence circular dependency warning for postcss-values-parsers package
+-		if (
+-			warning.code === 'CIRCULAR_DEPENDENCY' &&
+-			warning.importer.indexOf('node_modules/postcss-values-parser/lib') > -1
+-		) {
+-			return;
+-		}
++export default [
++	{
++		input: 'src/index.js',
++		output: [
++			{ file: 'dist/index.cjs', format: 'cjs', sourcemap: true, exports: 'auto' },
++			{ file: 'dist/index.mjs', format: 'esm', sourcemap: true, exports: 'auto' },
++		],
++		onwarn: (warning) => {
++			// Silence circular dependency warning for postcss-values-parsers package
++			if (
++				warning.code === 'CIRCULAR_DEPENDENCY' &&
++				warning.importer.indexOf('node_modules/postcss-values-parser/lib') > -1
++			) {
++				return;
++			}
+ 
+-		console.warn(`(!) ${warning.message}`);
++			console.warn(`(!) ${warning.message}`);
++		},
++		plugins: [
++			babel({
++				babelHelpers: 'bundled',
++				exclude: 'node_modules/**',
++				presets: [
++					['@babel/preset-env', {
++						corejs: 3,
++						loose: true,
++						modules: false,
++						targets: { node: 12 },
++						useBuiltIns: 'usage',
++					}],
++				],
++			}),
++			terser(),
++		],
+ 	},
+-	plugins: [
+-		commonjs(),
+-		nodeResolve({
+-			rootDir: path.join(process.cwd(), '..', '..'),
+-		}),
+-		babel({
+-			babelHelpers: 'bundled',
+-			exclude: 'node_modules/**',
+-			presets: [
+-				['@babel/preset-env', {
+-					corejs: 3,
+-					loose: true,
+-					modules: false,
+-					targets: { node: 12 },
+-					useBuiltIns: 'usage',
+-				}],
+-			],
+-		}),
+-		terser(),
+-	],
+-};
++	{
++		input: 'src/cli.js',
++		output: [
++			{ file: 'dist/cli.mjs', format: 'esm', sourcemap: false },
++		],
++		onwarn: (warning) => {
++			// Silence circular dependency warning for postcss-values-parsers package
++			if (
++				warning.code === 'CIRCULAR_DEPENDENCY' &&
++				warning.importer.indexOf('node_modules/postcss-values-parser/lib') > -1
++			) {
++				return;
++			}
++
++			console.warn(`(!) ${warning.message}`);
++		},
++		plugins: [
++			commonjs(),
++			nodeResolve({
++				rootDir: path.join(process.cwd(), '..', '..'),
++			}),
++			babel({
++				babelHelpers: 'bundled',
++				exclude: 'node_modules/**',
++				presets: [
++					['@babel/preset-env', {
++						corejs: 3,
++						loose: true,
++						modules: false,
++						targets: { node: 12 },
++						useBuiltIns: 'usage',
++					}],
++				],
++			}),
++			terser(),
++			addHashBang(),
++		],
++	},
++];
++
++function addHashBang () {
++	return {
++		name: 'add-hash-bang',
++		renderChunk (code) {
++			const updatedCode = `#!/usr/bin/env node\n\n${code}`;
++
++			return updatedCode;
++		},
++	};
++}
+diff --git a/rollup/default.ts.js b/rollup/default.ts.js
+index 37a6689..ea69e17 100644
+--- a/rollup/default.ts.js
++++ b/rollup/default.ts.js
+@@ -5,42 +5,82 @@ import typescript from '@rollup/plugin-typescript';
+ import { nodeResolve } from '@rollup/plugin-node-resolve';
+ import { terser } from 'rollup-plugin-terser';
+ 
+-export default {
+-	input: 'src/index.ts',
+-	output: [
+-		{ file: 'dist/index.js', format: 'cjs', sourcemap: true, exports: 'auto' },
+-		{ file: 'dist/index.mjs', format: 'esm', sourcemap: true, exports: 'auto' },
+-	],
+-	onwarn: (warning) => {
+-		// Silence circular dependency warning for postcss-values-parsers package
+-		if (
+-			warning.code === 'CIRCULAR_DEPENDENCY' &&
+-			warning.importer.indexOf('node_modules/postcss-values-parser/lib') > -1
+-		) {
+-			return;
+-		}
++export default [
++	{
++		input: 'src/index.ts',
++		output: [
++			{ file: 'dist/index.cjs', format: 'cjs', sourcemap: true, exports: 'auto' },
++			{ file: 'dist/index.mjs', format: 'esm', sourcemap: true, exports: 'auto' },
++		],
++		external: [
++			'postcss-values-parser',
++		],
++		plugins: [
++			typescript({ tsconfig: './tsconfig.json' }),
++			babel({
++				babelHelpers: 'bundled',
++				exclude: 'node_modules/**',
++				presets: [
++					['@babel/preset-env', {
++						corejs: 3,
++						loose: true,
++						modules: false,
++						targets: { node: 12 },
++						useBuiltIns: 'usage',
++					}],
++				],
++			}),
++			terser(),
++		],
++	},
++	{
++		input: 'src/cli.ts',
++		output: [
++			{ file: 'dist/cli.mjs', format: 'esm', sourcemap: false },
++		],
++		onwarn: (warning) => {
++			// Silence circular dependency warning for postcss-values-parsers package
++			if (
++				warning.code === 'CIRCULAR_DEPENDENCY' &&
++				warning.importer.indexOf('node_modules/postcss-values-parser/lib') > -1
++			) {
++				return;
++			}
+ 
+-		console.warn(`(!) ${warning.message}`);
++			console.warn(`(!) ${warning.message}`);
++		},
++		plugins: [
++			typescript({ tsconfig: './tsconfig.json' }),
++			commonjs(),
++			nodeResolve({
++				rootDir: path.join(process.cwd(), '..', '..'),
++			}),
++			babel({
++				babelHelpers: 'bundled',
++				exclude: 'node_modules/**',
++				presets: [
++					['@babel/preset-env', {
++						corejs: 3,
++						loose: true,
++						modules: false,
++						targets: { node: 12 },
++						useBuiltIns: 'usage',
++					}],
++				],
++			}),
++			terser(),
++			addHashBang(),
++		],
+ 	},
+-	plugins: [
+-		typescript({ tsconfig: './tsconfig.json' }),
+-		commonjs(),
+-		nodeResolve({
+-			rootDir: path.join(process.cwd(), '..', '..'),
+-		}),
+-		babel({
+-			babelHelpers: 'bundled',
+-			exclude: 'node_modules/**',
+-			presets: [
+-				['@babel/preset-env', {
+-					corejs: 3,
+-					loose: true,
+-					modules: false,
+-					targets: { node: 12 },
+-					useBuiltIns: 'usage',
+-				}],
+-			],
+-		}),
+-		terser(),
+-	],
+-};
++];
++
++function addHashBang () {
++	return {
++		name: 'add-hash-bang',
++		renderChunk (code) {
++			const updatedCode = `#!/usr/bin/env node\n\n${code}`;
++
++			return updatedCode;
++		},
++	};
++}
+-- 
+2.33.1
+

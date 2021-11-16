@@ -1,7 +1,7 @@
 From 1926613049b6bdc1512102584e213e5abf25ba41 Mon Sep 17 00:00:00 2001
 From: romainmenke <romainmenke@gmail.com>
 Date: Mon, 15 Nov 2021 08:48:51 +0100
-Subject: [PATCH 10/10] wip
+Subject: [PATCH 10/11] wip
 
 ---
  plugins/postcss-lab-function/src/index.ts     | 23 ++++++++++--
