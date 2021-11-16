@@ -1,7 +1,7 @@
 From 9311892398aa2ff63adcb1437603e4d15520ac51 Mon Sep 17 00:00:00 2001
 From: Tom Bremer <tom.bremer@asynchrony.com>
 Date: Mon, 9 Nov 2015 15:14:19 -0600
-Subject: [PATCH 35/96] Support direct nesting, add walkRules method, update
+Subject: [PATCH 35/99] Support direct nesting, add walkRules method, update
  ignore tests, add direct nesting test. This resolves
  jonathantneal/postcss-nesting#10
 

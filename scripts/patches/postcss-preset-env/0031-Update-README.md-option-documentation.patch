@@ -1,7 +1,7 @@
 From 13da5ca4833f33e8c7a557975a12f048aab84369 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Fri, 11 May 2018 16:20:48 -0400
-Subject: [PATCH 31/84] Update README.md option documentation
+Subject: [PATCH 31/97] Update README.md option documentation
 
 ---
  README.md | 49 ++++++++++++++++++++++++++++++-------------------

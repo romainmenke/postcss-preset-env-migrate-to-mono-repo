@@ -1,7 +1,7 @@
 From 2ee61c4cec16dfade01a1b00b89a69a73ac007d2 Mon Sep 17 00:00:00 2001
 From: Romain Menke <11521496+romainmenke@users.noreply.github.com>
 Date: Wed, 3 Nov 2021 12:48:48 +0100
-Subject: [PATCH 90/96] fix spec issues (csstools/postcss-nesting#88)
+Subject: [PATCH 90/99] fix spec issues (csstools/postcss-nesting#88)
 
 * fix spec issues
 

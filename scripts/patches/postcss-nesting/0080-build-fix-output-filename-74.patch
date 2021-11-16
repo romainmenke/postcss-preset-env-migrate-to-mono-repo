@@ -1,7 +1,7 @@
 From 52ec2d9a1d209b7b32ac07fe4a6edb7ae19943a2 Mon Sep 17 00:00:00 2001
 From: ambar <ambar.lee@gmail.com>
 Date: Tue, 2 Mar 2021 21:28:46 +0800
-Subject: [PATCH 80/96] build: fix output filename (csstools/postcss-nesting#74)
+Subject: [PATCH 80/99] build: fix output filename (csstools/postcss-nesting#74)
 
 ---
  .rollup.js | 2 +-

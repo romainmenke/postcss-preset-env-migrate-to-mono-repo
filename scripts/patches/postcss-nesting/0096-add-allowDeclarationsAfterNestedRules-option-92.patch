@@ -1,7 +1,7 @@
 From 930f49e67584533b6d1fad7aea8127507383a1ed Mon Sep 17 00:00:00 2001
 From: Romain Menke <11521496+romainmenke@users.noreply.github.com>
 Date: Fri, 12 Nov 2021 15:13:30 +0100
-Subject: [PATCH 96/96] add `allowDeclarationsAfterNestedRules` option (csstools/postcss-nesting#92)
+Subject: [PATCH 96/99] add `allowDeclarationsAfterNestedRules` option (csstools/postcss-nesting#92)
 
 * add allowDeclarationsAfterNestedRules option
 

@@ -1,7 +1,7 @@
 From 5474462f8b01e3bd0f17f3bb184f6e11e85997f5 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Mon, 21 May 2018 20:59:00 -0400
-Subject: [PATCH 35/84] 5.1.0
+Subject: [PATCH 35/97] 5.1.0
 
 ---
  CHANGELOG.md | 10 ++++++++++

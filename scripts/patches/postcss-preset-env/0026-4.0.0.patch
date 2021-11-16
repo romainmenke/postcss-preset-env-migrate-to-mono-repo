@@ -1,7 +1,7 @@
 From 00ac4a9a7b3a7be0b2b779552e9692b5deb72e93 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sat, 7 Apr 2018 23:39:04 -0400
-Subject: [PATCH 26/84] 4.0.0
+Subject: [PATCH 26/97] 4.0.0
 
 ---
  .tape.js                                      |  34 +--

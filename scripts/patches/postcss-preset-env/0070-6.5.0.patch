@@ -1,7 +1,7 @@
 From d81eb93d8df554af1e9029c3bf89b2da70cbf2d3 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Wed, 12 Dec 2018 10:49:11 -0500
-Subject: [PATCH 70/84] 6.5.0
+Subject: [PATCH 70/97] 6.5.0
 
 ---
  CHANGELOG.md                             |  9 +++++++--

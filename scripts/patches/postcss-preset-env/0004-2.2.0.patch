@@ -1,7 +1,7 @@
 From 2015bafced1d169966db58461e15fd503436a85c Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Wed, 14 Feb 2018 10:09:56 -0500
-Subject: [PATCH 04/84] 2.2.0
+Subject: [PATCH 04/97] 2.2.0
 
 ---
  .tape.js                                   | 15 +++++++++++++++

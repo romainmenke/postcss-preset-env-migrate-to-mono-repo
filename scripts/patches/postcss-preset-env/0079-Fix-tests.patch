@@ -1,7 +1,7 @@
 From fbb3b3d96ad461a4875ca410bb94ba8e047fc7be Mon Sep 17 00:00:00 2001
 From: Dmitry Semigradsky <semigradskyd@gmail.com>
 Date: Fri, 31 Jan 2020 13:26:58 +0300
-Subject: [PATCH 79/84] Fix tests
+Subject: [PATCH 79/97] Fix tests
 
 ---
  test/basic.expect.css         | 144 ++++++++++++++++++++++------------

@@ -1,7 +1,7 @@
 From 71ff1e5930282db2299e37b2eb9497864bbe8a74 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Mon, 1 Oct 2018 22:29:51 -0400
-Subject: [PATCH 55/84] 6.0.8
+Subject: [PATCH 55/97] 6.0.8
 
 ---
  CHANGELOG.md |  7 +++++++

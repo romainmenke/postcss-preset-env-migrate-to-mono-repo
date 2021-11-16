@@ -1,7 +1,7 @@
 From c6f501864178adaab7d5c20e35b8cbf5dbe4549d Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Mon, 23 Apr 2018 09:34:50 -0400
-Subject: [PATCH 27/84] README: Update Gitter badge
+Subject: [PATCH 27/97] README: Update Gitter badge
 
 ---
  README.md | 4 ++--

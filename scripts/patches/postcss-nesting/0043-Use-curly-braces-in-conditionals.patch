@@ -1,7 +1,7 @@
 From c45f5713792b179fd8e738cf4f752f42a70b8445 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sat, 20 Feb 2016 23:06:28 -0500
-Subject: [PATCH 43/96] Use curly braces in conditionals
+Subject: [PATCH 43/99] Use curly braces in conditionals
 
 ---
  index.js | 9 +++++++--

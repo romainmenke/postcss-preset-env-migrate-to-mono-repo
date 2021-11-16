@@ -1,7 +1,7 @@
 From ec68afe6dd421e639505d7d190472e473a8d00cc Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sun, 18 Mar 2018 19:29:50 -0400
-Subject: [PATCH 21/84] Update development dependencies
+Subject: [PATCH 21/97] Update development dependencies
 
 ---
  package.json | 4 ++--

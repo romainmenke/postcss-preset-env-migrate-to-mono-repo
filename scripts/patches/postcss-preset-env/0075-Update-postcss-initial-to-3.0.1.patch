@@ -1,7 +1,7 @@
 From 61ea05f315532faaef44caf48963ec69efbd573d Mon Sep 17 00:00:00 2001
 From: Luke Bennett <lukeeeebennettplus@gmail.com>
 Date: Thu, 11 Jul 2019 17:08:32 +0100
-Subject: [PATCH 75/84] Update postcss-initial to 3.0.1
+Subject: [PATCH 75/97] Update postcss-initial to 3.0.1
 
 postcss-initial@3.0.1 fixes a proto polution vulnerability in its
 lodash.template dependency.

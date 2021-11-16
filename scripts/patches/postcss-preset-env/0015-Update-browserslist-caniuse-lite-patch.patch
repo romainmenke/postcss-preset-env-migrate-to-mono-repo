@@ -1,7 +1,7 @@
 From a24d4d620762f25cfcde31facc183b31ea5bca3d Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Fri, 16 Mar 2018 10:07:58 -0400
-Subject: [PATCH 15/84] Update browserslist, caniuse-lite (patch)
+Subject: [PATCH 15/97] Update browserslist, caniuse-lite (patch)
 
 ---
  package.json | 4 ++--

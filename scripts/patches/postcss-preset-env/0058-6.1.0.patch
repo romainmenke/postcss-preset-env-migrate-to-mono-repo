@@ -1,7 +1,7 @@
 From 7f8f34bb6516b13d9cd575cb015e00abd9186c1d Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Wed, 10 Oct 2018 14:17:09 -0400
-Subject: [PATCH 58/84] 6.1.0
+Subject: [PATCH 58/97] 6.1.0
 
 ---
  .tape.js                                 |   6 +

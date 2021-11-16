@@ -1,7 +1,7 @@
 From 4e70f150a2f886a23b91fc691609700d3b6a4d03 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Fri, 13 Jul 2018 15:17:28 -0400
-Subject: [PATCH 41/84] Update CHANGELOG.md to amend minor change in 5.2.0
+Subject: [PATCH 41/97] Update CHANGELOG.md to amend minor change in 5.2.0
 
 ---
  CHANGELOG.md | 2 +-

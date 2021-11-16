@@ -1,7 +1,7 @@
 From f79ec82f2a6157d7c048745e29d29a5ac46e02e7 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sat, 17 Feb 2018 15:26:52 -0500
-Subject: [PATCH 06/84] Add :focus-visible polyfill
+Subject: [PATCH 06/97] Add :focus-visible polyfill
 
 Update tests
 ---

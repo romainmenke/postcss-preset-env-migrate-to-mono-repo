@@ -1,7 +1,7 @@
 From 63f06590a12a2c0eb9663bada9e4eba4efb5d4ab Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Thu, 20 Sep 2018 09:08:12 -0400
-Subject: [PATCH 47/84] 6.0.0
+Subject: [PATCH 47/97] 6.0.0
 
 ---
  .gitignore                         |   2 +-

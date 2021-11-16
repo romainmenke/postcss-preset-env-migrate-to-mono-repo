@@ -1,7 +1,7 @@
 From 7afb45a0f75c8c6385086f6ae352b4f0e2bdd4a5 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sat, 9 Sep 2017 21:15:53 -0400
-Subject: [PATCH 61/96] Update dependencies
+Subject: [PATCH 61/99] Update dependencies
 
 ---
  package.json | 4 ++--

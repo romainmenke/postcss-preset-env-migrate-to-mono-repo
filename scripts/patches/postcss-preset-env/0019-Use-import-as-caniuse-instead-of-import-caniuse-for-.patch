@@ -1,7 +1,7 @@
 From b7b398b66b922c747b844182ecfe29d407b63ee6 Mon Sep 17 00:00:00 2001
 From: Ryan Zimmerman <opensrc@ryanzim.com>
 Date: Wed, 28 Feb 2018 16:53:30 -0500
-Subject: [PATCH 19/84] Use import * as caniuse instead of import caniuse for
+Subject: [PATCH 19/97] Use import * as caniuse instead of import caniuse for
  compatibility
 
 ---

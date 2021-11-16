@@ -1,7 +1,7 @@
 From 54a7bb301213e26f39d0f5ed160c30fed4b6be75 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Mon, 25 Jun 2018 15:57:25 -0400
-Subject: [PATCH 39/84] Update AppVeyor Travis CI for Node 6 testing
+Subject: [PATCH 39/97] Update AppVeyor Travis CI for Node 6 testing
 
 ---
  .appveyor.yml | 2 +-
