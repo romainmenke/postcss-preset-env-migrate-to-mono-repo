@@ -40407,41 +40407,6 @@ index f9df75b..8623ac0 100644
 +    "directory": "<TODO>"
    }
  }
-diff --git a/plugin-packs/postcss-preset-env/package.json b/plugin-packs/postcss-preset-env/package.json
-index 64a7844..36c44e1 100644
---- a/plugin-packs/postcss-preset-env/package.json
-+++ b/plugin-packs/postcss-preset-env/package.json
-@@ -4,7 +4,6 @@
-   "description": "Convert modern CSS into something browsers understand",
-   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
-   "license": "CC0-1.0",
--  "repository": "csstools/postcss-preset-env",
-   "homepage": "https://github.com/csstools/postcss-preset-env#readme",
-   "bugs": "https://github.com/csstools/postcss-preset-env/issues",
-   "main": "index.js",
-@@ -77,10 +76,6 @@
-     "rollup": "^1.16.6",
-     "rollup-plugin-babel": "^4.3.3"
-   },
--  "eslintConfig": {
--    "extends": "dev",
--    "parser": "babel-eslint"
--  },
-   "keywords": [
-     "postcss",
-     "css",
-@@ -94,5 +89,10 @@
-     "csswg",
-     "future",
-     "next"
--  ]
-+  ],
-+  "repository": {
-+    "type": "git",
-+    "url": "https://github.com/csstools/postcss-plugins.git",
-+    "directory": "<TODO>"
-+  }
- }
 diff --git a/plugins/css-blank-pseudo/package.json b/plugins/css-blank-pseudo/package.json
 index a09d5a4..bb985ea 100644
 --- a/plugins/css-blank-pseudo/package.json
@@ -41036,52 +41001,6 @@ index 11fb136..525136d 100644
 +    "url": "https://github.com/csstools/postcss-plugins.git",
 +    "directory": "<TODO>"
 +  }
- }
-diff --git a/plugins/postcss-nesting/package.json b/plugins/postcss-nesting/package.json
-index 5789d3c..1e4f6e4 100644
---- a/plugins/postcss-nesting/package.json
-+++ b/plugins/postcss-nesting/package.json
-@@ -14,7 +14,6 @@
-   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
-   "bugs": "https://github.com/csstools/postcss-nesting/issues",
-   "homepage": "https://github.com/csstools/postcss-nesting#readme",
--  "repository": "csstools/postcss-nesting",
-   "exports": {
-     ".": {
-       "import": "./postcss-8-nesting/postcss-nesting.mjs",
-@@ -58,22 +57,6 @@
-   "engines": {
-     "node": "^12 || ^14 || >=16"
-   },
--  "eslintConfig": {
--    "extends": "eslint:recommended",
--    "parserOptions": {
--      "ecmaVersion": 12,
--      "sourceType": "module",
--      "ecmaFeatures": {
--        "modules": true
--      }
--    },
--    "rules": {
--      "semi": [
--        "error",
--        "never"
--      ]
--    }
--  },
-   "peerDependencies": {
-     "postcss": "^8.2"
-   },
-@@ -121,5 +104,10 @@
-   ],
-   "dependencies": {
-     "postcss-selector-parser": "6.0.6"
-+  },
-+  "repository": {
-+    "type": "git",
-+    "url": "https://github.com/csstools/postcss-plugins.git",
-+    "directory": "<TODO>"
-   }
  }
 diff --git a/plugins/postcss-overflow-shorthand/package.json b/plugins/postcss-overflow-shorthand/package.json
 index 479cf76..8523ec3 100644

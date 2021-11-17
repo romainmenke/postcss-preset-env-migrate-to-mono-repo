@@ -104,27 +104,6 @@ index 9934291..f9df75b 100644
 +    "node": "^12 || ^14 || >=16"
    }
  }
-diff --git a/plugin-packs/postcss-preset-env/package.json b/plugin-packs/postcss-preset-env/package.json
-index cd30568..64a7844 100644
---- a/plugin-packs/postcss-preset-env/package.json
-+++ b/plugin-packs/postcss-preset-env/package.json
-@@ -17,14 +17,14 @@
-   ],
-   "scripts": {
-     "build": "rollup -c .rollup.js --silent",
--    "prepublishOnly": "npm run build --if-present && npm run test",
-+    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
-     "test": "npm run test:js && npm run test:tape",
-     "test:js": "eslint src/*.js src/lib/*.js src/patch/*.js --cache --ignore-path .gitignore --quiet",
-     "test:tape": "postcss-tape",
-     "stryker": "stryker run --logLevel error"
-   },
-   "engines": {
--    "node": ">=12"
-+    "node": "^12 || ^14 || >=16"
-   },
-   "dependencies": {
-     "autoprefixer": "^9.6.1",
 diff --git a/plugins/css-blank-pseudo/package.json b/plugins/css-blank-pseudo/package.json
 index 7c1964d..a09d5a4 100644
 --- a/plugins/css-blank-pseudo/package.json
@@ -437,28 +416,6 @@ index d471e4c..11fb136 100644
    },
    "peerDependencies": {
      "postcss": "^8.3"
-diff --git a/plugins/postcss-nesting/package.json b/plugins/postcss-nesting/package.json
-index d91ea28..5789d3c 100644
---- a/plugins/postcss-nesting/package.json
-+++ b/plugins/postcss-nesting/package.json
-@@ -37,7 +37,7 @@
-     "postcss-8-nesting"
-   ],
-   "scripts": {
--    "prepublishOnly": "npm run build --if-present && npm run test",
-+    "prepublishOnly": "npm run build --if-present && npm run test --if-present",
-     "build": "node .bin/build.js",
-     "test": "node .bin/test.js",
-     "test:lint": "node .bin/test-lint.js",
-@@ -56,7 +56,7 @@
-     "node >= 12"
-   ],
-   "engines": {
--    "node": ">=12"
-+    "node": "^12 || ^14 || >=16"
-   },
-   "eslintConfig": {
-     "extends": "eslint:recommended",
 diff --git a/plugins/postcss-overflow-shorthand/package.json b/plugins/postcss-overflow-shorthand/package.json
 index c3fc8ce..479cf76 100644
 --- a/plugins/postcss-overflow-shorthand/package.json
