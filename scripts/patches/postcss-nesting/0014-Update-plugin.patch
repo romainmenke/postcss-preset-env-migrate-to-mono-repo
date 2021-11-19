@@ -1,7 +1,7 @@
 From ccf223b424b296f9e4937906ca8a3c40dd467f35 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Tue, 15 Sep 2015 19:12:40 -0400
-Subject: [PATCH 14/99] Update plugin
+Subject: [PATCH 014/105] Update plugin
 
 Support prefix option
 Add document and supports to bubbles

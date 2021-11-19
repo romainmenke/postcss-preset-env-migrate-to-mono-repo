@@ -1,7 +1,7 @@
 From 0cefff5517c9e92cfe70ae1954c32e1adfba55e4 Mon Sep 17 00:00:00 2001
 From: Romain Menke <11521496+romainmenke@users.noreply.github.com>
 Date: Mon, 15 Nov 2021 15:06:22 +0100
-Subject: [PATCH 97/99] remove postcss 7 (csstools/postcss-nesting#93)
+Subject: [PATCH 097/105] remove postcss 7 (csstools/postcss-nesting#93)
 
 * remove postcss 7 and deno support
 

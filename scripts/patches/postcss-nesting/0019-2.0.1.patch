@@ -1,7 +1,7 @@
 From 7e8e81a9f8f543a0ff49aba1e70d40009e17ddc3 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Wed, 16 Sep 2015 02:13:16 -0400
-Subject: [PATCH 19/99] 2.0.1
+Subject: [PATCH 019/105] 2.0.1
 
 ---
  CHANGELOG.md | 5 +++++

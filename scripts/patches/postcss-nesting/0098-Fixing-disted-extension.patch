@@ -1,7 +1,7 @@
 From c0bf7372137af2a2f3224d0ad4538271ca5a3b14 Mon Sep 17 00:00:00 2001
 From: Antonio Laguna <sombragriselros@gmail.com>
 Date: Tue, 16 Nov 2021 06:57:23 +0100
-Subject: [PATCH 98/99] Fixing disted extension
+Subject: [PATCH 098/105] Fixing disted extension
 
 ---
  .rollup.js | 2 +-

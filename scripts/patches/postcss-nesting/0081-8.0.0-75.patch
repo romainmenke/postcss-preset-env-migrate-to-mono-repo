@@ -1,7 +1,7 @@
 From 64ba9ac4a56e353b1685adb91cf0a24b425183cc Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Tue, 27 Apr 2021 01:12:50 -0400
-Subject: [PATCH 81/99] 8.0.0 (csstools/postcss-nesting#75)
+Subject: [PATCH 081/105] 8.0.0 (csstools/postcss-nesting#75)
 
 * 8.0.0
 

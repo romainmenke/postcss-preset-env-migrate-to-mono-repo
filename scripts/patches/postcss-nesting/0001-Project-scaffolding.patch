@@ -1,7 +1,7 @@
 From c53c861c7462849c2fce053da9823dad555cbbc2 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Wed, 17 Jun 2015 12:08:22 -0400
-Subject: [PATCH 01/99] Project scaffolding
+Subject: [PATCH 001/105] Project scaffolding
 
 ---
  .eslintrc   | 19 +++++++++++++++++++

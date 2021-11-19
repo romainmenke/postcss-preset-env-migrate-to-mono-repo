@@ -1,7 +1,7 @@
 From 37ca9e28202c62eedf0ce39d1b663ecbcec8a54b Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Wed, 17 Jun 2015 12:26:48 -0400
-Subject: [PATCH 05/99] Update README.md
+Subject: [PATCH 005/105] Update README.md
 
 ---
  README.md | 98 +++++++++++++++++++++++++++++++++++++++++++++++++++++++

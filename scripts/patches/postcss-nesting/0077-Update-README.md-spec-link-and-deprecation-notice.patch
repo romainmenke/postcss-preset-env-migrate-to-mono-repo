@@ -1,7 +1,7 @@
 From ab01c5c058ef9574e9273a1de196bda65cf56cdc Mon Sep 17 00:00:00 2001
 From: John Albin Wilkins <virtually.johnalbin@gmail.com>
 Date: Fri, 15 Mar 2019 22:48:13 +0800
-Subject: [PATCH 77/99] Update README.md spec link and deprecation notice
+Subject: [PATCH 077/105] Update README.md spec link and deprecation notice
 
 ---
  README.md | 8 +++++---

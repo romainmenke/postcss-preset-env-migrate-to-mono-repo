@@ -1,7 +1,7 @@
 From a19c002696b914bf958ab1d35a3bd0f108d63e4f Mon Sep 17 00:00:00 2001
 From: schelmo <g.schlmm@gmail.com>
 Date: Wed, 27 Oct 2021 16:14:41 +0200
-Subject: [PATCH 86/99] fix csstools/postcss-nesting#82: use the RuleExit listener (csstools/postcss-nesting#86)
+Subject: [PATCH 086/105] fix csstools/postcss-nesting#82: use the RuleExit listener (csstools/postcss-nesting#86)
 
 ---
  .bin/test-tape.js        | 20 ++++++++++++++++----

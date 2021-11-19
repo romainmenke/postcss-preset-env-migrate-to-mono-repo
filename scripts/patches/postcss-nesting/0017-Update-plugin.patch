@@ -1,7 +1,7 @@
 From 1504f28d5a853051e1752aa2ded7c73df71857e9 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Wed, 16 Sep 2015 02:08:19 -0400
-Subject: [PATCH 17/99] Update plugin
+Subject: [PATCH 017/105] Update plugin
 
 Fix bug where `@next` rule followed by `@media` rule did not bubble
 ---

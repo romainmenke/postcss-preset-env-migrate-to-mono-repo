@@ -1,7 +1,7 @@
 From bc1e73c7c82f09f754b61436a606ce5c92478c89 Mon Sep 17 00:00:00 2001
 From: Tommi Finnilae <baijeri@gmail.com>
 Date: Mon, 12 Oct 2015 13:02:50 +0300
-Subject: [PATCH 31/99] Update README.md
+Subject: [PATCH 031/105] Update README.md
 
 fix example code
 ---

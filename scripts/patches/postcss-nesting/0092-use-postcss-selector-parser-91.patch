@@ -1,7 +1,7 @@
 From e8489fcae3eb5ac51ba1e94e753a2b090e1c07e5 Mon Sep 17 00:00:00 2001
 From: Romain Menke <11521496+romainmenke@users.noreply.github.com>
 Date: Wed, 3 Nov 2021 13:28:26 +0100
-Subject: [PATCH 92/99] use postcss selector parser (csstools/postcss-nesting#91)
+Subject: [PATCH 092/105] use postcss selector parser (csstools/postcss-nesting#91)
 
 * use postcss selector parser
 

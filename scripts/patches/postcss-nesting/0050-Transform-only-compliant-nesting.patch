@@ -1,7 +1,7 @@
 From 47280dd2f3b24d73a78a24db218f0baa5bcdbf75 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Sat, 20 May 2017 21:13:23 -0400
-Subject: [PATCH 50/99] Transform only compliant nesting
+Subject: [PATCH 050/105] Transform only compliant nesting
 
 ---
  lib/transform-nesting-atrule.js | 2 +-

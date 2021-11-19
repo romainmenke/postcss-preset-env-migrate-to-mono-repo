@@ -1,7 +1,7 @@
 From 34a3aae7733594515493917bff7347052c8217a1 Mon Sep 17 00:00:00 2001
 From: Philip Bordallo <git@philipbordallo.com>
 Date: Sat, 26 May 2018 10:29:31 -0700
-Subject: [PATCH 73/99] Fix cssdb badge and link
+Subject: [PATCH 073/105] Fix cssdb badge and link
 
 ---
  README.md | 4 ++--

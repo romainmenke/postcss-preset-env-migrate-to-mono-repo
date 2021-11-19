@@ -1,7 +1,7 @@
 From 1931fbbd6a1e3ecf5aea1c73fed37307937544a3 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Tue, 15 Sep 2015 09:27:52 -0400
-Subject: [PATCH 13/99] Update documentation
+Subject: [PATCH 013/105] Update documentation
 
 ---
  README.md | 103 +++++++++++++++++++++++++++++++++++++++---------------

@@ -1,7 +1,7 @@
 From b638e5a76ebd673c95e006185a09315a78e4cb9a Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Mon, 22 May 2017 13:24:23 -0400
-Subject: [PATCH 55/99] Improve selector validity testing
+Subject: [PATCH 055/105] Improve selector validity testing
 
 ---
  lib/transform-nesting-atrule.js | 2 +-

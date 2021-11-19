@@ -1,0 +1,62 @@
+From d16f681f7f3e1cfa1022994d9d7e5f33329a4d37 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Wed, 3 Nov 2021 13:40:39 +0100
+Subject: [PATCH 94/97] update tests for nesting
+
+---
+ test/basic.nesting.expect.css     | 5 -----
+ test/basic.stage0-ff49.expect.css | 5 -----
+ test/basic.stage0.expect.css      | 5 -----
+ 3 files changed, 15 deletions(-)
+
+diff --git a/test/basic.nesting.expect.css b/test/basic.nesting.expect.css
+index a30c323..e330ef5 100644
+--- a/test/basic.nesting.expect.css
++++ b/test/basic.nesting.expect.css
+@@ -26,11 +26,6 @@
+ 		order: 5;
+ 	}
+ 
+-.test-nesting-rules {
+-
+-	order: 6;
+-}
+-
+ @custom-media --narrow-window (max-width: 30em);
+ 
+ @media (--narrow-window) {
+diff --git a/test/basic.stage0-ff49.expect.css b/test/basic.stage0-ff49.expect.css
+index 79fe510..b68fe33 100644
+--- a/test/basic.stage0-ff49.expect.css
++++ b/test/basic.stage0-ff49.expect.css
+@@ -36,11 +36,6 @@
+ 		order: 5;
+ 	}
+ 
+-.test-nesting-rules {
+-
+-	order: 6;
+-}
+-
+ @media (max-width: 30em) {
+ 	.test-custom-media-queries {
+ 		order: 7;
+diff --git a/test/basic.stage0.expect.css b/test/basic.stage0.expect.css
+index dc8cfe9..adac4a6 100644
+--- a/test/basic.stage0.expect.css
++++ b/test/basic.stage0.expect.css
+@@ -46,11 +46,6 @@
+ 		order: 5;
+ 	}
+ 
+-.test-nesting-rules {
+-
+-	order: 6;
+-}
+-
+ @media (max-width: 30em) {
+ 	.test-custom-media-queries {
+ 		order: 7;
+-- 
+2.33.1
+

@@ -1,7 +1,7 @@
 From 2ae0263b0cfe22fb0cb288c45bf4088308983187 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Mon, 8 May 2017 15:43:54 -0400
-Subject: [PATCH 48/99] 3.0.0
+Subject: [PATCH 048/105] 3.0.0
 
 ---
  .eslintrc                        | 146 -------------------------------

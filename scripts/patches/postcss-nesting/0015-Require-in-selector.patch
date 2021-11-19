@@ -1,7 +1,7 @@
 From ef27dceb2e76399767608d1cc8e9cb2c6f68153c Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Tue, 15 Sep 2015 19:51:59 -0400
-Subject: [PATCH 15/99] Require & in selector
+Subject: [PATCH 015/105] Require & in selector
 
 ---
  index.js     | 2 +-
