@@ -1,0 +1,27 @@
+From c095e4660ea74f1005fba1ad13d6d29c133c93e8 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Thu, 18 Nov 2021 19:28:54 +0100
+Subject: [PATCH 23/24] Updating CHANGELOG
+
+---
+ CHANGELOG.md | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 458e9a4..6cab5a3 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Lab Function
+ 
++### 4.0.1 (November 18, 2021)
++
++- Added: Safeguards against postcss-values-parser potentially throwing an error.
++- Updated: postcss-value-parser to 6.0.1 (patch)
++
+ ### 4.0.0 (September 17, 2021)
+ 
+ - Updated: Support for PostCS 8+ (major).
+-- 
+2.33.1
+

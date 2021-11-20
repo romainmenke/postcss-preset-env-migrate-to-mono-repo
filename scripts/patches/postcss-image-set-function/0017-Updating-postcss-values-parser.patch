@@ -1,0 +1,26 @@
+From 3f8cb7f3db68eef460e6ebe61a69434144e7298f Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Fri, 19 Nov 2021 09:45:39 +0100
+Subject: [PATCH 17/19] Updating postcss-values-parser
+
+So we have a common version for all of the plugins
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 92a23cd..3b9d199 100644
+--- a/package.json
++++ b/package.json
+@@ -21,7 +21,7 @@
+     "node": ">=12"
+   },
+   "dependencies": {
+-    "postcss-values-parser": "6.0.0"
++    "postcss-values-parser": "6.0.1"
+   },
+   "peerDependencies": {
+     "postcss": "^8.3"
+-- 
+2.33.1
+

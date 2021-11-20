@@ -1,0 +1,39 @@
+From 6fbd9f8a4f61eb1057209d18c1996db5b685801e Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Wed, 17 Nov 2021 21:38:01 +0100
+Subject: [PATCH 14/18] Ensuring values parser doesn't break build
+
+---
+ index.js | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index 1f0d16a..90b019b 100644
+--- a/index.js
++++ b/index.js
+@@ -22,7 +22,21 @@ module.exports = function creator(opts) {
+ 				return;
+ 			}
+ 
+-			const valueAST = parse(decl.value, { ignoreUnknownWords: true });
++			let valueAST;
++
++			try {
++				valueAST = parse(decl.value, { ignoreUnknownWords: true });
++			} catch (error) {
++				console.warn(
++					'[postcss-double-position-gradients] There was an error parsing "%s" and it has been ignored.',
++					decl.value
++				);
++			}
++
++			if (typeof valueAST === 'undefined') {
++				// Bail if there's an error
++				return;
++			}
+ 
+ 			valueAST.walkFuncs((func) => {
+ 				if (!gradientPartsRegExp.test(func.name)) {
+-- 
+2.33.1
+

@@ -1,0 +1,25 @@
+From f8a694348da6b5b0e9965ce1029f54a775350c73 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Thu, 18 Nov 2021 12:48:58 +0100
+Subject: [PATCH 108/108] 10.0.2
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 9515fb7..5f45f5d 100644
+--- a/package.json
++++ b/package.json
+@@ -2,7 +2,7 @@
+   "name": "postcss-nesting",
+   "description": "Nest rules inside each other in CSS",
+   "license": "CC0-1.0",
+-  "version": "10.0.1",
++  "version": "10.0.2",
+   "type": "module",
+   "main": "dist/index.cjs",
+   "module": "dist/index.mjs",
+-- 
+2.33.1
+

@@ -1,0 +1,34 @@
+From 8ab1fae4c65955b9b14d7c53953bac3feab8c3e5 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Wed, 17 Nov 2021 19:43:27 +0100
+Subject: [PATCH 11/18] even smaller still
+
+---
+ index.js | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/index.js b/index.js
+index f33e6ae..5a65255 100644
+--- a/index.js
++++ b/index.js
+@@ -24,7 +24,7 @@ module.exports = function creator(opts) {
+ 
+ 			const valueAST = parse(decl.value, { ignoreUnknownWords: true });
+ 
+-			valueAST.walkType('func', (func) => {
++			valueAST.walkFuncs((func) => {
+ 				if (!gradientPartsRegExp.test(func.name)) {
+ 					return;
+ 				}
+@@ -52,7 +52,7 @@ module.exports = function creator(opts) {
+ 						func.insertBefore(node, [comma, color]);
+ 					}
+ 				})
+-			});
++			})
+ 
+ 			const modifiedValue = String(valueAST);
+ 
+-- 
+2.33.1
+

@@ -1,0 +1,26 @@
+From f3cde8e3732d133d7bf2eba7014bf25db76fd05b Mon Sep 17 00:00:00 2001
+From: Romain Menke <11521496+romainmenke@users.noreply.github.com>
+Date: Thu, 18 Nov 2021 19:35:39 +0100
+Subject: [PATCH 22/26] Update src/index.js
+
+Co-authored-by: Antonio Laguna <sombragriselros@gmail.com>
+---
+ src/index.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/index.js b/src/index.js
+index 438722f..c952661 100755
+--- a/src/index.js
++++ b/src/index.js
+@@ -9,7 +9,7 @@ const creator = opts => {
+ 		postcssPlugin: 'postcss-place',
+ 		Declaration: (decl, { result }) => {
+ 			if (placeMatch.test(decl)) {
+-				onCSSDeclaration(decl, { result: result })
++				onCSSDeclaration(decl, { result })
+ 			}
+ 		},
+ 	}
+-- 
+2.33.1
+

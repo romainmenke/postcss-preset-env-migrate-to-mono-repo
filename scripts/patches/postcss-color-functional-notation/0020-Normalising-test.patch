@@ -1,0 +1,32 @@
+From 72507a8be812b9674f1501d9f39966e030757bdd Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Thu, 18 Nov 2021 19:21:39 +0100
+Subject: [PATCH 20/22] Normalising test
+
+---
+ .github/workflows/test.yml | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
+index 4a287db..4067cf5 100644
+--- a/.github/workflows/test.yml
++++ b/.github/workflows/test.yml
+@@ -7,12 +7,12 @@ jobs:
+     runs-on: ubuntu-latest
+     strategy:
+       matrix:
+-        node: [12, 16]
++        node: [12, 14, 16]
+     steps:
+       - uses: actions/checkout@v2
+       - uses: actions/setup-node@v2
+         with:
+           node-version: ${{ matrix.node }}
+ 
+-      - run: yarn install --ignore-scripts
+-      - run: yarn run test
++      - run: npm install --ignore-scripts
++      - run: npm run test
+-- 
+2.33.1
+

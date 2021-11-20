@@ -1,0 +1,26 @@
+From 48b619c1b76635a9490da092e81b1563ef3fbdf1 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Thu, 18 Nov 2021 12:48:44 +0100
+Subject: [PATCH 107/108] Updating CHANGELOG
+
+---
+ CHANGELOG.md | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 25e8d4e..1b78852 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Nesting
+ 
++### 10.0.2 (November 18, 2021)
++
++- Fixed: Support for Deno. Ensuring we pack `mod.js` so it can be accessible by CDNs.
++
+ ### 10.0.1 (November 17, 2021)
+ 
+ - Removed: Support for `allowDeclarationsAfterNestedRules`.
+-- 
+2.33.1
+

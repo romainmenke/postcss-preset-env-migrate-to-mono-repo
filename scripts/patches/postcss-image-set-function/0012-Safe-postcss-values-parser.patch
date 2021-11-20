@@ -1,0 +1,98 @@
+From 1aa53942cb6a98b7af3c4f8fab6984af55ad4083 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Thu, 18 Nov 2021 18:48:51 +0100
+Subject: [PATCH 12/19] Safe postcss values parser
+
+---
+ .tape.js                          |  4 +++-
+ index.js                          | 15 ++++++++++++++-
+ test/basic.css                    |  5 +++++
+ test/basic.expect.css             |  5 +++++
+ test/basic.no-preserve.expect.css |  5 +++++
+ 5 files changed, 32 insertions(+), 2 deletions(-)
+
+diff --git a/.tape.js b/.tape.js
+index f70686f..ff20d15 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,9 +1,11 @@
+ module.exports = {
+ 	'basic': {
+-		message: 'supports basic usage'
++		message: 'supports basic usage',
++		warnings: 2,
+ 	},
+ 	'basic:no-preserve': {
+ 		message: 'supports { preserve: false } usage',
++		warnings: 2,
+ 		options: {
+ 			preserve: false
+ 		}
+diff --git a/index.js b/index.js
+index 5aa4063..2228740 100644
+--- a/index.js
++++ b/index.js
+@@ -22,7 +22,20 @@ module.exports = function creator(opts) {
+ 
+ 				// if a declaration likely uses an image-set() function
+ 				if (imageSetValueMatchRegExp.test(value)) {
+-					const valueAST = parse(value);
++					let valueAST
++
++					try {
++						valueAST = parse(value, { ignoreUnknownWords: true })
++					} catch (error) {
++						decl.warn(
++							helpers.result,
++							`Failed to parse value '${value}' as an image-set function. Leaving the original value intact.`
++						)
++					}
++
++					if (typeof valueAST === 'undefined') {
++						return
++					}
+ 
+ 					// process every image-set() function
+ 					valueAST.walkFuncs(node => {
+diff --git a/test/basic.css b/test/basic.css
+index 0daf0e9..f8fb491 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -103,3 +103,8 @@
+ 		);
+ 	}
+ }
++
++.test-unparseable-image-set-function {
++	background-image: image-set(url(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==) 1x, url(img/test-2x.png) 2x);
++	background-image: image-set(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==, url(img/test-2x.png) 2x);
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 4ad8a54..a9c2882 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -285,3 +285,8 @@
+ 		);
+ 	}
+ }
++
++.test-unparseable-image-set-function {
++	background-image: image-set(url(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==) 1x, url(img/test-2x.png) 2x);
++	background-image: image-set(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==, url(img/test-2x.png) 2x);
++}
+diff --git a/test/basic.no-preserve.expect.css b/test/basic.no-preserve.expect.css
+index 2a0f6f2..f97a6cc 100644
+--- a/test/basic.no-preserve.expect.css
++++ b/test/basic.no-preserve.expect.css
+@@ -230,3 +230,8 @@
+ 	}
+ 	}
+ }
++
++.test-unparseable-image-set-function {
++	background-image: image-set(url(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==) 1x, url(img/test-2x.png) 2x);
++	background-image: image-set(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==, url(img/test-2x.png) 2x);
++}
+-- 
+2.33.1
+

@@ -1,0 +1,47 @@
+From f87816ee87bc53afce1a2327f28fc658232a8e8c Mon Sep 17 00:00:00 2001
+From: Romain Menke <11521496+romainmenke@users.noreply.github.com>
+Date: Thu, 18 Nov 2021 19:08:32 +0100
+Subject: [PATCH 18/22] Apply suggestions from code review
+
+---
+ test/basic.css                      | 2 +-
+ test/basic.expect.css               | 2 +-
+ test/basic.preserve-true.expect.css | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/test/basic.css b/test/basic.css
+index 1786e2a..bf5a631 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -47,5 +47,5 @@
+ }
+ 
+ .test-unparseable-color-function {
+-	color: rgb(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==);
++	color: rgb(; );
+ }
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 4660374..7b29c38 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -47,5 +47,5 @@
+ }
+ 
+ .test-unparseable-color-function {
+-	color: rgb(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==);
++	color: rgb(; );
+ }
+diff --git a/test/basic.preserve-true.expect.css b/test/basic.preserve-true.expect.css
+index 9c31588..541469e 100644
+--- a/test/basic.preserve-true.expect.css
++++ b/test/basic.preserve-true.expect.css
+@@ -71,5 +71,5 @@
+ }
+ 
+ .test-unparseable-color-function {
+-	color: rgb(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==);
++	color: rgb(; );
+ }
+-- 
+2.33.1
+

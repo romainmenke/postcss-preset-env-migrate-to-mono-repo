@@ -1,0 +1,32 @@
+From 2cdc5c3338edd434db9b788419d0fa7ee6e47ed9 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Wed, 17 Nov 2021 19:36:39 +0100
+Subject: [PATCH 09/18] fmt
+
+---
+ index.js | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/index.js b/index.js
+index 1db1683..1761e2b 100644
+--- a/index.js
++++ b/index.js
+@@ -3,7 +3,8 @@ const Punctuation = require("postcss-values-parser/lib/nodes/Punctuation");
+ 
+ // whether the value has a lab() or lch() matcher
+ const gradientRegExp = /(repeating-)?(conic|linear|radial)-gradient\([\W\w]*\)/i;
+-// const gradientPartsRegExp = /^(repeating-)?(conic|linear|radial)-gradient$/i;
++
++const isPunctuationCommaNode = node => node.type === 'punctuation' && node.value === ','
+ 
+ /**
+  * Transform double-position gradients in CSS.
+@@ -54,5 +55,3 @@ module.exports = function creator(opts) {
+ }
+ 
+ module.exports.postcss = true;
+-
+-const isPunctuationCommaNode = node => node.type === 'punctuation' && node.value === ','
+-- 
+2.33.1
+

@@ -1,0 +1,100 @@
+From 42335ef91c6834a69318690409f8ec78b13c03a5 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Thu, 18 Nov 2021 18:35:44 +0100
+Subject: [PATCH 16/22] Safe postcss values parser
+
+---
+ .tape.js                            |  4 +++-
+ src/onCSSDeclaration.js             | 17 +++++++++++++++--
+ test/basic.css                      |  4 ++++
+ test/basic.expect.css               |  4 ++++
+ test/basic.preserve-true.expect.css |  4 ++++
+ 5 files changed, 30 insertions(+), 3 deletions(-)
+
+diff --git a/.tape.js b/.tape.js
+index e496428..e179a15 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,9 +1,11 @@
+ module.exports = {
+ 	'basic': {
+-		message: 'supports basic usage'
++		message: 'supports basic usage',
++		warnings: 1,
+ 	},
+ 	'basic:preserve-true': {
+ 		message: 'supports { preserve: true } usage',
++		warnings: 1,
+ 		options: {
+ 			preserve: true
+ 		}
+diff --git a/src/onCSSDeclaration.js b/src/onCSSDeclaration.js
+index e56aefa..a7ce3f5 100644
+--- a/src/onCSSDeclaration.js
++++ b/src/onCSSDeclaration.js
+@@ -3,11 +3,24 @@ import onCSSFunction from './onCSSFunction'
+ import options from './options'
+ 
+ /** @type {(decl: CSSDeclaration) => void} Transform space and slash separated color functions in CSS Declarations. */
+-const onCSSDeclaration = decl => {
++const onCSSDeclaration = (decl, { result }) => {
+ 	const { value: originalValue } = decl
+ 
+ 	if (hasAnyColorFunction(originalValue)) {
+-		const valueAST = parse(originalValue)
++		let valueAST
++
++		try {
++			valueAST = parse(originalValue, { ignoreUnknownWords: true })
++		} catch (error) {
++			decl.warn(
++				result,
++				`Failed to parse params '${originalValue}' as a color function. Leaving the original value intact.`
++			)
++		}
++
++		if (typeof valueAST === 'undefined') {
++			return
++		}
+ 
+ 		valueAST.walkType('func', onCSSFunction)
+ 
+diff --git a/test/basic.css b/test/basic.css
+index b334ca9..1786e2a 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -45,3 +45,7 @@
+ 	color: hwb(0 0% 0% / 100%);
+ 	color: hwb(0 0% 0% / 50%);
+ }
++
++.test-unparseable-color-function {
++	color: rgb(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==);
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 1ae39c6..4660374 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -45,3 +45,7 @@
+ 	color: hwb(0 0% 0% / 100%);
+ 	color: hwb(0 0% 0% / 50%);
+ }
++
++.test-unparseable-color-function {
++	color: rgb(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==);
++}
+diff --git a/test/basic.preserve-true.expect.css b/test/basic.preserve-true.expect.css
+index 7e26fe0..9c31588 100644
+--- a/test/basic.preserve-true.expect.css
++++ b/test/basic.preserve-true.expect.css
+@@ -69,3 +69,7 @@
+ 	color: hwb(0 0% 0% / 100%);
+ 	color: hwb(0 0% 0% / 50%);
+ }
++
++.test-unparseable-color-function {
++	color: rgb(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==);
++}
+-- 
+2.33.1
+

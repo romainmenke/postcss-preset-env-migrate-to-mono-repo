@@ -1,0 +1,44 @@
+From b2ab1822acc1c2803bb7159c4e357f64dbb0a96a Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Thu, 18 Nov 2021 19:28:39 +0100
+Subject: [PATCH 21/24] Updating libraries
+
+---
+ package.json | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/package.json b/package.json
+index 04c0754..f9271c5 100644
+--- a/package.json
++++ b/package.json
+@@ -27,19 +27,19 @@
+   },
+   "dependencies": {
+     "@csstools/convert-colors": "2.0.0",
+-    "postcss-values-parser": "6.0.0"
++    "postcss-values-parser": "6.0.1"
+   },
+   "peerDependencies": {
+     "postcss": "^8.3"
+   },
+   "devDependencies": {
+-    "@babel/core": "7.15.5",
+-    "@babel/preset-env": "7.15.6",
+-    "@rollup/plugin-babel": "5.3.0",
+-    "eslint": "7.32.0",
+-    "postcss": "8.3.6",
+-    "postcss-tape": "6.0.1",
+-    "rollup": "2.56.3"
++    "@babel/core": "^7.16.0",
++    "@babel/preset-env": "^7.16.4",
++    "@rollup/plugin-babel": "^5.3.0",
++    "eslint": "^8.2.0",
++    "postcss": "^8.3.11",
++    "postcss-tape": "^6.0.1",
++    "rollup": "^2.60.0"
+   },
+   "babel": {
+     "presets": [
+-- 
+2.33.1
+

@@ -1,0 +1,24 @@
+From 81a2fe5f2dbb3203ae539adf1d6851bde79739b9 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Thu, 18 Nov 2021 19:23:27 +0100
+Subject: [PATCH 22/22] 4.0.1
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index b7c1334..0e78b49 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-functional-notation",
+-  "version": "4.0.0",
++  "version": "4.0.1",
+   "description": "Use space and slash separated color notation in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

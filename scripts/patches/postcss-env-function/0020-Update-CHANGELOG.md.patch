@@ -1,0 +1,31 @@
+From fbb8397e5913eb44ccacba231911f1cef87034b0 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Thu, 18 Nov 2021 18:03:05 +0100
+Subject: [PATCH 20/21] Update CHANGELOG.md
+
+---
+ CHANGELOG.md | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 9057446..8b7bd1f 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,14 @@
+ # Changes to PostCSS Environment Variables
+ 
++### 4.0.2 (November 18, 2021)
++
++- Added: Safeguards against postcss-values-parser potentially throwing an error.
++
++### 4.0.1 (October 28, 2021)
++
++- Updated: Enforcing styling consistency
++- Updated: `postcss-values-parser` to 6.0.1 (patch).
++
+ ### 4.0.0 (September 17, 2021)
+ 
+ - Updated: Support for PostCS 8+ (major).
+-- 
+2.33.1
+

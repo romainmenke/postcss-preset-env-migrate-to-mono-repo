@@ -1,0 +1,34 @@
+From 99ca63bd80bde047707d4d94fe81812c3cc5638b Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Wed, 17 Nov 2021 21:37:26 +0100
+Subject: [PATCH 12/18] Updating dependencies
+
+---
+ package.json | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/package.json b/package.json
+index 676717e..cd9140b 100644
+--- a/package.json
++++ b/package.json
+@@ -19,14 +19,14 @@
+     "node": ">=12"
+   },
+   "dependencies": {
+-    "postcss-values-parser": "6.0.0"
++    "postcss-values-parser": "6.0.1"
+   },
+   "peerDependencies": {
+     "postcss": "^8.3"
+   },
+   "devDependencies": {
+-    "eslint": "7.32.0",
+-    "postcss": "8.3.6",
++    "eslint": "8.2.0",
++    "postcss": "8.3.11",
+     "postcss-tape": "6.0.1"
+   },
+   "eslintConfig": {
+-- 
+2.33.1
+

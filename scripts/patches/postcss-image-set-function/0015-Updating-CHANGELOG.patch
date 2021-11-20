@@ -1,0 +1,26 @@
+From 453abfa961d8529013060b5c3ab348f00005e83d Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Thu, 18 Nov 2021 19:09:18 +0100
+Subject: [PATCH 15/19] Updating CHANGELOG
+
+---
+ CHANGELOG.md | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 10d43dc..997e1b8 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS image-set() Function
+ 
++### 4.0.1 (November 18, 2021)
++
++- Added: Safeguards against postcss-values-parser potentially throwing an error.
++
+ ### 4.0.0 (September 17, 2021)
+ 
+ - Updated: Support for PostCS 8+ (major).
+-- 
+2.33.1
+

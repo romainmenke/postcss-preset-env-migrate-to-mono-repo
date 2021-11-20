@@ -1,0 +1,62 @@
+From 7caed8890a5df90aaef451e41709d5f1627e1700 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Wed, 17 Nov 2021 18:28:33 +0100
+Subject: [PATCH 100/103] Fixing tests after postcss-nesting updates
+
+---
+ test/basic.nesting.expect.css     | 5 +++++
+ test/basic.stage0-ff49.expect.css | 5 +++++
+ test/basic.stage0.expect.css      | 5 +++++
+ 3 files changed, 15 insertions(+)
+
+diff --git a/test/basic.nesting.expect.css b/test/basic.nesting.expect.css
+index e330ef5..a30c323 100644
+--- a/test/basic.nesting.expect.css
++++ b/test/basic.nesting.expect.css
+@@ -26,6 +26,11 @@
+ 		order: 5;
+ 	}
+ 
++.test-nesting-rules {
++
++	order: 6;
++}
++
+ @custom-media --narrow-window (max-width: 30em);
+ 
+ @media (--narrow-window) {
+diff --git a/test/basic.stage0-ff49.expect.css b/test/basic.stage0-ff49.expect.css
+index b68fe33..79fe510 100644
+--- a/test/basic.stage0-ff49.expect.css
++++ b/test/basic.stage0-ff49.expect.css
+@@ -36,6 +36,11 @@
+ 		order: 5;
+ 	}
+ 
++.test-nesting-rules {
++
++	order: 6;
++}
++
+ @media (max-width: 30em) {
+ 	.test-custom-media-queries {
+ 		order: 7;
+diff --git a/test/basic.stage0.expect.css b/test/basic.stage0.expect.css
+index 66cf31d..b5262b8 100644
+--- a/test/basic.stage0.expect.css
++++ b/test/basic.stage0.expect.css
+@@ -46,6 +46,11 @@
+ 		order: 5;
+ 	}
+ 
++.test-nesting-rules {
++
++	order: 6;
++}
++
+ @media (max-width: 30em) {
+ 	.test-custom-media-queries {
+ 		order: 7;
+-- 
+2.33.1
+

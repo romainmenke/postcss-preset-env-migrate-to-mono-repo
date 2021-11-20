@@ -1,0 +1,49 @@
+From 5905d89d5765772f7afddf44cc7cc639fae9fc5c Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Wed, 17 Nov 2021 19:42:09 +0100
+Subject: [PATCH 10/18] cleanup and make change smaller
+
+---
+ index.js | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index 1761e2b..f33e6ae 100644
+--- a/index.js
++++ b/index.js
+@@ -3,6 +3,7 @@ const Punctuation = require("postcss-values-parser/lib/nodes/Punctuation");
+ 
+ // whether the value has a lab() or lch() matcher
+ const gradientRegExp = /(repeating-)?(conic|linear|radial)-gradient\([\W\w]*\)/i;
++const gradientPartsRegExp = /^(repeating-)?(conic|linear|radial)-gradient$/i;
+ 
+ const isPunctuationCommaNode = node => node.type === 'punctuation' && node.value === ','
+ 
+@@ -24,6 +25,10 @@ module.exports = function creator(opts) {
+ 			const valueAST = parse(decl.value, { ignoreUnknownWords: true });
+ 
+ 			valueAST.walkType('func', (func) => {
++				if (!gradientPartsRegExp.test(func.name)) {
++					return;
++				}
++
+ 				const nodes = func.nodes;
+ 
+ 				nodes.slice(0).forEach((node, index, nodes) => {
+@@ -37,7 +42,12 @@ module.exports = function creator(opts) {
+ 					if (isDoublePositionLength) {
+ 						// insert the fallback colors
+ 						const color = node2back.clone();
+-						const comma = new Punctuation({ value: ',', raws: isPunctuationCommaNode(node1next) ? node1next.clone().raws : { before: '', after: '' } })
++						const comma = new Punctuation({
++							value: ',',
++							raws: isPunctuationCommaNode(node1next)
++								? Object.assign({}, node1next.clone().raws)
++								: { before: '', after: '' }
++						});
+ 
+ 						func.insertBefore(node, [comma, color]);
+ 					}
+-- 
+2.33.1
+

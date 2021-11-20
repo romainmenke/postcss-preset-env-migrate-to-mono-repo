@@ -1,0 +1,25 @@
+From 62d00884a19cdf9d680abf28575fbcf3721caccb Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Thu, 18 Nov 2021 18:36:35 +0100
+Subject: [PATCH 17/22] wording
+
+---
+ src/onCSSDeclaration.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/onCSSDeclaration.js b/src/onCSSDeclaration.js
+index a7ce3f5..9ad3354 100644
+--- a/src/onCSSDeclaration.js
++++ b/src/onCSSDeclaration.js
+@@ -14,7 +14,7 @@ const onCSSDeclaration = (decl, { result }) => {
+ 		} catch (error) {
+ 			decl.warn(
+ 				result,
+-				`Failed to parse params '${originalValue}' as a color function. Leaving the original value intact.`
++				`Failed to parse value '${originalValue}' as a color function. Leaving the original value intact.`
+ 			)
+ 		}
+ 
+-- 
+2.33.1
+

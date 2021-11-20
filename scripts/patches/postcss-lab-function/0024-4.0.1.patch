@@ -1,0 +1,24 @@
+From 6293f19d90be476a99e061dd1918a7a26e4a8146 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Thu, 18 Nov 2021 19:29:01 +0100
+Subject: [PATCH 24/24] 4.0.1
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index f9271c5..ea1c8a3 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-lab-function",
+-  "version": "4.0.0",
++  "version": "4.0.1",
+   "description": "Use lab() and lch() color functions in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

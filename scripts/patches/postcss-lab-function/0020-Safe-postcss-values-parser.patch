@@ -1,0 +1,100 @@
+From b1017423d296c636c11a0a0aecb58e6cd264efca Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Thu, 18 Nov 2021 19:04:21 +0100
+Subject: [PATCH 20/24] Safe postcss values parser
+
+---
+ .tape.js                            |  4 +++-
+ src/onCSSDeclaration.js             | 17 +++++++++++++++--
+ test/basic.css                      |  4 ++++
+ test/basic.expect.css               |  4 ++++
+ test/basic.preserve-true.expect.css |  4 ++++
+ 5 files changed, 30 insertions(+), 3 deletions(-)
+
+diff --git a/.tape.js b/.tape.js
+index e496428..e179a15 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,9 +1,11 @@
+ module.exports = {
+ 	'basic': {
+-		message: 'supports basic usage'
++		message: 'supports basic usage',
++		warnings: 1,
+ 	},
+ 	'basic:preserve-true': {
+ 		message: 'supports { preserve: true } usage',
++		warnings: 1,
+ 		options: {
+ 			preserve: true
+ 		}
+diff --git a/src/onCSSDeclaration.js b/src/onCSSDeclaration.js
+index d6db088..29538b8 100644
+--- a/src/onCSSDeclaration.js
++++ b/src/onCSSDeclaration.js
+@@ -3,11 +3,24 @@ import onCSSFunction from './onCSSFunction'
+ import options from './options'
+ 
+ /** @type {(decl: CSSDeclaration) => void} Transform lab() and lch() functions in CSS Declarations. */
+-const onCSSDeclaration = decl => {
++const onCSSDeclaration = (decl, { result }) => {
+ 	const { value: originalValue } = decl
+ 
+ 	if (hasAnyColorFunction(originalValue)) {
+-		const valueAST = parse(originalValue)
++		let valueAST
++
++		try {
++			valueAST = parse(originalValue, { ignoreUnknownWords: true })
++		} catch (error) {
++			decl.warn(
++				result,
++				`Failed to parse value '${originalValue}' as a lab or hcl function. Leaving the original value intact.`
++			)
++		}
++
++		if (typeof valueAST === 'undefined') {
++			return
++		}
+ 
+ 		valueAST.walkType('func', onCSSFunction)
+ 
+diff --git a/test/basic.css b/test/basic.css
+index 57dc0f7..5e9a293 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -15,3 +15,7 @@
+ 	color: lch(40% 68.8 34.5 / 50%);
+ 	color: lch(100% 50 0);
+ }
++
++.test-unparseable-lab-function {
++	background-image: lab(; );
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 4068e14..f874de5 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -15,3 +15,7 @@
+ 	color: rgba(178, 34, 34, 0.5);
+ 	color: rgb(255, 216, 255);
+ }
++
++.test-unparseable-lab-function {
++	background-image: lab(; );
++}
+diff --git a/test/basic.preserve-true.expect.css b/test/basic.preserve-true.expect.css
+index e2cb310..0674cdd 100644
+--- a/test/basic.preserve-true.expect.css
++++ b/test/basic.preserve-true.expect.css
+@@ -27,3 +27,7 @@
+ 	color: rgb(255, 216, 255);
+ 	color: lch(100% 50 0);
+ }
++
++.test-unparseable-lab-function {
++	background-image: lab(; );
++}
+-- 
+2.33.1
+

@@ -1,0 +1,119 @@
+From f8524beba9c182ccc000bc35f9a3e739a2ae1cf6 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Thu, 18 Nov 2021 19:16:46 +0100
+Subject: [PATCH 21/26] Safe postcss values parser
+
+---
+ .tape.js                             |  4 +++-
+ src/index.js                         |  4 ++--
+ src/onCSSDeclaration.js              | 18 ++++++++++++++++--
+ test/basic.css                       |  4 ++++
+ test/basic.expect.css                |  4 ++++
+ test/basic.preserve-false.expect.css |  4 ++++
+ 6 files changed, 33 insertions(+), 5 deletions(-)
+
+diff --git a/.tape.js b/.tape.js
+index 24d784e..b8be1ea 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,9 +1,11 @@
+ module.exports = {
+ 	'basic': {
+-		message: 'supports basic usage'
++		message: 'supports basic usage',
++		warnings: 1,
+ 	},
+ 	'basic:preserve-false': {
+ 		message: 'supports { preserve: false } usage',
++		warnings: 1,
+ 		options: {
+ 			preserve: false
+ 		}
+diff --git a/src/index.js b/src/index.js
+index 19698c7..438722f 100755
+--- a/src/index.js
++++ b/src/index.js
+@@ -7,9 +7,9 @@ const creator = opts => {
+ 
+ 	return {
+ 		postcssPlugin: 'postcss-place',
+-		Declaration: (decl) => {
++		Declaration: (decl, { result }) => {
+ 			if (placeMatch.test(decl)) {
+-				onCSSDeclaration(decl)
++				onCSSDeclaration(decl, { result: result })
+ 			}
+ 		},
+ 	}
+diff --git a/src/onCSSDeclaration.js b/src/onCSSDeclaration.js
+index 740a0f2..4a7c332 100644
+--- a/src/onCSSDeclaration.js
++++ b/src/onCSSDeclaration.js
+@@ -1,12 +1,26 @@
+ import { parse } from 'postcss-values-parser'
+ import options from './options'
+ 
+-export default decl => {
++export default (decl, { result }) => {
+ 	// alignment
+ 	const alignment = decl.prop.match(placeMatch)[1]
+ 
+ 	// value ast and child nodes
+-	const value = parse(decl.value)
++	let value
++
++	try {
++		value = parse(decl.value)
++	} catch (error) {
++		decl.warn(
++			result,
++			`Failed to parse value '${decl.value}'. Leaving the original value intact.`
++		)
++	}
++
++	if (typeof value === 'undefined') {
++		return
++	}
++
+ 	let alignmentValues = []
+ 	value.walkWords(walk => {
+ 		alignmentValues.push(
+diff --git a/test/basic.css b/test/basic.css
+index a760709..f8acf33 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -21,3 +21,7 @@ d {
+ 	place-items: first var(--second);
+ 	place-self: first var(--second);
+ }
++
++.test-unparseable-var-in-place-declaration {
++	place-content: var(; );
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index f94f52a..47fdfd3 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -45,3 +45,7 @@ d {
+ 	justify-self: var(--second);
+ 	place-self: first var(--second);
+ }
++
++.test-unparseable-var-in-place-declaration {
++	place-content: var(; );
++}
+diff --git a/test/basic.preserve-false.expect.css b/test/basic.preserve-false.expect.css
+index 92214f4..81eb3de 100644
+--- a/test/basic.preserve-false.expect.css
++++ b/test/basic.preserve-false.expect.css
+@@ -33,3 +33,7 @@ d {
+ 	align-self: first;
+ 	justify-self: var(--second);
+ }
++
++.test-unparseable-var-in-place-declaration {
++	place-content: var(; );
++}
+-- 
+2.33.1
+

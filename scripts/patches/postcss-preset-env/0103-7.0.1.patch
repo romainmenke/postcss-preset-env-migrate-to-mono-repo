@@ -1,0 +1,24 @@
+From 167668fdb5704b819dffe8eaec5c867e4e759513 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Fri, 19 Nov 2021 12:24:23 +0100
+Subject: [PATCH 103/103] 7.0.1
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 631b53b..e6a218c 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-preset-env",
+-  "version": "7.0.0",
++  "version": "7.0.1",
+   "description": "Convert modern CSS into something browsers understand",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

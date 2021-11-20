@@ -1,0 +1,38 @@
+From a9307fccafaf6bb6e2ddbf29119f262c9d4644d7 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Thu, 18 Nov 2021 12:55:43 +0100
+Subject: [PATCH 15/18] Using postcss warning method
+
+---
+ index.js | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/index.js b/index.js
+index 90b019b..246fdcb 100644
+--- a/index.js
++++ b/index.js
+@@ -17,7 +17,7 @@ module.exports = function creator(opts) {
+ 
+ 	return {
+ 		postcssPlugin: 'postcss-double-position-gradients',
+-		Declaration(decl) {
++		Declaration(decl, { result }) {
+ 			if (!gradientRegExp.test(decl.value)) {
+ 				return;
+ 			}
+@@ -27,9 +27,9 @@ module.exports = function creator(opts) {
+ 			try {
+ 				valueAST = parse(decl.value, { ignoreUnknownWords: true });
+ 			} catch (error) {
+-				console.warn(
+-					'[postcss-double-position-gradients] There was an error parsing "%s" and it has been ignored.',
+-					decl.value
++				decl.warn(
++					result,
++					`Failed to parse value '${decl.value}' as a CSS gradient. Leaving the original value intact.`
+ 				);
+ 			}
+ 
+-- 
+2.33.1
+

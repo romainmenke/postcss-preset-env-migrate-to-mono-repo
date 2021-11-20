@@ -1,0 +1,46 @@
+From 9cb356b0009042d1be38683f3bfe06be945d61d3 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Thu, 18 Nov 2021 19:20:54 +0100
+Subject: [PATCH 19/22] Updating dependencies
+
+---
+ package.json | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/package.json b/package.json
+index ca40517..b7c1334 100644
+--- a/package.json
++++ b/package.json
+@@ -26,20 +26,20 @@
+     "node": ">=12"
+   },
+   "dependencies": {
+-    "postcss-values-parser": "6.0.0"
++    "postcss-values-parser": "6.0.1"
+   },
+   "peerDependencies": {
+     "postcss": "^8.3"
+   },
+   "devDependencies": {
+-    "@babel/core": "7.15.5",
+-    "@babel/preset-env": "7.15.6",
+-    "eslint": "7.32.0",
+-    "postcss": "8.3.6",
+-    "postcss-tape": "6.0.1",
+-    "pre-commit": "1.2.2",
+-    "rollup": "2.56.3",
+-    "rollup-plugin-babel": "4.4.0"
++    "@babel/core": "^7.16.0",
++    "@babel/preset-env": "^7.16.4",
++    "eslint": "^8.2.0",
++    "postcss": "^8.3.11",
++    "postcss-tape": "^6.0.1",
++    "pre-commit": "^1.2.2",
++    "rollup": "^2.60.0",
++    "rollup-plugin-babel": "^4.4.0"
+   },
+   "babel": {
+     "presets": [
+-- 
+2.33.1
+

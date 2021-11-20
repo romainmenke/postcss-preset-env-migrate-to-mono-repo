@@ -1,0 +1,26 @@
+From 69cd8ef50698121c0beb9cefca4a6649396c91e4 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Wed, 17 Nov 2021 19:09:13 +0100
+Subject: [PATCH 05/18] add test for veutify infinite loop
+
+---
+ test/basic.css | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/test/basic.css b/test/basic.css
+index 0d53b4b..aac6780 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -17,3 +17,9 @@
+ .test-conic-gradient-ignored {
+ 	background-image: conic-gradient(yellowgreen 40%, gold 0deg , gold 75% , #f06 0deg);
+ }
++
++.v-progress-linear--striped .v-progress-linear__determinate {
++	background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 25%, transparent 0, transparent 50%, rgba(255, 255, 255, 0.25) 0, rgba(255, 255, 255, 0.25) 75%, transparent 0, transparent);
++	background-size: 40px 40px;
++	background-repeat: repeat
++}
+-- 
+2.33.1
+

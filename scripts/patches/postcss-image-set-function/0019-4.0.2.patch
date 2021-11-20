@@ -1,0 +1,24 @@
+From fc8c37214c17d62894a4d4b918b00713dec9cece Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Fri, 19 Nov 2021 09:45:55 +0100
+Subject: [PATCH 19/19] 4.0.2
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 3b9d199..e1e63b9 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-image-set-function",
+-  "version": "4.0.1",
++  "version": "4.0.2",
+   "description": "Display resolution-dependent images using the image-set() function in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

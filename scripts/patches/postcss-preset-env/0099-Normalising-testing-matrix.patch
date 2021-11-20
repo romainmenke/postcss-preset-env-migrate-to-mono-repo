@@ -1,0 +1,33 @@
+From a02d0fe34d8ff3f2c050b1475483416d606e9334 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Wed, 17 Nov 2021 17:36:10 +0100
+Subject: [PATCH 099/103] Normalising testing matrix
+
+---
+ .github/workflows/test.yml | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
+index 4a287db..f9eb048 100644
+--- a/.github/workflows/test.yml
++++ b/.github/workflows/test.yml
+@@ -7,12 +7,12 @@ jobs:
+     runs-on: ubuntu-latest
+     strategy:
+       matrix:
+-        node: [12, 16]
++        node: [12, 14, 16]
+     steps:
+       - uses: actions/checkout@v2
+       - uses: actions/setup-node@v2
+         with:
+           node-version: ${{ matrix.node }}
+-
+-      - run: yarn install --ignore-scripts
+-      - run: yarn run test
++      - run: npm install --ignore-scripts
++      - run: npm run build
++      - run: npm run test
+-- 
+2.33.1
+

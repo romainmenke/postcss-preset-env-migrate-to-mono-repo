@@ -1,0 +1,259 @@
+From 1da206b3234f151395ec25042329b46624b58886 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Thu, 18 Nov 2021 17:49:15 +0100
+Subject: [PATCH 18/21] Safe postcss values parser (csstools/postcss-env-function#17)
+
+* Dev dependencies using ranges consistently with other packages
+
+* Ignoring unknown words
+
+* If there's an exception during parsing, do not let it blow up
+
+* Adding tests
+---
+ .tape.js                              | 12 +++++++++-
+ package.json                          | 16 ++++++-------
+ src/index.js                          | 34 +++++++++++++++++++++++----
+ src/lib/get-replaced-value.js         |  2 +-
+ src/lib/import-from.js                |  2 +-
+ test/basic.css                        |  4 ++++
+ test/basic.expect.css                 |  4 ++++
+ test/basic.import-is-empty.expect.css |  4 ++++
+ test/basic.import.expect.css          |  4 ++++
+ 9 files changed, 67 insertions(+), 15 deletions(-)
+
+diff --git a/.tape.js b/.tape.js
+index c35060c..f6c471b 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,9 +1,11 @@
+ module.exports = {
+ 	'basic': {
+-		message: 'supports basic usage'
++		message: 'supports basic usage',
++		warnings: 1
+ 	},
+ 	'basic:import': {
+ 		message: 'supports { importFrom: { environmentVariables: { ... } } } usage',
++		warnings: 1,
+ 		options: {
+ 			importFrom: {
+ 				environmentVariables: {
+@@ -15,6 +17,7 @@ module.exports = {
+ 	},
+ 	'basic:import-fn': {
+ 		message: 'supports { importFrom() } usage',
++		warnings: 1,
+ 		options: {
+ 			importFrom() {
+ 				return {
+@@ -30,6 +33,7 @@ module.exports = {
+ 	},
+ 	'basic:import-fn-promise': {
+ 		message: 'supports { async importFrom() } usage',
++		warnings: 1,
+ 		options: {
+ 			importFrom() {
+ 				return new Promise(resolve => {
+@@ -47,6 +51,7 @@ module.exports = {
+ 	},
+ 	'basic:import-json': {
+ 		message: 'supports { importFrom: "test/import-variables.json" } usage',
++		warnings: 1,
+ 		options: {
+ 			importFrom: 'test/import-variables.json'
+ 		},
+@@ -55,6 +60,7 @@ module.exports = {
+ 	},
+ 	'basic:import-js': {
+ 		message: 'supports { importFrom: "test/import-variables.js" } usage',
++		warnings: 1,
+ 		options: {
+ 			importFrom: 'test/import-variables.js'
+ 		},
+@@ -63,6 +69,7 @@ module.exports = {
+ 	},
+ 	'basic:import-cjs': {
+ 		message: 'supports { importFrom: "test/import-variables.cjs" } usage',
++		warnings: 1,
+ 		options: {
+ 			importFrom: 'test/import-variables.cjs'
+ 		},
+@@ -71,6 +78,7 @@ module.exports = {
+ 	},
+ 	'basic:import-js-from': {
+ 		message: 'supports { importFrom: { from: "test/import-variables.js" } } usage',
++		warnings: 1,
+ 		options: {
+ 			importFrom: { from: 'test/import-variables.js' }
+ 		},
+@@ -79,6 +87,7 @@ module.exports = {
+ 	},
+ 	'basic:import-js-from-type': {
+ 		message: 'supports { importFrom: [ { from: "test/import-variables.js", type: "js" } ] } usage',
++		warnings: 1,
+ 		options: {
+ 			importFrom: [ { from: 'test/import-variables.js', type: 'js' } ]
+ 		},
+@@ -87,6 +96,7 @@ module.exports = {
+ 	},
+ 	'basic:import-is-empty': {
+ 		message: 'supports { importFrom: {} } usage',
++		warnings: 1,
+ 		options: {
+ 			importFrom: {}
+ 		}
+diff --git a/package.json b/package.json
+index b2d76dc..eb9c68f 100644
+--- a/package.json
++++ b/package.json
+@@ -32,14 +32,14 @@
+     "postcss": "^8.3"
+   },
+   "devDependencies": {
+-    "@babel/core": "7.15.8",
+-    "@babel/preset-env": "7.15.8",
+-    "@rollup/plugin-babel": "5.3.0",
+-    "eslint": "8.1.0",
+-    "postcss": "8.3.6",
+-    "postcss-tape": "6.0.1",
+-    "pre-commit": "1.2.2",
+-    "rollup": "2.58.3"
++    "@babel/core": "^7.15.8",
++    "@babel/preset-env": "^7.15.8",
++    "@rollup/plugin-babel": "^5.3.0",
++    "eslint": "^8.1.0",
++    "postcss": "^8.3.6",
++    "postcss-tape": "^6.0.1",
++    "pre-commit": "^1.2.2",
++    "rollup": "^2.58.3"
+   },
+   "babel": {
+     "presets": [
+diff --git a/src/index.js b/src/index.js
+index eb6d4a3..54333c2 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -14,15 +14,41 @@ export default function creator(opts) {
+ 
+ 	return {
+ 		postcssPlugin: 'postcss-env-fn',
+-		async AtRule(atRule) {
+-			const replacedValue = getReplacedValue(atRule.params, await environmentVariablesPromise)
++		async AtRule(atRule, { result }) {
++			let replacedValue
++
++			try {
++				replacedValue = getReplacedValue(atRule.params, await environmentVariablesPromise)
++			} catch (error) {
++				atRule.warn(
++					result,
++					`Failed to parse params '${atRule.params}' as an environment value. Leaving the original value intact.`
++				)
++			}
++
++			if (typeof replacedValue === 'undefined') {
++				return
++			}
+ 
+ 			if (replacedValue !== atRule.params) {
+ 				atRule.params = replacedValue
+ 			}
+ 		},
+-		async Declaration(decl) {
+-			const replacedValue = getReplacedValue(decl.value, await environmentVariablesPromise)
++		async Declaration(decl, { result }) {
++			let replacedValue
++
++			try {
++				replacedValue = getReplacedValue(decl.value, await environmentVariablesPromise)
++			} catch (error) {
++				decl.warn(
++					result,
++					`Failed to parse value '${decl.value}' as an environment value. Leaving the original value intact.`
++				)
++			}
++
++			if (typeof replacedValue === 'undefined') {
++				return
++			}
+ 
+ 			if (replacedValue !== decl.value) {
+ 				decl.value = replacedValue
+diff --git a/src/lib/get-replaced-value.js b/src/lib/get-replaced-value.js
+index e020402..69489d6 100644
+--- a/src/lib/get-replaced-value.js
++++ b/src/lib/get-replaced-value.js
+@@ -9,7 +9,7 @@ import walkEnvFuncs from './walk-env-funcs'
+  */
+ export default (originalValue, variables) => {
+ 	// get the ast of the original value
+-	const ast = parse(originalValue)
++	const ast = parse(originalValue, { ignoreUnknownWords: true })
+ 
+ 	// walk all of the css env() functions
+ 	walkEnvFuncs(ast, node => {
+diff --git a/src/lib/import-from.js b/src/lib/import-from.js
+index 30a0f2b..eed4f72 100644
+--- a/src/lib/import-from.js
++++ b/src/lib/import-from.js
+@@ -14,7 +14,7 @@ function importEnvironmentVariablesFromObject(object) {
+ 	)
+ 
+ 	for (const key in environmentVariables) {
+-		environmentVariables[key] = parse(environmentVariables[key]).nodes
++		environmentVariables[key] = parse(environmentVariables[key], { ignoreUnknownWords: true }).nodes
+ 	}
+ 
+ 	return environmentVariables
+diff --git a/test/basic.css b/test/basic.css
+index e044c62..f60cf30 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -14,3 +14,7 @@ body {
+ 		order: 3;
+ 	}
+ }
++
++html {
++	background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==);
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index e044c62..f60cf30 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -14,3 +14,7 @@ body {
+ 		order: 3;
+ 	}
+ }
++
++html {
++	background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==);
++}
+diff --git a/test/basic.import-is-empty.expect.css b/test/basic.import-is-empty.expect.css
+index e044c62..f60cf30 100644
+--- a/test/basic.import-is-empty.expect.css
++++ b/test/basic.import-is-empty.expect.css
+@@ -14,3 +14,7 @@ body {
+ 		order: 3;
+ 	}
+ }
++
++html {
++	background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==);
++}
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+index 9491cec..1533c94 100644
+--- a/test/basic.import.expect.css
++++ b/test/basic.import.expect.css
+@@ -14,3 +14,7 @@ body {
+ 		order: 3;
+ 	}
+ }
++
++html {
++	background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==);
++}
+-- 
+2.33.1
+
