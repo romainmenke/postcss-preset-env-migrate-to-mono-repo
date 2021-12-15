@@ -1,7 +1,7 @@
 From f1621c4c07265f3e80397e1f2dc8c338404793de Mon Sep 17 00:00:00 2001
 From: Oleg Lykasov <oleglykasov@gmail.com>
 Date: Wed, 19 Jul 2017 00:29:30 +0300
-Subject: [PATCH 108/186] Added: noValueNotifications option (#71)
+Subject: [PATCH 108/186] Added: noValueNotifications option (postcss/postcss-custom-properties#71)
 
 ---
  README.md     |  9 +++++++++

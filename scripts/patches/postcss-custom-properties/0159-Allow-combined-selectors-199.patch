@@ -1,7 +1,7 @@
 From 24c108bb4df935c8942bd81509ac3ed5cc8a931a Mon Sep 17 00:00:00 2001
 From: Yvain Liechti <ryuran@gmail.com>
 Date: Sat, 7 Mar 2020 18:44:41 +0100
-Subject: [PATCH 159/186] Allow combined selectors (#199)
+Subject: [PATCH 159/186] Allow combined selectors (postcss/postcss-custom-properties#199)
 
 ---
  src/lib/get-custom-properties-from-root.js |  4 ++--

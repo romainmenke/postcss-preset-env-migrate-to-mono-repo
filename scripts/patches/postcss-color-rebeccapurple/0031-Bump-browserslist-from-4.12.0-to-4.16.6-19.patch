@@ -1,7 +1,7 @@
 From 562db325eb5e08183b8ff84c94a8fd34fdd78d3c Mon Sep 17 00:00:00 2001
 From: "dependabot[bot]" <49699333+dependabot[bot]@users.noreply.github.com>
 Date: Wed, 26 May 2021 09:50:54 -0400
-Subject: [PATCH 31/34] Bump browserslist from 4.12.0 to 4.16.6 (#19)
+Subject: [PATCH 31/34] Bump browserslist from 4.12.0 to 4.16.6 (postcss/postcss-color-rebeccapurple#19)
 
 Bumps [browserslist](https://github.com/browserslist/browserslist) from 4.12.0 to 4.16.6.
 - [Release notes](https://github.com/browserslist/browserslist/releases)

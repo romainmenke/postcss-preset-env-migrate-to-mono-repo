@@ -1,7 +1,7 @@
 From 7f02aee850dc3d225a9e8600ceaaa87bb7ea2fd5 Mon Sep 17 00:00:00 2001
 From: Ole Ersoy <ole.mk10@gmail.com>
 Date: Mon, 20 Feb 2017 04:52:25 -0600
-Subject: [PATCH 100/186] Updated resolveValue comment (#65)
+Subject: [PATCH 100/186] Updated resolveValue comment (postcss/postcss-custom-properties#65)
 
 ---
  index.js | 15 ++++++---------

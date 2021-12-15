@@ -1,7 +1,7 @@
 From 275ecca121728989f5b4e4414725ced3bb1cd7ad Mon Sep 17 00:00:00 2001
 From: Antonio Laguna <sombragriselros@gmail.com>
 Date: Wed, 15 Dec 2021 14:01:04 +0100
-Subject: [PATCH 31/31] Switching to postcss-value-parser (#24)
+Subject: [PATCH 31/31] Switching to postcss-value-parser (postcss/postcss-color-hex-alpha#24)
 
 ---
  package.json            |  2 +-

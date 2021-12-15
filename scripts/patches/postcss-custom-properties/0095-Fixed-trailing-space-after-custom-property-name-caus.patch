@@ -2,7 +2,7 @@ From 5366045b7ac9d7a16c2b83489b4fbf2d58c522b7 Mon Sep 17 00:00:00 2001
 From: Ryan Fitzer <ryanfitzer@users.noreply.github.com>
 Date: Fri, 22 Apr 2016 12:49:13 -0700
 Subject: [PATCH 095/186] Fixed: trailing space after custom property name
- causes duplicate empty property (#43)
+ causes duplicate empty property (postcss/postcss-custom-properties#43)
 
 * Fix issue where trailing space causes duplicate empty property when using `var()`.
 

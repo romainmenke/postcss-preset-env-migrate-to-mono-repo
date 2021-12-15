@@ -1,7 +1,7 @@
 From 8848759171abee7d7375b6d0e96180fdebd04c3d Mon Sep 17 00:00:00 2001
 From: "dependabot[bot]" <49699333+dependabot[bot]@users.noreply.github.com>
 Date: Tue, 17 Mar 2020 11:19:02 +0300
-Subject: [PATCH 29/34] Bump acorn from 7.1.0 to 7.1.1 (#13)
+Subject: [PATCH 29/34] Bump acorn from 7.1.0 to 7.1.1 (postcss/postcss-color-rebeccapurple#13)
 
 Bumps [acorn](https://github.com/acornjs/acorn) from 7.1.0 to 7.1.1.
 - [Release notes](https://github.com/acornjs/acorn/releases)

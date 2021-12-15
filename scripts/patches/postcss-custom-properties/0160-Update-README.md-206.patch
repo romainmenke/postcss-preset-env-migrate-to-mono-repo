@@ -1,7 +1,7 @@
 From b898eb2986db1719b7459ed60ea22304d0f9e3b7 Mon Sep 17 00:00:00 2001
 From: Dmitry Semigradsky <semigradskyd@gmail.com>
 Date: Sat, 7 Mar 2020 20:45:16 +0300
-Subject: [PATCH 160/186] Update README.md (#206)
+Subject: [PATCH 160/186] Update README.md (postcss/postcss-custom-properties#206)
 
 Add cool 'Can I use' table
 ---

@@ -1,7 +1,7 @@
 From 2819d55da4385e46819e2feda4964a52709773d8 Mon Sep 17 00:00:00 2001
 From: wtgtybhertgeghgtwtg <wtgtybhertgeghgtwtg@gmail.com>
 Date: Tue, 31 Jan 2017 23:22:13 -0700
-Subject: [PATCH 097/186] Bump `balanced-match`. (#57)
+Subject: [PATCH 097/186] Bump `balanced-match`. (postcss/postcss-custom-properties#57)
 
 ---
  package.json | 2 +-

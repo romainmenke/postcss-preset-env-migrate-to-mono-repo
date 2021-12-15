@@ -3,7 +3,7 @@ From: Maxime Thirouin <m@moox.io>
 Date: Fri, 6 Feb 2015 07:30:30 +0100
 Subject: [PATCH 055/186] Fixed: logs now have filename back (3.0.1)
 
-Close #19
+Close postcss/postcss-custom-properties#19
 ---
  CHANGELOG.md | 39 +++++++++++++++++++++------------------
  package.json |  4 ++--

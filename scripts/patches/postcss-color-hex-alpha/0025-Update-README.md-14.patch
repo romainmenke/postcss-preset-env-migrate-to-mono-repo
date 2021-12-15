@@ -1,7 +1,7 @@
 From 6725ee3c9db5022f300f5ca55d63abc518ecd3a3 Mon Sep 17 00:00:00 2001
 From: Dmitry Semigradsky <semigradskyd@gmail.com>
 Date: Fri, 30 Oct 2020 10:34:29 +0300
-Subject: [PATCH 25/31] Update README.md (#14)
+Subject: [PATCH 25/31] Update README.md (postcss/postcss-color-hex-alpha#14)
 
 Add cool 'Can I use' table
 ---

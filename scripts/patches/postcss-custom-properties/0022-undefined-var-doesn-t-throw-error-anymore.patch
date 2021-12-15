@@ -5,7 +5,7 @@ Subject: [PATCH 022/186] undefined var doesn't throw error anymore...
 
 (just a console warning) & are kept as is in the output
 
-Close #5
+Close postcss/postcss-custom-properties#5
 ---
  CHANGELOG.md                                 | 1 +
  index.js                                     | 2 +-

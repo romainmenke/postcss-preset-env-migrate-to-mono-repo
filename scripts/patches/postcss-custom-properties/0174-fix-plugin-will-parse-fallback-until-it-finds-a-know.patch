@@ -2,7 +2,7 @@ From 3b234979f5dcc59fe3372d24136e4d41ae9a595c Mon Sep 17 00:00:00 2001
 From: Caleb Williams <caleb.d.williams@gmail.com>
 Date: Mon, 14 Jun 2021 21:01:35 -0500
 Subject: [PATCH 174/186] fix: plugin will parse fallback until it finds a
- known value (#240)
+ known value (postcss/postcss-custom-properties#240)
 
 ---
  src/lib/transform-properties.js       |   11 +-

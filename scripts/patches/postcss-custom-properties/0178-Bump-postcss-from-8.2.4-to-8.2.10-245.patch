@@ -1,7 +1,7 @@
 From 287a8d1365a76a5dbdd2795b428209a7a6fc0f08 Mon Sep 17 00:00:00 2001
 From: "dependabot[bot]" <49699333+dependabot[bot]@users.noreply.github.com>
 Date: Fri, 17 Sep 2021 08:27:56 -0400
-Subject: [PATCH 178/186] Bump postcss from 8.2.4 to 8.2.10 (#245)
+Subject: [PATCH 178/186] Bump postcss from 8.2.4 to 8.2.10 (postcss/postcss-custom-properties#245)
 
 Bumps [postcss](https://github.com/postcss/postcss) from 8.2.4 to 8.2.10.
 - [Release notes](https://github.com/postcss/postcss/releases)

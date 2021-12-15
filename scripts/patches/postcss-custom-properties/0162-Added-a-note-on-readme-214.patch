@@ -2,9 +2,9 @@ From 817c42ae25acb9e48dff52704413932982e677d4 Mon Sep 17 00:00:00 2001
 From: "Cerino O. Ligutom III"
  <6721822+cerino-ligutom@users.noreply.github.com>
 Date: Fri, 18 Sep 2020 16:02:09 +0800
-Subject: [PATCH 162/186] Added a note on readme (#214)
+Subject: [PATCH 162/186] Added a note on readme (postcss/postcss-custom-properties#214)
 
-Added a note that this plugin only processes variables that are defined in the `:root` selector as per #213 .
+Added a note that this plugin only processes variables that are defined in the `:root` selector as per postcss/postcss-custom-properties#213 .
 ---
  README.md | 2 ++
  1 file changed, 2 insertions(+)

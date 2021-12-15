@@ -1,7 +1,7 @@
 From 27efa3e12ae94ee3182447fbb334a03d724344c8 Mon Sep 17 00:00:00 2001
 From: Alex Yatsenko <reme3d2y@gmail.com>
 Date: Fri, 18 Sep 2020 11:11:56 +0300
-Subject: [PATCH 165/186] Fix/multipart values (#222)
+Subject: [PATCH 165/186] Fix/multipart values (postcss/postcss-custom-properties#222)
 
 ---
  .tape.js                              | 18 +++++++

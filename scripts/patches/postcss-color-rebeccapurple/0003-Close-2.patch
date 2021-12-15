@@ -1,7 +1,7 @@
 From 4a8a46c51a86817459cd7945a856118ddc6c0dc5 Mon Sep 17 00:00:00 2001
 From: Maxime Thirouin <m@moox.io>
 Date: Tue, 7 Oct 2014 08:24:41 +0200
-Subject: [PATCH 03/34] Close #2
+Subject: [PATCH 03/34] Close postcss/postcss-color-rebeccapurple#2
 
 ---
  README.md | 2 ++

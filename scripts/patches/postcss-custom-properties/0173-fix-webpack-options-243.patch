@@ -1,11 +1,11 @@
 From 690781a274d0a24297466c47a2945d5d9ae29b58 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Daniel=20Rodr=C3=ADguez=20Rivero?= <rdanielo@gmail.com>
 Date: Wed, 5 May 2021 04:38:30 +0200
-Subject: [PATCH 173/186] fix/webpack-options (#243)
+Subject: [PATCH 173/186] fix/webpack-options (postcss/postcss-custom-properties#243)
 
 * fix/webpack-options
 
-fixes #241
+fixes postcss/postcss-custom-properties#241
 
 * Update INSTALL.md
 ---

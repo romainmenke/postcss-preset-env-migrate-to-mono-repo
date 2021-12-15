@@ -1,7 +1,7 @@
 From 276957a5d94d0a9ea7ef13ce572eed5b1d54921f Mon Sep 17 00:00:00 2001
 From: Dmitry Semigradsky <semigradskyd@gmail.com>
 Date: Tue, 12 Jan 2021 19:40:15 +0300
-Subject: [PATCH 171/186] Support PostCSS 8 (#229)
+Subject: [PATCH 171/186] Support PostCSS 8 (postcss/postcss-custom-properties#229)
 
 ---
  .rollup.js                                    |    9 +-

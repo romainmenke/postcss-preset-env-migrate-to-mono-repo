@@ -4,7 +4,7 @@ Date: Sun, 2 Nov 2014 07:27:29 +0100
 Subject: [PATCH 036/186] Add warning when a custom prop is used in another
  place that :root
 
-Close #13
+Close postcss/postcss-custom-properties#13
 ---
  CHANGELOG.md | 18 +++++++++++-------
  index.js     |  3 ++-

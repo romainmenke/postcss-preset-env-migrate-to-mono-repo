@@ -3,7 +3,7 @@ From: Maxime Thirouin <m@moox.io>
 Date: Wed, 8 Oct 2014 08:03:36 +0200
 Subject: [PATCH 04/34] Better "why this plugin" section
 
-Ref #2
+Ref postcss/postcss-color-rebeccapurple#2
 poke @ai
 ---
  README.md | 5 ++++-

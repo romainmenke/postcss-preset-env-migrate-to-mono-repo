@@ -3,7 +3,7 @@ From: Maxime Thirouin <m@moox.io>
 Date: Wed, 27 Aug 2014 08:48:11 +0200
 Subject: [PATCH 023/186] Add ref to postcss-calc in README
 
-Close #3
+Close postcss/postcss-custom-properties#3
 ---
  README.md | 2 ++
  1 file changed, 2 insertions(+)

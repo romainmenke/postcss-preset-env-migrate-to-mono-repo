@@ -1,7 +1,7 @@
 From 4dbb3fcff8d4154587ed1b8d631df06161804711 Mon Sep 17 00:00:00 2001
 From: bendobos <bendobos1@gmail.com>
 Date: Fri, 18 Sep 2020 10:05:25 +0200
-Subject: [PATCH 164/186] Export to SCSS file (#212)
+Subject: [PATCH 164/186] Export to SCSS file (postcss/postcss-custom-properties#212)
 
 ---
  .tape.js                                      | 16 ++++++++++++++++

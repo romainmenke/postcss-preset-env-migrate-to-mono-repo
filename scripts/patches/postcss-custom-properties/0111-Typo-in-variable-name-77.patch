@@ -1,7 +1,7 @@
 From 9bfcb517fddac3ad39f40208f1d4dd460a5c9fe0 Mon Sep 17 00:00:00 2001
 From: Hiroki Osame <hiroki.osame@gmail.com>
 Date: Fri, 6 Oct 2017 10:26:50 -0700
-Subject: [PATCH 111/186] Typo in variable name (#77)
+Subject: [PATCH 111/186] Typo in variable name (postcss/postcss-custom-properties#77)
 
 ---
  index.js | 2 +-

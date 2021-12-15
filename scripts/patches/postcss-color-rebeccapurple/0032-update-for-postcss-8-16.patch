@@ -1,7 +1,7 @@
 From 0779a52384f242df9effec18cecb0043fb621894 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Ren=C3=A9e=20Kooi?= <renee@kooi.me>
 Date: Wed, 28 Jul 2021 01:21:45 +0200
-Subject: [PATCH 32/34] update for postcss 8 (#16)
+Subject: [PATCH 32/34] update for postcss 8 (postcss/postcss-color-rebeccapurple#16)
 
 * deps: update dependencies
 

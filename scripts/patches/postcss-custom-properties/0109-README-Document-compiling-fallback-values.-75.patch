@@ -1,7 +1,7 @@
 From 129f75068200da5d39df155387f9993d4ce57ebd Mon Sep 17 00:00:00 2001
 From: Brett Jankord <bjankord@gmail.com>
 Date: Fri, 15 Sep 2017 11:58:19 -0500
-Subject: [PATCH 109/186] README: Document compiling fallback values. (#75)
+Subject: [PATCH 109/186] README: Document compiling fallback values. (postcss/postcss-custom-properties#75)
 
 I wasn't sure if this was possible with the plugin so I coded it up and it worked. It would be cool to note this in the README so others can save some time by looking at the README.
 ---

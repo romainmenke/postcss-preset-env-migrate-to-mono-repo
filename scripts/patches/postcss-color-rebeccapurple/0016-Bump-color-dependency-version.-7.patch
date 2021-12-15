@@ -1,7 +1,7 @@
 From bdf9f888eb513159d5ec0dd3b3e7328cfdcebdc7 Mon Sep 17 00:00:00 2001
 From: wtgtybhertgeghgtwtg <wtgtybhertgeghgtwtg@gmail.com>
 Date: Mon, 28 Nov 2016 00:04:11 -0700
-Subject: [PATCH 16/34] Bump `color` dependency version. (#7)
+Subject: [PATCH 16/34] Bump `color` dependency version. (postcss/postcss-color-rebeccapurple#7)
 
 ---
  package.json | 2 +-

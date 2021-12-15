@@ -1,7 +1,7 @@
 From 7acd5599a04ce95f8ed5a97aa12c9b9062a263ff Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Fri, 15 Sep 2017 12:58:58 -0400
-Subject: [PATCH 110/186] README: Add CSS Standard Status (#78)
+Subject: [PATCH 110/186] README: Add CSS Standard Status (postcss/postcss-custom-properties#78)
 
 ---
  README.md | 2 +-

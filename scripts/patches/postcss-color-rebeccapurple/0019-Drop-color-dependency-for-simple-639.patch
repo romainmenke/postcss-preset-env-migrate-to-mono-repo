@@ -1,7 +1,7 @@
 From 932246cd51918540fdc390787467df0a79e018a2 Mon Sep 17 00:00:00 2001
 From: Jonathan Neal <jonathantneal@hotmail.com>
 Date: Wed, 10 May 2017 15:39:05 -0400
-Subject: [PATCH 19/34] Drop color dependency for simple #639
+Subject: [PATCH 19/34] Drop color dependency for simple hex color: 639
 
 ---
  index.js                                 | 2 +-

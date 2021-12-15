@@ -6,7 +6,7 @@ Subject: [PATCH 018/186] fallback now are always added by default + rename map
 
 see why: http://www.w3.org/TR/css-variables/#invalid-variables
 
-Close #4
+Close postcss/postcss-custom-properties#4
 ---
  CHANGELOG.md                                |  9 ++-
  README.md                                   |  2 +-

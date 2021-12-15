@@ -1,7 +1,7 @@
 From 5bcc57d2109f561b5733e7c150e6b675c461d043 Mon Sep 17 00:00:00 2001
 From: Antonio Laguna <sombragriselros@gmail.com>
 Date: Wed, 15 Dec 2021 14:01:01 +0100
-Subject: [PATCH 34/34] Switching to postcss-value-perser (#22)
+Subject: [PATCH 34/34] Switching to postcss-value-perser (postcss/postcss-color-rebeccapurple#22)
 
 ---
  package.json            |  2 +-

@@ -3,7 +3,7 @@ From: Maxime Thirouin <m@moox.io>
 Date: Sun, 2 Nov 2014 07:47:21 +0100
 Subject: [PATCH 037/186] handle !important
 
-Close #12
+Close postcss/postcss-custom-properties#12
 ---
  CHANGELOG.md                         |  3 ++-
  index.js                             |  8 +++++---

@@ -1,7 +1,7 @@
 From 1d622ea40de3f078e6ca89dba4a4b0ff8f8519fb Mon Sep 17 00:00:00 2001
 From: Noah Allen <noahtallen@gmail.com>
 Date: Tue, 28 Sep 2021 03:21:01 -0700
-Subject: [PATCH 185/186] Fix type definitions (#257)
+Subject: [PATCH 185/186] Fix type definitions (postcss/postcss-custom-properties#257)
 
 The type definitions have slightly invalid syntax.
 { root: any } should be { root }: { root: any }

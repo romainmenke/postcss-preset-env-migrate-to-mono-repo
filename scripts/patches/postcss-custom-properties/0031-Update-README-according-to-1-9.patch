@@ -1,7 +1,7 @@
 From 6d4fad56272b01b0e98b73163d040c9753068721 Mon Sep 17 00:00:00 2001
 From: Maxime Thirouin <m@moox.io>
 Date: Wed, 1 Oct 2014 05:52:35 +0200
-Subject: [PATCH 031/186] Update README according to #1 & #9
+Subject: [PATCH 031/186] Update README according to postcss/postcss-custom-properties#1 & postcss/postcss-custom-properties#9
 
 ---
  README.md | 4 +---

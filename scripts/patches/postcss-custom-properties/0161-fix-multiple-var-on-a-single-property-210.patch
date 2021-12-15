@@ -1,7 +1,7 @@
 From a250907b9ca0b336d6c0ca948a1db2fe2d145309 Mon Sep 17 00:00:00 2001
 From: Yvain Liechti <ryuran@gmail.com>
 Date: Sat, 7 Mar 2020 18:46:33 +0100
-Subject: [PATCH 161/186] fix multiple var on a single property (#210)
+Subject: [PATCH 161/186] fix multiple var on a single property (postcss/postcss-custom-properties#210)
 
 ---
  test/basic.css                        | 8 ++++++++

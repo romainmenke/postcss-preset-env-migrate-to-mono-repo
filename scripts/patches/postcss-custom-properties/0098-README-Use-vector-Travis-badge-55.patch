@@ -1,7 +1,7 @@
 From aeec09fad25c6117bc59cb9b19aac0389719631b Mon Sep 17 00:00:00 2001
 From: Aleksey Shvayka <shvaikalesh@gmail.com>
 Date: Wed, 1 Feb 2017 08:33:42 +0200
-Subject: [PATCH 098/186] README Use vector Travis badge (#55)
+Subject: [PATCH 098/186] README Use vector Travis badge (postcss/postcss-custom-properties#55)
 
 PNG does not look nice on Retina
 ---

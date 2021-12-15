@@ -1,7 +1,7 @@
 From 3c6d1d2ed52103315c60e34f24ab524a4f5c92eb Mon Sep 17 00:00:00 2001
 From: Max Belsky <public.belsky@gmail.com>
 Date: Fri, 17 Sep 2021 15:27:41 +0300
-Subject: [PATCH 177/186] Replace babel-eslint with @babel/eslint-parser (#249)
+Subject: [PATCH 177/186] Replace babel-eslint with @babel/eslint-parser (postcss/postcss-custom-properties#249)
 
 ---
  package.json | 5 +++--

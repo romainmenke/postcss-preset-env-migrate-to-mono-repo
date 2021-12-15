@@ -1,7 +1,7 @@
 From 6c233a54617f6140c12b058c5e555b9ccf3851ce Mon Sep 17 00:00:00 2001
 From: Antonio Laguna <sombragriselros@gmail.com>
 Date: Wed, 15 Dec 2021 14:01:07 +0100
-Subject: [PATCH 186/186] Switching to postcss-value-parser (#260)
+Subject: [PATCH 186/186] Switching to postcss-value-parser (postcss/postcss-custom-properties#260)
 
 * Using new package
 
