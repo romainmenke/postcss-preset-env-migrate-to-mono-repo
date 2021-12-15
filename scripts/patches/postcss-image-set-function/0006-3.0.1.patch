@@ -1,0 +1,59 @@
+From 2bdb8c42d011a4fe0becd4fc060a25ae4a1195fb Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 18 Sep 2018 11:58:20 -0400
+Subject: [PATCH 06/19] 3.0.1
+
+---
+ CHANGELOG.md | 4 ++++
+ INSTALL.md   | 2 +-
+ package.json | 4 ++--
+ 3 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 75ef470..8f662f7 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS image-set() Function
+ 
++### 3.0.1 (September 18, 2018)
++
++- Updated: PostCSS Values Parser 2
++
+ ### 3.0.0 (September 17, 2018)
+ 
+ - Updated: Support for PostCSS 7+
+diff --git a/INSTALL.md b/INSTALL.md
+index 0f66ae6..5de51e4 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -1,4 +1,4 @@
+-# Installing PostCSS
++# Installing PostCSS image-set() Function
+ 
+ [PostCSS image-set() Function] runs in all Node environments, with special instructions for:
+ 
+diff --git a/package.json b/package.json
+index 3c65e0b..b79b6b3 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-image-set-function",
+-  "version": "3.0.0",
++  "version": "3.0.1",
+   "description": "Display resolution-dependent images using the image-set() function in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -28,7 +28,7 @@
+   },
+   "dependencies": {
+     "postcss": "^7.0.2",
+-    "postcss-values-parser": "^1.5.0"
++    "postcss-values-parser": "^2.0.0"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.1.0",
+-- 
+2.33.1
+

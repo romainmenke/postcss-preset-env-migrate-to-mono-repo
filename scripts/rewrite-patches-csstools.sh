@@ -20,3 +20,4 @@ sh ./scripts/rewrite-patches.sh postcss-nesting csstools
 sh ./scripts/rewrite-patches.sh postcss-overflow-shorthand csstools
 sh ./scripts/rewrite-patches.sh postcss-place csstools
 sh ./scripts/rewrite-patches.sh postcss-pseudo-class-any-link csstools
+sh ./scripts/rewrite-patches.sh postcss-tape csstools

@@ -1,0 +1,40 @@
+From b6f1af41640826cf8f469ac49a4d67bcd02537f4 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 29 Jul 2019 07:08:20 -0400
+Subject: [PATCH 29/38] 5.0.1
+
+---
+ CHANGELOG.md | 5 +++++
+ package.json | 2 +-
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 388473c..d7db822 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Tape
+ 
++### 5.0.1 (July 29, 2019)
++
++- Fixed: Tests for an error
++- Fixed: Documentation errors
++
+ ### 5.0.0 (May 16, 2019)
+ 
+ - Updated: Node 8+ compatibility (major)
+diff --git a/package.json b/package.json
+index fb32a33..46ca0c3 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-tape",
+-  "version": "5.0.0",
++  "version": "5.0.1",
+   "description": "Quickly test PostCSS plugins",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

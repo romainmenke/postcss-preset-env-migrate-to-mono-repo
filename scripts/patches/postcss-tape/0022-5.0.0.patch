@@ -1,0 +1,357 @@
+From 861336bb7c29a68b6c9bcbdf9bae87e68ff95146 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 16 May 2019 11:27:37 -0400
+Subject: [PATCH 22/38] 5.0.0
+
+---
+ .travis.yml                           |  3 +-
+ CHANGELOG.md                          |  5 +++
+ package.json                          | 18 ++++-----
+ rollup.config.js                      | 18 ++-------
+ src/index.js                          | 53 +++++++++++----------------
+ src/lib/color.js                      |  2 +-
+ src/lib/get-options-from-arguments.js |  2 +-
+ src/lib/get-options.js                |  2 +-
+ src/lib/log.js                        | 10 ++---
+ src/lib/utils.js                      | 10 ++---
+ test/basic.errors.expect.css          |  3 ++
+ 11 files changed, 57 insertions(+), 69 deletions(-)
+ create mode 100644 test/basic.errors.expect.css
+
+diff --git a/.travis.yml b/.travis.yml
+index 2a28c6c..12ea3cd 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -8,10 +8,9 @@ os:
+   - osx
+ 
+ node_js:
+-  - node
++  - 12
+   - 10
+   - 8
+-  - 6
+ 
+ install:
+   - git config --global core.autocrlf false
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 377d6e3..388473c 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Tape
+ 
++### 5.0.0 (May 16, 2019)
++
++- Updated: Node 8+ compatibility (major)
++- Fixed: Better support warnings and errors
++
+ ### 4.0.0 (December 22, 2018)
+ 
+ - Changes the nested `postcss-plugin: { "test-name": {} }` with
+diff --git a/package.json b/package.json
+index 4b30866..b59930a 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-tape",
+-  "version": "4.0.0",
++  "version": "5.0.0",
+   "description": "Quickly test PostCSS plugins",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -24,19 +24,19 @@
+     "test:tape:ci": "node . --ci true --plugin test/plugin.js --config test"
+   },
+   "engines": {
+-    "node": ">=6.0.0"
++    "node": ">=8.0.0"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.2.2",
++    "@babel/core": "^7.4.4",
+     "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+-    "@babel/preset-env": "^7.2.3",
++    "@babel/preset-env": "^7.4.4",
+     "babel-eslint": "^10.0.1",
+-    "eslint": "^5.10.0",
++    "eslint": "^5.16.0",
+     "eslint-config-dev": "2.0.0",
+-    "postcss": "^7.0.7",
+-    "rollup": "^0.68.1",
+-    "rollup-plugin-babel": "^4.1.0",
+-    "rollup-plugin-terser": "^3.0.0"
++    "postcss": "^7.0.16",
++    "rollup": "^1.12.1",
++    "rollup-plugin-babel": "^4.3.2",
++    "rollup-plugin-terser": "^4.0.4"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+diff --git a/rollup.config.js b/rollup.config.js
+index d979407..2907f40 100644
+--- a/rollup.config.js
++++ b/rollup.config.js
+@@ -3,32 +3,22 @@ import { terser } from 'rollup-plugin-terser';
+ 
+ export default {
+ 	input: 'src/index.js',
+-	output: { file: 'index.js', format: 'cjs' },
++	output: { file: 'index.js', format: 'cjs', strict: false },
+ 	plugins: [
+ 		babel({
+ 			plugins: [ '@babel/syntax-dynamic-import' ],
+-			presets: [ ['@babel/env', { targets: { node: 6 } }] ]
++			presets: [ ['@babel/env', { targets: { node: 8 } }] ]
+ 		}),
+ 		terser(),
+-		trimUseStrict(),
+ 		addHashBang()
+ 	]
+ };
+ 
+-function addHashBang() {
++function addHashBang () {
+ 	return {
+ 		name: 'add-hash-bang',
+-		renderChunk(code) {
++		renderChunk (code) {
+ 			return `#!/usr/bin/env node\n${code}`;
+ 		}
+ 	};
+ }
+-
+-function trimUseStrict() {
+-	return {
+-		name: 'trim-use-strict',
+-		renderChunk(code) {
+-			return code.replace(/\s*('|")?use strict\1;\s*/, '');
+-		}
+-	};
+-}
+diff --git a/src/index.js b/src/index.js
+index d799d2a..1db09c8 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -39,7 +39,7 @@ getOptions().then(
+ 				const result = await testPlugin.process(sourceCSS, processOptions, pluginOptions);
+ 				const resultCSS = result.css;
+ 
+-				if ('fix' in options && options.fix !== false) {
++				if (options.fix) {
+ 					await writeFile(expectPath, resultCSS);
+ 					await writeFile(resultPath, resultCSS);
+ 				} else {
+@@ -55,30 +55,30 @@ getOptions().then(
+ 
+ 				const warnings = result.warnings();
+ 
+-				if (Object(test.warnings) instanceof Number) {
++				if (typeof test.warnings === 'number') {
+ 					if (test.warnings !== warnings.length) {
+ 						const s = warnings.length !== 1 ? 's' : '';
+ 
+ 						throw new Error(`Expected: ${test.warnings} warning${s}\nReceived: ${warnings.length} warnings`);
+ 					}
+-				} else if (test.warnings) {
+-					if (warnings.length) {
+-						const areExpectedWarnings = warnings.every(
+-							warning => Object.keys(test.warnings).every(
+-								key => test.warnings[key] instanceof RegExp
+-									? test.warnings[key].test(warning[key])
+-								: test.warnings[key] === warning[key]
+-							)
+-						);
+-
+-						if (!areExpectedWarnings) {
+-							const s = warnings.length !== 1 ? 's' : '';
+-
+-							throw new Error(`Unexpected warning${s}:\n${warnings.join('\n')}`);
+-						}
+-					} else {
+-						throw new Error(`Expected a warning`);
++				} else if (warnings.length) {
++					const areExpectedWarnings = warnings.every(
++						warning => test.warnings === Object(test.warnings) && Object.keys(test.warnings).every(
++							key => test.warnings[key] instanceof RegExp
++								? test.warnings[key].test(warning[key])
++							: test.warnings[key] === warning[key]
++						)
++					);
++
++					if (!areExpectedWarnings) {
++						const s = warnings.length !== 1 ? 's' : '';
++
++						throw new Error(`Unexpected warning${s}:\n${warnings.join('\n')}`);
+ 					}
++				} else if (test.warnings) {
++					throw new Error(`Expected a warning`);
++				} else if (test.errors) {
++					throw new Error(`Expected an error`);
+ 				}
+ 
+ 				if (Object(test.after) instanceof Function) {
+@@ -94,8 +94,7 @@ getOptions().then(
+ 				);
+ 
+ 				if (!areExpectedErrors) {
+-					log.fail(pluginName, test.message, options.ci);
+-					console.error(error.message);
++					log.fail(pluginName, test.message, error, options.ci);
+ 
+ 					hadErrors = true;
+ 
+@@ -113,14 +112,6 @@ getOptions().then(
+ 		}
+ 	}
+ ).then(
+-	() => {
+-		process.exit(0);
+-	},
+-	error => {
+-		if (Object(error).message) {
+-			console.error(error);
+-		}
+-
+-		process.exit(1);
+-	}
++	process.exit.bind(process, 0),
++	process.exit.bind(process, 1)
+ )
+diff --git a/src/lib/color.js b/src/lib/color.js
+index 9b758d5..144bb92 100644
+--- a/src/lib/color.js
++++ b/src/lib/color.js
+@@ -24,6 +24,6 @@ const colors = {
+ 	bgWhite: '\x1b[47m'
+ };
+ 
+-export default function color(name, string) {
++export default function color (name, string) {
+ 	return colors[name] + string.replace(colors.reset, colors.reset + colors[name]) + colors.reset;
+ }
+diff --git a/src/lib/get-options-from-arguments.js b/src/lib/get-options-from-arguments.js
+index a437214..dcd3de9 100644
+--- a/src/lib/get-options-from-arguments.js
++++ b/src/lib/get-options-from-arguments.js
+@@ -3,7 +3,7 @@ const primativeRegExp = /^(false|null|true|undefined|(\d+\.)?\d+|\{.*\}|\[.*\])$
+ const relaxedJsonPropRegExp = /(['"])?([a-z0-9A-Z_]+)\1:/g;
+ const relaxedJsonValueRegExp = /("[a-z0-9A-Z_]+":\s*)(?!true|false|null|\d+)'?([A-z0-9]+)'?([,}])/g;
+ 
+-export default function getOptionsFromArguments(defaultOptions) {
++export default function getOptionsFromArguments (defaultOptions) {
+ 	return process.argv.slice(2).reduce(
+ 		(args, arg, index, argv) => {
+ 			const nextIndex = index + 1;
+diff --git a/src/lib/get-options.js b/src/lib/get-options.js
+index 3ad5846..d0d0aff 100644
+--- a/src/lib/get-options.js
++++ b/src/lib/get-options.js
+@@ -2,7 +2,7 @@ import getOptionsFromArguments from './get-options-from-arguments';
+ import { readJSON } from './utils';
+ import path from 'path';
+ 
+-export default async function getOptions() {
++export default async function getOptions () {
+ 	const cwd = process.cwd();
+ 
+ 	// default options
+diff --git a/src/lib/log.js b/src/lib/log.js
+index d51812d..9169190 100644
+--- a/src/lib/log.js
++++ b/src/lib/log.js
+@@ -9,7 +9,7 @@ const stdout  = process.stdout;
+ 
+ let interval;
+ 
+-export function pass(name, message, ci) {
++export function pass (name, message, ci) {
+ 	clearInterval(interval);
+ 
+ 	if (ci) {
+@@ -23,22 +23,22 @@ export function pass(name, message, ci) {
+ 	}
+ }
+ 
+-export function fail(name, message, ci) {
++export function fail (name, message, error, ci) {
+ 	clearInterval(interval);
+ 
+ 	if (ci) {
+-		stdout.write(` ${color('red', cross)}\n`);
++		stdout.write(` ${color('red', cross)}\n${error}\n`);
+ 	} else {
+ 		// reset current stream line
+ 		readline.clearLine(stdout, 0);
+ 		readline.cursorTo(stdout, 0);
+ 
+-		stdout.write(`${color('red', cross)} ${name} ${color('dim', message)}\n`);
++		stdout.write(`${color('red', cross)} ${name} ${color('dim', message)}\n${error}\n`);
+ 	}
+ }
+ 
+ // log with a waiting appearance
+-export function wait(name, message, ci) {
++export function wait (name, message, ci) {
+ 	if (ci) {
+ 		stdout.write(`${name} ${color('dim', message)}`);
+ 	} else {
+diff --git a/src/lib/utils.js b/src/lib/utils.js
+index 8bde690..7470721 100644
+--- a/src/lib/utils.js
++++ b/src/lib/utils.js
+@@ -1,6 +1,6 @@
+ import fs from 'fs';
+ 
+-export function readFile(pathname) {
++export function readFile (pathname) {
+ 	return new Promise((resolve, reject) => {
+ 		fs.readFile(pathname, 'utf8', (error, data) => {
+ 			if (error) {
+@@ -12,7 +12,7 @@ export function readFile(pathname) {
+ 	});
+ }
+ 
+-export function readJSON(pathname, ...keys) {
++export function readJSON (pathname, ...keys) {
+ 	return readFile(pathname).then(
+ 		data => JSON.parse(data)
+ 	).then(
+@@ -26,7 +26,7 @@ export function readJSON(pathname, ...keys) {
+ 	);
+ }
+ 
+-export function readOrWriteFile(pathname, data) {
++export function readOrWriteFile (pathname, data) {
+ 	return readFile(pathname).catch(
+ 		() => writeFile(pathname, data || '').then(
+ 			() => ''
+@@ -34,13 +34,13 @@ export function readOrWriteFile(pathname, data) {
+ 	);
+ }
+ 
+-export function safelyReadFile(pathname) {
++export function safelyReadFile (pathname) {
+ 	return readFile(pathname).catch(
+ 		() => ''
+ 	);
+ }
+ 
+-export function writeFile(pathname, data) {
++export function writeFile (pathname, data) {
+ 	return new Promise((resolve, reject) => {
+ 		fs.writeFile(pathname, data, (error) => {
+ 			if (error) {
+diff --git a/test/basic.errors.expect.css b/test/basic.errors.expect.css
+new file mode 100644
+index 0000000..2ef56ae
+--- /dev/null
++++ b/test/basic.errors.expect.css
+@@ -0,0 +1,3 @@
++a {
++	display: block;
++}
+-- 
+2.33.1
+

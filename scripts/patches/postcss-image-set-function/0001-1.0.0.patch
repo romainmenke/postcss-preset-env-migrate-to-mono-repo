@@ -1,0 +1,1755 @@
+From f9436809c6859b035bc619e4862c6255b89524d0 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 7 May 2018 04:52:21 -0400
+Subject: [PATCH 01/19] 1.0.0
+
+---
+ .appveyor.yml                     |  18 ++
+ .editorconfig                     |  19 ++
+ .gitignore                        |  12 +
+ .rollup.js                        |  16 ++
+ .tape.js                          |  38 +++
+ .travis.yml                       |   9 +
+ CHANGELOG.md                      |   5 +
+ CONTRIBUTING.md                   |  65 ++++++
+ LICENSE.md                        | 108 +++++++++
+ README.md                         | 247 ++++++++++++++++++++
+ index.js                          |  35 +++
+ lib/get-comma.js                  |   2 +
+ lib/get-image.js                  |  13 ++
+ lib/get-media.js                  |  25 ++
+ lib/handle-invalidation.js        |   7 +
+ lib/process-image-set.js          |  65 ++++++
+ package.json                      |  58 +++++
+ test/basic.css                    | 105 +++++++++
+ test/basic.expect.css             | 369 ++++++++++++++++++++++++++++++
+ test/basic.no-preserve.expect.css | 308 +++++++++++++++++++++++++
+ test/invalid.css                  |  52 +++++
+ 21 files changed, 1576 insertions(+)
+ create mode 100644 .appveyor.yml
+ create mode 100644 .editorconfig
+ create mode 100644 .gitignore
+ create mode 100644 .rollup.js
+ create mode 100644 .tape.js
+ create mode 100644 .travis.yml
+ create mode 100644 CHANGELOG.md
+ create mode 100644 CONTRIBUTING.md
+ create mode 100644 LICENSE.md
+ create mode 100644 README.md
+ create mode 100644 index.js
+ create mode 100644 lib/get-comma.js
+ create mode 100644 lib/get-image.js
+ create mode 100644 lib/get-media.js
+ create mode 100644 lib/handle-invalidation.js
+ create mode 100644 lib/process-image-set.js
+ create mode 100644 package.json
+ create mode 100644 test/basic.css
+ create mode 100644 test/basic.expect.css
+ create mode 100644 test/basic.no-preserve.expect.css
+ create mode 100644 test/invalid.css
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+new file mode 100644
+index 0000000..acbf8a5
+--- /dev/null
++++ b/.appveyor.yml
+@@ -0,0 +1,18 @@
++# https://www.appveyor.com/docs/appveyor-yml
++
++environment:
++  matrix:
++    - nodejs_version: 4
++
++version: "{build}"
++build: off
++deploy: off
++
++install:
++  - ps: Install-Product node $env:nodejs_version
++  - npm install --ignore-scripts
++
++test_script:
++  - node --version
++  - npm --version
++  - cmd: "npm test"
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..7227e5a
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,19 @@
++root = true
++
++[*]
++charset = utf-8
++end_of_line = lf
++indent_style = tab
++insert_final_newline = true
++trim_trailing_whitespace = true
++
++[*.md]
++trim_trailing_whitespace = false
++
++[*.{json,md,yml}]
++indent_size = 2
++indent_style = space
++
++[test/*.expect.css]
++insert_final_newline = false
++trim_trailing_whitespace = false
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..de73e5a
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,12 @@
++node_modules
++index.*.js
++package-lock.json
++*.log*
++*.result.css
++.*
++!.appveyor.yml
++!.editorconfig
++!.gitignore
++!.rollup.js
++!.tape.js
++!.travis.yml
+diff --git a/.rollup.js b/.rollup.js
+new file mode 100644
+index 0000000..0436758
+--- /dev/null
++++ b/.rollup.js
+@@ -0,0 +1,16 @@
++import babel from 'rollup-plugin-babel';
++
++export default {
++	input: 'index.js',
++	output: [
++		{ file: 'index.cjs.js', format: 'cjs' },
++		{ file: 'index.es.js', format: 'es' }
++	],
++	plugins: [
++		babel({
++			presets: [
++				['env', { modules: false, targets: { node: 4 } }]
++			]
++		})
++	]
++};
+diff --git a/.tape.js b/.tape.js
+new file mode 100644
+index 0000000..cf56d4b
+--- /dev/null
++++ b/.tape.js
+@@ -0,0 +1,38 @@
++module.exports = {
++	'postcss-image-set-function': {
++		'basic': {
++			message: 'supports basic usage'
++		},
++		'basic:no-preserve': {
++			message: 'supports { preserve: false } usage',
++			options: {
++				preserve: false
++			}
++		},
++		'invalid': {
++			message: 'ignores invalid usage',
++			expect: 'invalid.css',
++			result: 'invalid.css'
++		},
++		'invalid:warn': {
++			message: 'warns invalid usage when { onvalid: "warn" }',
++			options: {
++				oninvalid: 'warn'
++			},
++			expect: 'invalid.css',
++			result: 'invalid.css',
++			warning: 10
++		},
++		'invalid:throw': {
++			message: 'throws invalid usage when { onvalid: "throw" }',
++			options: {
++				oninvalid: 'throw'
++			},
++			expect: 'invalid.css',
++			result: 'invalid.css',
++			error: {
++				message: /unexpected image/
++			}
++		}
++	}
++};
+diff --git a/.travis.yml b/.travis.yml
+new file mode 100644
+index 0000000..c564664
+--- /dev/null
++++ b/.travis.yml
+@@ -0,0 +1,9 @@
++# https://docs.travis-ci.com/user/travis-lint
++
++language: node_js
++
++node_js:
++  - 4
++
++install:
++  - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100644
+index 0000000..8526ab9
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,5 @@
++# Changes to PostCSS image-set() Function
++
++### 1.0.0 (May 2, 2018)
++
++- Initial version
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+new file mode 100644
+index 0000000..c2c61d3
+--- /dev/null
++++ b/CONTRIBUTING.md
+@@ -0,0 +1,65 @@
++# Contributing to PostCSS image-set() Function
++
++You want to help? You rock! Now, take a moment to be sure your contributions
++make sense to everyone else.
++
++## Reporting Issues
++
++Found a problem? Want a new feature?
++
++- See if your issue or idea has [already been reported].
++- Provide a [reduced test case] or a [live example].
++
++Remember, a bug is a _demonstrable problem_ caused by _our_ code.
++
++## Submitting Pull Requests
++
++Pull requests are the greatest contributions, so be sure they are focused in
++scope and avoid unrelated commits.
++
++1. To begin; [fork this project], clone your fork, and add our upstream.
++   ```bash
++   # Clone your fork of the repo into the current directory
++   git clone git@github.com:YOUR_USER/postcss-image-set-function.git
++
++   # Navigate to the newly cloned directory
++   cd postcss-image-set-function
++
++   # Assign the original repo to a remote called "upstream"
++   git remote add upstream git@github.com:jonathantneal/postcss-image-set-function.git
++
++   # Install the tools necessary for testing
++   npm install
++   ```
++
++2. Create a branch for your feature or fix:
++   ```bash
++   # Move into a new branch for your feature
++   git checkout -b feature/thing
++   ```
++   ```bash
++   # Move into a new branch for your fix
++   git checkout -b fix/something
++   ```
++
++3. If your code follows our practices, then push your feature branch:
++   ```bash
++   # Test current code
++   npm test
++   ```
++   ```bash
++   # Push the branch for your new feature
++   git push origin feature/thing
++   ```
++   ```bash
++   # Or, push the branch for your update
++   git push origin update/something
++   ```
++
++That’s it! Now [open a pull request] with a clear title and description.
++
++[already been reported]: issues
++[fork this project]:     fork
++[live example]:          https://codepen.io/pen
++[open a pull request]:   https://help.github.com/articles/using-pull-requests/
++[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+diff --git a/LICENSE.md b/LICENSE.md
+new file mode 100644
+index 0000000..0bc1fa7
+--- /dev/null
++++ b/LICENSE.md
+@@ -0,0 +1,108 @@
++# CC0 1.0 Universal
++
++## Statement of Purpose
++
++The laws of most jurisdictions throughout the world automatically confer
++exclusive Copyright and Related Rights (defined below) upon the creator and
++subsequent owner(s) (each and all, an “owner”) of an original work of
++authorship and/or a database (each, a “Work”).
++
++Certain owners wish to permanently relinquish those rights to a Work for the
++purpose of contributing to a commons of creative, cultural and scientific works
++(“Commons”) that the public can reliably and without fear of later claims of
++infringement build upon, modify, incorporate in other works, reuse and
++redistribute as freely as possible in any form whatsoever and for any purposes,
++including without limitation commercial purposes. These owners may contribute
++to the Commons to promote the ideal of a free culture and the further
++production of creative, cultural and scientific works, or to gain reputation or
++greater distribution for their Work in part through the use and efforts of
++others.
++
++For these and/or other purposes and motivations, and without any expectation of
++additional consideration or compensation, the person associating CC0 with a
++Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
++and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
++publicly distribute the Work under its terms, with knowledge of his or her
++Copyright and Related Rights in the Work and the meaning and intended legal
++effect of CC0 on those rights.
++
++1. Copyright and Related Rights. A Work made available under CC0 may be
++   protected by copyright and related or neighboring rights (“Copyright and
++   Related Rights”). Copyright and Related Rights include, but are not limited
++   to, the following:
++   1. the right to reproduce, adapt, distribute, perform, display, communicate,
++      and translate a Work;
++   2. moral rights retained by the original author(s) and/or performer(s);
++   3. publicity and privacy rights pertaining to a person’s image or likeness
++      depicted in a Work;
++   4. rights protecting against unfair competition in regards to a Work,
++      subject to the limitations in paragraph 4(i), below;
++   5. rights protecting the extraction, dissemination, use and reuse of data in
++      a Work;
++   6. database rights (such as those arising under Directive 96/9/EC of the
++      European Parliament and of the Council of 11 March 1996 on the legal
++      protection of databases, and under any national implementation thereof,
++      including any amended or successor version of such directive); and
++   7. other similar, equivalent or corresponding rights throughout the world
++      based on applicable law or treaty, and any national implementations
++      thereof.
++
++2. Waiver. To the greatest extent permitted by, but not in contravention of,
++   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++   and Related Rights and associated claims and causes of action, whether now
++   known or unknown (including existing as well as future claims and causes of
++   action), in the Work (i) in all territories worldwide, (ii) for the maximum
++   duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
++   makes the Waiver for the benefit of each member of the public at large and
++   to the detriment of Affirmer’s heirs and successors, fully intending that
++   such Waiver shall not be subject to revocation, rescission, cancellation,
++   termination, or any other legal or equitable action to disrupt the quiet
++   enjoyment of the Work by the public as contemplated by Affirmer’s express
++   Statement of Purpose.
++
++3. Public License Fallback. Should any part of the Waiver for any reason be
++   judged legally invalid or ineffective under applicable law, then the Waiver
++   shall be preserved to the maximum extent permitted taking into account
++   Affirmer’s express Statement of Purpose. In addition, to the extent the
++   Waiver is so judged Affirmer hereby grants to each affected person a
++   royalty-free, non transferable, non sublicensable, non exclusive,
++   irrevocable and unconditional license to exercise Affirmer’s Copyright and
++   Related Rights in the Work (i) in all territories worldwide, (ii) for the
++   maximum duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “License”). The License
++   shall be deemed effective as of the date CC0 was applied by Affirmer to the
++   Work. Should any part of the License for any reason be judged legally
++   invalid or ineffective under applicable law, such partial invalidity or
++   ineffectiveness shall not invalidate the remainder of the License, and in
++   such case Affirmer hereby affirms that he or she will not (i) exercise any
++   of his or her remaining Copyright and Related Rights in the Work or (ii)
++   assert any associated claims and causes of action with respect to the Work,
++   in either case contrary to Affirmer’s express Statement of Purpose.
++
++4. Limitations and Disclaimers.
++   1. No trademark or patent rights held by Affirmer are waived, abandoned,
++      surrendered, licensed or otherwise affected by this document.
++   2. Affirmer offers the Work as-is and makes no representations or warranties
++      of any kind concerning the Work, express, implied, statutory or
++      otherwise, including without limitation warranties of title,
++      merchantability, fitness for a particular purpose, non infringement, or
++      the absence of latent or other defects, accuracy, or the present or
++      absence of errors, whether or not discoverable, all to the greatest
++      extent permissible under applicable law.
++   3. Affirmer disclaims responsibility for clearing rights of other persons
++      that may apply to the Work or any use thereof, including without
++      limitation any person’s Copyright and Related Rights in the Work.
++      Further, Affirmer disclaims responsibility for obtaining any necessary
++      consents, permissions or other rights required for any use of the Work.
++   4. Affirmer understands and acknowledges that Creative Commons is not a
++      party to this document and has no duty or obligation with respect to this
++      CC0 or use of the Work.
++
++For more information, please see
++http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..49c88f0
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,247 @@
++# PostCSS image-set() Function [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
++
++[![NPM Version][npm-img]][npm-url]
++[![CSS Standard Status][css-img]][css-url]
++[![Build Status][cli-img]][cli-url]
++[![Windows Build Status][win-img]][win-url]
++[![Support Chat][git-img]][git-url]
++
++[PostCSS image-set() Function] lets you display resolution-dependent images
++using the `image-set()` function in CSS, following the [CSS Images]
++specification.
++
++```pcss
++.example {
++  background-image: image-set(
++    url(img.png) 1x,
++    url(img@2x.png) 2x,
++    url(img@print.png) 600dpi
++  );
++}
++
++/* becomes */
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++  .example {
++    background-image: url(img.png);
++  }
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++  .example {
++    background-image: url(img@2x.png);
++  }
++}
++
++
++@media (-webkit-min-device-pixel-ratio: 6.25), (min-resolution: 600dpi) {
++  .example {
++    background-image: url(my@print.png);
++  }
++}
++
++.example {
++  background-image: image-set(
++    url(img.png) 1x,
++    url(img@2x.png) 2x,
++    url(img@print.png) 600dpi
++  );
++}
++```
++
++## Usage
++
++Add [PostCSS image-set() Function] to your build tool:
++
++```bash
++npm install postcss-image-set-function --save-dev
++```
++
++#### Node
++
++Use [PostCSS image-set() Function] to process your CSS:
++
++```js
++import postcssImageSetFunction from 'postcss-image-set-function';
++
++postcssImageSetFunction.process(YOUR_CSS, /* processOptions */, /* pluginOptions */);
++```
++
++#### PostCSS
++
++Add [PostCSS] to your build tool:
++
++```bash
++npm install postcss --save-dev
++```
++
++Use [PostCSS image-set() Function] as a plugin:
++
++```js
++import postcss from 'gulp-postcss';
++import postcssImageSetFunction from 'postcss-image-set-function';
++
++postcss([
++  postcssImageSetFunction(/* pluginOptions */)
++]).process(YOUR_CSS);
++```
++
++#### Webpack
++
++Add [PostCSS Loader] to your build tool:
++
++```bash
++npm install postcss-loader --save-dev
++```
++
++Use [PostCSS image-set() Function] in your Webpack configuration:
++
++```js
++import postcssImageSetFunction from 'postcss-image-set-function';
++
++module.exports = {
++  module: {
++    rules: [
++      {
++        test: /\.css$/,
++        use: [
++          'style-loader',
++          { loader: 'css-loader', options: { importLoaders: 1 } },
++          { loader: 'postcss-loader', options: {
++            ident: 'postcss',
++            plugins: () => [
++              postcssImageSetFunction(/* pluginOptions */)
++            ]
++          } }
++        ]
++      }
++    ]
++  }
++}
++```
++
++#### Gulp
++
++Add [Gulp PostCSS] to your build tool:
++
++```bash
++npm install gulp-postcss --save-dev
++```
++
++Use [PostCSS image-set() Function] in your Gulpfile:
++
++```js
++import postcss from 'gulp-postcss';
++import postcssImageSetFunction from 'postcss-image-set-function';
++
++gulp.task('css', () => gulp.src('./src/*.css').pipe(
++  postcss([
++    postcssImageSetFunction(/* pluginOptions */)
++  ])
++).pipe(
++  gulp.dest('.')
++));
++```
++
++#### Grunt
++
++Add [Grunt PostCSS] to your build tool:
++
++```bash
++npm install grunt-postcss --save-dev
++```
++
++Use [PostCSS image-set() Function] in your Gruntfile:
++
++```js
++import postcssImageSetFunction from 'postcss-image-set-function';
++
++grunt.loadNpmTasks('grunt-postcss');
++
++grunt.initConfig({
++  postcss: {
++    options: {
++      use: [
++       postcssImageSetFunction(/* pluginOptions */)
++      ]
++    },
++    dist: {
++      src: '*.css'
++    }
++  }
++});
++```
++
++## Options
++
++### preserve
++
++The `preserve` option determines whether the original declaration using
++`image-set()` is preserved. By default, it is preserved.
++
++```js
++postcssImageSetFunction({ preserve: false })
++```
++
++```pcss
++.example {
++  background-image: image-set(
++    url(img.png) 1x,
++    url(img@2x.png) 2x,
++    url(img@print.png) 600dpi
++  );
++}
++
++/* becomes */
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++  .example {
++    background-image: url(img.png);
++  }
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++  .example {
++    background-image: url(img@2x.png);
++  }
++}
++
++
++@media (-webkit-min-device-pixel-ratio: 6.25), (min-resolution: 600dpi) {
++  .example {
++    background-image: url(my@print.png);
++  }
++}
++```
++
++### onvalid
++
++The `oninvalid` option determines how invalid usage of `image-set()` should be
++handled. By default, invalid usages of `image-set()` are ignored. They can be
++configured to display a `warning` or `throw` an error.
++
++```js
++postcssImageSetFunction({ oninvalid: 'warning' }) // warn on invalid usages
++```
++
++```js
++postcssImageSetFunction({ oninvalid: 'throw' }) // throw on invalid usages
++```
++
++[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-image-set-function.svg
++[cli-url]: https://travis-ci.org/jonathantneal/postcss-image-set-function
++[css-img]: https://cssdb.org/badge/image-set-function.svg
++[css-url]: https://cssdb.org/#image-set-function
++[git-img]: https://img.shields.io/badge/support-chat-blue.svg
++[git-url]: https://gitter.im/postcss/postcss
++[npm-img]: https://img.shields.io/npm/v/postcss-image-set-function.svg
++[npm-url]: https://www.npmjs.com/package/postcss-image-set-function
++[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-image-set-function.svg
++[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-image-set-function
++
++[CSS Images]: https://drafts.csswg.org/css-images-4/#image-set-notation
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
++[PostCSS]: https://github.com/postcss/postcss
++[PostCSS Loader]: https://github.com/postcss/postcss-loader
++[PostCSS image-set() Function]: https://github.com/jonathantneal/postcss-image-set-function
+diff --git a/index.js b/index.js
+new file mode 100644
+index 0000000..002d2ed
+--- /dev/null
++++ b/index.js
+@@ -0,0 +1,35 @@
++import postcss from 'postcss';
++import parser from 'postcss-values-parser';
++import processImageSet from './lib/process-image-set';
++
++const imageSetValueMatchRegExp = /(^|[^\w-])(-webkit-)?image-set\(/
++const imageSetFunctionMatchRegExp = /^(-webkit-)?image-set$/i
++
++export default postcss.plugin('postcss-image-set-function', opts => {
++	// prepare options
++	const preserve = 'preserve' in Object(opts) ? Boolean(opts.preserve) : true;
++	const oninvalid = 'oninvalid' in Object(opts) ? opts.oninvalid : 'ignore';
++
++	return (root, result) => {
++		// for every declaration
++		root.walkDecls(decl => {
++			const { value } = decl;
++
++			// if a declaration likely uses an image-set() function
++			if (imageSetValueMatchRegExp.test(value)) {
++				const ast = parser(value).parse();
++
++				// process every image-set() function
++				ast.walkType('func', node => {
++					if (imageSetFunctionMatchRegExp.test(node.value)) {
++						processImageSet(
++							node.nodes.slice(1, -1),
++							decl,
++							{ decl, oninvalid, preserve, result }
++						);
++					}
++				})
++			}
++		})
++	}
++});
+diff --git a/lib/get-comma.js b/lib/get-comma.js
+new file mode 100644
+index 0000000..6b2f8be
+--- /dev/null
++++ b/lib/get-comma.js
+@@ -0,0 +1,2 @@
++// return whether a node is a valid comma
++export default node => Object(node).type === 'comma';
+diff --git a/lib/get-image.js b/lib/get-image.js
+new file mode 100644
+index 0000000..84061ba
+--- /dev/null
++++ b/lib/get-image.js
+@@ -0,0 +1,13 @@
++const imageSetFunctionMatchRegExp = /^(-webkit-)?image-set$/i
++
++// return a valid image
++export default node =>
++	// <url> | <image()> | <cross-fade()> | <gradient>
++	// the image-set() function can not be nested inside of itself
++	Object(node).type === 'func' && /^(cross-fade|image|(repeating-)?(conic|linear|radial)-gradient|url)$/i.test(node.value) && !(
++		node.parent.parent && node.parent.parent.type === 'func' && imageSetFunctionMatchRegExp.test(node.parent.parent.value)
++	)
++	? String(node)
++: Object(node).type === 'string'
++	? node.value
++: false;
+diff --git a/lib/get-media.js b/lib/get-media.js
+new file mode 100644
+index 0000000..84c2edb
+--- /dev/null
++++ b/lib/get-media.js
+@@ -0,0 +1,25 @@
++import postcss from 'postcss';
++
++const dpiRatios = { dpcm: 2.54, dpi: 1, dppx: 96, x: 96 };
++
++// return a valid @media rule
++export default (node, mediasByDpi) => {
++	if (Object(node).type === 'number' && node.unit in dpiRatios) {
++		// calculate min-device-pixel-ratio and min-resolution
++		const dpi = Number(node.value) * dpiRatios[node.unit.toLowerCase()];
++		const pxRatio = Math.floor(dpi / dpiRatios.x * 100) / 100;
++
++		if (dpi in mediasByDpi) {
++			return false;
++		} else {
++			const media = mediasByDpi[dpi] = postcss.atRule({
++				name: 'media',
++				params: `(-webkit-min-device-pixel-ratio: ${pxRatio}), (min-resolution: ${dpi}dpi)`
++			});
++
++			return media;
++		}
++	} else {
++		return false;
++	}
++};
+diff --git a/lib/handle-invalidation.js b/lib/handle-invalidation.js
+new file mode 100644
+index 0000000..67b4991
+--- /dev/null
++++ b/lib/handle-invalidation.js
+@@ -0,0 +1,7 @@
++export default (opts, message, word) => {
++	if (opts.oninvalid === 'warn') {
++		opts.decl.warn(opts.result, message, { word: String(word) });
++	} else if (opts.oninvalid === 'throw') {
++		throw opts.decl.error(message, { word: String(word) });
++	}
++};
+diff --git a/lib/process-image-set.js b/lib/process-image-set.js
+new file mode 100644
+index 0000000..7d15da6
+--- /dev/null
++++ b/lib/process-image-set.js
+@@ -0,0 +1,65 @@
++import getComma from './get-comma';
++import getImage from './get-image';
++import getMedia from './get-media';
++import handleInvalidation from './handle-invalidation';
++
++export default (imageSetOptionNodes, decl, opts) => {
++	const parent = decl.parent;
++	const mediasByDpi = {};
++
++	let length = imageSetOptionNodes.length;
++	let index = -1;
++
++	while (index < length) {
++		const [comma, value, media] = [
++			index < 0 ? true : getComma(imageSetOptionNodes[index]),
++			getImage(imageSetOptionNodes[index + 1]),
++			getMedia(imageSetOptionNodes[index + 2], mediasByDpi)
++		];
++
++		// handle invalidations
++		if (!comma) {
++			return handleInvalidation(opts, 'unexpected comma', imageSetOptionNodes[index]);
++		} else if (!value) {
++			return handleInvalidation(opts, 'unexpected image', imageSetOptionNodes[index + 1]);
++		} else if (!media) {
++			return handleInvalidation(opts, 'unexpected resolution', imageSetOptionNodes[index + 2]);
++		}
++
++		// prepare @media { decl: <image> }
++		const parentClone = parent.clone().removeAll();
++		const declClone = decl.clone({ value });
++
++		parentClone.append(declClone);
++		media.append(parentClone);
++
++		index += 3
++	}
++
++	const medias = Object.keys(mediasByDpi).map(params => mediasByDpi[params]);
++
++	// conditionally prepend previous siblings
++	if (medias.length) {
++		const siblings = parent.nodes;
++		const previousSiblings = siblings.slice(0, siblings.indexOf(decl));
++
++		if (previousSiblings.length) {
++			const parentClone = parent.cloneBefore().removeAll();
++
++			parentClone.append(previousSiblings);
++		}
++
++		// prepend any @media { decl: <image> } rules
++		parent.before(medias);
++
++		// conditionally remove the current rule
++		if (!opts.preserve) {
++			decl.remove();
++
++			// and then conditionally remove its parent
++			if (!parent.nodes.length) {
++				parent.remove();
++			}
++		}
++	}
++}
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..aa64676
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,58 @@
++{
++  "name": "postcss-image-set-function",
++  "version": "1.0.0",
++  "description": "Display resolution-dependent images using the image-set() function in CSS",
++  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
++  "license": "CC0-1.0",
++  "repository": "jonathantneal/postcss-image-set-function",
++  "homepage": "https://github.com/jonathantneal/postcss-image-set-function#readme",
++  "bugs": "https://github.com/jonathantneal/postcss-image-set-function/issues",
++  "main": "index.cjs.js",
++  "module": "index.es.js",
++  "files": [
++    "index.cjs.js",
++    "index.es.js"
++  ],
++  "scripts": {
++    "prepublishOnly": "npm test",
++    "pretest": "rollup -c .rollup.js --silent",
++    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
++    "test:ec": "echint --ignore index.*.js test",
++    "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
++    "test:tape": "postcss-tape"
++  },
++  "engines": {
++    "node": ">=4.0.0"
++  },
++  "dependencies": {
++    "postcss": "^6.0.22",
++    "postcss-values-parser": "^1.5.0"
++  },
++  "devDependencies": {
++    "babel-core": "^6.26.3",
++    "babel-eslint": "^8.2.3",
++    "babel-preset-env": "^1.6.1",
++    "eslint": "^4.19.1",
++    "eslint-config-dev": "^2.0.0",
++    "postcss-tape": "^2.2.0",
++    "pre-commit": "^1.2.2",
++    "rollup": "^0.58.2",
++    "rollup-plugin-babel": "^3.0.4"
++  },
++  "eslintConfig": {
++    "extends": "dev",
++    "parser": "babel-eslint"
++  },
++  "keywords": [
++    "postcss",
++    "css",
++    "postcss-plugin",
++    "image-set",
++    "background",
++    "image",
++    "responsive",
++    "resolution",
++    "negotiation",
++    "optimization"
++  ]
++}
+diff --git a/test/basic.css b/test/basic.css
+new file mode 100644
+index 0000000..0daf0e9
+--- /dev/null
++++ b/test/basic.css
+@@ -0,0 +1,105 @@
++.test-unchanged-properties {
++	order: 1;
++	background-image: url("img/test.png");
++	order: 2;
++	background: url(my-img-print.png) top left no-repeat red;
++	order: 3;
++}
++
++.test-changed-properties {
++	order: 1;
++	background-image: image-set(
++		url(img/test.png) 1x
++	);
++	order: 2;
++	background-image: image-set(
++		url(img/test.png) 2x
++	);
++	order: 3;
++	background-image: image-set(
++		url(img/test.png) 1x,
++		url(img/test-2x.png) 2x
++	);
++	order: 4;
++	background-image: image-set(
++		url(img/test.png) 1x,
++		url(img/test-2x.png) 2x,
++		url(my-img-print.png) 600dpi
++	);
++	order: 5;
++}
++
++.test-mixed-units {
++	order: 1;
++	background-image: image-set(
++		url(img/test.png) 1x,
++		url(img/test-2x.png) 2dppx
++	);
++	order: 2;
++	background-image: image-set(
++		url(img/test.png) 1x,
++		url(img/test-2x.png) 20dpcm
++	);
++	order: 3;
++}
++
++.test-mixed-order {
++	order: 1;
++	background: image-set(
++		url(../images/bck@3x.png) 3x,
++		url(../images/bck.png) 1x,
++		url(../images/bck@2x.png) 2x
++	);
++	order: 2;
++	background: image-set(
++		url(../images/bck@2x.png) 2x,
++		url(../images/bck@3x.png) 3x,
++		url(../images/bck.png) 1x
++	);
++	order: 3;
++}
++
++.test-no-url {
++	order: 1;
++	background-image: image-set(
++		"img/test.png" 1x,
++		"img/test-2x.png" 2x
++	);
++	order: 2;
++	background-image: image-set(
++		"img/test.png" 1x,
++		"img/test-2x.png" 2x,
++		"my-img-print.png" 600dpi
++	);
++	order: 3;
++}
++
++.test-webkit-prefix {
++	order: 1;
++	background-image: -webkit-image-set(
++		url(img/test.png) 1x,
++		url(img/test-2x.png) 2x,
++		url(my-img-print.png) 600dpi
++	);
++	order: 2;
++}
++
++@media (min-width: 1000px) {
++	.test-within-mq-1 {
++		background-image: image-set(
++			url(img/test.png) 1x,
++			url(img/test-2x.png) 2x,
++			url(my-img-print.png) 600dpi
++		);
++	}
++}
++
++@media (min-width: 768px) and (max-width: 1024px) {
++	.test-within-mq-2 {
++		background-image: image-set(
++			url(img/test.png) 1x,
++			url(img/test-2x.png) 2x,
++			url(my-img-print.png) 600dpi
++		);
++	}
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+new file mode 100644
+index 0000000..5c9fe83
+--- /dev/null
++++ b/test/basic.expect.css
+@@ -0,0 +1,369 @@
++.test-unchanged-properties {
++	order: 1;
++	background-image: url("img/test.png");
++	order: 2;
++	background: url(my-img-print.png) top left no-repeat red;
++	order: 3;
++}
++
++.test-changed-properties {
++	order: 1;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-changed-properties {
++	background-image: 
++		url(img/test.png);
++}
++}
++
++.test-changed-properties {
++	background-image: image-set(
++		url(img/test.png) 1x
++	);
++	order: 2;
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-changed-properties {
++	background-image: 
++		url(img/test.png);
++}
++}
++
++.test-changed-properties {
++	background-image: image-set(
++		url(img/test.png) 2x
++	);
++	order: 3;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-changed-properties {
++	background-image: 
++		url(img/test.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-changed-properties {
++	background-image: 
++		url(img/test-2x.png);
++}
++}
++
++.test-changed-properties {
++	background-image: image-set(
++		url(img/test.png) 1x,
++		url(img/test-2x.png) 2x
++	);
++	order: 4;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-changed-properties {
++	background-image: 
++		url(img/test.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-changed-properties {
++	background-image: 
++		url(img/test-2x.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 6.25), (min-resolution: 600dpi) {
++
++.test-changed-properties {
++	background-image: 
++		url(my-img-print.png);
++}
++}
++
++.test-changed-properties {
++	background-image: image-set(
++		url(img/test.png) 1x,
++		url(img/test-2x.png) 2x,
++		url(my-img-print.png) 600dpi
++	);
++	order: 5;
++}
++
++.test-mixed-units {
++	order: 1;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-mixed-units {
++	background-image: 
++		url(img/test.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-mixed-units {
++	background-image: 
++		url(img/test-2x.png);
++}
++}
++
++.test-mixed-units {
++	background-image: image-set(
++		url(img/test.png) 1x,
++		url(img/test-2x.png) 2dppx
++	);
++	order: 2;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-mixed-units {
++	background-image: 
++		url(img/test.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 0.52), (min-resolution: 50.8dpi) {
++
++.test-mixed-units {
++	background-image: 
++		url(img/test-2x.png);
++}
++}
++
++.test-mixed-units {
++	background-image: image-set(
++		url(img/test.png) 1x,
++		url(img/test-2x.png) 20dpcm
++	);
++	order: 3;
++}
++
++.test-mixed-order {
++	order: 1;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-mixed-order {
++	background: 
++		url(../images/bck.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-mixed-order {
++	background: 
++		url(../images/bck@2x.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 3), (min-resolution: 288dpi) {
++
++.test-mixed-order {
++	background: 
++		url(../images/bck@3x.png);
++}
++}
++
++.test-mixed-order {
++	background: image-set(
++		url(../images/bck@3x.png) 3x,
++		url(../images/bck.png) 1x,
++		url(../images/bck@2x.png) 2x
++	);
++	order: 2;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-mixed-order {
++	background: 
++		url(../images/bck.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-mixed-order {
++	background: 
++		url(../images/bck@2x.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 3), (min-resolution: 288dpi) {
++
++.test-mixed-order {
++	background: 
++		url(../images/bck@3x.png);
++}
++}
++
++.test-mixed-order {
++	background: image-set(
++		url(../images/bck@2x.png) 2x,
++		url(../images/bck@3x.png) 3x,
++		url(../images/bck.png) 1x
++	);
++	order: 3;
++}
++
++.test-no-url {
++	order: 1;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-no-url {
++	background-image: img/test.png;
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-no-url {
++	background-image: img/test-2x.png;
++}
++}
++
++.test-no-url {
++	background-image: image-set(
++		"img/test.png" 1x,
++		"img/test-2x.png" 2x
++	);
++	order: 2;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-no-url {
++	background-image: img/test.png;
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-no-url {
++	background-image: img/test-2x.png;
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 6.25), (min-resolution: 600dpi) {
++
++.test-no-url {
++	background-image: my-img-print.png;
++}
++}
++
++.test-no-url {
++	background-image: image-set(
++		"img/test.png" 1x,
++		"img/test-2x.png" 2x,
++		"my-img-print.png" 600dpi
++	);
++	order: 3;
++}
++
++.test-webkit-prefix {
++	order: 1;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-webkit-prefix {
++	background-image: 
++		url(img/test.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-webkit-prefix {
++	background-image: 
++		url(img/test-2x.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 6.25), (min-resolution: 600dpi) {
++
++.test-webkit-prefix {
++	background-image: 
++		url(my-img-print.png);
++}
++}
++
++.test-webkit-prefix {
++	background-image: -webkit-image-set(
++		url(img/test.png) 1x,
++		url(img/test-2x.png) 2x,
++		url(my-img-print.png) 600dpi
++	);
++	order: 2;
++}
++
++@media (min-width: 1000px) {
++	@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++	.test-within-mq-1 {
++		background-image: 
++			url(img/test.png);
++	}
++	}
++	@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++	.test-within-mq-1 {
++		background-image: 
++			url(img/test-2x.png);
++	}
++	}
++	@media (-webkit-min-device-pixel-ratio: 6.25), (min-resolution: 600dpi) {
++	.test-within-mq-1 {
++		background-image: 
++			url(my-img-print.png);
++	}
++	}
++	.test-within-mq-1 {
++		background-image: image-set(
++			url(img/test.png) 1x,
++			url(img/test-2x.png) 2x,
++			url(my-img-print.png) 600dpi
++		);
++	}
++}
++
++@media (min-width: 768px) and (max-width: 1024px) {
++	@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++	.test-within-mq-2 {
++		background-image: 
++			url(img/test.png);
++	}
++	}
++	@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++	.test-within-mq-2 {
++		background-image: 
++			url(img/test-2x.png);
++	}
++	}
++	@media (-webkit-min-device-pixel-ratio: 6.25), (min-resolution: 600dpi) {
++	.test-within-mq-2 {
++		background-image: 
++			url(my-img-print.png);
++	}
++	}
++	.test-within-mq-2 {
++		background-image: image-set(
++			url(img/test.png) 1x,
++			url(img/test-2x.png) 2x,
++			url(my-img-print.png) 600dpi
++		);
++	}
++}
+diff --git a/test/basic.no-preserve.expect.css b/test/basic.no-preserve.expect.css
+new file mode 100644
+index 0000000..d28790c
+--- /dev/null
++++ b/test/basic.no-preserve.expect.css
+@@ -0,0 +1,308 @@
++.test-unchanged-properties {
++	order: 1;
++	background-image: url("img/test.png");
++	order: 2;
++	background: url(my-img-print.png) top left no-repeat red;
++	order: 3;
++}
++
++.test-changed-properties {
++	order: 1;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-changed-properties {
++	background-image: 
++		url(img/test.png);
++}
++}
++
++.test-changed-properties {
++	order: 2;
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-changed-properties {
++	background-image: 
++		url(img/test.png);
++}
++}
++
++.test-changed-properties {
++	order: 3;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-changed-properties {
++	background-image: 
++		url(img/test.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-changed-properties {
++	background-image: 
++		url(img/test-2x.png);
++}
++}
++
++.test-changed-properties {
++	order: 4;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-changed-properties {
++	background-image: 
++		url(img/test.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-changed-properties {
++	background-image: 
++		url(img/test-2x.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 6.25), (min-resolution: 600dpi) {
++
++.test-changed-properties {
++	background-image: 
++		url(my-img-print.png);
++}
++}
++
++.test-changed-properties {
++	order: 5;
++}
++
++.test-mixed-units {
++	order: 1;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-mixed-units {
++	background-image: 
++		url(img/test.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-mixed-units {
++	background-image: 
++		url(img/test-2x.png);
++}
++}
++
++.test-mixed-units {
++	order: 2;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-mixed-units {
++	background-image: 
++		url(img/test.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 0.52), (min-resolution: 50.8dpi) {
++
++.test-mixed-units {
++	background-image: 
++		url(img/test-2x.png);
++}
++}
++
++.test-mixed-units {
++	order: 3;
++}
++
++.test-mixed-order {
++	order: 1;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-mixed-order {
++	background: 
++		url(../images/bck.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-mixed-order {
++	background: 
++		url(../images/bck@2x.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 3), (min-resolution: 288dpi) {
++
++.test-mixed-order {
++	background: 
++		url(../images/bck@3x.png);
++}
++}
++
++.test-mixed-order {
++	order: 2;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-mixed-order {
++	background: 
++		url(../images/bck.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-mixed-order {
++	background: 
++		url(../images/bck@2x.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 3), (min-resolution: 288dpi) {
++
++.test-mixed-order {
++	background: 
++		url(../images/bck@3x.png);
++}
++}
++
++.test-mixed-order {
++	order: 3;
++}
++
++.test-no-url {
++	order: 1;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-no-url {
++	background-image: img/test.png;
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-no-url {
++	background-image: img/test-2x.png;
++}
++}
++
++.test-no-url {
++	order: 2;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-no-url {
++	background-image: img/test.png;
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-no-url {
++	background-image: img/test-2x.png;
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 6.25), (min-resolution: 600dpi) {
++
++.test-no-url {
++	background-image: my-img-print.png;
++}
++}
++
++.test-no-url {
++	order: 3;
++}
++
++.test-webkit-prefix {
++	order: 1;
++}
++
++@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++
++.test-webkit-prefix {
++	background-image: 
++		url(img/test.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-webkit-prefix {
++	background-image: 
++		url(img/test-2x.png);
++}
++}
++
++@media (-webkit-min-device-pixel-ratio: 6.25), (min-resolution: 600dpi) {
++
++.test-webkit-prefix {
++	background-image: 
++		url(my-img-print.png);
++}
++}
++
++.test-webkit-prefix {
++	order: 2;
++}
++
++@media (min-width: 1000px) {
++	@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++	.test-within-mq-1 {
++		background-image: 
++			url(img/test.png);
++	}
++	}
++	@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++	.test-within-mq-1 {
++		background-image: 
++			url(img/test-2x.png);
++	}
++	}
++	@media (-webkit-min-device-pixel-ratio: 6.25), (min-resolution: 600dpi) {
++	.test-within-mq-1 {
++		background-image: 
++			url(my-img-print.png);
++	}
++	}
++}
++
++@media (min-width: 768px) and (max-width: 1024px) {
++	@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
++	.test-within-mq-2 {
++		background-image: 
++			url(img/test.png);
++	}
++	}
++	@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++	.test-within-mq-2 {
++		background-image: 
++			url(img/test-2x.png);
++	}
++	}
++	@media (-webkit-min-device-pixel-ratio: 6.25), (min-resolution: 600dpi) {
++	.test-within-mq-2 {
++		background-image: 
++			url(my-img-print.png);
++	}
++	}
++}
+diff --git a/test/invalid.css b/test/invalid.css
+new file mode 100644
+index 0000000..1691f24
+--- /dev/null
++++ b/test/invalid.css
+@@ -0,0 +1,52 @@
++.test-invalid-params {
++	order: 1;
++	background-image: image-set();
++	order: 2;
++	background-image: image-set(
++		url(img/test.png)
++	);
++	order: 3;
++	background-image: image-set(
++		1x
++	);
++	order: 4;
++}
++
++.test-invalid-commas {
++	order: 1;
++	background-image: image-set(
++		url(img/test.png) 1x,
++	);
++	order: 2;
++	background-image: image-set(
++		url(img/test.png) 1x,
++		url(img/test-2x.png) 2x,
++	);
++	order: 3;
++}
++
++.test-invalid-images {
++	order: 1;
++	background: image-set(
++		image-set(
++			url(img/test.png) 1x
++		) 1x
++	);
++	order: 2;
++	background: image-set(
++		calc(1rem + 1px) 1x
++	);
++	order: 3;
++}
++
++.test-invalid-resolutions {
++	order: 1;
++	background-image: image-set(
++		url(img/test.png) 1
++	);
++	order: 2;
++	background-image: image-set(
++		url(img/test.png) 1omg
++	);
++	order: 3;
++}
+-- 
+2.33.1
+

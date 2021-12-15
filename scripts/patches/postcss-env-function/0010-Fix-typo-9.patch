@@ -1,0 +1,25 @@
+From 7f31fda6012f02e62a7eb81745ca071e9d84da1d Mon Sep 17 00:00:00 2001
+From: Danny Andrews <danny-andrews@users.noreply.github.com>
+Date: Tue, 12 Jan 2021 02:58:56 -0600
+Subject: [PATCH 10/21] Fix typo (csstools/postcss-env-function#9)
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 8256876..cdf1577 100644
+--- a/README.md
++++ b/README.md
+@@ -95,7 +95,7 @@ postcssEnvFunction({
+ }
+ ```
+ 
+-Multiple sources can be passed into this option, and they will be parsed in the order they are received. JavaScript files, JSON files, functions, and objects will need to namespace Custom Properties using the `environmentVariables` or `variables-variables` key.
++Multiple sources can be passed into this option, and they will be parsed in the order they are received. JavaScript files, JSON files, functions, and objects will need to namespace Custom Properties using the `environmentVariables` or `environment-variables` key.
+ 
+ ```js
+ postcssEnvFunction({
+-- 
+2.33.1
+

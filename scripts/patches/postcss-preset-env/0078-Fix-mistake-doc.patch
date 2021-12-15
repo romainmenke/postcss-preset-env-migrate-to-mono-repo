@@ -1,0 +1,28 @@
+From d7e82c241995854ebedecf6df973422e1052290c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=C4=90=C4=83ng=20T=C3=BA?=
+ <43217335+dtvn@users.noreply.github.com>
+Date: Wed, 16 Oct 2019 11:35:46 +0700
+Subject: [PATCH 078/103] Fix mistake doc
+
+[Grunt] use -> processors
+https://github.com/nDmitry/grunt-postcss#usage
+---
+ INSTALL.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/INSTALL.md b/INSTALL.md
+index 0977111..eb99b82 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -152,7 +152,7 @@ grunt.loadNpmTasks('grunt-postcss');
+ grunt.initConfig({
+   postcss: {
+     options: {
+-      use: [
++      processors: [
+        postcssPresetEnv(/* pluginOptions */)
+       ]
+     },
+-- 
+2.33.1
+

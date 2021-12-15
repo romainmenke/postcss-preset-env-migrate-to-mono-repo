@@ -1,0 +1,112 @@
+From 1f3ce3b6590dfe442aec931bc1cd3a3908dfe124 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 11 May 2018 12:30:27 -0400
+Subject: [PATCH 02/24] 1.0.1
+
+---
+ CHANGELOG.md                        | 4 ++++
+ index.js                            | 2 +-
+ package.json                        | 2 +-
+ test/basic.css                      | 2 ++
+ test/basic.expect.css               | 2 ++
+ test/basic.preserve-true.expect.css | 4 ++++
+ 6 files changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 6b10693..a106b40 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Lab Function
+ 
++### 1.0.1 (May 11, 2018)
++
++- Fixed: Values beyond the acceptable 0-255 RGB range
++
+ ### 1.0.0 (May 11, 2018)
+ 
+ - Initial version
+diff --git a/index.js b/index.js
+index 9a23ff2..ff5eeb1 100644
+--- a/index.js
++++ b/index.js
+@@ -54,7 +54,7 @@ export default postcss.plugin('postcss-lab-function', opts => {
+ 									number => parseFloat(number)
+ 								)
+ 							).map(
+-								sourceValue => parseInt(sourceValue * 2.55)
++								sourceValue => Math.max(Math.min(parseInt(sourceValue * 2.55), 255), 0)
+ 							)
+ 
+ 							children[0].value = String(rgbValues[0]);
+diff --git a/package.json b/package.json
+index 85489c8..0256cee 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-lab-function",
+-  "version": "1.0.0",
++  "version": "1.0.1",
+   "description": "Use lab() and lch() color functions in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+diff --git a/test/basic.css b/test/basic.css
+index 65e029e..a06b69e 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -4,6 +4,7 @@
+ 	color: lab(40 56.6 39 / .5);
+ 	color: lab(40 56.6 39 / 100%);
+ 	color: lab(40 56.6 39 / 50%);
++	color: lab(100 50 0);
+ }
+ 
+ .test-lch {
+@@ -12,4 +13,5 @@
+ 	color: lch(40 68.8 34.5 / .5);
+ 	color: lch(40 68.8 34.5 / 100%);
+ 	color: lch(40 68.8 34.5 / 50%);
++	color: lch(100 50 0);
+ }
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 306d9a7..4068e14 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -4,6 +4,7 @@
+ 	color: rgba(178, 34, 34, .5);
+ 	color: rgb(178, 34, 34);
+ 	color: rgba(178, 34, 34, 0.5);
++	color: rgb(255, 216, 255);
+ }
+ 
+ .test-lch {
+@@ -12,4 +13,5 @@
+ 	color: rgba(178, 34, 34, .5);
+ 	color: rgb(178, 34, 34);
+ 	color: rgba(178, 34, 34, 0.5);
++	color: rgb(255, 216, 255);
+ }
+diff --git a/test/basic.preserve-true.expect.css b/test/basic.preserve-true.expect.css
+index f030287..fdf49eb 100644
+--- a/test/basic.preserve-true.expect.css
++++ b/test/basic.preserve-true.expect.css
+@@ -9,6 +9,8 @@
+ 	color: lab(40 56.6 39 / 100%);
+ 	color: rgba(178, 34, 34, 0.5);
+ 	color: lab(40 56.6 39 / 50%);
++	color: rgb(255, 216, 255);
++	color: lab(100 50 0);
+ }
+ 
+ .test-lch {
+@@ -22,4 +24,6 @@
+ 	color: lch(40 68.8 34.5 / 100%);
+ 	color: rgba(178, 34, 34, 0.5);
+ 	color: lch(40 68.8 34.5 / 50%);
++	color: rgb(255, 216, 255);
++	color: lch(100 50 0);
+ }
+-- 
+2.33.1
+

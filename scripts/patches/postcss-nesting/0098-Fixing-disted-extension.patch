@@ -1,0 +1,25 @@
+From c0bf7372137af2a2f3224d0ad4538271ca5a3b14 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Tue, 16 Nov 2021 06:57:23 +0100
+Subject: [PATCH 098/108] Fixing disted extension
+
+---
+ .rollup.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/.rollup.js b/.rollup.js
+index e357af8..d60cb57 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -6,7 +6,7 @@ export default [
+ 	{
+ 		input: 'src/index.js',
+ 		output: [
+-			{ file: 'dist/index.js', format: 'cjs', sourcemap: true, exports: 'default' },
++			{ file: 'dist/index.cjs', format: 'cjs', sourcemap: true, exports: 'default' },
+ 			{ file: 'dist/index.mjs', format: 'esm', sourcemap: true, exports: 'default' }
+ 		],
+ 		plugins: [
+-- 
+2.33.1
+

@@ -1,0 +1,200 @@
+From 87c6d347d24798d9aa8e1917986ceac45377a059 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 18 Sep 2018 00:38:50 -0400
+Subject: [PATCH 076/108] 7.0.0
+
+---
+ .appveyor.yml | 18 ------------------
+ .gitignore    |  3 +--
+ .rollup.js    |  6 +++---
+ CHANGELOG.md  |  9 +++++++++
+ INSTALL.md    | 25 +++++++++++++++++++++++--
+ README.md     |  2 +-
+ package.json  | 14 +++++++-------
+ 7 files changed, 44 insertions(+), 33 deletions(-)
+ delete mode 100644 .appveyor.yml
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+deleted file mode 100644
+index 73f0d8f..0000000
+--- a/.appveyor.yml
++++ /dev/null
+@@ -1,18 +0,0 @@
+-# https://www.appveyor.com/docs/appveyor-yml
+-
+-environment:
+-  matrix:
+-    - nodejs_version: 6
+-
+-version: "{build}"
+-build: off
+-deploy: off
+-
+-install:
+-  - ps: Install-Product node $env:nodejs_version
+-  - npm install --ignore-scripts
+-
+-test_script:
+-  - node --version
+-  - npm --version
+-  - cmd: "npm test"
+diff --git a/.gitignore b/.gitignore
+index de73e5a..d920b78 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,10 +1,9 @@
+ node_modules
+-index.*.js
++index.*.*
+ package-lock.json
+ *.log*
+ *.result.css
+ .*
+-!.appveyor.yml
+ !.editorconfig
+ !.gitignore
+ !.rollup.js
+diff --git a/.rollup.js b/.rollup.js
+index 1d581ca..f508944 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -3,8 +3,8 @@ import babel from 'rollup-plugin-babel';
+ export default {
+ 	input: 'index.js',
+ 	output: [
+-		{ file: 'index.cjs.js', format: 'cjs' },
+-		{ file: 'index.es.js', format: 'es' }
++		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
++		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
+ 	],
+ 	plugins: [
+ 		babel({
+@@ -12,7 +12,7 @@ export default {
+ 				'array-includes'
+ 			],
+ 			presets: [
+-				['env', { modules: false, targets: { node: 6 } }]
++				['@babel/env', { modules: false, targets: { node: 6 } }]
+ 			]
+ 		})
+ 	]
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 5a125aa..14def81 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,14 @@
+ # Changes to PostCSS Nesting
+ 
++### 7.0.0 (September 17, 2018)
++
++- Updated: Support for PostCSS v7+
++- Updated: Support for Node v6+
++
++In a comment, a CSSWG member expressed interest in handling nested `@media`
++while handling selector nesting. Since the specification has yet to be added
++to the official CSSWG repository, nested at-rule deprecation is further delayed.
++
+ ### 6.0.0 (June 9, 2018)
+ 
+ - Deprecated: Nested at-rules like `@media` will no longer work in 7.0.0
+diff --git a/INSTALL.md b/INSTALL.md
+index 45ae189..94a5903 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -2,8 +2,8 @@
+ 
+ [PostCSS Nesting] runs in all Node environments, with special instructions for:
+ 
+-| [Node](#node) | [Webpack](#webpack) | [Create React App](#create-react-app) | [Gulp](#gulp) | [Grunt](#grunt) |
+-| --- | --- | --- | --- | --- |
++| [Node](#node) | [PostCSS CLI](#postcss-cli) | [Webpack](#webpack) | [Create React App](#create-react-app) | [Gulp](#gulp) | [Grunt](#grunt) |
++| --- | --- | --- | --- | --- | --- |
+ 
+ ## Node
+ 
+@@ -32,6 +32,26 @@ postcss([
+ ]).process(YOUR_CSS /*, processOptions */);
+ ```
+ 
++## PostCSS CLI
++
++Add [PostCSS CLI] to your project:
++
++```bash
++npm install postcss-cli --save-dev
++```
++
++Use [PostCSS Nesting] in your `postcss.config.js` configuration file:
++
++```js
++const postcssNesting = require('postcss-nesting');
++
++module.exports = {
++  plugins: [
++    postcssNesting(/* pluginOptions */)
++  ]
++}
++```
++
+ ## Webpack
+ 
+ Add [PostCSS Loader] to your project:
+@@ -143,6 +163,7 @@ grunt.initConfig({
+ [Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+ [Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
++[PostCSS CLI]: https://github.com/postcss/postcss-cli
+ [PostCSS Loader]: https://github.com/postcss/postcss-loader
+ [PostCSS Nesting]: https://github.com/jonathantneal/postcss-nesting
+ [React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
+diff --git a/README.md b/README.md
+index c138919..9f306c9 100644
+--- a/README.md
++++ b/README.md
+@@ -1,7 +1,7 @@
+ # PostCSS Nesting [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS" width="90" height="90" align="right">][postcss]
+ 
+-[![CSS Standard Status][css-img]][css-url]
+ [![NPM Version][npm-img]][npm-url]
++[![CSS Standard Status][css-img]][css-url]
+ [![Build Status][cli-img]][cli-url]
+ [![Support Chat][git-img]][git-url]
+ 
+diff --git a/package.json b/package.json
+index 15bea0b..24a4ba8 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-nesting",
+-  "version": "6.0.0",
++  "version": "7.0.0",
+   "description": "Nest style rules inside each other",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -27,16 +27,16 @@
+     "postcss": "^7.0.2"
+   },
+   "devDependencies": {
+-    "babel-core": "^6.26.3",
+-    "babel-eslint": "^8.2.3",
++    "@babel/core": "^7.0.0",
++    "@babel/preset-env": "^7.0.0",
++    "babel-eslint": "^9.0.0",
+     "babel-plugin-array-includes": "^2.0.3",
+-    "babel-preset-env": "^1.7.0",
+-    "eslint": "^4.19.1",
++    "eslint": "^5.6.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.60.1",
+-    "rollup-plugin-babel": "^3.0.4"
++    "rollup": "^0.66.0",
++    "rollup-plugin-babel": "^4.0.1"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+-- 
+2.33.1
+

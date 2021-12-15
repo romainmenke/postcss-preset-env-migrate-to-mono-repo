@@ -1,0 +1,121 @@
+From 595171b25892791453162b836059edc48582630b Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 4 Jun 2019 10:17:15 -0400
+Subject: [PATCH 23/38] Update project configuration
+
+---
+ .gitignore       |  3 +--
+ README.md        |  2 +-
+ package.json     | 37 +++++++++++++++++++------------------
+ rollup.config.js |  2 +-
+ 4 files changed, 22 insertions(+), 22 deletions(-)
+
+diff --git a/.gitignore b/.gitignore
+index d5f386a..d5cc2c0 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -6,5 +6,4 @@ package-lock.json
+ !.travis.yml
+ *.log*
+ *.result.css
+-/index.js
+-/index.mjs
++/index.*
+diff --git a/README.md b/README.md
+index 5e7e546..2153945 100644
+--- a/README.md
++++ b/README.md
+@@ -312,7 +312,7 @@ postcss-tape --fixtures=path/to/tests
+ 
+ [npm-img]: https://img.shields.io/npm/v/postcss-tape.svg
+ [npm-url]: https://www.npmjs.com/package/postcss-tape
+-[cli-img]: https://img.shields.io/travis/csstools/postcss-tape.svg
++[cli-img]: https://img.shields.io/travis/csstools/postcss-tape/master.svg
+ [cli-url]: https://travis-ci.org/csstools/postcss-tape
+ [git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
+ [git-url]: https://gitter.im/postcss/postcss
+diff --git a/package.json b/package.json
+index b59930a..79ae64a 100644
+--- a/package.json
++++ b/package.json
+@@ -12,14 +12,15 @@
+     "postcss-tape": "index.js"
+   },
+   "files": [
+-    "index.js"
++    "index.js",
++    "index.js.map"
+   ],
+   "scripts": {
+     "build": "rollup --config --silent",
+     "prepublish": "npm test",
+     "pretest:tape": "npm run build",
+     "test": "npm run test:js && npm run test:tape",
+-    "test:js": "eslint src/*.js src/lib/*.js --cache --ignore-pattern .gitignore",
++    "test:js": "eslint src/{*,**/*}.js --cache --ignore-pattern .gitignore",
+     "test:tape": "node . --plugin test/plugin.js --config test",
+     "test:tape:ci": "node . --ci true --plugin test/plugin.js --config test"
+   },
+@@ -27,30 +28,30 @@
+     "node": ">=8.0.0"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.4.4",
++    "@babel/core": "^7.4.5",
+     "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+-    "@babel/preset-env": "^7.4.4",
++    "@babel/preset-env": "^7.4.5",
+     "babel-eslint": "^10.0.1",
+     "eslint": "^5.16.0",
+-    "eslint-config-dev": "2.0.0",
+     "postcss": "^7.0.16",
+-    "rollup": "^1.12.1",
++    "rollup": "^1.12.3",
+     "rollup-plugin-babel": "^4.3.2",
+-    "rollup-plugin-terser": "^4.0.4"
++    "rollup-plugin-terser": "^5.0.0"
+   },
+   "eslintConfig": {
+-    "extends": "dev",
++    "env": {
++      "browser": true,
++      "es6": true,
++      "node": true
++    },
++    "extends": "eslint:recommended",
+     "parser": "babel-eslint",
+-    "rules": {
+-      "complexity": [
+-        1,
+-        24
+-      ],
+-      "max-params": [
+-        1,
+-        4
+-      ]
+-    }
++    "parserOptions": {
++      "ecmaVersion": 2018,
++      "impliedStrict": true,
++      "sourceType": "module"
++    },
++    "root": true
+   },
+   "keywords": [
+     "postcss",
+diff --git a/rollup.config.js b/rollup.config.js
+index 2907f40..fabbf5f 100644
+--- a/rollup.config.js
++++ b/rollup.config.js
+@@ -3,7 +3,7 @@ import { terser } from 'rollup-plugin-terser';
+ 
+ export default {
+ 	input: 'src/index.js',
+-	output: { file: 'index.js', format: 'cjs', strict: false },
++	output: { file: 'index.js', format: 'cjs', sourcemap: true, strict: false },
+ 	plugins: [
+ 		babel({
+ 			plugins: [ '@babel/syntax-dynamic-import' ],
+-- 
+2.33.1
+

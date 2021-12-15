@@ -1,0 +1,43 @@
+From d5af5ac7d0a4dc78f48dcdb54a5f7f9f224da20e Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 22 Sep 2021 10:27:46 -0400
+Subject: [PATCH 086/103] update dependencies
+
+---
+ package.json | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+
+diff --git a/package.json b/package.json
+index 653fa5d..02a9ad0 100644
+--- a/package.json
++++ b/package.json
+@@ -39,9 +39,7 @@
+     "postcss": "^8.3.7",
+     "postcss-attribute-case-insensitive": "^5.0.0",
+     "postcss-color-functional-notation": "^4.0.0",
+-    "postcss-color-gray": "^5.0.0",
+-    "postcss-color-hex-alpha": "^7.0.0",
+-    "postcss-color-mod-function": "^3.0.3",
++    "postcss-color-hex-alpha": "^8.0.0",
+     "postcss-color-rebeccapurple": "^7.0.0",
+     "postcss-custom-media": "^8.0.0",
+     "postcss-custom-properties": "^12.0.0",
+@@ -54,7 +52,6 @@
+     "postcss-font-variant": "^5.0.0",
+     "postcss-gap-properties": "^3.0.0",
+     "postcss-image-set-function": "^4.0.0",
+-    "postcss-initial": "^3.0.4",
+     "postcss-lab-function": "^4.0.0",
+     "postcss-logical": "^5.0.0",
+     "postcss-media-minmax": "^5.0.0",
+@@ -64,7 +61,6 @@
+     "postcss-place": "^7.0.0",
+     "postcss-pseudo-class-any-link": "^7.0.0",
+     "postcss-replace-overflow-wrap": "^4.0.0",
+-    "postcss-selector-matches": "^4.0.0",
+     "postcss-selector-not": "^5.0.0"
+   },
+   "devDependencies": {
+-- 
+2.33.1
+

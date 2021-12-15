@@ -1,0 +1,39 @@
+From 01e92f48cf29ee1388fd0d91a90fa199ea484825 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 9 Nov 2019 07:32:02 -0500
+Subject: [PATCH 32/38] Update dependencies
+
+---
+ package.json | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/package.json b/package.json
+index bd0ca43..ee567a2 100644
+--- a/package.json
++++ b/package.json
+@@ -28,15 +28,15 @@
+     "node": ">=8.0.0"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.5.5",
++    "@babel/core": "^7.7.2",
+     "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+-    "@babel/preset-env": "^7.5.5",
+-    "babel-eslint": "^10.0.2",
+-    "eslint": "^6.1.0",
+-    "postcss": "^7.0.17",
+-    "rollup": "^1.17.0",
++    "@babel/preset-env": "^7.7.1",
++    "babel-eslint": "^10.0.3",
++    "eslint": "^6.6.0",
++    "postcss": "^7.0.21",
++    "rollup": "^1.26.3",
+     "rollup-plugin-babel": "^4.3.3",
+-    "rollup-plugin-terser": "^5.1.1"
++    "rollup-plugin-terser": "^5.1.2"
+   },
+   "eslintConfig": {
+     "env": {
+-- 
+2.33.1
+

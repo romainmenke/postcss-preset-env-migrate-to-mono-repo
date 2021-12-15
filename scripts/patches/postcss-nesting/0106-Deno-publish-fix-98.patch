@@ -1,0 +1,43 @@
+From 832c93079a758cfc5aea550725b427bb9c8581e2 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Thu, 18 Nov 2021 12:47:23 +0100
+Subject: [PATCH 106/108] Deno publish fix (csstools/postcss-nesting#98)
+
+* Ensuring we also export mod.js when packing
+
+* Linking to jsdelivr on README
+---
+ README.md    | 2 +-
+ package.json | 3 ++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/README.md b/README.md
+index 15a4898..4746ace 100644
+--- a/README.md
++++ b/README.md
+@@ -67,7 +67,7 @@ You can also use [PostCSS Nesting] on [Deno]:
+ 
+ ```js
+ import postcss from "https://deno.land/x/postcss/mod.js";
+-import postcssNesting from "https://deno.land/x/postcss_nesting/mod.js";
++import postcssNesting from "https://cdn.jsdelivr.net/npm/postcss-nesting@10/mod.js";
+ 
+ await postcss([postcssNesting]).process(YOUR_CSS /*, processOptions */);
+ ```
+diff --git a/package.json b/package.json
+index 22f7169..9515fb7 100644
+--- a/package.json
++++ b/package.json
+@@ -23,7 +23,8 @@
+     }
+   },
+   "files": [
+-    "dist"
++    "dist",
++    "mod.js"
+   ],
+   "scripts": {
+     "prepublishOnly": "npm run build && npm test",
+-- 
+2.33.1
+

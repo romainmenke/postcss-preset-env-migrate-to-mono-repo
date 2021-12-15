@@ -1,0 +1,306 @@
+From 1b0a72ecd8fad6bba8aa13ac7a19d81e5ef0e5fb Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 24 Nov 2018 01:29:22 -0500
+Subject: [PATCH 068/103] Reorganize files
+
+---
+ .appveyor.yml                                 |  18 ---
+ .gitignore                                    |   4 +-
+ .rollup.js                                    |   6 +-
+ README.md                                     |   5 +-
+ package.json                                  |  14 +--
+ src/cli.js                                    | 119 ++++++++++++++++++
+ .../lib}/get-transformed-insertions.js        |   0
+ .../get-unsupported-browsers-by-feature.js    |   0
+ {lib => src/lib}/ids-by-execution-order.js    |   0
+ {lib => src/lib}/plugins-by-id.js             |   0
+ {lib => src/lib}/write-to-exports.js          |   0
+ .../patch}/postcss-system-ui-font-family.js   |   0
+ index.js => src/postcss.js                    |   0
+ 13 files changed, 132 insertions(+), 34 deletions(-)
+ delete mode 100644 .appveyor.yml
+ create mode 100644 src/cli.js
+ rename {lib => src/lib}/get-transformed-insertions.js (100%)
+ rename {lib => src/lib}/get-unsupported-browsers-by-feature.js (100%)
+ rename {lib => src/lib}/ids-by-execution-order.js (100%)
+ rename {lib => src/lib}/plugins-by-id.js (100%)
+ rename {lib => src/lib}/write-to-exports.js (100%)
+ rename {patch => src/patch}/postcss-system-ui-font-family.js (100%)
+ rename index.js => src/postcss.js (100%)
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+deleted file mode 100644
+index 73f0d8f..0000000
+--- a/.appveyor.yml
++++ /dev/null
+@@ -1,18 +0,0 @@
+-# https://www.appveyor.com/docs/appveyor-yml
+-
+-environment:
+-  matrix:
+-    - nodejs_version: 6
+-
+-version: "{build}"
+-build: off
+-deploy: off
+-
+-install:
+-  - ps: Install-Product node $env:nodejs_version
+-  - npm install --ignore-scripts
+-
+-test_script:
+-  - node --version
+-  - npm --version
+-  - cmd: "npm test"
+diff --git a/.gitignore b/.gitignore
+index 6b0c809..056c19f 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,12 +1,12 @@
+ node_modules
+-index.*.*
+ package-lock.json
+ *.log*
+ *.result.css
+ .*
+-!.appveyor.yml
+ !.editorconfig
+ !.gitignore
+ !.rollup.js
+ !.tape.js
+ !.travis.yml
++/index.js*
++/index.mjs*
+diff --git a/.rollup.js b/.rollup.js
+index 3ae567c..7df09c9 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -1,10 +1,10 @@
+ import babel from 'rollup-plugin-babel';
+ 
+ export default {
+-	input: 'index.js',
++	input: 'src/postcss.js',
+ 	output: [
+-		{ file: 'index.cjs.js', format: 'cjs' },
+-		{ file: 'index.esm.mjs', format: 'esm' }
++		{ file: 'index.js', format: 'cjs', sourcemap: true },
++		{ file: 'index.mjs', format: 'esm', sourcemap: true }
+ 	],
+ 	plugins: [
+ 		babel({
+diff --git a/README.md b/README.md
+index e642eae..e14b57e 100644
+--- a/README.md
++++ b/README.md
+@@ -2,7 +2,6 @@
+ 
+ [![NPM Version][npm-img]][npm-url]
+ [![Build Status][cli-img]][cli-url]
+-[![Windows Build Status][win-img]][win-url]
+ [![Support Chat][git-img]][git-url]
+ 
+ [PostCSS Preset Env] lets you convert modern CSS into something most browsers
+@@ -363,14 +362,12 @@ postcssPresetEnv({
+ });
+ ```
+ 
+-[cli-img]: https://img.shields.io/travis/csstools/postcss-preset-env.svg
++[cli-img]: https://img.shields.io/travis/csstools/postcss-preset-env/master.svg
+ [cli-url]: https://travis-ci.org/csstools/postcss-preset-env
+ [git-img]: https://img.shields.io/badge/support-chat-blue.svg
+ [git-url]: https://gitter.im/postcss/postcss
+ [npm-img]: https://img.shields.io/npm/v/postcss-preset-env.svg
+ [npm-url]: https://www.npmjs.com/package/postcss-preset-env
+-[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-preset-env.svg
+-[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-preset-env
+ 
+ [autoprefixer]: https://github.com/postcss/autoprefixer
+ [browserslist]: https://github.com/browserslist/browserslist#readme
+diff --git a/package.json b/package.json
+index 7ce1c47..6971d85 100644
+--- a/package.json
++++ b/package.json
+@@ -7,19 +7,19 @@
+   "repository": "csstools/postcss-preset-env",
+   "homepage": "https://github.com/csstools/postcss-preset-env#readme",
+   "bugs": "https://github.com/csstools/postcss-preset-env/issues",
+-  "main": "index.cjs.js",
+-  "module": "index.esm.mjs",
++  "main": "index.js",
++  "module": "index.mjs",
+   "files": [
+-    "index.cjs.js",
+-    "index.cjs.js.map",
+-    "index.esm.mjs",
+-    "index.esm.mjs.map"
++    "index.js",
++    "index.js.map",
++    "index.mjs",
++    "index.mjs.map"
+   ],
+   "scripts": {
+     "prepublishOnly": "npm test",
+     "pretest": "rollup -c .rollup.js --silent",
+     "test": "npm run test:js && npm run test:tape",
+-    "test:js": "eslint *.js lib/*.js --cache --ignore-path .gitignore --quiet",
++    "test:js": "eslint src/*.js src/lib/*.js src/patch/*.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+diff --git a/src/cli.js b/src/cli.js
+new file mode 100644
+index 0000000..a46b30f
+--- /dev/null
++++ b/src/cli.js
+@@ -0,0 +1,119 @@
++import fs from 'fs';
++import plugin from './postcss';
++
++if (process.argv.length < 3) {
++	console.log([
++		'PostCSS Preset Env\n',
++		'  Transforms Modern CSS\n',
++		'Usage:\n',
++		'  postcss-preset-env source.css transformed.css',
++		'  postcss-preset-env --in=source.css --out=transformed.css --opts={}',
++		'  echo "/* a bunch of css */" | focus-within\n'
++	].join('\n'));
++	process.exit(0);
++}
++
++// get process and plugin options from the command line
++const fileRegExp = /^[\w\/.]+$/;
++const argRegExp = /^--(\w+)=("|')?(.+)\2$/;
++const relaxedJsonPropRegExp = /(['"])?([a-z0-9A-Z_]+)(['"])?:/g;
++const relaxedJsonValueRegExp = /("[a-z0-9A-Z_]+":\s*)(?!true|false|null|\d+)'?([A-z0-9]+)'?([,}])/g;
++const argo = process.argv.slice(2).reduce(
++	(object, arg) => {
++		const argMatch = arg.match(argRegExp);
++		const fileMatch = arg.match(fileRegExp);
++
++		if (argMatch) {
++			object[argMatch[1]] = argMatch[3];
++		} else if (fileMatch) {
++			if (object.from === '<stdin>') {
++				object.from = arg;
++			} else if (object.to === '<stdout>') {
++				object.to = arg;
++			}
++		}
++
++		return object;
++	},
++	{ from: '<stdin>', to: '<stdout>', opts: 'null' }
++);
++
++// get css from command line arguments or stdin
++(argo.from === '<stdin>' ? getStdin() : readFile(argo.from))
++.then(css => {
++	const pluginOpts = JSON.parse(
++		argo.opts
++		.replace(relaxedJsonPropRegExp, '"$2": ')
++		.replace(relaxedJsonValueRegExp, '$1"$2"$3')
++	);
++	const processOptions = Object.assign({ from: argo.from, to: argo.to || argo.from }, argo.map ? { map: JSON.parse(argo.map) } : {});
++
++	const result = plugin.process(css, processOptions, pluginOpts);
++
++	if (argo.to === '<stdout>') {
++		return result.css;
++	} else {
++		return writeFile(argo.to, result.css).then(
++			() => `CSS was written to "${argo.to}"`
++		)
++	}
++}).then(
++	result => {
++		console.log(result);
++
++		process.exit(0);
++	},
++	error => {
++		console.error(error);
++
++		process.exit(1);
++	}
++);
++
++function readFile(pathname) {
++	return new Promise((resolve, reject) => {
++		fs.readFile(pathname, 'utf8', (error, data) => {
++			if (error) {
++				reject(error);
++			} else {
++				resolve(data);
++			}
++		});
++	});
++}
++
++function writeFile(pathname, data) {
++	return new Promise((resolve, reject) => {
++		fs.writeFile(pathname, data, (error, content) => {
++			if (error) {
++				reject(error);
++			} else {
++				resolve(content);
++			}
++		});
++	});
++}
++
++function getStdin() {
++	return new Promise(resolve => {
++		let data = '';
++
++		if (process.stdin.isTTY) {
++			resolve(data);
++		} else {
++			process.stdin.setEncoding('utf8');
++
++			process.stdin.on('readable', () => {
++				let chunk;
++
++				while (chunk = process.stdin.read()) {
++					data += chunk;
++				}
++			});
++
++			process.stdin.on('end', () => {
++				resolve(data);
++			});
++		}
++	});
++}
+diff --git a/lib/get-transformed-insertions.js b/src/lib/get-transformed-insertions.js
+similarity index 100%
+rename from lib/get-transformed-insertions.js
+rename to src/lib/get-transformed-insertions.js
+diff --git a/lib/get-unsupported-browsers-by-feature.js b/src/lib/get-unsupported-browsers-by-feature.js
+similarity index 100%
+rename from lib/get-unsupported-browsers-by-feature.js
+rename to src/lib/get-unsupported-browsers-by-feature.js
+diff --git a/lib/ids-by-execution-order.js b/src/lib/ids-by-execution-order.js
+similarity index 100%
+rename from lib/ids-by-execution-order.js
+rename to src/lib/ids-by-execution-order.js
+diff --git a/lib/plugins-by-id.js b/src/lib/plugins-by-id.js
+similarity index 100%
+rename from lib/plugins-by-id.js
+rename to src/lib/plugins-by-id.js
+diff --git a/lib/write-to-exports.js b/src/lib/write-to-exports.js
+similarity index 100%
+rename from lib/write-to-exports.js
+rename to src/lib/write-to-exports.js
+diff --git a/patch/postcss-system-ui-font-family.js b/src/patch/postcss-system-ui-font-family.js
+similarity index 100%
+rename from patch/postcss-system-ui-font-family.js
+rename to src/patch/postcss-system-ui-font-family.js
+diff --git a/index.js b/src/postcss.js
+similarity index 100%
+rename from index.js
+rename to src/postcss.js
+-- 
+2.33.1
+

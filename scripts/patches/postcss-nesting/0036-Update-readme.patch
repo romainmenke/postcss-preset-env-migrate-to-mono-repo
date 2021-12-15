@@ -1,0 +1,56 @@
+From 179a8452b5f49630247f0f18f7f0deaeb47260f5 Mon Sep 17 00:00:00 2001
+From: Tom Bremer <tom.bremer@asynchrony.com>
+Date: Mon, 9 Nov 2015 15:45:31 -0600
+Subject: [PATCH 036/108] Update readme
+
+---
+ README.md | 25 ++++++++++++++++++++++++-
+ 1 file changed, 24 insertions(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 5c4f8c6..ed7480a 100644
+--- a/README.md
++++ b/README.md
+@@ -4,8 +4,9 @@
+ 
+ [CSS Nesting] allows you to nest one style rule inside another, following the [CSS Nesting Module Level 3] specification.
+ 
++### At Rule Nesting
+ ```css
+-/* before */
++/* at rule nesting */
+ 
+ a, b {
+ 	color: red;
+@@ -27,6 +28,28 @@ a, b {
+ 	}
+ }
+ 
++/* direct nesting */
++
++a, b {
++	color: red;
++
++	& c, & d {
++		color: white;
++	}
++
++	& & {
++		color: blue;
++	}
++
++	&:hover {
++		color: black;
++	}
++
++	@media (min-width: 30em) {
++		color: yellow;
++	}
++}
++
+ /* after */
+ 
+ a, b {
+-- 
+2.33.1
+

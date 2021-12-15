@@ -1,0 +1,40 @@
+From c1cd77faa0ab436ff1a4593ace19c635f0dc989b Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 20 May 2017 21:15:00 -0400
+Subject: [PATCH 053/108] 4.0.0
+
+---
+ CHANGELOG.md | 5 +++++
+ package.json | 2 +-
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index d8a636d..81a2ed8 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Nesting
+ 
++### 4.0.0 (May 20, 2017)
++
++- Transform only compliant nesting
++- Preserve more raws formatting
++
+ ### 3.0.0 (May 8, 2017)
+ 
+ - Added: Node 4.x support
+diff --git a/package.json b/package.json
+index 247ff41..3aca9e0 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-nesting",
+-  "version": "3.0.0",
++  "version": "4.0.0",
+   "description": "Nest style and media rules inside each another, following the CSS Nesting Module Level 3 specification",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

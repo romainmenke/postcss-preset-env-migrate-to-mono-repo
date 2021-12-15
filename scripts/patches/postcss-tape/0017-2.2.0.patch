@@ -1,0 +1,39 @@
+From a0a3f94b63bd07cbd1754088d54654bd4dc835c1 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 3 Nov 2017 00:06:35 -0400
+Subject: [PATCH 17/38] 2.2.0
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 2 +-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index e4f213d..7aaa925 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Tape
+ 
++### 2.2.0 (November 2, 2017)
++
++- Added: New `processOptions` option for controlling the PostCSS process
++
+ ### 2.1.0 (September 16, 2017)
+ 
+ - Added: New `plugin` methods for specifying alternative plugin(s)
+diff --git a/package.json b/package.json
+index d573357..4b84e67 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-tape",
+-  "version": "2.1.0",
++  "version": "2.2.0",
+   "description": "Quickly test PostCSS plugins",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

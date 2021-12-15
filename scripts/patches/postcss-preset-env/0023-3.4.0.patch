@@ -1,0 +1,41 @@
+From 229b0dd80b183ecd6a53d72aad197af64d0458b6 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 18 Mar 2018 19:36:19 -0400
+Subject: [PATCH 023/103] 3.4.0
+
+---
+ CHANGELOG.md | 6 ++++++
+ package.json | 2 +-
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 09060b5..6ae7d00 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,11 @@
+ # Changes to PostCSS Preset Env
+ 
++### 3.4.0 (March 18, 2018)
++
++- Updated: `browserslist` to v3.2.0 (minor update)
++- Updated: `postcss` to v6.0.20 (patch update)
++- Updated: `postcss-image-set-polyfill` to `@csstools/postcss-image-set-function` (hopefully temporarily)
++
+ ### 3.3.0 (March 16, 2018)
+ 
+ - Updated: `postcss-apply` to v0.9.0 (minor update)
+diff --git a/package.json b/package.json
+index 171dd1c..efd03b9 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-preset-env",
+-  "version": "3.3.0",
++  "version": "3.4.0",
+   "description": "Convert modern CSS into something browsers understand",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

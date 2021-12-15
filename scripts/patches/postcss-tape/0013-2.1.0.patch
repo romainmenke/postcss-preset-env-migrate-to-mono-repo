@@ -1,0 +1,40 @@
+From 8d0d83997b4a947b8898e2f84e91a73a1a23a070 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 16 Sep 2017 19:35:24 -0400
+Subject: [PATCH 13/38] 2.1.0
+
+---
+ CHANGELOG.md | 5 +++++
+ package.json | 2 +-
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index d23d036..e4f213d 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Tape
+ 
++### 2.1.0 (September 16, 2017)
++
++- Added: New `plugin` methods for specifying alternative plugin(s)
++- Added: Support for running all tests even if some fail
++
+ ### 2.0.1 (May 9, 2017)
+ 
+ - Updated: Travis compatibility
+diff --git a/package.json b/package.json
+index 512c0da..b013e39 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-tape",
+-  "version": "2.0.1",
++  "version": "2.1.0",
+   "description": "Quickly test PostCSS plugins",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

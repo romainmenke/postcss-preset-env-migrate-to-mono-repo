@@ -1,0 +1,74 @@
+From ab7bb6d1cd7ea22a5c8e29c4164ee6a942f53e1c Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 14 Dec 2016 01:54:15 -0800
+Subject: [PATCH 03/38] 1.2.0
+
+---
+ CHANGELOG.md |  5 +++++
+ index.js     | 21 ++++++++++++++++++++-
+ package.json |  2 +-
+ 3 files changed, 26 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index a98211a..158e769 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Tape
+ 
++### 1.2.0 (December 14, 2016)
++
++- Added: Expected `error` option
++- Added: `after` command to run option
++
+ ### 1.1.0 (December 8, 2016)
+ 
+ - Added: Support `plugins#process` with separate arguments
+diff --git a/index.js b/index.js
+index af20e93..a957ee0 100644
+--- a/index.js
++++ b/index.js
+@@ -97,8 +97,27 @@ Promise.all(Object.keys(tests).map(
+ 									return `  ${ pass }  ${ test.message }`;
+ 								}
+ 							}
+-						)
++						),
++						(error) => {
++							const expectedError = test.error && Object.keys(test.error).every(
++								(key) => test.error[key] === error[key]
++							);
++
++							if (expectedError) {
++								return `  ${ pass }  ${ test.message }`;
++							} else {
++								throw error;
++							}
++						}
+ 					)
++				).then(
++					(result) => {
++						if (test.after) {
++							test.after();
++						}
++
++						return result;
++					}
+ 				);
+ 			}
+ 		)
+diff --git a/package.json b/package.json
+index 49abef1..c356fa9 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-tape",
+-  "version": "1.1.0",
++  "version": "1.2.0",
+   "description": "Quickly test a PostCSS Plugin",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

@@ -1,0 +1,499 @@
+From 08fe1ce1c8eb8acab1ffcb9757e809e849539795 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 18 Sep 2018 00:57:17 -0400
+Subject: [PATCH 11/26] 4.0.0
+
+---
+ .appveyor.yml |  18 ------
+ .gitignore    |   3 +-
+ .rollup.js    |   6 +-
+ .travis.yml   |   2 +-
+ CHANGELOG.md  |   5 ++
+ INSTALL.md    | 170 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ README.md     | 110 +++-----------------------------
+ package.json  |  22 ++++---
+ 8 files changed, 200 insertions(+), 136 deletions(-)
+ delete mode 100644 .appveyor.yml
+ create mode 100644 INSTALL.md
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+deleted file mode 100644
+index acbf8a5..0000000
+--- a/.appveyor.yml
++++ /dev/null
+@@ -1,18 +0,0 @@
+-# https://www.appveyor.com/docs/appveyor-yml
+-
+-environment:
+-  matrix:
+-    - nodejs_version: 4
+-
+-version: "{build}"
+-build: off
+-deploy: off
+-
+-install:
+-  - ps: Install-Product node $env:nodejs_version
+-  - npm install --ignore-scripts
+-
+-test_script:
+-  - node --version
+-  - npm --version
+-  - cmd: "npm test"
+diff --git a/.gitignore b/.gitignore
+index de73e5a..d920b78 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,10 +1,9 @@
+ node_modules
+-index.*.js
++index.*.*
+ package-lock.json
+ *.log*
+ *.result.css
+ .*
+-!.appveyor.yml
+ !.editorconfig
+ !.gitignore
+ !.rollup.js
+diff --git a/.rollup.js b/.rollup.js
+index 0436758..ebe39f9 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -3,13 +3,13 @@ import babel from 'rollup-plugin-babel';
+ export default {
+ 	input: 'index.js',
+ 	output: [
+-		{ file: 'index.cjs.js', format: 'cjs' },
+-		{ file: 'index.es.js', format: 'es' }
++		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
++		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
+ 	],
+ 	plugins: [
+ 		babel({
+ 			presets: [
+-				['env', { modules: false, targets: { node: 4 } }]
++				['@babel/env', { modules: false, targets: { node: 6 } }]
+ 			]
+ 		})
+ 	]
+diff --git a/.travis.yml b/.travis.yml
+index c564664..e1f11a5 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 4
++  - 6
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 35b9a5f..3c66faf 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Place Properties
+ 
++### 4.0.0 (September 17, 2018)
++
++- Updated: Support for PostCSS v7+
++- Updated: Support for Node v6+
++
+ ### 3.0.1 (May 8, 2018)
+ 
+ - Updated: `postcss-values-parser` to v1.5.0 (major)
+diff --git a/INSTALL.md b/INSTALL.md
+new file mode 100644
+index 0000000..bfdf3dd
+--- /dev/null
++++ b/INSTALL.md
+@@ -0,0 +1,170 @@
++# Installing PostCSS Place Properties
++
++[PostCSS Place Properties] runs in all Node environments, with special instructions for:
++
++| [Node](#node) | [PostCSS CLI](#postcss-cli) | [Webpack](#webpack) | [Create React App](#create-react-app) | [Gulp](#gulp) | [Grunt](#grunt) |
++| --- | --- | --- | --- | --- | --- |
++
++## Node
++
++Add [PostCSS Place Properties] to your project:
++
++```bash
++npm install postcss-place --save-dev
++```
++
++Use [PostCSS Place Properties] to process your CSS:
++
++```js
++import postcssPlace from 'postcss-place';
++
++postcssPlace.process(YOUR_CSS /*, processOptions, pluginOptions */);
++```
++
++Or use it as a [PostCSS] plugin:
++
++```js
++import postcss from 'postcss';
++import postcssPlace from 'postcss-place';
++
++postcss([
++  postcssPlace(/* pluginOptions */)
++]).process(YOUR_CSS /*, processOptions */);
++```
++
++## PostCSS CLI
++
++Add [PostCSS CLI] to your project:
++
++```bash
++npm install postcss-cli --save-dev
++```
++
++Use [PostCSS Place Properties] in your `postcss.config.js` configuration file:
++
++```js
++const postcssPlace = require('postcss-place');
++
++module.exports = {
++  plugins: [
++    postcssPlace(/* pluginOptions */)
++  ]
++}
++```
++
++## Webpack
++
++Add [PostCSS Loader] to your project:
++
++```bash
++npm install postcss-loader --save-dev
++```
++
++Use [PostCSS Place Properties] in your Webpack configuration:
++
++```js
++import postcssPlace from 'postcss-place';
++
++module.exports = {
++  module: {
++    rules: [
++      {
++        test: /\.css$/,
++        use: [
++          'style-loader',
++          { loader: 'css-loader', options: { importLoaders: 1 } },
++          { loader: 'postcss-loader', options: {
++            ident: 'postcss',
++            plugins: () => [
++              postcssPlace(/* pluginOptions */)
++            ]
++          } }
++        ]
++      }
++    ]
++  }
++}
++```
++
++## Create React App
++
++Add [React App Rewired] and [React App Rewire PostCSS] to your project:
++
++```bash
++npm install react-app-rewired react-app-rewire-postcss --save-dev
++```
++
++Use [React App Rewire PostCSS] and [PostCSS Place Properties] in your
++`config-overrides.js` file:
++
++```js
++import reactAppRewirePostcss from 'react-app-rewire-postcss';
++import postcssPlace from 'postcss-place';
++
++export default config => reactAppRewirePostcss(config, {
++  plugins: () => [
++    postcssPlace(/* pluginOptions */)
++  ]
++});
++```
++
++## Gulp
++
++Add [Gulp PostCSS] to your project:
++
++```bash
++npm install gulp-postcss --save-dev
++```
++
++Use [PostCSS Place Properties] in your Gulpfile:
++
++```js
++import postcss from 'gulp-postcss';
++import postcssPlace from 'postcss-place';
++
++gulp.task('css', () => gulp.src('./src/*.css').pipe(
++  postcss([
++    postcssPlace(/* pluginOptions */)
++  ])
++).pipe(
++  gulp.dest('.')
++));
++```
++
++## Grunt
++
++Add [Grunt PostCSS] to your project:
++
++```bash
++npm install grunt-postcss --save-dev
++```
++
++Use [PostCSS Place Properties] in your Gruntfile:
++
++```js
++import postcssPlace from 'postcss-place';
++
++grunt.loadNpmTasks('grunt-postcss');
++
++grunt.initConfig({
++  postcss: {
++    options: {
++      use: [
++       postcssPlace(/* pluginOptions */)
++      ]
++    },
++    dist: {
++      src: '*.css'
++    }
++  }
++});
++```
++
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
++[PostCSS]: https://github.com/postcss/postcss
++[PostCSS CLI]: https://github.com/postcss/postcss-cli
++[PostCSS Loader]: https://github.com/postcss/postcss-loader
++[PostCSS Place Properties]: https://github.com/jonathantneal/postcss-place
++[React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
++[React App Rewired]: https://github.com/timarney/react-app-rewired
+diff --git a/README.md b/README.md
+index 18052c2..295f760 100644
+--- a/README.md
++++ b/README.md
+@@ -3,7 +3,6 @@
+ [![NPM Version][npm-img]][npm-url]
+ [![CSS Standard Status][css-img]][css-url]
+ [![Build Status][cli-img]][cli-url]
+-[![Windows Build Status][win-img]][win-url]
+ [![Support Chat][git-img]][git-url]
+ 
+ [PostCSS Place Properties] lets you use `place-*` properties as shorthands for `align-*`
+@@ -29,126 +28,35 @@ and `justify-*`, following the [CSS Box Alignment] specification.
+ 
+ ## Usage
+ 
+-Add [PostCSS Place Properties] to your build tool:
++Add [PostCSS Place Properties] to your project:
+ 
+ ```bash
+ npm install postcss-place --save-dev
+ ```
+ 
+-#### Node
+-
+ Use [PostCSS Place Properties] to process your CSS:
+ 
+ ```js
+ import postcssPlace from 'postcss-place';
+ 
+-postcssPlace.process(YOUR_CSS, /* processOptions */, /* pluginOptions */);
+-```
+-
+-#### PostCSS
+-
+-Add [PostCSS] to your build tool:
+-
+-```bash
+-npm install postcss --save-dev
++postcssPlace.process(YOUR_CSS /*, processOptions, pluginOptions */);
+ ```
+ 
+-Use [PostCSS Place Properties] as a plugin:
++Or use it as a [PostCSS] plugin:
+ 
+ ```js
+-import postcss from 'gulp-postcss';
++import postcss from 'postcss';
+ import postcssPlace from 'postcss-place';
+ 
+ postcss([
+   postcssPlace(/* pluginOptions */)
+-]).process(YOUR_CSS);
+-```
+-
+-#### Webpack
+-
+-Add [PostCSS Loader] to your build tool:
+-
+-```bash
+-npm install postcss-loader --save-dev
+-```
+-
+-Use [PostCSS Place Properties] in your Webpack configuration:
+-
+-```js
+-import postcssPlace from 'postcss-place';
+-
+-module.exports = {
+-  module: {
+-    rules: [
+-      {
+-        test: /\.css$/,
+-        use: [
+-          'style-loader',
+-          { loader: 'css-loader', options: { importLoaders: 1 } },
+-          { loader: 'postcss-loader', options: {
+-            ident: 'postcss',
+-            plugins: () => [
+-              postcssPlace(/* pluginOptions */)
+-            ]
+-          } }
+-        ]
+-      }
+-    ]
+-  }
+-}
+-```
+-
+-#### Gulp
+-
+-Add [Gulp PostCSS] to your build tool:
+-
+-```bash
+-npm install gulp-postcss --save-dev
+-```
+-
+-Use [PostCSS Place Properties] in your Gulpfile:
+-
+-```js
+-import postcss from 'gulp-postcss';
+-import postcssPlace from 'postcss-place';
+-
+-gulp.task('css', () => gulp.src('./src/*.css').pipe(
+-  postcss([
+-    postcssPlace(/* pluginOptions */)
+-  ])
+-).pipe(
+-  gulp.dest('.')
+-));
++]).process(YOUR_CSS /*, processOptions */);
+ ```
+ 
+-#### Grunt
++[PostCSS Place Properties] runs in all Node environments, with special instructions for:
+ 
+-Add [Grunt PostCSS] to your build tool:
+-
+-```bash
+-npm install grunt-postcss --save-dev
+-```
+-
+-Use [PostCSS Place Properties] in your Gruntfile:
+-
+-```js
+-import postcssPlace from 'postcss-place';
+-
+-grunt.loadNpmTasks('grunt-postcss');
+-
+-grunt.initConfig({
+-  postcss: {
+-    options: {
+-      use: [
+-       postcssPlace(/* pluginOptions */)
+-      ]
+-    },
+-    dist: {
+-      src: '*.css'
+-    }
+-  }
+-});
+-```
++| [Node](INSTALL.md#node) | [Webpack](INSTALL.md#webpack) | [Create React App](INSTALL.md#create-react-app) | [Gulp](INSTALL.md#gulp) | [Grunt](INSTALL.md#grunt) |
++| --- | --- | --- | --- | --- |
+ 
+ ## Options
+ 
+@@ -185,8 +93,6 @@ postcssPlace({ preserve: false })
+ [git-url]: https://gitter.im/postcss/postcss
+ [npm-img]: https://img.shields.io/npm/v/postcss-place.svg
+ [npm-url]: https://www.npmjs.com/package/postcss-place
+-[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-place.svg
+-[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-place
+ 
+ [CSS Box Alignment]: https://www.w3.org/TR/css-align-3/#place-content
+ [Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+diff --git a/package.json b/package.json
+index 43582c2..73b024d 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-place",
+-  "version": "3.0.1",
++  "version": "4.0.0",
+   "description": "Use a place-* shorthand for align-* and justify-* in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -8,10 +8,12 @@
+   "homepage": "https://github.com/jonathantneal/postcss-place#readme",
+   "bugs": "https://github.com/jonathantneal/postcss-place/issues",
+   "main": "index.cjs.js",
+-  "module": "index.es.js",
++  "module": "index.es.mjs",
+   "files": [
+     "index.cjs.js",
+-    "index.es.js"
++    "index.cjs.js.map",
++    "index.es.mjs",
++    "index.es.mjs.map"
+   ],
+   "scripts": {
+     "prepublishOnly": "npm test",
+@@ -22,22 +24,22 @@
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+-    "node": ">=4.0.0"
++    "node": ">=6.0.0"
+   },
+   "dependencies": {
+     "postcss": "^7.0.2",
+     "postcss-values-parser": "^1.5.0"
+   },
+   "devDependencies": {
+-    "babel-core": "^6.26.3",
+-    "babel-eslint": "^8.2.3",
+-    "babel-preset-env": "^1.6.1",
+-    "eslint": "^4.19.1",
++    "@babel/core": "^7.0.0",
++    "@babel/preset-env": "^7.0.0",
++    "babel-eslint": "^9.0.0",
++    "eslint": "^5.6.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.58.2",
+-    "rollup-plugin-babel": "^3.0.4"
++    "rollup": "^0.66.0",
++    "rollup-plugin-babel": "^4.0.1"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+-- 
+2.33.1
+

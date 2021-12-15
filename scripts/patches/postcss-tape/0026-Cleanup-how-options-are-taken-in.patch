@@ -1,0 +1,63 @@
+From bbc941b79bbbe1cf06221061469fd41d21df0b0b Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 29 Jul 2019 06:31:44 -0400
+Subject: [PATCH 26/38] Cleanup how options are taken in
+
+---
+ src/lib/get-options.js | 38 ++++++++++++++++----------------------
+ 1 file changed, 16 insertions(+), 22 deletions(-)
+
+diff --git a/src/lib/get-options.js b/src/lib/get-options.js
+index d0d0aff..ad15dd3 100644
+--- a/src/lib/get-options.js
++++ b/src/lib/get-options.js
+@@ -18,30 +18,24 @@ export default async function getOptions () {
+ 		)
+ 	);
+ 
+-	try {
+-		options.plugin = await import(
+-			path.resolve(options.plugin)
+-		);
+-	} catch (error1) {
+-		throw error1;
+-	}
++	const importedPluginFile = path.resolve(options.plugin);
++	const importedPlugin = await import(importedPluginFile);
++
++	options.plugin = importedPlugin;
+ 
+ 	try {
+-		options.config = await import(
+-			path.extname(options.config)
+-				? path.resolve(options.config)
+-			: path.resolve(options.config, 'postcss-tape.config.js')
+-		);
+-	} catch (error1) {
+-		try {
+-			options.config = await import(
+-				path.extname(options.config)
+-					? path.resolve(options.config)
+-				: path.resolve(options.config, '.tape.js')
+-			);
+-		} catch (error2) {
+-			throw error2;
+-		}
++		const importedConfigFile = path.extname(options.config)
++			? path.resolve(options.config)
++		: path.resolve(options.config, 'postcss-tape.config.js');
++
++		const importedConfig = await import(importedConfigFile);
++
++		options.config = importedConfig.default || importedConfig;
++	} catch (ignoredError) {
++		const importedConfigFile = path.resolve(options.config, '.tape.js');
++		const importedConfig = await import(importedConfigFile);
++
++		options.config = importedConfig.default || importedConfig;
+ 	}
+ 
+ 	return options;
+-- 
+2.33.1
+

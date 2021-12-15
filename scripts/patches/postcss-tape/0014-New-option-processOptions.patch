@@ -1,0 +1,29 @@
+From fd538918141944522cd643c114696a6f5c2b063e Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 2 Nov 2017 23:23:34 -0400
+Subject: [PATCH 14/38] New option: processOptions
+
+---
+ index.js | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/index.js b/index.js
+index 27cecab..da39ab7 100644
+--- a/index.js
++++ b/index.js
+@@ -73,10 +73,10 @@ Object.keys(tests).reduce(
+ 					return readFile(sourcePath, 'utf8').then(
+ 						(css) => testPlugin.process(
+ 							css,
+-							{
++							Object.assign({
+ 								from: sourcePath,
+ 								to:   resultPath
+-							},
++							}, test.processOptions),
+ 							test.options
+ 						),
+ 						() => writeFile(sourcePath, '').then(
+-- 
+2.33.1
+

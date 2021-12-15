@@ -16,7 +16,8 @@ set -e
 # sh ./scripts/apply-patches.sh postcss-image-set-function plugins
 # sh ./scripts/apply-patches.sh postcss-lab-function plugins
 # sh ./scripts/apply-patches.sh postcss-logical plugins
-sh ./scripts/apply-patches.sh postcss-nesting plugins
+# sh ./scripts/apply-patches.sh postcss-nesting plugins
 # sh ./scripts/apply-patches.sh postcss-overflow-shorthand plugins
-sh ./scripts/apply-patches.sh postcss-place plugins
+# sh ./scripts/apply-patches.sh postcss-place plugins
 # sh ./scripts/apply-patches.sh postcss-pseudo-class-any-link plugins
+sh ./scripts/apply-patches.sh postcss-tape packages

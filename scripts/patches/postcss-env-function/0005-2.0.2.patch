@@ -1,0 +1,98 @@
+From ff7a08d9a02390bd26b5233884bb4a7fb2558f20 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 20 Sep 2018 16:16:44 -0400
+Subject: [PATCH 05/21] 2.0.2
+
+---
+ .tape.js                              |  6 ++++++
+ CHANGELOG.md                          |  4 ++++
+ lib/import-from.js                    |  2 +-
+ package.json                          |  4 ++--
+ test/basic.import-is-empty.expect.css | 10 ++++++++++
+ 5 files changed, 23 insertions(+), 3 deletions(-)
+ create mode 100644 test/basic.import-is-empty.expect.css
+
+diff --git a/.tape.js b/.tape.js
+index 00854c3..dc9f015 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -77,6 +77,12 @@ module.exports = {
+ 			},
+ 			expect: 'basic.import.expect.css',
+ 			result: 'basic.import.result.css'
++		},
++		'basic:import-is-empty': {
++			message: 'supports { importFrom: {} } usage',
++			options: {
++				importFrom: {}
++			}
+ 		}
+ 	}
+ };
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 007135f..3eb6219 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Environment Variables
+ 
++### 2.0.2 (September 20, 2018)
++
++- Updated: Do not break on an empty importFrom object
++
+ ### 2.0.1 (September 18, 2018)
+ 
+ - Updated: Support for PostCSS Values Parser 2
+diff --git a/lib/import-from.js b/lib/import-from.js
+index 5b99a51..c50ba15 100644
+--- a/lib/import-from.js
++++ b/lib/import-from.js
+@@ -59,7 +59,7 @@ export default function importEnvironmentVariablesFromSources(sources) {
+ 		const from = String(opts.from || '');
+ 
+ 		// type of file being read from
+-		const type = (opts.type || path.extname(opts.from).slice(1)).toLowerCase();
++		const type = (opts.type || path.extname(from).slice(1)).toLowerCase();
+ 
+ 		return { type, from };
+ 	}).reduce(async (environmentVariables, source) => {
+diff --git a/package.json b/package.json
+index b1e6904..16ba077 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-env-function",
+-  "version": "2.0.1",
++  "version": "2.0.2",
+   "description": "Use env() variables in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -39,7 +39,7 @@
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.0",
++    "rollup": "^0.66.1",
+     "rollup-plugin-babel": "^4.0.3"
+   },
+   "eslintConfig": {
+diff --git a/test/basic.import-is-empty.expect.css b/test/basic.import-is-empty.expect.css
+new file mode 100644
+index 0000000..5199c9f
+--- /dev/null
++++ b/test/basic.import-is-empty.expect.css
+@@ -0,0 +1,10 @@
++body {
++	order: 1;
++	padding: env(--some-custom-padding);
++}
++
++@media (min-width: env(--another-custom-width)) {
++	body {
++		order: 2;
++	}
++}
+-- 
+2.33.1
+

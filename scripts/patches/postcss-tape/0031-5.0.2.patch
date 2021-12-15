@@ -1,0 +1,39 @@
+From c86b1e95f37c6e30b81e9a25b0e79bc3e2f49a29 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 29 Jul 2019 08:44:52 -0400
+Subject: [PATCH 31/38] 5.0.2
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 2 +-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index d7db822..3f1b8bc 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Tape
+ 
++### 5.0.2 (July 29, 2019)
++
++- Fixed: Issue loading a test plugin
++
+ ### 5.0.1 (July 29, 2019)
+ 
+ - Fixed: Tests for an error
+diff --git a/package.json b/package.json
+index 46ca0c3..bd0ca43 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-tape",
+-  "version": "5.0.1",
++  "version": "5.0.2",
+   "description": "Quickly test PostCSS plugins",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

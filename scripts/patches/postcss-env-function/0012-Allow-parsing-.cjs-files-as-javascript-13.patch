@@ -1,0 +1,59 @@
+From 21ef77a12d72348c2fef072faf36f88c1724ff06 Mon Sep 17 00:00:00 2001
+From: Ian VanSchooten <ian.vanschooten@gmail.com>
+Date: Thu, 13 May 2021 12:32:10 -0400
+Subject: [PATCH 12/21] Allow parsing `.cjs` files as javascript (csstools/postcss-env-function#13)
+
+---
+ .tape.js                  | 8 ++++++++
+ src/lib/import-from.js    | 2 +-
+ test/import-variables.cjs | 6 ++++++
+ 3 files changed, 15 insertions(+), 1 deletion(-)
+ create mode 100644 test/import-variables.cjs
+
+diff --git a/.tape.js b/.tape.js
+index f676e2c..c35060c 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -61,6 +61,14 @@ module.exports = {
+ 		expect: 'basic.import.expect.css',
+ 		result: 'basic.import.result.css'
+ 	},
++	'basic:import-cjs': {
++		message: 'supports { importFrom: "test/import-variables.cjs" } usage',
++		options: {
++			importFrom: 'test/import-variables.cjs'
++		},
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
+ 	'basic:import-js-from': {
+ 		message: 'supports { importFrom: { from: "test/import-variables.js" } } usage',
+ 		options: {
+diff --git a/src/lib/import-from.js b/src/lib/import-from.js
+index 7641313..5914655 100644
+--- a/src/lib/import-from.js
++++ b/src/lib/import-from.js
+@@ -73,7 +73,7 @@ export default function importEnvironmentVariablesFromSources(sources) {
+ 	}).reduce(async (environmentVariables, source) => {
+ 		const { type, from } = await source;
+ 
+-		if (type === 'js') {
++		if (type === 'js' || type === 'cjs') {
+ 			return Object.assign(environmentVariables, await importEnvironmentVariablesFromJSFile(from));
+ 		}
+ 
+diff --git a/test/import-variables.cjs b/test/import-variables.cjs
+new file mode 100644
+index 0000000..f08efb7
+--- /dev/null
++++ b/test/import-variables.cjs
+@@ -0,0 +1,6 @@
++module.exports = {
++	environmentVariables: {
++		'--some-custom-padding': '20px',
++		'--another-custom-width': '600px'
++	}
++};
+-- 
+2.33.1
+

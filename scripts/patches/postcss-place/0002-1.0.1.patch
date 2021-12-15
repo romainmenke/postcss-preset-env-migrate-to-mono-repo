@@ -1,0 +1,229 @@
+From 005682de7e15f42d3f706040cbae7f469a4fe0e9 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 6 Dec 2016 14:08:53 -0500
+Subject: [PATCH 02/26] 1.0.1
+
+- Updated: boilerplate conventions (`postcss-tape`)
+---
+ .tape.js     |  7 +++++
+ CHANGELOG.md |  4 +++
+ README.md    | 18 ++++++------
+ package.json | 27 +++++++++++-------
+ test.js      | 81 ----------------------------------------------------
+ 5 files changed, 37 insertions(+), 100 deletions(-)
+ create mode 100644 .tape.js
+ delete mode 100644 test.js
+
+diff --git a/.tape.js b/.tape.js
+new file mode 100644
+index 0000000..44e3eb5
+--- /dev/null
++++ b/.tape.js
+@@ -0,0 +1,7 @@
++module.exports = {
++	'postcss-place': {
++		'basic': {
++			message: 'supports basic usage'
++		}
++	}
++};
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 29f298b..071bbeb 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to Place
+ 
++### 1.0.1 (December 6, 2016)
++
++- Updated: boilerplate conventions (`postcss-tape`)
++
+ ### 1.0.0 (November 25, 2016)
+ 
+ - Initial version
+diff --git a/README.md b/README.md
+index 6ed097b..191d189 100644
+--- a/README.md
++++ b/README.md
+@@ -26,6 +26,15 @@
+ }
+ ```
+ 
++## Options
++
++#### `prefix`
++
++Type: `String`  
++Default: `null`
++
++Specifies a prefix to be surrounded by dashes before the declaration (e.g. `prefix: 'x'` changes the detected property to `-x-place-content`).
++
+ ## Usage
+ 
+ Add [Place] to your build tool:
+@@ -107,15 +116,6 @@ grunt.initConfig({
+ });
+ ```
+ 
+-## Options
+-
+-#### `prefix`
+-
+-Type: `String`  
+-Default: `null`
+-
+-Specifies a prefix to be surrounded by dashes before the declaration (e.g. `prefix: 'x'` changes the detected property to `-x-place-content`).
+-
+ [npm-url]: https://www.npmjs.com/package/postcss-place
+ [npm-img]: https://img.shields.io/npm/v/postcss-place.svg
+ [cli-url]: https://travis-ci.org/jonathantneal/postcss-place
+diff --git a/package.json b/package.json
+index 7e7262f..13113b2 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-place",
+-  "version": "1.0.0",
++  "version": "1.0.1",
+   "description": "`place-[alignment] shorthand for align-[alignment] and justify-[alignment]",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com> (http://jonathantneal.com)",
+   "license": "CC0-1.0",
+@@ -12,31 +12,38 @@
+     "index.js"
+   ],
+   "scripts": {
+-    "lint": "eslint index.js && jscs index.js",
+-    "tape": "node test",
+-    "test": "npm run lint && node test"
++    "lint": "echint && eslint index.js && jscs index.js",
++    "prepublish": "npm test",
++    "tape": "postcss-tape",
++    "test": "npm run lint && postcss-tape"
+   },
+   "engines": {
+     "node": ">=6.9.1"
+   },
+   "dependencies": {
+-    "postcss": "^5.2.5",
++    "postcss": "^5.2.6",
+     "postcss-value-parser": "^3.3.0"
+   },
+   "devDependencies": {
+-    "eslint": "^3.10.2",
+-    "eslint-config-10up": "github:jonathantneal/eslint-config-10up",
++    "echint": "^2.1.0",
++    "echint-config-dev": "1.0.0",
++    "eslint": "^3.11.1",
++    "eslint-config-dev": "1.0.0",
+     "jscs": "^3.0.7",
+-    "jscs-config-10up": "github:jonathantneal/jscs-config-10up"
++    "jscs-config-dev": "1.0.1",
++    "postcss-tape": "1.0.1"
++  },
++  "echint": {
++    "extends": "dev"
+   },
+   "eslintConfig": {
+-    "extends": "10up",
++    "extends": "dev",
+     "parserOptions": {
+       "sourceType": "module"
+     }
+   },
+   "jscsConfig": {
+-    "preset": "10up"
++    "preset": "dev"
+   },
+   "keywords": [
+     "postcss",
+diff --git a/test.js b/test.js
+deleted file mode 100644
+index 5fcb605..0000000
+--- a/test.js
++++ /dev/null
+@@ -1,81 +0,0 @@
+-// tests
+-var tests = {
+-	'postcss-place': {
+-		'basic': {
+-			message: 'supports basic usage'
+-		}
+-	}
+-};
+-
+-// tooling
+-const fs     = require('fs');
+-const path   = require('path');
+-const plugin = require('.');
+-
+-// error symbols
+-const pass = '\x1b[32m\✔\x1b[0m';
+-const fail = '\x1b[31m\✖\x1b[0m';
+-
+-// runner
+-Promise.all(Object.keys(tests).map(
+-	(section) => Promise.all(
+-		Object.keys(tests[section]).map(
+-			(name) => {
+-				const baseName = name.split(':')[0];
+-				const testName = name.split(':').join('.');
+-				const warnings = tests[section][name].warning || 0;
+-
+-				return Promise.all([
+-					readFile(path.resolve(__dirname, 'test', baseName + '.css'), 'utf8'),
+-					readFile(path.resolve(__dirname, 'test', testName + '.expect.css'), 'utf8')
+-				]).then(
+-					([actualCSS, expectCSS]) => plugin.process(actualCSS, tests[section][name].options || {}).then(
+-						(result) => writeFile(path.resolve(__dirname, 'test', testName + '.result.css'), result.css).then(
+-							() => {
+-								if (result.css !== expectCSS) {
+-									throw new Error(`  ${ fail }  ${ tests[section][name].message }\n${ JSON.stringify({
+-										expect: expectCSS,
+-										result: result.css
+-									}, null, '  ') }`);
+-								} else if (result.warnings().length !== warnings) {
+-									throw Error(`  ${ fail } ${ tests[section][name].message } (${ result.warnings().length } warnings, expected ${ warnings })`);
+-								} else {
+-									return `  ${ pass }  ${ tests[section][name].message }`;
+-								}
+-							}
+-						)
+-					)
+-				);
+-			}
+-		)
+-	).then(
+-		(messages) => console.log(`${ pass } ${ section }\n${ messages.join('\n') }`)
+-	).catch(
+-		(error)    => {
+-			console.log(`${ fail } ${ section }\n${ error.message }`);
+-
+-			throw Error;
+-		}
+-	)
+-)).then(
+-	() => console.log(`\n${ pass } Test passed`) && process.exit(0),
+-	() => console.log(`\n${ fail } Test failed`) && process.exit(1)
+-);
+-
+-// Promise fs.readFile
+-function readFile(filename) {
+-	return new Promise(
+-		(resolve, reject) => fs.readFile(filename, 'utf8',
+-			(error, data) => error ? reject(error) : resolve(data)
+-		)
+-	);
+-}
+-
+-// Promise fs.writeFile
+-function writeFile(filename, data) {
+-	return new Promise(
+-		(resolve, reject) => fs.writeFile(filename, data,
+-			(error) => error ? reject(error) : resolve()
+-		)
+-	);
+-}
+-- 
+2.33.1
+

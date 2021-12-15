@@ -1,0 +1,65 @@
+From bfb37c33092bea70a00a93a7d04c26cb7d95edad Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 9 Sep 2017 22:30:04 -0400
+Subject: [PATCH 064/108] Update README
+
+- Organize badges
+- Update CSS Nesting specification title
+---
+ README.md | 22 +++++++++-------------
+ 1 file changed, 9 insertions(+), 13 deletions(-)
+
+diff --git a/README.md b/README.md
+index 186f63b..fd81abc 100644
+--- a/README.md
++++ b/README.md
+@@ -1,14 +1,13 @@
+ # PostCSS Nesting [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
+ 
+-[![NPM Version][npm-img]][npm-url]
+ [![CSS Standard Status][css-img]][css-url]
++[![NPM Version][npm-img]][npm-url]
+ [![Build Status][cli-img]][cli-url]
+ [![Licensing][lic-img]][lic-url]
+-[![Changelog][log-img]][log-url]
+ [![Gitter Chat][git-img]][git-url]
+ 
+ [PostCSS Nesting] lets you nest style rules inside each other, following the
+-[CSS Nesting Module Level 3] specification.
++[CSS Nesting] specification.
+ 
+ ```css
+ a, b {
+@@ -113,22 +112,19 @@ grunt.initConfig({
+ });
+ ```
+ 
+-[npm-url]: https://www.npmjs.com/package/postcss-nesting
+-[npm-img]: https://img.shields.io/npm/v/postcss-nesting.svg
+ [cli-url]: https://travis-ci.org/jonathantneal/postcss-nesting
+ [cli-img]: https://img.shields.io/travis/jonathantneal/postcss-nesting.svg
+ [css-img]: https://jonathantneal.github.io/css-db/badge/css-nesting.svg
+ [css-url]: https://jonathantneal.github.io/css-db/#css-nesting
+-[lic-url]: LICENSE.md
+-[lic-img]: https://img.shields.io/npm/l/postcss-nesting.svg
+-[log-url]: CHANGELOG.md
+-[log-img]: https://img.shields.io/badge/changelog-md-blue.svg
+ [git-url]: https://gitter.im/postcss/postcss
+ [git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
++[lic-url]: LICENSE.md
++[lic-img]: https://img.shields.io/npm/l/postcss-nesting.svg
++[npm-url]: https://www.npmjs.com/package/postcss-nesting
++[npm-img]: https://img.shields.io/npm/v/postcss-nesting.svg
+ 
+-[PostCSS Nesting]: https://github.com/jonathantneal/postcss-nesting
+-[PostCSS]: https://github.com/postcss/postcss
++[CSS Nesting]: http://tabatkins.github.io/specs/css-nesting/
+ [Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+ [Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+-
+-[CSS Nesting Module Level 3]: http://tabatkins.github.io/specs/css-nesting/
++[PostCSS]: https://github.com/postcss/postcss
++[PostCSS Nesting]: https://github.com/jonathantneal/postcss-nesting
+-- 
+2.33.1
+

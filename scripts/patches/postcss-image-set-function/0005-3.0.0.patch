@@ -1,0 +1,528 @@
+From b64c388c4e0d6c347177de60bccd81109a104f80 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 18 Sep 2018 11:56:38 -0400
+Subject: [PATCH 05/19] 3.0.0
+
+---
+ .appveyor.yml |  18 ------
+ .gitignore    |   3 +-
+ .rollup.js    |   6 +-
+ .travis.yml   |   2 +-
+ CHANGELOG.md  |   5 ++
+ INSTALL.md    | 171 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ README.md     | 115 ++++-----------------------------
+ index.js      |   6 +-
+ package.json  |  22 ++++---
+ 9 files changed, 207 insertions(+), 141 deletions(-)
+ delete mode 100644 .appveyor.yml
+ create mode 100644 INSTALL.md
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+deleted file mode 100644
+index acbf8a5..0000000
+--- a/.appveyor.yml
++++ /dev/null
+@@ -1,18 +0,0 @@
+-# https://www.appveyor.com/docs/appveyor-yml
+-
+-environment:
+-  matrix:
+-    - nodejs_version: 4
+-
+-version: "{build}"
+-build: off
+-deploy: off
+-
+-install:
+-  - ps: Install-Product node $env:nodejs_version
+-  - npm install --ignore-scripts
+-
+-test_script:
+-  - node --version
+-  - npm --version
+-  - cmd: "npm test"
+diff --git a/.gitignore b/.gitignore
+index de73e5a..d920b78 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,10 +1,9 @@
+ node_modules
+-index.*.js
++index.*.*
+ package-lock.json
+ *.log*
+ *.result.css
+ .*
+-!.appveyor.yml
+ !.editorconfig
+ !.gitignore
+ !.rollup.js
+diff --git a/.rollup.js b/.rollup.js
+index 0436758..ebe39f9 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -3,13 +3,13 @@ import babel from 'rollup-plugin-babel';
+ export default {
+ 	input: 'index.js',
+ 	output: [
+-		{ file: 'index.cjs.js', format: 'cjs' },
+-		{ file: 'index.es.js', format: 'es' }
++		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
++		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
+ 	],
+ 	plugins: [
+ 		babel({
+ 			presets: [
+-				['env', { modules: false, targets: { node: 4 } }]
++				['@babel/env', { modules: false, targets: { node: 6 } }]
+ 			]
+ 		})
+ 	]
+diff --git a/.travis.yml b/.travis.yml
+index c564664..e1f11a5 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 4
++  - 6
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 9119c00..75ef470 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS image-set() Function
+ 
++### 3.0.0 (September 17, 2018)
++
++- Updated: Support for PostCSS 7+
++- Updated: Support for Node 6+
++
+ ### 2.0.0 (May 7, 2018)
+ 
+ - Sort images by DPR and use the lowest as the default
+diff --git a/INSTALL.md b/INSTALL.md
+new file mode 100644
+index 0000000..0f66ae6
+--- /dev/null
++++ b/INSTALL.md
+@@ -0,0 +1,171 @@
++# Installing PostCSS
++
++[PostCSS image-set() Function] runs in all Node environments, with special instructions for:
++
++| [Node](#node) | [PostCSS CLI](#postcss-cli) | [Webpack](#webpack) | [Create React App](#create-react-app) | [Gulp](#gulp) | [Grunt](#grunt) |
++| --- | --- | --- | --- | --- | --- |
++
++## Node
++
++Add [PostCSS image-set() Function] to your project:
++
++```bash
++npm install postcss-image-set-function --save-dev
++```
++
++Use [PostCSS image-set() Function] to process your CSS:
++
++```js
++const postcssImageSetFunction = require('postcss-image-set-function');
++
++postcssImageSetFunction.process(YOUR_CSS /*, processOptions, pluginOptions */);
++```
++
++Or use it as a [PostCSS] plugin:
++
++```js
++const postcss = require('postcss');
++const postcssImageSetFunction = require('postcss-image-set-function');
++
++postcss([
++  postcssImageSetFunction(/* pluginOptions */)
++]).process(YOUR_CSS /*, processOptions */);
++```
++
++## PostCSS CLI
++
++Add [PostCSS CLI] to your project:
++
++```bash
++npm install postcss-cli --save-dev
++```
++
++Use [PostCSS image-set() Function] in your `postcss.config.js` configuration
++file:
++
++```js
++const postcssImageSetFunction = require('postcss-image-set-function');
++
++module.exports = {
++  plugins: [
++    postcssImageSetFunction(/* pluginOptions */)
++  ]
++}
++```
++
++## Webpack
++
++Add [PostCSS Loader] to your project:
++
++```bash
++npm install postcss-loader --save-dev
++```
++
++Use [PostCSS image-set() Function] in your Webpack configuration:
++
++```js
++const postcssImageSetFunction = require('postcss-image-set-function');
++
++module.exports = {
++  module: {
++    rules: [
++      {
++        test: /\.css$/,
++        use: [
++          'style-loader',
++          { loader: 'css-loader', options: { importLoaders: 1 } },
++          { loader: 'postcss-loader', options: {
++            ident: 'postcss',
++            plugins: () => [
++              postcssImageSetFunction(/* pluginOptions */)
++            ]
++          } }
++        ]
++      }
++    ]
++  }
++}
++```
++
++## Create React App
++
++Add [React App Rewired] and [React App Rewire PostCSS] to your project:
++
++```bash
++npm install react-app-rewired react-app-rewire-postcss --save-dev
++```
++
++Use [React App Rewire PostCSS] and [PostCSS image-set() Function] in your
++`config-overrides.js` file:
++
++```js
++const reactAppRewirePostcss = require('react-app-rewire-postcss');
++const postcssImageSetFunction = require('postcss-image-set-function');
++
++module.exports = config => reactAppRewirePostcss(config, {
++  plugins: () => [
++    postcssImageSetFunction(/* pluginOptions */)
++  ]
++});
++```
++
++## Gulp
++
++Add [Gulp PostCSS] to your project:
++
++```bash
++npm install gulp-postcss --save-dev
++```
++
++Use [PostCSS image-set() Function] in your Gulpfile:
++
++```js
++const postcss = require('gulp-postcss');
++const postcssImageSetFunction = require('postcss-image-set-function');
++
++gulp.task('css', () => gulp.src('./src/*.css').pipe(
++  postcss([
++    postcssImageSetFunction(/* pluginOptions */)
++  ])
++).pipe(
++  gulp.dest('.')
++));
++```
++
++## Grunt
++
++Add [Grunt PostCSS] to your project:
++
++```bash
++npm install grunt-postcss --save-dev
++```
++
++Use [PostCSS image-set() Function] in your Gruntfile:
++
++```js
++const postcssImageSetFunction = require('postcss-image-set-function');
++
++grunt.loadNpmTasks('grunt-postcss');
++
++grunt.initConfig({
++  postcss: {
++    options: {
++      use: [
++       postcssImageSetFunction(/* pluginOptions */)
++      ]
++    },
++    dist: {
++      src: '*.css'
++    }
++  }
++});
++```
++
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
++[PostCSS]: https://github.com/postcss/postcss
++[PostCSS CLI]: https://github.com/postcss/postcss-cli
++[PostCSS Loader]: https://github.com/postcss/postcss-loader
++[PostCSS image-set() Function]: https://github.com/jonathantneal/postcss-image-set-function
++[React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
++[React App Rewired]: https://github.com/timarney/react-app-rewired
+diff --git a/README.md b/README.md
+index 8aced93..92a495e 100644
+--- a/README.md
++++ b/README.md
+@@ -3,7 +3,6 @@
+ [![NPM Version][npm-img]][npm-url]
+ [![CSS Standard Status][css-img]][css-url]
+ [![Build Status][cli-img]][cli-url]
+-[![Windows Build Status][win-img]][win-url]
+ [![Support Chat][git-img]][git-url]
+ 
+ [PostCSS image-set() Function] lets you display resolution-dependent images
+@@ -49,126 +48,36 @@ specification.
+ 
+ ## Usage
+ 
+-Add [PostCSS image-set() Function] to your build tool:
++Add [PostCSS image-set() Function] to your project:
+ 
+ ```bash
+ npm install postcss-image-set-function --save-dev
+ ```
+ 
+-#### Node
+-
+ Use [PostCSS image-set() Function] to process your CSS:
+ 
+ ```js
+-import postcssImageSetFunction from 'postcss-image-set-function';
++const postcssImageSetFunction = require('postcss-image-set-function');
+ 
+-postcssImageSetFunction.process(YOUR_CSS, /* processOptions */, /* pluginOptions */);
++postcssImageSetFunction.process(YOUR_CSS /*, processOptions, pluginOptions */);
+ ```
+ 
+-#### PostCSS
+-
+-Add [PostCSS] to your build tool:
+-
+-```bash
+-npm install postcss --save-dev
+-```
+-
+-Use [PostCSS image-set() Function] as a plugin:
++Or use it as a [PostCSS] plugin:
+ 
+ ```js
+-import postcss from 'gulp-postcss';
+-import postcssImageSetFunction from 'postcss-image-set-function';
++const postcss = require('postcss');
++const postcssImageSetFunction = require('postcss-image-set-function');
+ 
+ postcss([
+   postcssImageSetFunction(/* pluginOptions */)
+-]).process(YOUR_CSS);
+-```
+-
+-#### Webpack
+-
+-Add [PostCSS Loader] to your build tool:
+-
+-```bash
+-npm install postcss-loader --save-dev
+-```
+-
+-Use [PostCSS image-set() Function] in your Webpack configuration:
+-
+-```js
+-import postcssImageSetFunction from 'postcss-image-set-function';
+-
+-module.exports = {
+-  module: {
+-    rules: [
+-      {
+-        test: /\.css$/,
+-        use: [
+-          'style-loader',
+-          { loader: 'css-loader', options: { importLoaders: 1 } },
+-          { loader: 'postcss-loader', options: {
+-            ident: 'postcss',
+-            plugins: () => [
+-              postcssImageSetFunction(/* pluginOptions */)
+-            ]
+-          } }
+-        ]
+-      }
+-    ]
+-  }
+-}
++]).process(YOUR_CSS /*, processOptions */);
+ ```
+ 
+-#### Gulp
++[PostCSS image-set() Function] runs in all Node environments, with special
++instructions for:
+ 
+-Add [Gulp PostCSS] to your build tool:
+-
+-```bash
+-npm install gulp-postcss --save-dev
+-```
+-
+-Use [PostCSS image-set() Function] in your Gulpfile:
+-
+-```js
+-import postcss from 'gulp-postcss';
+-import postcssImageSetFunction from 'postcss-image-set-function';
+-
+-gulp.task('css', () => gulp.src('./src/*.css').pipe(
+-  postcss([
+-    postcssImageSetFunction(/* pluginOptions */)
+-  ])
+-).pipe(
+-  gulp.dest('.')
+-));
+-```
+-
+-#### Grunt
+-
+-Add [Grunt PostCSS] to your build tool:
+-
+-```bash
+-npm install grunt-postcss --save-dev
+-```
+-
+-Use [PostCSS image-set() Function] in your Gruntfile:
+-
+-```js
+-import postcssImageSetFunction from 'postcss-image-set-function';
+-
+-grunt.loadNpmTasks('grunt-postcss');
+-
+-grunt.initConfig({
+-  postcss: {
+-    options: {
+-      use: [
+-       postcssImageSetFunction(/* pluginOptions */)
+-      ]
+-    },
+-    dist: {
+-      src: '*.css'
+-    }
+-  }
+-});
+-```
++| [Node](INSTALL.md#node) | [PostCSS CLI](INSTALL.md#postcss-cli) | [Webpack](INSTALL.md#webpack) | [Create React App](INSTALL.md#create-react-app) | [Gulp](INSTALL.md#gulp) | [Grunt](INSTALL.md#grunt) |
++| --- | --- | --- | --- | --- | --- |
+ 
+ ## Options
+ 
+@@ -249,8 +158,6 @@ rather than wait for a larger, resolution-matching image to load.
+ [git-url]: https://gitter.im/postcss/postcss
+ [npm-img]: https://img.shields.io/npm/v/postcss-image-set-function.svg
+ [npm-url]: https://www.npmjs.com/package/postcss-image-set-function
+-[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-image-set-function.svg
+-[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-image-set-function
+ 
+ [CSS Images]: https://drafts.csswg.org/css-images-4/#image-set-notation
+ [Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+diff --git a/index.js b/index.js
+index 002d2ed..3775a02 100644
+--- a/index.js
++++ b/index.js
+@@ -1,5 +1,5 @@
+ import postcss from 'postcss';
+-import parser from 'postcss-values-parser';
++import valueParser from 'postcss-values-parser';
+ import processImageSet from './lib/process-image-set';
+ 
+ const imageSetValueMatchRegExp = /(^|[^\w-])(-webkit-)?image-set\(/
+@@ -17,10 +17,10 @@ export default postcss.plugin('postcss-image-set-function', opts => {
+ 
+ 			// if a declaration likely uses an image-set() function
+ 			if (imageSetValueMatchRegExp.test(value)) {
+-				const ast = parser(value).parse();
++				const valueAST = valueParser(value).parse();
+ 
+ 				// process every image-set() function
+-				ast.walkType('func', node => {
++				valueAST.walkType('func', node => {
+ 					if (imageSetFunctionMatchRegExp.test(node.value)) {
+ 						processImageSet(
+ 							node.nodes.slice(1, -1),
+diff --git a/package.json b/package.json
+index 1902c6a..3c65e0b 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-image-set-function",
+-  "version": "2.0.0",
++  "version": "3.0.0",
+   "description": "Display resolution-dependent images using the image-set() function in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -8,10 +8,12 @@
+   "homepage": "https://github.com/jonathantneal/postcss-image-set-function#readme",
+   "bugs": "https://github.com/jonathantneal/postcss-image-set-function/issues",
+   "main": "index.cjs.js",
+-  "module": "index.es.js",
++  "module": "index.es.mjs",
+   "files": [
+     "index.cjs.js",
+-    "index.es.js"
++    "index.cjs.js.map",
++    "index.es.mjs",
++    "index.es.mjs.map"
+   ],
+   "scripts": {
+     "prepublishOnly": "npm test",
+@@ -22,22 +24,22 @@
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+-    "node": ">=4.0.0"
++    "node": ">=6.0.0"
+   },
+   "dependencies": {
+     "postcss": "^7.0.2",
+     "postcss-values-parser": "^1.5.0"
+   },
+   "devDependencies": {
+-    "babel-core": "^6.26.3",
+-    "babel-eslint": "^8.2.3",
+-    "babel-preset-env": "^1.6.1",
+-    "eslint": "^4.19.1",
++    "@babel/core": "^7.1.0",
++    "@babel/preset-env": "^7.1.0",
++    "babel-eslint": "^9.0.0",
++    "eslint": "^5.6.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.58.2",
+-    "rollup-plugin-babel": "^3.0.4"
++    "rollup": "^0.66.0",
++    "rollup-plugin-babel": "^4.0.3"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+-- 
+2.33.1
+

@@ -1,0 +1,32 @@
+From c53bdc732fdc4f655e26baaa8498eb35d6cb3897 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Wed, 17 Nov 2021 09:35:19 +0100
+Subject: [PATCH 103/108] Adding clarification for postcss-nested
+
+---
+ README.md | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 039a14e..1e42c76 100644
+--- a/README.md
++++ b/README.md
+@@ -6,7 +6,8 @@
+ [![Support Chat][git-img]][git-url]
+ 
+ [PostCSS Nesting] lets you nest style rules inside each other, following the
+-[CSS Nesting] specification.
++[CSS Nesting] specification. If you want nested rules the same way [Sass] works
++you might want to use [PostCSS Nested] instead.
+ 
+ ```pcss
+ a, b {
+@@ -84,3 +85,5 @@ await postcss([postcssNesting]).process(YOUR_CSS /*, processOptions */);
+ [PostCSS]: https://github.com/postcss/postcss
+ [PostCSS Nesting]: https://github.com/jonathantneal/postcss-nesting
+ [Deno]: https://deno.land/x/postcss_nesting
++[PostCSS Nested]: https://github.com/postcss/postcss-nested
++[Sass]: https://sass-lang.com/
+-- 
+2.33.1
+

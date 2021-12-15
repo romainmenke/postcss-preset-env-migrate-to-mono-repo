@@ -1,0 +1,25 @@
+From d29cf2639e8a38347ce230bccaffb806b5738b68 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 17 Jun 2015 13:06:08 -0400
+Subject: [PATCH 009/108] Update README.md
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 73584a0..49cd76b 100644
+--- a/README.md
++++ b/README.md
+@@ -2,7 +2,7 @@
+ 
+ <img align="right" width="135" height="95" src="http://postcss.github.io/postcss/logo-leftp.png" title="Philosopher’s stone, logo of PostCSS">
+ 
+-[PostCSS Nesting] is a [PostCSS] plugin that transform W3C [CSS Nesting Module Level 3] syntax (@tabatkins proposal) to more compatible CSS.
++[PostCSS Nesting] is a [PostCSS] plugin that transforms W3C [CSS Nesting Module Level 3] syntax (@tabatkins’ proposal) to more compatible CSS.
+ 
+ ```css
+ /* before */
+-- 
+2.33.1
+

@@ -1,0 +1,1047 @@
+From ac829f1ef43c272e2323a4be673251f5455d71f9 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 24 Nov 2018 22:43:41 -0500
+Subject: [PATCH 18/38] 3.0.0
+
+---
+ .gitignore                            |   3 +-
+ .tape.js                              |  17 ---
+ .travis.yml                           |  16 ++-
+ README.md                             |  18 +--
+ index.js                              | 177 --------------------------
+ lib/log.js                            |  96 --------------
+ package.json                          |  34 +++--
+ rollup.config.js                      |  34 +++++
+ src/cli.js                            | 116 +++++++++++++++++
+ {lib => src/lib}/color.js             |  17 +--
+ src/lib/get-options-from-arguments.js |  42 ++++++
+ src/lib/get-options.js                |  48 +++++++
+ src/lib/log.js                        |  86 +++++++++++++
+ src/lib/utils.js                      |  53 ++++++++
+ test.js                               |   7 -
+ test/basic.custom-expect.css          |   3 +
+ test/basic.generate.expect.css        |   3 +
+ test/basic.warnings.expect.css        |   3 +
+ test/plugin.js                        |  11 ++
+ test/postcss-tape.config.js           |  41 ++++++
+ 20 files changed, 489 insertions(+), 336 deletions(-)
+ delete mode 100644 .tape.js
+ delete mode 100644 index.js
+ delete mode 100644 lib/log.js
+ create mode 100644 rollup.config.js
+ create mode 100644 src/cli.js
+ rename {lib => src/lib}/color.js (63%)
+ create mode 100644 src/lib/get-options-from-arguments.js
+ create mode 100644 src/lib/get-options.js
+ create mode 100644 src/lib/log.js
+ create mode 100644 src/lib/utils.js
+ delete mode 100644 test.js
+ create mode 100644 test/basic.custom-expect.css
+ create mode 100644 test/basic.generate.expect.css
+ create mode 100644 test/basic.warnings.expect.css
+ create mode 100644 test/plugin.js
+ create mode 100644 test/postcss-tape.config.js
+
+diff --git a/.gitignore b/.gitignore
+index b2b5b45..f8f9cbd 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -5,4 +5,5 @@ node_modules
+ !.travis.yml
+ *.log*
+ *.result.css
+-basic.generate.expect.css
++/index.js
++/index.mjs
+diff --git a/.tape.js b/.tape.js
+deleted file mode 100644
+index 64166ff..0000000
+--- a/.tape.js
++++ /dev/null
+@@ -1,17 +0,0 @@
+-module.exports = {
+-	'postcss-tape': {
+-		'basic': {
+-			'message': 'supports basic usage'
+-		},
+-		'basic:generate': {
+-			'message': 'supports generating all files',
+-			'error':   /Expected: \n/
+-		},
+-		'basic:sources': {
+-			'message': 'supports specifying files',
+-			'source':  'basic.css',
+-			'expect':  'basic.result.css',
+-			'result':  'basic.result.css'
+-		}
+-	}
+-};
+diff --git a/.travis.yml b/.travis.yml
+index 8524235..6a81966 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -1,3 +1,17 @@
++# https://docs.travis-ci.com/user/travis-lint
++
+ language: node_js
++
++os:
++  - windows
++  - linux
++  - osx
++
+ node_js:
+-  - 4
++  - node
++  - 10
++  - 8
++  - 6
++
++install:
++  - npm install --ignore-scripts
+diff --git a/README.md b/README.md
+index 35c664b..88565f2 100644
+--- a/README.md
++++ b/README.md
+@@ -2,8 +2,6 @@
+ 
+ [![NPM Version][npm-img]][npm-url]
+ [![Build Status][cli-img]][cli-url]
+-[![Licensing][lic-img]][lic-url]
+-[![Changelog][log-img]][log-url]
+ [![Gitter Chat][git-img]][git-url]
+ 
+ [PostCSS Tape] lets you quickly test [PostCSS] plugins.
+@@ -33,10 +31,10 @@
+    };
+    ```
+ 
+-That’s it! Empty tests will be auto-generated. Now you can use the `tape` task:
++That’s it! Empty tests will be auto-generated.
+ 
+ ```sh
+-npm run tape
++npm test
+ ```
+ 
+ ## Options
+@@ -244,16 +242,12 @@ A plugin or array of plugins that will specifying alternative plugin
+ }
+ ```
+ 
+-[npm-url]: https://www.npmjs.com/package/postcss-tape
+ [npm-img]: https://img.shields.io/npm/v/postcss-tape.svg
+-[cli-url]: https://travis-ci.org/jonathantneal/postcss-tape
++[npm-url]: https://www.npmjs.com/package/postcss-tape
+ [cli-img]: https://img.shields.io/travis/jonathantneal/postcss-tape.svg
+-[lic-url]: LICENSE.md
+-[lic-img]: https://img.shields.io/npm/l/postcss-tape.svg
+-[log-url]: CHANGELOG.md
+-[log-img]: https://img.shields.io/badge/changelog-md-blue.svg
+-[git-url]: https://gitter.im/postcss/postcss
++[cli-url]: https://travis-ci.org/jonathantneal/postcss-tape
+ [git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
++[git-url]: https://gitter.im/postcss/postcss
+ 
+-[PostCSS Tape]: https://github.com/jonathantneal/postcss-tape
+ [PostCSS]: https://github.com/postcss/postcss
++[PostCSS Tape]: https://github.com/jonathantneal/postcss-tape
+diff --git a/index.js b/index.js
+deleted file mode 100644
+index da39ab7..0000000
+--- a/index.js
++++ /dev/null
+@@ -1,177 +0,0 @@
+-#!/usr/bin/env node
+-
+-'use strict';
+-
+-// tooling
+-const log  = require('./lib/log');
+-const fs   = require('fs');
+-const path = require('path');
+-
+-// current directory
+-const cwd = process.cwd();
+-
+-// argument option matcher
+-const optionMatch = /^--([\w-]+)=(["']?)(.+?)\2$/;
+-
+-// options
+-const opts = Object.assign.apply(
+-	null,
+-	[
+-		// default options
+-		{
+-			plugin:   cwd,
+-			config:   path.join(cwd, '.tape.js'),
+-			fixtures: path.join(cwd, 'test')
+-		},
+-		// package.json[postcssConfig] options
+-		requireOrThrow(path.join(cwd, 'package.json')).postcssConfig
+-	].concat(
+-		// argument options
+-		process.argv.filter(
+-			(arg) => optionMatch.test(arg)
+-		).map(
+-			(arg) => arg.match(optionMatch)
+-		).map(
+-			(arg) => ({
+-				[arg[1]]: arg[3]
+-			})
+-		)
+-	)
+-);
+-
+-// plugin
+-const plugin = requireOrThrow(path.resolve(cwd, opts.plugin));
+-
+-// tests
+-const tests = requireOrThrow(path.resolve(cwd, opts.config));
+-
+-// runner
+-Object.keys(tests).reduce(
+-	(testpromise, section) => testpromise.then(
+-		() => Object.keys(tests[section]).reduce(
+-			(sectionpromise, name) => sectionpromise.then(
+-				(passing) => {
+-					const test = tests[section][name];
+-
+-					const testPlugin = typeof test.plugin === 'function' ? test.plugin() : plugin;
+-
+-					log.wait(section, test.message);
+-
+-					const testBase = name.split(':')[0];
+-					const testFull = name.split(':').join('.');
+-					const warnings = test.warning || 0;
+-
+-					// test paths
+-					const sourcePath = path.resolve(opts.fixtures, test.source || `${testBase}.css`);
+-					const expectPath = path.resolve(opts.fixtures, test.expect || `${testFull}.expect.css`);
+-					const resultPath = path.resolve(opts.fixtures, test.result || `${testFull}.result.css`);
+-
+-					if (test.before) {
+-						test.before();
+-					}
+-
+-					return readFile(sourcePath, 'utf8').then(
+-						(css) => testPlugin.process(
+-							css,
+-							Object.assign({
+-								from: sourcePath,
+-								to:   resultPath
+-							}, test.processOptions),
+-							test.options
+-						),
+-						() => writeFile(sourcePath, '').then(
+-							() => ''
+-						)
+-					).then(
+-						(result) => writeFile(resultPath, result.css).then(
+-							() => readFile(expectPath, 'utf8').catch(
+-								() => writeFile(expectPath, '').then(
+-									() => ''
+-								)
+-							)
+-						).then(
+-							(css) => {
+-								if (result.css !== css) {
+-									return Promise.reject([
+-										`Expected: ${JSON.stringify(css).slice(1, -1)}`,
+-										`Rendered: ${JSON.stringify(result.css).slice(1, -1)}`
+-									])
+-								} else if (result.warnings().length !== warnings) {
+-									return Promise.reject([
+-										`Expected: ${result.warnings().length} warnings`,
+-										`Rendered: ${warnings} warnings`
+-									]);
+-								}
+-
+-								return passing;
+-							}
+-						)
+-					).then(
+-						() => {
+-							if (test.after) {
+-								test.after();
+-							}
+-
+-							log.pass(section, test.message);
+-
+-							return passing;
+-						},
+-						(error) => {
+-							if (test.after) {
+-								test.after();
+-							}
+-
+-							const expectedError = test.error && Object.keys(test.error).every(
+-								(key) => test.error[key] instanceof RegExp ? test.error[key].test(error[key]) : test.error[key] === error[key]
+-							);
+-
+-							if (expectedError) {
+-								log.pass(section, test.message);
+-
+-								return passing;
+-							}
+-
+-							log.fail(section, test.message, error.reason || error.message || error);
+-
+-							return false;
+-						}
+-					);
+-				}
+-			),
+-			Promise.resolve(true)
+-		)
+-	),
+-	Promise.resolve(true)
+-).then(
+-	(passing) => passing === false ? process.exit(1) : process.exit(0),
+-	() => process.exit(1)
+-);
+-
+-// load modules or throw an error
+-function requireOrThrow(name) {
+-	try {
+-		return require(name);
+-	} catch (error) {
+-		log.fail(name, 'failed to load');
+-
+-		return process.exit(1);
+-	}
+-}
+-
+-// fs.readFile then-ified
+-function readFile(filename) {
+-	return new Promise(
+-		(resolve, reject) => fs.readFile(filename, 'utf8',
+-			(error, data) => error ? reject(error) : resolve(data)
+-		)
+-	);
+-}
+-
+-// fs.writeFile then-ified
+-function writeFile(filename, data) {
+-	return new Promise(
+-		(resolve, reject) => fs.writeFile(filename, data,
+-			(error) => error ? reject(error) : resolve()
+-		)
+-	);
+-}
+diff --git a/lib/log.js b/lib/log.js
+deleted file mode 100644
+index 9321448..0000000
+--- a/lib/log.js
++++ /dev/null
+@@ -1,96 +0,0 @@
+-'use strict';
+-
+-// tooling
+-const color    = require('./color');
+-const readline = require('readline');
+-
+-// symbols
+-const isWin32 = process.platform === 'win32';
+-const tick    = isWin32 ? '√' : '✔';
+-const cross   = isWin32 ? '×' : '✖';
+-
+-// log methods
+-Object.assign(exports, {
+-	// log with a passing appearance
+-	pass(name, message, size) {
+-		clearInterval(exports.interval);
+-
+-		// reset current stream line
+-		readline.clearLine(process.stdout, 0);
+-		readline.cursorTo(process.stdout, 0);
+-
+-		process.stdout.write(color.green(tick) + ' ' + name + ' ' + color.dim(message) + (size ? ' ' + color.green('[' + size + ']') : '') + '\n');
+-
+-		return exports;
+-	},
+-
+-	// log with a failing appearance
+-	fail(name, message, errors) {
+-		clearInterval(exports.interval);
+-
+-		// reset current stream line
+-		readline.clearLine(process.stdout, 0);
+-		readline.cursorTo(process.stdout, 0);
+-
+-		process.stdout.write(color.red(cross) + ' ' + name + ' ' + color.dim(message) + '\n');
+-
+-		if (errors) {
+-			if (Array.isArray(errors)) {
+-				errors.forEach((error) => {
+-					process.stdout.write('  → ' + color.dim(error) + '\n');
+-				});
+-			} else {
+-				process.stdout.write('  → ' + color.dim(errors) + '\n');
+-			}
+-		}
+-
+-		return exports;
+-	},
+-
+-	// log with a waiting appearance
+-	wait(name, message) {
+-		const spinner = isWin32 ? '-–—–-' : '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
+-
+-		let index = 0;
+-
+-		clearInterval(exports.interval);
+-
+-		// reset current stream line
+-		readline.clearLine(process.stdout, 0);
+-		readline.cursorTo(process.stdout, 0);
+-
+-		process.stdout.write(color.yellow(spinner[index]) + ' ' + name + ' ' + color.dim(message));
+-
+-		exports.interval = setInterval(() => {
+-			index = (index + 1) % spinner.length;
+-
+-			readline.cursorTo(process.stdout, 0);
+-
+-			process.stdout.write(color.yellow(spinner[index]) + ' ' + name + ' ' + color.dim(message));
+-		}, 60);
+-
+-		return exports;
+-	},
+-
+-	// stopped waiting log
+-	stop() {
+-		clearInterval(exports.interval);
+-
+-		// reset current stream line
+-		readline.clearLine(process.stdout, 0);
+-		readline.cursorTo(process.stdout, 0);
+-
+-		return exports;
+-	},
+-
+-	// log
+-	line(message) {
+-		// reset current stream line
+-		readline.clearLine(process.stdout, 0);
+-		readline.cursorTo(process.stdout, 0);
+-
+-		process.stdout.write(Array.isArray(message) ? message.join('\n') + '\n' : String(message || '') + '\n');
+-
+-		return exports;
+-	}
+-});
+diff --git a/package.json b/package.json
+index 4b84e67..549ac68 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-tape",
+-  "version": "2.2.0",
++  "version": "3.0.0",
+   "description": "Quickly test PostCSS plugins",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -12,25 +12,37 @@
+     "postcss-tape": "index.js"
+   },
+   "files": [
+-    "index.js",
+-    "lib"
++    "index.js"
+   ],
+   "scripts": {
+-    "clean": "git clean -X -d -f",
++    "build": "rollup -c --silent",
+     "prepublish": "npm test",
+-    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+-    "test:js": "eslint *.js --cache --ignore-pattern .gitignore",
+-    "test:tape": "node index --plugin=test.js"
++    "pretest": "npm run build",
++    "test": "npm run test:js && npm run test:tape",
++    "test:js": "eslint src/*.js src/lib/*.js --cache --ignore-pattern .gitignore",
++    "test:tape": "node . --plugin=test/plugin.js --config=test"
+   },
+   "engines": {
+-    "node": ">=4.0.0"
++    "node": ">=6.0.0"
+   },
+   "devDependencies": {
+-    "eslint": "^4.10.0",
+-    "eslint-config-dev": "2.0.0"
++    "@babel/core": "^7.1.6",
++    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
++    "@babel/preset-env": "^7.1.6",
++    "babel-eslint": "^10.0.1",
++    "eslint": "^5.9.0",
++    "eslint-config-dev": "2.0.0",
++    "postcss": "^7.0.6",
++    "rollup": "^0.67.3",
++    "rollup-plugin-babel": "^4.0.3",
++    "rollup-plugin-terser": "^3.0.0"
+   },
+   "eslintConfig": {
+-    "extends": "dev"
++    "extends": "dev",
++    "parser": "babel-eslint",
++    "rules": {
++      "complexity": [1, 23]
++    }
+   },
+   "keywords": [
+     "postcss",
+diff --git a/rollup.config.js b/rollup.config.js
+new file mode 100644
+index 0000000..f7edc6b
+--- /dev/null
++++ b/rollup.config.js
+@@ -0,0 +1,34 @@
++import babel from 'rollup-plugin-babel';
++import { terser } from 'rollup-plugin-terser';
++
++export default {
++	input: 'src/cli.js',
++	output: { file: 'index.js', format: 'cjs' },
++	plugins: [
++		babel({
++			plugins: [ '@babel/syntax-dynamic-import' ],
++			presets: [ ['@babel/env', { targets: { node: 6 } }] ]
++		}),
++		terser(),
++		trimUseStrict(),
++		addHashBang()
++	]
++};
++
++function addHashBang() {
++	return {
++		name: 'add-hash-bang',
++		renderChunk(code) {
++			return `#!/usr/bin/env node\n${code}`;
++		}
++	};
++}
++
++function trimUseStrict() {
++	return {
++		name: 'trim-use-strict',
++		renderChunk(code) {
++			return code.replace(/\s*('|")?use strict\1;\s*/, '');
++		}
++	};
++}
+diff --git a/src/cli.js b/src/cli.js
+new file mode 100644
+index 0000000..0b55f11
+--- /dev/null
++++ b/src/cli.js
+@@ -0,0 +1,116 @@
++import getOptions from './lib/get-options';
++import path from 'path';
++import { readOrWriteFile, safelyReadFile, writeFile } from './lib/utils';
++import { fail, pass, wait } from './lib/log';
++
++getOptions().then(
++	async options => {
++		let hadErrors = false;
++
++		// runner
++		for (const name in options.config) {
++			const test = options.config[name];
++
++			const testPlugin = test.plugin instanceof Function ? test.plugin : options.plugin;
++
++			const testBase = name.split(':')[0];
++			const testFull = name.split(':').join('.');
++
++			// test paths
++			const sourcePath = path.resolve(options.fixtures, test.source || `${testBase}.css`);
++			const expectPath = path.resolve(options.fixtures, test.expect || `${testFull}.expect.css`);
++			const resultPath = path.resolve(options.fixtures, test.result || `${testFull}.result.css`);
++
++			const processOptions = Object.assign({ from: sourcePath, to: resultPath }, test.processOptions);
++			const pluginOptions = test.options;
++
++			const pluginName = Object(testPlugin.postcss).postcssPlugin;
++
++			wait(pluginName, test.message);
++
++			try {
++				if (Object(test.before) instanceof Function) {
++					await test.before();
++				}
++
++				const expectCSS = await safelyReadFile(expectPath);
++				const sourceCSS = await readOrWriteFile(sourcePath, expectCSS);
++
++				const result = await testPlugin.process(sourceCSS, processOptions, pluginOptions);
++				const resultCSS = result.css;
++
++				if ('fix' in options && options.fix !== false) {
++					await writeFile(expectPath, resultCSS);
++					await writeFile(resultPath, resultCSS);
++				} else {
++					await writeFile(resultPath, resultCSS);
++
++					if (expectCSS !== resultCSS) {
++						throw new Error([
++							`Expected: ${JSON.stringify(expectCSS).slice(1, -1)}`,
++							`Rendered: ${JSON.stringify(resultCSS).slice(1, -1)}`
++						].join('\n'));
++					}
++				}
++
++				const warnings = result.warnings();
++
++				if (Object(test.warnings) instanceof Number) {
++					if (test.warnings !== warnings.length) {
++						const s = warnings.length !== 1 ? 's' : '';
++
++						throw new Error(`Expected: ${test.warnings} warning${s}\nRecieved: ${warnings.length} warnings`);
++					}
++				} else if (test.warnings) {
++					if (warnings.length) {
++						const areExpectedWarnings = warnings.every(
++							warning => Object.keys(test.warnings).every(
++								key => test.warnings[key] instanceof RegExp
++									? test.warnings[key].test(warning[key])
++								: test.warnings[key] === warning[key]
++							)
++						);
++
++						if (!areExpectedWarnings) {
++							const s = warnings.length !== 1 ? 's' : '';
++
++							throw new Error(`Unexpected warning${s}:\n${warnings.join('\n')}`);
++						}
++					} else {
++						throw new Error(`Expected a warning`);
++					}
++				}
++
++				if (Object(test.after) instanceof Function) {
++					await test.after();
++				}
++
++				pass(pluginName, test.message);
++			} catch (error) {
++				const areExpectedErrors = test.errors === Object(test.errors) && Object.keys(test.errors).every(
++					key => test.errors[key] instanceof RegExp
++						? test.errors[key].test(error[key])
++					: test.error[key] === error[key]
++				);
++
++				if (!areExpectedErrors) {
++					fail(pluginName, test.message);
++					console.error(error.message);
++
++					hadErrors = true;
++				}
++			}
++		}
++
++		if (hadErrors) {
++			throw new Error();
++		}
++	}
++).then(
++	() => {
++		process.exit(0);
++	},
++	() => {
++		process.exit(1);
++	}
++)
+diff --git a/lib/color.js b/src/lib/color.js
+similarity index 63%
+rename from lib/color.js
+rename to src/lib/color.js
+index 93b9c69..9b758d5 100644
+--- a/lib/color.js
++++ b/src/lib/color.js
+@@ -1,6 +1,3 @@
+-'use strict';
+-
+-// colors
+ const colors = {
+ 	reset: '\x1b[0m',
+ 	bold: '\x1b[1m',
+@@ -27,14 +24,6 @@ const colors = {
+ 	bgWhite: '\x1b[47m'
+ };
+ 
+-// colors as wrapping methods
+-Object.assign.apply(
+-	null,
+-	[exports].concat(
+-		Object.keys(colors).map(
+-			(color) => ({
+-				[color]: (string) => colors[color] + string.replace(colors.reset, colors.reset + colors[color]) + colors.reset
+-			})
+-		)
+-	)
+-);
++export default function color(name, string) {
++	return colors[name] + string.replace(colors.reset, colors.reset + colors[name]) + colors.reset;
++}
+diff --git a/src/lib/get-options-from-arguments.js b/src/lib/get-options-from-arguments.js
+new file mode 100644
+index 0000000..4055de8
+--- /dev/null
++++ b/src/lib/get-options-from-arguments.js
+@@ -0,0 +1,42 @@
++export default function getOptionsFromArguments(defaultOptions) {
++	// argument option matcher
++	const fileRegExp = /^[\w\/.]+$/;
++	const argRegExp = /^--(\w+)=("|')?(.+)\2$/;
++	const primativeRegExp = /^(false|null|true|undefined|\d+|\{.*\}|\[.*\])$/;
++	const relaxedJsonPropRegExp = /(['"])?([a-z0-9A-Z_]+)\1:/g;
++	const relaxedJsonValueRegExp = /("[a-z0-9A-Z_]+":\s*)(?!true|false|null|\d+)'?([A-z0-9]+)'?([,}])/g;
++	const argNames = {};
++
++	return process.argv.slice(2).reduce(
++		(options, arg) => {
++			const argMatch = arg.match(argRegExp);
++			const fileMatch = arg.match(fileRegExp);
++
++			if (argMatch) {
++				const name = argMatch[1];
++				const value = name !== 'from' && name !== 'to' && primativeRegExp.test(argMatch[3])
++					? JSON.parse(
++						argMatch[3]
++						.replace(relaxedJsonPropRegExp, '"$2": ')
++						.replace(relaxedJsonValueRegExp, '$1"$2"$3')
++					)
++				: argMatch[3];
++
++				options[name] = argNames[name]
++					? [].concat(options[name], value)
++				: value;
++
++				argNames[name] = true;
++			} else if (fileMatch) {
++				if (options.from === '<stdin>') {
++					options.from = arg;
++				} else if (options.to === '<stdout>') {
++					options.to = arg;
++				}
++			}
++
++			return options;
++		},
++		Object.assign({}, defaultOptions)
++	);
++}
+diff --git a/src/lib/get-options.js b/src/lib/get-options.js
+new file mode 100644
+index 0000000..3ad5846
+--- /dev/null
++++ b/src/lib/get-options.js
+@@ -0,0 +1,48 @@
++import getOptionsFromArguments from './get-options-from-arguments';
++import { readJSON } from './utils';
++import path from 'path';
++
++export default async function getOptions() {
++	const cwd = process.cwd();
++
++	// default options
++	const defaultOptions = {
++		plugin:   cwd,
++		config:   cwd,
++		fixtures: path.resolve(cwd, 'test')
++	}
++
++	const options = await readJSON('package.json', 'postcss', 'postcssConfig').then(
++		packageOptions => getOptionsFromArguments(
++			Object.assign(defaultOptions, packageOptions)
++		)
++	);
++
++	try {
++		options.plugin = await import(
++			path.resolve(options.plugin)
++		);
++	} catch (error1) {
++		throw error1;
++	}
++
++	try {
++		options.config = await import(
++			path.extname(options.config)
++				? path.resolve(options.config)
++			: path.resolve(options.config, 'postcss-tape.config.js')
++		);
++	} catch (error1) {
++		try {
++			options.config = await import(
++				path.extname(options.config)
++					? path.resolve(options.config)
++				: path.resolve(options.config, '.tape.js')
++			);
++		} catch (error2) {
++			throw error2;
++		}
++	}
++
++	return options;
++}
+diff --git a/src/lib/log.js b/src/lib/log.js
+new file mode 100644
+index 0000000..0196827
+--- /dev/null
++++ b/src/lib/log.js
+@@ -0,0 +1,86 @@
++import color from './color';
++import readline from 'readline';
++
++// symbols
++const isWin32 = process.platform === 'win32';
++const tick    = isWin32 ? '√' : '✔';
++const cross   = isWin32 ? '×' : '✖';
++
++let interval;
++
++export function pass(name, message, size) {
++	clearInterval(interval);
++
++	// reset current stream line
++	readline.clearLine(process.stdout, 0);
++	readline.cursorTo(process.stdout, 0);
++
++	process.stdout.write(color('green', tick) + ' ' + name + ' ' + color('dim', message) + (size ? ' ' + color('green', '[' + size + ']') : '') + '\n');
++}
++
++export function fail(name, message, errors) {
++	clearInterval(interval);
++
++	// reset current stream line
++	readline.clearLine(process.stdout, 0);
++	readline.cursorTo(process.stdout, 0);
++
++	process.stdout.write(color('red', cross) + ' ' + name + ' ' + color('dim', message) + '\n');
++
++	if (errors) {
++		if (Array.isArray(errors)) {
++			errors.forEach((error) => {
++				process.stdout.write('  → ' + color('dim', error) + '\n');
++			});
++		} else {
++			process.stdout.write('  → ' + color('dim', errors) + '\n');
++		}
++	}
++}
++
++// log with a waiting appearance
++export function wait(name, message) {
++	const spinner = isWin32 ? '-–—–-' : '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
++
++	let index = 0;
++
++	clearInterval(interval);
++
++	// reset current stream line
++	readline.clearLine(process.stdout, 0);
++	readline.cursorTo(process.stdout, 0);
++
++	process.stdout.write(color('yellow', spinner[index]) + ' ' + name + ' ' + color('dim', message));
++
++	interval = setInterval(() => {
++		index = (index + 1) % spinner.length;
++
++		readline.cursorTo(process.stdout, 0);
++
++		process.stdout.write(color('yellow', spinner[index]) + ' ' + name + ' ' + color('dim', message));
++	}, 60);
++
++	return exports;
++}
++
++// stopped waiting log
++export function stop() {
++	clearInterval(interval);
++
++	// reset current stream line
++	readline.clearLine(process.stdout, 0);
++	readline.cursorTo(process.stdout, 0);
++
++	return exports;
++}
++
++// log
++export function line(message) {
++	// reset current stream line
++	readline.clearLine(process.stdout, 0);
++	readline.cursorTo(process.stdout, 0);
++
++	process.stdout.write(Array.isArray(message) ? message.join('\n') + '\n' : String(message || '') + '\n');
++
++	return exports;
++}
+diff --git a/src/lib/utils.js b/src/lib/utils.js
+new file mode 100644
+index 0000000..8bde690
+--- /dev/null
++++ b/src/lib/utils.js
+@@ -0,0 +1,53 @@
++import fs from 'fs';
++
++export function readFile(pathname) {
++	return new Promise((resolve, reject) => {
++		fs.readFile(pathname, 'utf8', (error, data) => {
++			if (error) {
++				reject(error);
++			} else {
++				resolve(data);
++			}
++		});
++	});
++}
++
++export function readJSON(pathname, ...keys) {
++	return readFile(pathname).then(
++		data => JSON.parse(data)
++	).then(
++		options => keys.length ?
++			options[
++				Object.keys(options).find(key => keys.includes(key))
++			]
++		: options
++	).catch(
++		() => ({})
++	);
++}
++
++export function readOrWriteFile(pathname, data) {
++	return readFile(pathname).catch(
++		() => writeFile(pathname, data || '').then(
++			() => ''
++		)
++	);
++}
++
++export function safelyReadFile(pathname) {
++	return readFile(pathname).catch(
++		() => ''
++	);
++}
++
++export function writeFile(pathname, data) {
++	return new Promise((resolve, reject) => {
++		fs.writeFile(pathname, data, (error) => {
++			if (error) {
++				reject(error);
++			} else {
++				resolve();
++			}
++		});
++	});
++}
+diff --git a/test.js b/test.js
+deleted file mode 100644
+index 5333bc4..0000000
+--- a/test.js
++++ /dev/null
+@@ -1,7 +0,0 @@
+-// placeholder plugin
+-module.exports = {
+-	process: (css) => Promise.resolve({
+-		css: css,
+-		warnings: () => []
+-	})
+-};
+diff --git a/test/basic.custom-expect.css b/test/basic.custom-expect.css
+new file mode 100644
+index 0000000..2ef56ae
+--- /dev/null
++++ b/test/basic.custom-expect.css
+@@ -0,0 +1,3 @@
++a {
++	display: block;
++}
+diff --git a/test/basic.generate.expect.css b/test/basic.generate.expect.css
+new file mode 100644
+index 0000000..2ef56ae
+--- /dev/null
++++ b/test/basic.generate.expect.css
+@@ -0,0 +1,3 @@
++a {
++	display: block;
++}
+diff --git a/test/basic.warnings.expect.css b/test/basic.warnings.expect.css
+new file mode 100644
+index 0000000..2ef56ae
+--- /dev/null
++++ b/test/basic.warnings.expect.css
+@@ -0,0 +1,3 @@
++a {
++	display: block;
++}
+diff --git a/test/plugin.js b/test/plugin.js
+new file mode 100644
+index 0000000..ce547af
+--- /dev/null
++++ b/test/plugin.js
+@@ -0,0 +1,11 @@
++const postcss = require('postcss');
++
++module.exports = postcss.plugin('test-plugin', options => {
++	return (root, result) => {
++		if (Object(options).shouldFail) {
++			throw new Error('This should fail.');
++		} else if (Object(options).shouldWarn) {
++			result.warn('This should warn.');
++		}
++	}
++});
+diff --git a/test/postcss-tape.config.js b/test/postcss-tape.config.js
+new file mode 100644
+index 0000000..e5de5de
+--- /dev/null
++++ b/test/postcss-tape.config.js
+@@ -0,0 +1,41 @@
++module.exports = {
++	'basic': {
++		message: 'supports basic usage'
++	},
++	'basic:generate': {
++		message: 'supports generating all files',
++		after() {
++			require('fs').unlinkSync('test/basic.generate.result.css');
++		}
++	},
++	'basic:sources': {
++		message: 'supports specifying files',
++		source:  'basic.css',
++		expect:  'basic.custom-expect.css',
++		result:  'basic.custom-result.css',
++		after() {
++			require('fs').unlinkSync('test/basic.custom-result.css');
++		}
++	},
++	'basic:errors': {
++		message: 'supports failing',
++		options: {
++			shouldFail: true
++		},
++		errors: {
++			message: /should fail/
++		}
++	},
++	'basic:warnings': {
++		message: 'supports warnings',
++		options: {
++			shouldWarn: true
++		},
++		warnings: {
++			text: /should warn/
++		},
++		after() {
++			require('fs').unlinkSync('test/basic.warnings.result.css');
++		}
++	}
++};
+-- 
+2.33.1
+

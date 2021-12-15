@@ -1,0 +1,54 @@
+From fd5cada10de8816cd358a678a4a9daaf370b8441 Mon Sep 17 00:00:00 2001
+From: Philip Bordallo <git@philipbordallo.com>
+Date: Wed, 12 Dec 2018 23:24:14 -0800
+Subject: [PATCH 20/38] Log caught errors and update README with correct
+ options
+
+---
+ README.md    | 8 +++-----
+ src/index.js | 3 ++-
+ 2 files changed, 5 insertions(+), 6 deletions(-)
+
+diff --git a/README.md b/README.md
+index 88565f2..fff8de3 100644
+--- a/README.md
++++ b/README.md
+@@ -23,10 +23,8 @@
+ 3. Add tests to your `.tape.js` file:
+    ```js
+    module.exports = {
+-     'postcss-my-plugin': {
+-       'basic': {
+-         message: 'supports basic usage'
+-       }
++     'basic': {
++       message: 'supports basic usage'
+      }
+    };
+    ```
+@@ -125,7 +123,7 @@ An identifying feature of an error expected to be thrown by the test.
+ ```js
+ {
+   'some-test': {
+-    error: {
++    errors: {
+       message: 'You should not have done that'
+     }
+   }
+diff --git a/src/index.js b/src/index.js
+index 58ca8c5..34ac8a1 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -116,7 +116,8 @@ getOptions().then(
+ 	() => {
+ 		process.exit(0);
+ 	},
+-	() => {
++	(error) => {
++		console.error(error);
+ 		process.exit(1);
+ 	}
+ )
+-- 
+2.33.1
+

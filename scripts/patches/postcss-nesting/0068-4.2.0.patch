@@ -1,0 +1,39 @@
+From 524d34e297c6805566fd76b57097e42abd78324c Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 19 Sep 2017 08:37:56 -0400
+Subject: [PATCH 068/108] 4.2.0
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 2 +-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 48d974d..15fd535 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Nesting
+ 
++### 4.2.0 (September 18, 2017)
++
++- Added: Reduced splitting of rules
++
+ ### 4.1.0 (August 19, 2017)
+ 
+ - Added: Mutation-safe walk method
+diff --git a/package.json b/package.json
+index 38be6fe..a0dbc59 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-nesting",
+-  "version": "4.1.0",
++  "version": "4.2.0",
+   "description": "Nest style and media rules inside each another, following the CSS Nesting Module Level 3 specification",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

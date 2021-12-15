@@ -1,0 +1,934 @@
+From 20f253f30dcfbcec7044daa3d5e05b3bf4349756 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 17 Sep 2018 23:33:50 -0400
+Subject: [PATCH 03/21] 2.0.0
+
+---
+ .appveyor.yml                |  18 ----
+ .gitignore                   |   3 +-
+ .rollup.js                   |   9 +-
+ .tape.js                     |  77 +++++++++++++++-
+ .travis.yml                  |   2 +-
+ CHANGELOG.md                 |   6 ++
+ INSTALL.md                   | 170 +++++++++++++++++++++++++++++++++++
+ README.md                    | 154 +++++++++++++------------------
+ index.js                     |  29 +++---
+ lib/import-from.js           |  93 +++++++++++++++++++
+ lib/replace-with-word.js     |   8 --
+ lib/update-env-value.js      |  42 +++++++--
+ package.json                 |  23 ++---
+ test/basic.expect.css        |   4 +-
+ test/basic.import.expect.css |  10 +++
+ test/import-variables.js     |   6 ++
+ test/import-variables.json   |   6 ++
+ 17 files changed, 504 insertions(+), 156 deletions(-)
+ delete mode 100644 .appveyor.yml
+ create mode 100644 INSTALL.md
+ create mode 100644 lib/import-from.js
+ delete mode 100644 lib/replace-with-word.js
+ create mode 100644 test/basic.import.expect.css
+ create mode 100644 test/import-variables.js
+ create mode 100644 test/import-variables.json
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+deleted file mode 100644
+index acbf8a5..0000000
+--- a/.appveyor.yml
++++ /dev/null
+@@ -1,18 +0,0 @@
+-# https://www.appveyor.com/docs/appveyor-yml
+-
+-environment:
+-  matrix:
+-    - nodejs_version: 4
+-
+-version: "{build}"
+-build: off
+-deploy: off
+-
+-install:
+-  - ps: Install-Product node $env:nodejs_version
+-  - npm install --ignore-scripts
+-
+-test_script:
+-  - node --version
+-  - npm --version
+-  - cmd: "npm test"
+diff --git a/.gitignore b/.gitignore
+index de73e5a..d920b78 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,10 +1,9 @@
+ node_modules
+-index.*.js
++index.*.*
+ package-lock.json
+ *.log*
+ *.result.css
+ .*
+-!.appveyor.yml
+ !.editorconfig
+ !.gitignore
+ !.rollup.js
+diff --git a/.rollup.js b/.rollup.js
+index 0436758..3f28a55 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -3,13 +3,16 @@ import babel from 'rollup-plugin-babel';
+ export default {
+ 	input: 'index.js',
+ 	output: [
+-		{ file: 'index.cjs.js', format: 'cjs' },
+-		{ file: 'index.es.js', format: 'es' }
++		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
++		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
+ 	],
+ 	plugins: [
+ 		babel({
++			plugins: [
++				'@babel/plugin-syntax-dynamic-import'
++			],
+ 			presets: [
+-				['env', { modules: false, targets: { node: 4 } }]
++				['@babel/env', { modules: false, targets: { node: 6 } }]
+ 			]
+ 		})
+ 	]
+diff --git a/.tape.js b/.tape.js
+index f6b23c8..00854c3 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,13 +1,82 @@
+ module.exports = {
+ 	'postcss-env-function': {
+ 		'basic': {
+-			message: 'supports basic usage',
++			message: 'supports basic usage'
++		},
++		'basic:import': {
++			message: 'supports { importFrom: { environmentVariables: { ... } } } usage',
+ 			options: {
+-				variables: {
+-					'--some-custom-padding': '20px',
+-					'--another-custom-width': '600px'
++				importFrom: {
++					environmentVariables: {
++						'--some-custom-padding': '20px',
++						'--another-custom-width': '600px'
++					}
+ 				}
+ 			}
++		},
++		'basic:import-fn': {
++			message: 'supports { importFrom() } usage',
++			options: {
++				importFrom() {
++					return {
++						environmentVariables: {
++							'--some-custom-padding': '20px',
++							'--another-custom-width': '600px'
++						}
++					};
++				}
++			},
++			expect: 'basic.import.expect.css',
++			result: 'basic.import.result.css'
++		},
++		'basic:import-fn-promise': {
++			message: 'supports { async importFrom() } usage',
++			options: {
++				importFrom() {
++					return new Promise(resolve => {
++						resolve({
++							environmentVariables: {
++								'--some-custom-padding': '20px',
++								'--another-custom-width': '600px'
++							}
++						})
++					});
++				}
++			},
++			expect: 'basic.import.expect.css',
++			result: 'basic.import.result.css'
++		},
++		'basic:import-json': {
++			message: 'supports { importFrom: "test/import-variables.json" } usage',
++			options: {
++				importFrom: 'test/import-variables.json'
++			},
++			expect: 'basic.import.expect.css',
++			result: 'basic.import.result.css'
++		},
++		'basic:import-js': {
++			message: 'supports { importFrom: "test/import-variables.js" } usage',
++			options: {
++				importFrom: 'test/import-variables.js'
++			},
++			expect: 'basic.import.expect.css',
++			result: 'basic.import.result.css'
++		},
++		'basic:import-js-from': {
++			message: 'supports { importFrom: { from: "test/import-variables.js" } } usage',
++			options: {
++				importFrom: { from: 'test/import-variables.js' }
++			},
++			expect: 'basic.import.expect.css',
++			result: 'basic.import.result.css'
++		},
++		'basic:import-js-from-type': {
++			message: 'supports { importFrom: [ { from: "test/import-variables.js", type: "js" } ] } usage',
++			options: {
++				importFrom: [ { from: 'test/import-variables.js', type: 'js' } ]
++			},
++			expect: 'basic.import.expect.css',
++			result: 'basic.import.result.css'
+ 		}
+ 	}
+ };
+diff --git a/.travis.yml b/.travis.yml
+index c564664..e1f11a5 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 4
++  - 6
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 8bcc451..633b2ad 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,11 @@
+ # Changes to PostCSS Environment Variables
+ 
++### 2.0.0 (September 17, 2018)
++
++- Updated: Support for PostCSS v7+
++- Updated: Support for Node v6+
++- Updated: Changed `variables` option to `importFrom` option
++
+ ### 1.0.0 (April 28, 2018)
+ 
+ - Initial version
+diff --git a/INSTALL.md b/INSTALL.md
+new file mode 100644
+index 0000000..77a30a1
+--- /dev/null
++++ b/INSTALL.md
+@@ -0,0 +1,170 @@
++# Installing PostCSS Environment Variables
++
++[PostCSS Environment Variables] runs in all Node environments, with special instructions for:
++
++| [Node](#node) | [PostCSS CLI](#postcss-cli) | [Webpack](#webpack) | [Create React App](#create-react-app) | [Gulp](#gulp) | [Grunt](#grunt) |
++| --- | --- | --- | --- | --- | --- |
++
++## Node
++
++Add [PostCSS Environment Variables] to your project:
++
++```bash
++npm install postcss-env-function --save-dev
++```
++
++Use [PostCSS Environment Variables] to process your CSS:
++
++```js
++const postcssEnvFunction = require('postcss-env-function');
++
++postcssEnvFunction.process(YOUR_CSS /*, processOptions, pluginOptions */);
++```
++
++Or use it as a [PostCSS] plugin:
++
++```js
++const postcss = require('postcss');
++const postcssEnvFunction = require('postcss-env-function');
++
++postcss([
++  postcssEnvFunction(/* pluginOptions */)
++]).process(YOUR_CSS /*, processOptions */);
++```
++
++## PostCSS CLI
++
++Add [PostCSS CLI] to your project:
++
++```bash
++npm install postcss-cli --save-dev
++```
++
++Use [PostCSS Environment Variables] in your `postcss.config.js` configuration file:
++
++```js
++const postcssEnvFunction = require('postcss-env-function');
++
++module.exports = {
++  plugins: [
++    postcssEnvFunction(/* pluginOptions */)
++  ]
++}
++```
++
++## Webpack
++
++Add [PostCSS Loader] to your project:
++
++```bash
++npm install postcss-loader --save-dev
++```
++
++Use [PostCSS Environment Variables] in your Webpack configuration:
++
++```js
++const postcssEnvFunction = require('postcss-env-function');
++
++module.exports = {
++  module: {
++    rules: [
++      {
++        test: /\.css$/,
++        use: [
++          'style-loader',
++          { loader: 'css-loader', options: { importLoaders: 1 } },
++          { loader: 'postcss-loader', options: {
++            ident: 'postcss',
++            plugins: () => [
++              postcssEnvFunction(/* pluginOptions */)
++            ]
++          } }
++        ]
++      }
++    ]
++  }
++}
++```
++
++## Create React App
++
++Add [React App Rewired] and [React App Rewire PostCSS] to your project:
++
++```bash
++npm install react-app-rewired react-app-rewire-postcss --save-dev
++```
++
++Use [React App Rewire PostCSS] and [PostCSS Environment Variables] in your
++`config-overrides.js` file:
++
++```js
++const reactAppRewirePostcss = require('react-app-rewire-postcss');
++const postcssEnvFunction = require('postcss-env-function');
++
++module.exports = config => reactAppRewirePostcss(config, {
++  plugins: () => [
++    postcssEnvFunction(/* pluginOptions */)
++  ]
++});
++```
++
++## Gulp
++
++Add [Gulp PostCSS] to your project:
++
++```bash
++npm install gulp-postcss --save-dev
++```
++
++Use [PostCSS Environment Variables] in your Gulpfile:
++
++```js
++const postcss = require('gulp-postcss');
++const postcssEnvFunction = require('postcss-env-function');
++
++gulp.task('css', () => gulp.src('./src/*.css').pipe(
++  postcss([
++    postcssEnvFunction(/* pluginOptions */)
++  ])
++).pipe(
++  gulp.dest('.')
++));
++```
++
++## Grunt
++
++Add [Grunt PostCSS] to your project:
++
++```bash
++npm install grunt-postcss --save-dev
++```
++
++Use [PostCSS Environment Variables] in your Gruntfile:
++
++```js
++const postcssEnvFunction = require('postcss-env-function');
++
++grunt.loadNpmTasks('grunt-postcss');
++
++grunt.initConfig({
++  postcss: {
++    options: {
++      use: [
++       postcssEnvFunction(/* pluginOptions */)
++      ]
++    },
++    dist: {
++      src: '*.css'
++    }
++  }
++});
++```
++
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
++[PostCSS]: https://github.com/postcss/postcss
++[PostCSS CLI]: https://github.com/postcss/postcss-cli
++[PostCSS Loader]: https://github.com/postcss/postcss-loader
++[PostCSS Environment Variables]: https://github.com/jonathantneal/postcss-env-function
++[React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
++[React App Rewired]: https://github.com/timarney/react-app-rewired
+diff --git a/README.md b/README.md
+index a0c72b5..ed7e3b6 100644
+--- a/README.md
++++ b/README.md
+@@ -1,8 +1,8 @@
+ # PostCSS Environment Variables [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
+ 
+ [![NPM Version][npm-img]][npm-url]
++[![CSS Standard Status][css-img]][css-url]
+ [![Build Status][cli-img]][cli-url]
+-[![Windows Build Status][win-img]][win-url]
+ [![Support Chat][git-img]][git-url]
+ 
+ [PostCSS Environment Variables] lets you use `env()` variables in CSS,
+@@ -23,147 +23,115 @@ following the [CSS Environment Variables] specification.
+   }
+ }
+ 
+-/* when the `variables` option is: {
+-  "--branding-small": "600px",
+-  "--branding-padding": "20px"
++/* when the `importFrom` option is: {
++  "environmentVariables": {
++    "--branding-small": "600px",
++    "--branding-padding": "20px"
++  }
+ } */
+ ```
+ 
+ ## Usage
+ 
+-Add [PostCSS Environment Variables] to your build tool:
++Add [PostCSS Environment Variables] to your project:
+ 
+ ```bash
+ npm install postcss-env-function --save-dev
+ ```
+ 
+-#### Node
+-
+ Use [PostCSS Environment Variables] to process your CSS:
+ 
+ ```js
+-import postcssEnvFunction from 'postcss-env-function';
+-
+-postcssEnvFunction.process(YOUR_CSS, /* processOptions */, /* pluginOptions */);
+-```
+-
+-#### PostCSS
++const postcssEnvFunction = require('postcss-env-function');
+ 
+-Add [PostCSS] to your build tool:
+-
+-```bash
+-npm install postcss --save-dev
++postcssEnvFunction.process(YOUR_CSS /*, processOptions, pluginOptions */);
+ ```
+ 
+-Use [PostCSS Environment Variables] as a plugin:
++Or use it as a [PostCSS] plugin:
+ 
+ ```js
+-import postcss from 'gulp-postcss';
+-import postcssEnvFunction from 'postcss-env-function';
++const postcss = require('postcss');
++const postcssEnvFunction = require('postcss-env-function');
+ 
+ postcss([
+   postcssEnvFunction(/* pluginOptions */)
+-]).process(YOUR_CSS);
+-```
+-
+-#### Webpack
+-
+-Add [PostCSS Loader] to your build tool:
+-
+-```bash
+-npm install postcss-loader --save-dev
++]).process(YOUR_CSS /*, processOptions */);
+ ```
+ 
+-Use [PostCSS Environment Variables] in your Webpack configuration:
+-
+-```js
+-import postcssEnvFunction from 'postcss-env-function';
+-
+-module.exports = {
+-  module: {
+-    rules: [
+-      {
+-        test: /\.css$/,
+-        use: [
+-          'style-loader',
+-          { loader: 'css-loader', options: { importLoaders: 1 } },
+-          { loader: 'postcss-loader', options: {
+-            ident: 'postcss',
+-            plugins: () => [
+-              postcssEnvFunction(/* pluginOptions */)
+-            ]
+-          } }
+-        ]
+-      }
+-    ]
+-  }
+-}
+-```
++[PostCSS Environment Variables] runs in all Node environments, with special instructions for:
+ 
+-#### Gulp
++| [Node](INSTALL.md#node) | [PostCSS CLI](INSTALL.md#postcss-cli) | [Webpack](INSTALL.md#webpack) | [Create React App](INSTALL.md#create-react-app) | [Gulp](INSTALL.md#gulp) | [Grunt](INSTALL.md#grunt) |
++| --- | --- | --- | --- | --- | --- |
+ 
+-Add [Gulp PostCSS] to your build tool:
++## Options
+ 
+-```bash
+-npm install gulp-postcss --save-dev
+-```
++### importFrom
+ 
+-Use [PostCSS Environment Variables] in your Gulpfile:
++The `importFrom` option specifies sources where Environment Variables can be
++imported from, which might be JS and JSON files, functions, and directly passed
++objects.
+ 
+ ```js
+-import postcss from 'gulp-postcss';
+-import postcssEnvFunction from 'postcss-env-function';
+-
+-gulp.task('css', () => gulp.src('./src/*.css').pipe(
+-  postcss([
+-    postcssEnvFunction(/* pluginOptions */)
+-  ])
+-).pipe(
+-  gulp.dest('.')
+-));
++postcssCustomProperties({
++  importFrom: 'path/to/file.js' /* module.exports = {
++      environmentVariables: {
++        '--branding-padding': '20px',
++        '--branding-small': '600px'
++      }
++    } */
++});
+ ```
+ 
+-#### Grunt
++```pcss
++@media (max-width: env(--branding-small)) {
++  body {
++    padding: env(--branding-padding);
++  }
++}
+ 
+-Add [Grunt PostCSS] to your build tool:
++/* becomes */
+ 
+-```bash
+-npm install grunt-postcss --save-dev
++@media (min-width: 600px) {
++  body {
++    padding: 20px;
++  }
++}
+ ```
+ 
+-Use [PostCSS Environment Variables] in your Gruntfile:
++Multiple sources can be passed into this option, and they will be parsed in the
++order they are received. JavaScript files, JSON files, functions, and objects
++will need to namespace Custom Properties using the `environmentVariables` or
++`variables-variables` key.
+ 
+ ```js
+-import postcssEnvFunction from 'postcss-env-function';
+-
+-grunt.loadNpmTasks('grunt-postcss');
+-
+-grunt.initConfig({
+-  postcss: {
+-    options: {
+-      use: [
+-       postcssEnvFunction(/* pluginOptions */)
+-      ]
++postcssCustomProperties({
++  importFrom: [
++    'path/to/file.js', // module.exports = { environmentVariables: { '--branding-padding': '20px' } }
++    'and/then/this.json', // { "environment-variables": { "--branding-padding": "20px" } }
++    {
++      environmentVariables: { '--branding-padding': '20px' }
+     },
+-    dist: {
+-      src: '*.css'
++    () => {
++      const environmentVariables = { '--branding-padding': '20px' };
++
++      return { environmentVariables };
+     }
+-  }
++  ]
+ });
+ ```
+ 
++See example imports written in [JS](test/import-variables.js) and
++[JSON](test/import-variables.json).
++
+ [cli-img]: https://img.shields.io/travis/jonathantneal/postcss-env-function.svg
+ [cli-url]: https://travis-ci.org/jonathantneal/postcss-env-function
++[css-img]: https://cssdb.org/badge/environment-variables.svg
++[css-url]: https://cssdb.org/#environment-variables
+ [git-img]: https://img.shields.io/badge/support-chat-blue.svg
+ [git-url]: https://gitter.im/postcss/postcss
+ [npm-img]: https://img.shields.io/npm/v/postcss-env-function.svg
+ [npm-url]: https://www.npmjs.com/package/postcss-env-function
+-[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-env-function.svg
+-[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-env-function
+ 
+ [CSS Environment Variables]: https://drafts.csswg.org/css-env-1/
+-[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
+-[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
+ [PostCSS Environment Variables]: https://github.com/jonathantneal/postcss-env-function
+-[PostCSS Loader]: https://github.com/postcss/postcss-loader
+diff --git a/index.js b/index.js
+index f458df6..1a90784 100644
+--- a/index.js
++++ b/index.js
+@@ -2,19 +2,28 @@ import postcss from 'postcss';
+ import getReplacedValue from './lib/get-replaced-value';
+ import getSupportedValue from './lib/get-supported-value';
+ import setSupportedValue from './lib/set-supported-value';
++import importEnvironmentVariablesFromSources from './lib/import-from';
+ 
+-export default postcss.plugin('postcss-env-fn', opts => root => {
+-	const variables = Object(Object(opts).variables);
++export default postcss.plugin('postcss-env-fn', opts => {
++	// sources to import environment variables from
++	const importFrom = [].concat(Object(opts).importFrom || []);
+ 
+-	root.walk(node => {
+-		const supportedValue = getSupportedValue(node);
++	// promise any environment variables are imported
++	const environmentVariablesPromise = importEnvironmentVariablesFromSources(importFrom);
+ 
+-		if (supportedValue) {
+-			const replacedValue = getReplacedValue(supportedValue, variables);
++	return async root => {
++		const environmentVariables = await environmentVariablesPromise;
+ 
+-			if (replacedValue !== supportedValue) {
+-				setSupportedValue(node, replacedValue);
++		root.walk(node => {
++			const supportedValue = getSupportedValue(node);
++
++			if (supportedValue) {
++				const replacedValue = getReplacedValue(supportedValue, environmentVariables);
++
++				if (replacedValue !== supportedValue) {
++					setSupportedValue(node, replacedValue);
++				}
+ 			}
+-		}
+-	});
++		});
++	};
+ });
+diff --git a/lib/import-from.js b/lib/import-from.js
+new file mode 100644
+index 0000000..5b99a51
+--- /dev/null
++++ b/lib/import-from.js
+@@ -0,0 +1,93 @@
++import fs from 'fs';
++import path from 'path';
++import valueParser from 'postcss-values-parser';
++
++/* Import Custom Properties from Object
++/* ========================================================================== */
++
++function importEnvironmentVariablesFromObject(object) {
++	const environmentVariables = Object.assign(
++		{},
++		Object(object).environmentVariables || Object(object)['environment-variables']
++	);
++
++	for (const key in environmentVariables) {
++		environmentVariables[key] = valueParser(environmentVariables[key]).parse().nodes;
++	}
++
++	return environmentVariables;
++}
++
++/* Import Custom Properties from JSON file
++/* ========================================================================== */
++
++async function importEnvironmentVariablesFromJSONFile(from) {
++	const object = await readJSON(path.resolve(from));
++
++	return importEnvironmentVariablesFromObject(object);
++}
++
++/* Import Custom Properties from JS file
++/* ========================================================================== */
++
++async function importEnvironmentVariablesFromJSFile(from) {
++	const object = await import(path.resolve(from));
++
++	return importEnvironmentVariablesFromObject(object);
++}
++
++/* Import Custom Properties from Sources
++/* ========================================================================== */
++
++export default function importEnvironmentVariablesFromSources(sources) {
++	return sources.map(source => {
++		if (source instanceof Promise) {
++			return source;
++		} else if (source instanceof Function) {
++			return source();
++		}
++
++		// read the source as an object
++		const opts = source === Object(source) ? source : { from: String(source) };
++
++		// skip objects with Custom Properties
++		if (opts.environmentVariables || opts['environment-variables']) {
++			return opts
++		}
++
++		// source pathname
++		const from = String(opts.from || '');
++
++		// type of file being read from
++		const type = (opts.type || path.extname(opts.from).slice(1)).toLowerCase();
++
++		return { type, from };
++	}).reduce(async (environmentVariables, source) => {
++		const { type, from } = await source;
++
++		if (type === 'js') {
++			return Object.assign(environmentVariables, await importEnvironmentVariablesFromJSFile(from));
++		}
++
++		if (type === 'json') {
++			return Object.assign(environmentVariables, await importEnvironmentVariablesFromJSONFile(from));
++		}
++
++		return Object.assign(environmentVariables, importEnvironmentVariablesFromObject(await source));
++	}, {});
++}
++
++/* Helper utilities
++/* ========================================================================== */
++
++const readFile = from => new Promise((resolve, reject) => {
++	fs.readFile(from, 'utf8', (error, result) => {
++		if (error) {
++			reject(error);
++		} else {
++			resolve(result);
++		}
++	});
++});
++
++const readJSON = async from => JSON.parse(await readFile(from));
+diff --git a/lib/replace-with-word.js b/lib/replace-with-word.js
+deleted file mode 100644
+index 59800c1..0000000
+--- a/lib/replace-with-word.js
++++ /dev/null
+@@ -1,8 +0,0 @@
+-import parser from 'postcss-values-parser';
+-
+-// replaces a node with a word node
+-export default function (node, value) {
+-	const raws = node.raws;
+-
+-	node.replaceWith(parser.word({ value, raws }));
+-}
+diff --git a/lib/update-env-value.js b/lib/update-env-value.js
+index 89523f0..1cc2e5d 100644
+--- a/lib/update-env-value.js
++++ b/lib/update-env-value.js
+@@ -1,12 +1,44 @@
+ import getFnValue from './get-fn-value';
+-import replaceWithWord from './replace-with-word';
+ 
+ // update a node with an environment value
+-export default function (node, variables) {
++export default (node, variables) => {
+ 	// get the value of a css function as a string
+ 	const value = getFnValue(node);
+ 
+-	if (typeof value === 'string') {
+-		replaceWithWord(node, variables[value])
++	if (typeof value === 'string' && value in variables) {
++		node.replaceWith(
++			...asClonedArrayWithBeforeSpacing(variables[value], node.raws.before)
++		);
+ 	}
+-}
++};
++
++// return an array with its nodes cloned, preserving the raw
++const asClonedArrayWithBeforeSpacing = (array, beforeSpacing) => {
++	const clonedArray = asClonedArray(array, null);
++
++	if (clonedArray[0]) {
++		clonedArray[0].raws.before = beforeSpacing;
++	}
++
++	return clonedArray;
++};
++
++// return an array with its nodes cloned
++const asClonedArray = (array, parent) => array.map(node => asClonedNode(node, parent));
++
++// return a cloned node
++const asClonedNode = (node, parent) => {
++	const cloneNode = new node.constructor(node);
++
++	for (const key in node) {
++		if (key === 'parent') {
++			cloneNode.parent = parent;
++		} else if (Object(node[key]).constructor === Array) {
++			cloneNode[key] = asClonedArray(node.nodes, cloneNode);
++		} else if (Object(node[key]).constructor === Object) {
++			cloneNode[key] = Object.assign({}, node[key]);
++		}
++	}
++
++	return cloneNode;
++};
+diff --git a/package.json b/package.json
+index 896a668..41cccee 100644
+--- a/package.json
++++ b/package.json
+@@ -1,17 +1,19 @@
+ {
+   "name": "postcss-env-function",
+-  "version": "1.0.0",
+-  "description": "",
++  "version": "2.0.0",
++  "description": "Use env() variables in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+   "repository": "jonathantneal/postcss-env-function",
+   "homepage": "https://github.com/jonathantneal/postcss-env-function#readme",
+   "bugs": "https://github.com/jonathantneal/postcss-env-function/issues",
+   "main": "index.cjs.js",
+-  "module": "index.es.js",
++  "module": "index.es.mjs",
+   "files": [
+     "index.cjs.js",
+-    "index.es.js"
++    "index.cjs.js.map",
++    "index.es.mjs",
++    "index.es.mjs.map"
+   ],
+   "scripts": {
+     "prepublishOnly": "npm test",
+@@ -29,15 +31,16 @@
+     "postcss-values-parser": "^1.5.0"
+   },
+   "devDependencies": {
+-    "babel-core": "^6.26.3",
+-    "babel-eslint": "^8.2.3",
+-    "babel-preset-env": "^1.6.1",
+-    "eslint": "^4.19.1",
++    "@babel/core": "^7.0.0",
++    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
++    "@babel/preset-env": "^7.0.0",
++    "babel-eslint": "^9.0.0",
++    "eslint": "^5.6.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.58.2",
+-    "rollup-plugin-babel": "^3.0.4"
++    "rollup": "^0.66.0",
++    "rollup-plugin-babel": "^4.0.1"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 762c0d0..5199c9f 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -1,9 +1,9 @@
+ body {
+ 	order: 1;
+-	padding: 20px;
++	padding: env(--some-custom-padding);
+ }
+ 
+-@media (min-width: 600px) {
++@media (min-width: env(--another-custom-width)) {
+ 	body {
+ 		order: 2;
+ 	}
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+new file mode 100644
+index 0000000..762c0d0
+--- /dev/null
++++ b/test/basic.import.expect.css
+@@ -0,0 +1,10 @@
++body {
++	order: 1;
++	padding: 20px;
++}
++
++@media (min-width: 600px) {
++	body {
++		order: 2;
++	}
++}
+diff --git a/test/import-variables.js b/test/import-variables.js
+new file mode 100644
+index 0000000..f08efb7
+--- /dev/null
++++ b/test/import-variables.js
+@@ -0,0 +1,6 @@
++module.exports = {
++	environmentVariables: {
++		'--some-custom-padding': '20px',
++		'--another-custom-width': '600px'
++	}
++};
+diff --git a/test/import-variables.json b/test/import-variables.json
+new file mode 100644
+index 0000000..b07ea05
+--- /dev/null
++++ b/test/import-variables.json
+@@ -0,0 +1,6 @@
++{
++  "environment-variables": {
++    "--some-custom-padding": "20px",
++    "--another-custom-width": "600px"
++  }
++}
+-- 
+2.33.1
+

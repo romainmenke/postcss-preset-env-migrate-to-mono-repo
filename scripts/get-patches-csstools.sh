@@ -21,3 +21,4 @@ sh ./scripts/get-patches.sh postcss-nesting csstools
 sh ./scripts/get-patches.sh postcss-overflow-shorthand csstools
 sh ./scripts/get-patches.sh postcss-place csstools
 sh ./scripts/get-patches.sh postcss-pseudo-class-any-link csstools
+sh ./scripts/get-patches.sh postcss-tape csstools

@@ -1,0 +1,84 @@
+From b628680cc930f6c1af62c8babb8c0946132f1030 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 8 May 2018 01:57:08 -0400
+Subject: [PATCH 09/26] 3.0.1
+
+---
+ CHANGELOG.md |  4 ++--
+ index.js     | 16 ++++++----------
+ package.json |  4 ++--
+ 3 files changed, 10 insertions(+), 14 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 9b11bd5..35b9a5f 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,8 +1,8 @@
+ # Changes to PostCSS Place Properties
+ 
+-### 3.0.0 (May 8, 2018)
++### 3.0.1 (May 8, 2018)
+ 
+-- Updated: `postcss-selector-parser` to v4.0.0 (major)
++- Updated: `postcss-values-parser` to v1.5.0 (major)
+ - Updated: `postcss` to v6.0.22 (patch)
+ 
+ ### 2.0.0 (June 30, 2017)
+diff --git a/index.js b/index.js
+index 6f9be9e..0bb31cc 100644
+--- a/index.js
++++ b/index.js
+@@ -1,5 +1,5 @@
+ import postcss from 'postcss';
+-import parser from 'postcss-value-parser';
++import parser from 'postcss-values-parser';
+ 
+ const placeMatch = /^place-(content|items|self)/;
+ 
+@@ -13,17 +13,13 @@ export default postcss.plugin('postcss-place', opts => {
+ 			// alignment
+ 			const alignment = decl.prop.match(placeMatch)[1];
+ 
+-			// value
+-			const value = parser(decl.value);
+-
+-			// divider position
+-			const index = value.nodes.map(
+-				(node) => node.type
+-			).indexOf('space');
++			// value ast and child nodes
++			const value = parser(decl.value).parse();
++			const children = value.nodes[0].nodes;
+ 
+ 			// new justify-[alignment] and align-[alignment] declarations
+-			const alignValue = index === -1 ? decl.value : parser.stringify(value.nodes.slice(0, index));
+-			const justifyValue = index === -1 ? decl.value : parser.stringify(value.nodes.slice(index + 1));
++			const alignValue = children.length === 1 ? decl.value : String(children.slice(0, 1)).trim();
++			const justifyValue = children.length === 1 ? decl.value : String(children.slice(1)).trim();
+ 
+ 			decl.cloneBefore({
+ 				prop: `align-${alignment}`,
+diff --git a/package.json b/package.json
+index e1480e3..e461e48 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-place",
+-  "version": "3.0.0",
++  "version": "3.0.1",
+   "description": "Use a place-* shorthand for align-* and justify-* in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -26,7 +26,7 @@
+   },
+   "dependencies": {
+     "postcss": "^6.0.22",
+-    "postcss-value-parser": "^3.3.0"
++    "postcss-values-parser": "^1.5.0"
+   },
+   "devDependencies": {
+     "babel-core": "^6.26.3",
+-- 
+2.33.1
+

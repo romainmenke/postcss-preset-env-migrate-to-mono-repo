@@ -1,0 +1,42 @@
+From 1504f28d5a853051e1752aa2ded7c73df71857e9 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 16 Sep 2015 02:08:19 -0400
+Subject: [PATCH 017/108] Update plugin
+
+Fix bug where `@next` rule followed by `@media` rule did not bubble
+---
+ index.js     | 2 ++
+ test/test.js | 4 ++--
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/index.js b/index.js
+index e0182aa..ca130aa 100644
+--- a/index.js
++++ b/index.js
+@@ -71,6 +71,8 @@ function transpileRule(rule) {
+ 				transpileNestRule(rule, newRule, child);
+ 
+ 				transpileRule(newRule);
++
++				--index;
+ 			} else if (bubble.indexOf(child.name) !== -1) {
+ 				transpileAtRule(rule, newRule, child);
+ 
+diff --git a/test/test.js b/test/test.js
+index 8d51ce8..75e55b8 100644
+--- a/test/test.js
++++ b/test/test.js
+@@ -29,8 +29,8 @@ describe('postcss-nested', function () {
+ 	});
+ 
+ 	it('unwraps mixed nesting', function () {
+-		check('a { color: red; @media { color: white; @nest & b { color: blue } } }',
+-			  'a { color: red } @media { a { color: white } a b { color: blue } }');
++		check('a { color: red; @nest & b { color: white; @media { color: blue; } } @media { color: black; @nest & c { color: yellow } } }',
++			  'a { color: red } a b { color: white } @media { a b { color: blue } } @media { a { color: black } a c { color: yellow } }');
+ 	});
+ 
+ 	it('unwraps specified at-rules', function () {
+-- 
+2.33.1
+

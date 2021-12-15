@@ -1,0 +1,62 @@
+From 643577f85cf6f1ec1b792cd63cd6687058133b90 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 29 Jul 2019 08:59:24 -0400
+Subject: [PATCH 078/108] 7.0.1
+
+---
+ CHANGELOG.md            |  4 ++++
+ lib/rule-within-rule.js | 11 +++++++++++
+ package.json            |  2 +-
+ 3 files changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 14def81..27de0f6 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Nesting
+ 
++### 7.0.1 (July 29, 2018)
++
++- Fixed: Non-breaking issue with rules being unnecessarily split
++
+ ### 7.0.0 (September 17, 2018)
+ 
+ - Updated: Support for PostCSS v7+
+diff --git a/lib/rule-within-rule.js b/lib/rule-within-rule.js
+index e90a6e6..7a11b7c 100644
+--- a/lib/rule-within-rule.js
++++ b/lib/rule-within-rule.js
+@@ -10,6 +10,17 @@ export default function transformRuleWithinRule(node) {
+ 	// update the selectors of the node to be merged with the parent
+ 	node.selectors = mergeSelectors(parent.selectors, node.selectors);
+ 
++	// merge similar rules back together
++	// eslint-disable-next-line no-extra-parens
++	const areSameRule = (
++		node.type === 'rule' && parent.type === 'rule' && node.selector === parent.selector ||
++		node.type === 'atrule' && parent.type === 'atrule' && node.params === parent.params
++	);
++
++	if (areSameRule) {
++		node.append(...parent.nodes);
++	}
++
+ 	// conditionally cleanup an empty parent rule
+ 	cleanupParent(parent);
+ }
+diff --git a/package.json b/package.json
+index 24a4ba8..bf93bcd 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-nesting",
+-  "version": "7.0.0",
++  "version": "7.0.1",
+   "description": "Nest style rules inside each other",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

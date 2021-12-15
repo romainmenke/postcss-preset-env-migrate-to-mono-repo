@@ -1,0 +1,26 @@
+From 45b8aa031903c0860dfd51fc4db2a8e24f37c9dc Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Tue, 16 Nov 2021 06:53:36 +0100
+Subject: [PATCH 095/103] Custom selectors changed output
+
+Given it's a custom selector, postcss-nesting does not handle that case and produces unneeded (but harmless) `:is` code.
+---
+ test/import.expect.css | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/test/import.expect.css b/test/import.expect.css
+index ded9c5e..458b065 100644
+--- a/test/import.expect.css
++++ b/test/import.expect.css
+@@ -9,7 +9,7 @@
+ 	}
+ }
+ 
+-h1.test-custom-selectors,h2.test-custom-selectors,h3.test-custom-selectors,h4.test-custom-selectors,h5.test-custom-selectors,h6.test-custom-selectors {
++.test-custom-selectors:is(h1),.test-custom-selectors:is(h2),.test-custom-selectors:is(h3),.test-custom-selectors:is(h4),.test-custom-selectors:is(h5),.test-custom-selectors:is(h6) {
+ 		order: 3;
+ 	}
+ 
+-- 
+2.33.1
+

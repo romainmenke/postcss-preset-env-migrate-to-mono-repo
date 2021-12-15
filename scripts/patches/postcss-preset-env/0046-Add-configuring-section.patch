@@ -1,0 +1,57 @@
+From 499e144462de4d95866a202655e1930c3b719664 Mon Sep 17 00:00:00 2001
+From: Eduard Kyvenko <duardeco@gmail.com>
+Date: Mon, 20 Aug 2018 16:44:19 +0200
+Subject: [PATCH 046/103] Add configuring section
+
+---
+ README.md | 32 +++++++++++++++++++++++++++++++-
+ 1 file changed, 31 insertions(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 7c2bc44..b59079d 100644
+--- a/README.md
++++ b/README.md
+@@ -328,9 +328,39 @@ postcssPresetEnv({
+ })
+ ```
+ 
++### Configuring
++
++Pass the configuration to the plugin in any way supported by [postcss-load-config](https://github.com/michael-ciniawsky/postcss-load-config).
++
++#### postcss.config.js
++
++```js
++module.exports = {
++  plugins: {
++    'postcss-preset-env': {
++      stage: 3,
++      browsers: ['last 2 versions', '> 5%'],
++    }
++  }
++};
++```
++
++#### package.json
++
++```json
++{
++  "postcss": {
++    "postcss-preset-env": {
++      "stage": 3,
++      "browsers": ["last 2 versions", "> 5%"]
++    }
++  }
++}
++```
++
+ ### autoprefixer
+ 
+-[PostCSS Preset Env] includes [autoprefixer] and `[browsers](#browsers)` option will be passed to it automatically.
++[PostCSS Preset Env] includes [autoprefixer] and [`browsers`](#browsers) option will be passed to it automatically.
+ 
+ Specifying `autoprefixer` option enables passing
+ [additional options](https://github.com/postcss/autoprefixer#options)
+-- 
+2.33.1
+

@@ -1,0 +1,42 @@
+From e364d6e86653837cb864cf75138c9bb222b03436 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 16 Mar 2018 10:34:37 -0400
+Subject: [PATCH 018/103] 3.3.0
+
+---
+ CHANGELOG.md | 7 +++++++
+ package.json | 2 +-
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 3a0b45a..09060b5 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,12 @@
+ # Changes to PostCSS Preset Env
+ 
++### 3.3.0 (March 16, 2018)
++
++- Updated: `postcss-apply` to v0.9.0 (minor update)
++- Updated: `browserslist` to v3.1.2 (patch update)
++- Updated: `caniuse-lite` to v1.0.30000815 (patch update)
++- Updated: distribution to cjs and es bundles
++
+ ### 3.2.2 (February 27, 2018)
+ 
+ - Updated: `postcss-color-mod-function` to v2.4.2 (patch update)
+diff --git a/package.json b/package.json
+index 962a1fe..878dfbf 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-preset-env",
+-  "version": "3.2.2",
++  "version": "3.3.0",
+   "description": "Convert modern CSS into something browsers understand",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

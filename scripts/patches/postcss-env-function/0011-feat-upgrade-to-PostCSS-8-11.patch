@@ -1,0 +1,304 @@
+From 0b6b738a1f72d20e5f7b16c6b99c9f79f935aac5 Mon Sep 17 00:00:00 2001
+From: Armano <armano2@users.noreply.github.com>
+Date: Mon, 15 Mar 2021 04:36:20 +0100
+Subject: [PATCH 11/21] feat: upgrade to PostCSS 8 (csstools/postcss-env-function#11)
+
+---
+ .rollup.js                     |  2 +-
+ README.md                      |  2 +-
+ package.json                   | 31 +++++++++++++++-------------
+ src/index.js                   | 37 +++++++++++++++++++---------------
+ src/lib/get-replaced-value.js  |  6 +++++-
+ src/lib/get-supported-value.js |  5 -----
+ src/lib/import-from.js         | 36 ++++++++++++++++++++++-----------
+ src/lib/is-atrule.js           |  2 --
+ src/lib/is-decl.js             |  2 --
+ src/lib/set-supported-value.js | 13 ------------
+ 10 files changed, 69 insertions(+), 67 deletions(-)
+ delete mode 100644 src/lib/get-supported-value.js
+ delete mode 100644 src/lib/is-atrule.js
+ delete mode 100644 src/lib/is-decl.js
+ delete mode 100644 src/lib/set-supported-value.js
+
+diff --git a/.rollup.js b/.rollup.js
+index 1fb0d87..9e2c0b8 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -2,7 +2,7 @@ import pkg from './package.json'
+ 
+ export default {
+ 	...pkg.rollup,
+-	plugins: pkg.rollup.plugins.map(plugin => require(plugin)()),
++	plugins: pkg.rollup.plugins.map(plugin => require(plugin).default()),
+ 	onwarn(warning, warn) {
+ 		if (warning.code !== 'UNRESOLVED_IMPORT') warn(warning)
+ 	}
+diff --git a/README.md b/README.md
+index cdf1577..6ae36b1 100644
+--- a/README.md
++++ b/README.md
+@@ -35,7 +35,7 @@
+ Add [PostCSS Environment Variables] to your project:
+ 
+ ```bash
+-npm install postcss-env-function --save-dev
++npm install postcss postcss-env-function --save-dev
+ ```
+ 
+ Use [PostCSS Environment Variables] to process your CSS:
+diff --git a/package.json b/package.json
+index 91d6fcb..2c37afd 100644
+--- a/package.json
++++ b/package.json
+@@ -17,27 +17,30 @@
+     "build:watch": "npx rollup -c .rollup.js --watch",
+     "lint": "npx eslint --cache src",
+     "lint:fix": "npx eslint --cache --fix",
+-    "pretest": "npm install && npm run build",
++    "pretest": "npm run build",
+     "test": "npm run lint && npm run tape",
+-    "tape": "npx postcss-tape",
++    "tape": "postcss-tape",
+     "prepublishOnly": "npm test"
+   },
+   "engines": {
+-    "node": ">=8.0.0"
++    "node": ">=10.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.27",
+-    "postcss-values-parser": "^3.2.0"
++    "postcss-values-parser": "^5.0.0"
++  },
++  "peerDependencies": {
++    "postcss": "^8.0.0"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.9.0",
+-    "@babel/preset-env": "^7.9.5",
+-    "babel-eslint": "^10.1.0",
+-    "eslint": "^6.8.0",
+-    "postcss-tape": "^5.0.2",
++    "@babel/core": "^7.13.10",
++    "@babel/preset-env": "^7.13.10",
++    "@babel/eslint-parser": "^7.13.10",
++    "eslint": "^7.22.0",
++    "postcss": "^8.2.8",
++    "postcss-tape": "^6.0.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^2.7.2",
+-    "rollup-plugin-babel": "^4.4.0"
++    "rollup": "^2.41.2",
++    "@rollup/plugin-babel": "^5.3.0"
+   },
+   "babel": {
+     "presets": [
+@@ -55,12 +58,12 @@
+       "node": true
+     },
+     "extends": "eslint:recommended",
+-    "parser": "babel-eslint"
++    "parser": "@babel/eslint-parser"
+   },
+   "rollup": {
+     "input": "src/index.js",
+     "plugins": [
+-      "rollup-plugin-babel"
++      "@rollup/plugin-babel"
+     ],
+     "output": [
+       {
+diff --git a/src/index.js b/src/index.js
+index 1a90784..d72de31 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -1,29 +1,34 @@
+-import postcss from 'postcss';
+ import getReplacedValue from './lib/get-replaced-value';
+-import getSupportedValue from './lib/get-supported-value';
+-import setSupportedValue from './lib/set-supported-value';
+ import importEnvironmentVariablesFromSources from './lib/import-from';
+ 
+-export default postcss.plugin('postcss-env-fn', opts => {
++/**
++ * @param {{importFrom?: string[]}} opts
++ * @returns {import('postcss').Plugin}
++ */
++module.exports = function creator(opts) {
+ 	// sources to import environment variables from
+ 	const importFrom = [].concat(Object(opts).importFrom || []);
+ 
+ 	// promise any environment variables are imported
+ 	const environmentVariablesPromise = importEnvironmentVariablesFromSources(importFrom);
+ 
+-	return async root => {
+-		const environmentVariables = await environmentVariablesPromise;
++	return {
++		postcssPlugin: 'postcss-env-fn',
++		async AtRule(atRule) {
++			const replacedValue = getReplacedValue(atRule.params, await environmentVariablesPromise);
+ 
+-		root.walk(node => {
+-			const supportedValue = getSupportedValue(node);
+-
+-			if (supportedValue) {
+-				const replacedValue = getReplacedValue(supportedValue, environmentVariables);
++			if (replacedValue !== atRule.params) {
++				atRule.params = replacedValue;
++			}
++		},
++		async Declaration(decl) {
++			const replacedValue = getReplacedValue(decl.value, await environmentVariablesPromise);
+ 
+-				if (replacedValue !== supportedValue) {
+-					setSupportedValue(node, replacedValue);
+-				}
++			if (replacedValue !== decl.value) {
++				decl.value = replacedValue;
+ 			}
+-		});
++		}
+ 	};
+-});
++};
++
++module.exports.postcss = true;
+diff --git a/src/lib/get-replaced-value.js b/src/lib/get-replaced-value.js
+index da724a7..b411047 100644
+--- a/src/lib/get-replaced-value.js
++++ b/src/lib/get-replaced-value.js
+@@ -2,7 +2,11 @@ import { parse } from 'postcss-values-parser';
+ import updateEnvValue from './update-env-value';
+ import walkEnvFuncs from './walk-env-funcs';
+ 
+-// returns a value replaced with environment variables
++/**
++ * @param {string} originalValue
++ * @param variables
++ * @returns {string} returns a value replaced with environment variables
++ */
+ export default (originalValue, variables) => {
+ 	// get the ast of the original value
+ 	const ast = parse(originalValue);
+diff --git a/src/lib/get-supported-value.js b/src/lib/get-supported-value.js
+deleted file mode 100644
+index ac7f04f..0000000
+--- a/src/lib/get-supported-value.js
++++ /dev/null
+@@ -1,5 +0,0 @@
+-import isAtrule from './is-atrule';
+-import isDecl from './is-decl';
+-
+-// returns a value from an at-rule or declaration
+-export default (node) => isAtrule(node) ? node.params : isDecl(node) ? node.value : null;
+diff --git a/src/lib/import-from.js b/src/lib/import-from.js
+index ff3d967..7641313 100644
+--- a/src/lib/import-from.js
++++ b/src/lib/import-from.js
+@@ -2,9 +2,11 @@ import fs from 'fs';
+ import path from 'path';
+ import { parse } from 'postcss-values-parser';
+ 
+-/* Import Custom Properties from Object
+-/* ========================================================================== */
+-
++/**
++ * Import Custom Properties from Object
++ * @param {{environmentVariables: Record<string, string>, 'environment-variables': Record<string, string>}} object
++ * @returns {Record<string, import('postcss-values-parser').Root>}
++ */
+ function importEnvironmentVariablesFromObject(object) {
+ 	const environmentVariables = Object.assign(
+ 		{},
+@@ -18,27 +20,33 @@ function importEnvironmentVariablesFromObject(object) {
+ 	return environmentVariables;
+ }
+ 
+-/* Import Custom Properties from JSON file
+-/* ========================================================================== */
+-
++/**
++ * Import Custom Properties from JSON file
++ * @param {string} from
++ * @returns {Promise<Record<string, import('postcss-values-parser').Root>>}
++ */
+ async function importEnvironmentVariablesFromJSONFile(from) {
+ 	const object = await readJSON(path.resolve(from));
+ 
+ 	return importEnvironmentVariablesFromObject(object);
+ }
+ 
+-/* Import Custom Properties from JS file
+-/* ========================================================================== */
+-
++/**
++ * Import Custom Properties from JS file
++ * @param {string} from
++ * @returns {Promise<Record<string, import('postcss-values-parser').Root>>}
++ */
+ async function importEnvironmentVariablesFromJSFile(from) {
+ 	const object = await import(path.resolve(from));
+ 
+ 	return importEnvironmentVariablesFromObject(object);
+ }
+ 
+-/* Import Custom Properties from Sources
+-/* ========================================================================== */
+-
++/**
++ * Import Custom Properties from Sources
++ * @param {(string|Function|Promise|{type:string,environmentVariables: Record<string, string>, 'environment-variables': Record<string, string>})[]} sources
++ * @returns {Promise<Record<string, import('postcss-values-parser').Root>>}
++ */
+ export default function importEnvironmentVariablesFromSources(sources) {
+ 	return sources.map(source => {
+ 		if (source instanceof Promise) {
+@@ -80,6 +88,10 @@ export default function importEnvironmentVariablesFromSources(sources) {
+ /* Helper utilities
+ /* ========================================================================== */
+ 
++/**
++ * @param {string} from
++ * @returns {Promise<string>}
++ */
+ const readFile = from => new Promise((resolve, reject) => {
+ 	fs.readFile(from, 'utf8', (error, result) => {
+ 		if (error) {
+diff --git a/src/lib/is-atrule.js b/src/lib/is-atrule.js
+deleted file mode 100644
+index 233a7a1..0000000
+--- a/src/lib/is-atrule.js
++++ /dev/null
+@@ -1,2 +0,0 @@
+-// returns whether a node is an at-rule
+-export default (node) => node && node.type === 'atrule';
+diff --git a/src/lib/is-decl.js b/src/lib/is-decl.js
+deleted file mode 100644
+index 1b36284..0000000
+--- a/src/lib/is-decl.js
++++ /dev/null
+@@ -1,2 +0,0 @@
+-// returns whether a node is a declaration
+-export default (node) => node && node.type === 'decl';
+diff --git a/src/lib/set-supported-value.js b/src/lib/set-supported-value.js
+deleted file mode 100644
+index c7fb8ae..0000000
+--- a/src/lib/set-supported-value.js
++++ /dev/null
+@@ -1,13 +0,0 @@
+-import isAtrule from './is-atrule';
+-import isDecl from './is-decl';
+-
+-// assigns a value to an at-rule or declaration
+-export default function (node, value) {
+-	if (isAtrule(node)) {
+-		node.params = value;
+-	}
+-
+-	if (isDecl(node)) {
+-		node.value = value;
+-	}
+-}
+-- 
+2.33.1
+

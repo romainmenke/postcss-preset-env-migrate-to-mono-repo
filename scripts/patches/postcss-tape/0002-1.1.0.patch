@@ -1,0 +1,106 @@
+From 7eeb60d1d3250a2ceaaaa87c1b352aedaf3a97df Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 8 Dec 2016 10:13:36 -0500
+Subject: [PATCH 02/38] 1.1.0
+
+---
+ CHANGELOG.md |  4 ++++
+ README.md    | 15 ++++++++++++++-
+ index.js     | 24 ++++++++++++++++++++----
+ package.json |  2 +-
+ 4 files changed, 39 insertions(+), 6 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 3e09e44..a98211a 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Tape
+ 
++### 1.1.0 (December 8, 2016)
++
++- Added: Support `plugins#process` with separate arguments
++
+ ### 1.0.1 (December 6, 2016)
+ 
+ - Added: Initial version
+diff --git a/README.md b/README.md
+index cf00533..6392b5a 100644
+--- a/README.md
++++ b/README.md
+@@ -36,7 +36,7 @@ That’s it! Now you can use the `tape` task:
+ npm run tape
+ ```
+ 
+-### Options
++## Options
+ 
+ Options may be passed through `package.json` using `postcssConfig`:
+ 
+@@ -55,3 +55,16 @@ Options may be passed through arguments:
+ ```sh
+ postcss-tape --plugin=path/to/plugin.js --config=path/to/.tape.js
+ ```
++
++## Advanced usage
++
++Overriding the `plugin#process` method in your plugin allows you to separate plugin options from process options. This is useful when testing plugins that need to work when no options are passed, or when testing plugins that need to use options that share the namespace of process options.
++
++```js
++// override plugin#process
++module.exports.process = function (cssString, pluginOptions, processOptions) {
++	return postcss([
++		1 in arguments ? module.exports(pluginOptions) : module.exports()
++	]).process(cssString, processOptions);
++};
++```
+diff --git a/index.js b/index.js
+index 52b287b..af20e93 100644
+--- a/index.js
++++ b/index.js
+@@ -64,10 +64,26 @@ Promise.all(Object.keys(tests).map(
+ 					readFile(sourcePath, 'utf8'),
+ 					readFile(expectPath, 'utf8')
+ 				]).then(
+-					([sourceCSS, expectCSS]) => plugin.process(sourceCSS, Object.assign({
+-							from: sourcePath,
+-							to:   resultPath
+-						}, test.options)).then(
++					([sourceCSS, expectCSS]) => plugin.process.apply(
++						null,
++						plugin.process.length === 3 ? [
++							sourceCSS,
++							test.options,
++							{
++								from: sourcePath,
++								to:   resultPath
++							}
++						] : [
++							sourceCSS,
++							Object.assign(
++								{
++									from: sourcePath,
++									to:   resultPath
++								},
++								test.options
++							)
++						]
++					).then(
+ 						(result) => writeFile(resultPath, result.css).then(
+ 							() => {
+ 								if (result.css !== expectCSS) {
+diff --git a/package.json b/package.json
+index 127849c..49abef1 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-tape",
+-  "version": "1.0.1",
++  "version": "1.1.0",
+   "description": "Quickly test a PostCSS Plugin",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

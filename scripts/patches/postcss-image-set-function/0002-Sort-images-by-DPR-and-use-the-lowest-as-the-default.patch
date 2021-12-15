@@ -1,0 +1,571 @@
+From 1060925936d0f0776792f1674a9ff99653965a86 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 7 May 2018 20:30:07 -0400
+Subject: [PATCH 02/19] Sort images by DPR and use the lowest as the default
+
+---
+ README.md                         | 23 +++++++--
+ lib/get-media.js                  | 10 ++--
+ lib/process-image-set.js          | 40 ++++++++------
+ test/basic.expect.css             | 86 +------------------------------
+ test/basic.no-preserve.expect.css | 80 +---------------------------
+ 5 files changed, 51 insertions(+), 188 deletions(-)
+
+diff --git a/README.md b/README.md
+index 49c88f0..a870bb4 100644
+--- a/README.md
++++ b/README.md
+@@ -21,10 +21,8 @@ specification.
+ 
+ /* becomes */
+ 
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-  .example {
+-    background-image: url(img.png);
+-  }
++.example {
++  background-image: url(img.png);
+ }
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+@@ -228,6 +226,23 @@ postcssImageSetFunction({ oninvalid: 'warning' }) // warn on invalid usages
+ postcssImageSetFunction({ oninvalid: 'throw' }) // throw on invalid usages
+ ```
+ 
++## Image Resolution
++
++The `image-set()` function allows an author to provide multiple resolutions of
++an image and let the browser decide which is most appropriate in a given
++situation. The `image-set()` also never fails to choose an image; the
++`<resolution>` just helps determine which of the images is chosen.
++
++Since this plugin is not a browser, the image options are sorted by device
++pixel ratio and the lowest ratio is used as the default, while the remaining
++images are pushed behind media queries.
++
++Therefore, this plugin can only approximate native browser behavior. While
++images should typically match the resolution as the device they’re being viewed
++in, other factors can affect the chosen image. For example, if the user is on a
++slow mobile connection, the browser may prefer to select a lower-res image
++rather than wait for a larger, resolution-matching image to load.
++
+ [cli-img]: https://img.shields.io/travis/jonathantneal/postcss-image-set-function.svg
+ [cli-url]: https://travis-ci.org/jonathantneal/postcss-image-set-function
+ [css-img]: https://cssdb.org/badge/image-set-function.svg
+diff --git a/lib/get-media.js b/lib/get-media.js
+index 84c2edb..5482dea 100644
+--- a/lib/get-media.js
++++ b/lib/get-media.js
+@@ -3,18 +3,18 @@ import postcss from 'postcss';
+ const dpiRatios = { dpcm: 2.54, dpi: 1, dppx: 96, x: 96 };
+ 
+ // return a valid @media rule
+-export default (node, mediasByDpi) => {
++export default (node, mediasByDpr) => {
+ 	if (Object(node).type === 'number' && node.unit in dpiRatios) {
+ 		// calculate min-device-pixel-ratio and min-resolution
+ 		const dpi = Number(node.value) * dpiRatios[node.unit.toLowerCase()];
+-		const pxRatio = Math.floor(dpi / dpiRatios.x * 100) / 100;
++		const dpr = Math.floor(dpi / dpiRatios.x * 100) / 100;
+ 
+-		if (dpi in mediasByDpi) {
++		if (dpi in mediasByDpr) {
+ 			return false;
+ 		} else {
+-			const media = mediasByDpi[dpi] = postcss.atRule({
++			const media = mediasByDpr[dpi] = postcss.atRule({
+ 				name: 'media',
+-				params: `(-webkit-min-device-pixel-ratio: ${pxRatio}), (min-resolution: ${dpi}dpi)`
++				params: `(-webkit-min-device-pixel-ratio: ${dpr}), (min-resolution: ${dpi}dpi)`
+ 			});
+ 
+ 			return media;
+diff --git a/lib/process-image-set.js b/lib/process-image-set.js
+index 7d15da6..2a32935 100644
+--- a/lib/process-image-set.js
++++ b/lib/process-image-set.js
+@@ -5,7 +5,7 @@ import handleInvalidation from './handle-invalidation';
+ 
+ export default (imageSetOptionNodes, decl, opts) => {
+ 	const parent = decl.parent;
+-	const mediasByDpi = {};
++	const mediasByDpr = {};
+ 
+ 	let length = imageSetOptionNodes.length;
+ 	let index = -1;
+@@ -14,7 +14,7 @@ export default (imageSetOptionNodes, decl, opts) => {
+ 		const [comma, value, media] = [
+ 			index < 0 ? true : getComma(imageSetOptionNodes[index]),
+ 			getImage(imageSetOptionNodes[index + 1]),
+-			getMedia(imageSetOptionNodes[index + 2], mediasByDpi)
++			getMedia(imageSetOptionNodes[index + 2], mediasByDpr)
+ 		];
+ 
+ 		// handle invalidations
+@@ -36,29 +36,35 @@ export default (imageSetOptionNodes, decl, opts) => {
+ 		index += 3
+ 	}
+ 
+-	const medias = Object.keys(mediasByDpi).map(params => mediasByDpi[params]);
++	const medias = Object.keys(mediasByDpr).sort((a, b) => a - b).map(params => mediasByDpr[params]);
+ 
+ 	// conditionally prepend previous siblings
+ 	if (medias.length) {
+-		const siblings = parent.nodes;
+-		const previousSiblings = siblings.slice(0, siblings.indexOf(decl));
++		const firstDecl = medias[0].nodes[0].nodes[0];
+ 
+-		if (previousSiblings.length) {
+-			const parentClone = parent.cloneBefore().removeAll();
++		if (medias.length === 1) {
++			decl.value = firstDecl.value
++		} else {
++			const siblings = parent.nodes;
++			const previousSiblings = siblings.slice(0, siblings.indexOf(decl)).concat(firstDecl);
+ 
+-			parentClone.append(previousSiblings);
+-		}
++			if (previousSiblings.length) {
++				const parentClone = parent.cloneBefore().removeAll();
++
++				parentClone.append(previousSiblings);
++			}
+ 
+-		// prepend any @media { decl: <image> } rules
+-		parent.before(medias);
++			// prepend any @media { decl: <image> } rules
++			parent.before(medias.slice(1));
+ 
+-		// conditionally remove the current rule
+-		if (!opts.preserve) {
+-			decl.remove();
++			// conditionally remove the current rule
++			if (!opts.preserve) {
++				decl.remove();
+ 
+-			// and then conditionally remove its parent
+-			if (!parent.nodes.length) {
+-				parent.remove();
++				// and then conditionally remove its parent
++				if (!parent.nodes.length) {
++					parent.remove();
++				}
+ 			}
+ 		}
+ 	}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 5c9fe83..fd6c243 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -8,45 +8,15 @@
+ 
+ .test-changed-properties {
+ 	order: 1;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-changed-properties {
+ 	background-image: 
+ 		url(img/test.png);
+-}
+-}
+-
+-.test-changed-properties {
+-	background-image: image-set(
+-		url(img/test.png) 1x
+-	);
+ 	order: 2;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+-
+-.test-changed-properties {
+ 	background-image: 
+ 		url(img/test.png);
+-}
+-}
+-
+-.test-changed-properties {
+-	background-image: image-set(
+-		url(img/test.png) 2x
+-	);
+ 	order: 3;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-changed-properties {
+ 	background-image: 
+ 		url(img/test.png);
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -62,15 +32,9 @@
+ 		url(img/test-2x.png) 2x
+ 	);
+ 	order: 4;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-changed-properties {
+ 	background-image: 
+ 		url(img/test.png);
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -99,15 +63,9 @@
+ 
+ .test-mixed-units {
+ 	order: 1;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-mixed-units {
+ 	background-image: 
+ 		url(img/test.png);
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -123,6 +81,8 @@
+ 		url(img/test-2x.png) 2dppx
+ 	);
+ 	order: 2;
++	background-image: 
++		url(img/test-2x.png);
+ }
+ 
+ @media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+@@ -133,14 +93,6 @@
+ }
+ }
+ 
+-@media (-webkit-min-device-pixel-ratio: 0.52), (min-resolution: 50.8dpi) {
+-
+-.test-mixed-units {
+-	background-image: 
+-		url(img/test-2x.png);
+-}
+-}
+-
+ .test-mixed-units {
+ 	background-image: image-set(
+ 		url(img/test.png) 1x,
+@@ -151,15 +103,9 @@
+ 
+ .test-mixed-order {
+ 	order: 1;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-mixed-order {
+ 	background: 
+ 		url(../images/bck.png);
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -184,15 +130,9 @@
+ 		url(../images/bck@2x.png) 2x
+ 	);
+ 	order: 2;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-mixed-order {
+ 	background: 
+ 		url(../images/bck.png);
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -221,14 +161,8 @@
+ 
+ .test-no-url {
+ 	order: 1;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-no-url {
+ 	background-image: img/test.png;
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -243,14 +177,8 @@
+ 		"img/test-2x.png" 2x
+ 	);
+ 	order: 2;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-no-url {
+ 	background-image: img/test.png;
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -277,15 +205,9 @@
+ 
+ .test-webkit-prefix {
+ 	order: 1;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-webkit-prefix {
+ 	background-image: 
+ 		url(img/test.png);
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -313,12 +235,10 @@
+ }
+ 
+ @media (min-width: 1000px) {
+-	@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+ 	.test-within-mq-1 {
+ 		background-image: 
+ 			url(img/test.png);
+ 	}
+-	}
+ 	@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 	.test-within-mq-1 {
+ 		background-image: 
+@@ -341,12 +261,10 @@
+ }
+ 
+ @media (min-width: 768px) and (max-width: 1024px) {
+-	@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+ 	.test-within-mq-2 {
+ 		background-image: 
+ 			url(img/test.png);
+ 	}
+-	}
+ 	@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 	.test-within-mq-2 {
+ 		background-image: 
+diff --git a/test/basic.no-preserve.expect.css b/test/basic.no-preserve.expect.css
+index d28790c..4f594a9 100644
+--- a/test/basic.no-preserve.expect.css
++++ b/test/basic.no-preserve.expect.css
+@@ -8,39 +8,15 @@
+ 
+ .test-changed-properties {
+ 	order: 1;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-changed-properties {
+ 	background-image: 
+ 		url(img/test.png);
+-}
+-}
+-
+-.test-changed-properties {
+ 	order: 2;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+-
+-.test-changed-properties {
+ 	background-image: 
+ 		url(img/test.png);
+-}
+-}
+-
+-.test-changed-properties {
+ 	order: 3;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-changed-properties {
+ 	background-image: 
+ 		url(img/test.png);
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -52,15 +28,9 @@
+ 
+ .test-changed-properties {
+ 	order: 4;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-changed-properties {
+ 	background-image: 
+ 		url(img/test.png);
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -84,15 +54,9 @@
+ 
+ .test-mixed-units {
+ 	order: 1;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-mixed-units {
+ 	background-image: 
+ 		url(img/test.png);
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -104,6 +68,8 @@
+ 
+ .test-mixed-units {
+ 	order: 2;
++	background-image: 
++		url(img/test-2x.png);
+ }
+ 
+ @media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+@@ -114,29 +80,15 @@
+ }
+ }
+ 
+-@media (-webkit-min-device-pixel-ratio: 0.52), (min-resolution: 50.8dpi) {
+-
+-.test-mixed-units {
+-	background-image: 
+-		url(img/test-2x.png);
+-}
+-}
+-
+ .test-mixed-units {
+ 	order: 3;
+ }
+ 
+ .test-mixed-order {
+ 	order: 1;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-mixed-order {
+ 	background: 
+ 		url(../images/bck.png);
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -156,15 +108,9 @@
+ 
+ .test-mixed-order {
+ 	order: 2;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-mixed-order {
+ 	background: 
+ 		url(../images/bck.png);
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -188,14 +134,8 @@
+ 
+ .test-no-url {
+ 	order: 1;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-no-url {
+ 	background-image: img/test.png;
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -206,14 +146,8 @@
+ 
+ .test-no-url {
+ 	order: 2;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-no-url {
+ 	background-image: img/test.png;
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -235,15 +169,9 @@
+ 
+ .test-webkit-prefix {
+ 	order: 1;
+-}
+-
+-@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+-
+-.test-webkit-prefix {
+ 	background-image: 
+ 		url(img/test.png);
+ }
+-}
+ 
+ @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 
+@@ -266,12 +194,10 @@
+ }
+ 
+ @media (min-width: 1000px) {
+-	@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+ 	.test-within-mq-1 {
+ 		background-image: 
+ 			url(img/test.png);
+ 	}
+-	}
+ 	@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 	.test-within-mq-1 {
+ 		background-image: 
+@@ -287,12 +213,10 @@
+ }
+ 
+ @media (min-width: 768px) and (max-width: 1024px) {
+-	@media (-webkit-min-device-pixel-ratio: 1), (min-resolution: 96dpi) {
+ 	.test-within-mq-2 {
+ 		background-image: 
+ 			url(img/test.png);
+ 	}
+-	}
+ 	@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ 	.test-within-mq-2 {
+ 		background-image: 
+-- 
+2.33.1
+

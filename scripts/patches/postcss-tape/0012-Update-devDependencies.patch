@@ -1,0 +1,25 @@
+From d76aee18f9bc6de697a887eb42d761ce1d216d81 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 16 Sep 2017 19:35:12 -0400
+Subject: [PATCH 12/38] Update devDependencies
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index c045a76..512c0da 100644
+--- a/package.json
++++ b/package.json
+@@ -26,7 +26,7 @@
+     "node": ">=4.0.0"
+   },
+   "devDependencies": {
+-    "eslint": "^3.19.0",
++    "eslint": "^4.7.0",
+     "eslint-config-dev": "2.0.0"
+   },
+   "eslintConfig": {
+-- 
+2.33.1
+

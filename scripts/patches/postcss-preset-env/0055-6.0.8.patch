@@ -1,0 +1,85 @@
+From 71ff1e5930282db2299e37b2eb9497864bbe8a74 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 1 Oct 2018 22:29:51 -0400
+Subject: [PATCH 055/103] 6.0.8
+
+---
+ CHANGELOG.md |  7 +++++++
+ INSTALL.md   |  5 ++++-
+ package.json | 12 ++++++------
+ 3 files changed, 17 insertions(+), 7 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 72eb297..25b0e38 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,12 @@
+ # Changes to PostCSS Preset Env
+ 
++### 6.0.8 (October 1, 2018)
++
++- Updated: `caniuse-lite` to 1.0.30000888 (patch)
++- Updated: `postcss` to 7.0.4 (patch)
++
++**Did you hear? PostCSS Preset Env is now part of Create React App!** 🎉
++
+ ### 6.0.7 (September 23, 2018)
+ 
+ - Updated: `postcss` to 7.0.3 (patch)
+diff --git a/INSTALL.md b/INSTALL.md
+index 2443bc9..23ac7c8 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -88,7 +88,10 @@ module.exports = {
+ 
+ ## Create React App
+ 
+-Add [React App Rewired] and [React App Rewire PostCSS] to your project:
++**PostCSS Preset Env is already bundled with Create React App 2.**
++
++For Create React App 1, add [React App Rewired] and [React App Rewire PostCSS]
++to your project:
+ 
+ ```bash
+ npm install react-app-rewired react-app-rewire-postcss --save-dev
+diff --git a/package.json b/package.json
+index 30ca304..6be15e7 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-preset-env",
+-  "version": "6.0.7",
++  "version": "6.0.8",
+   "description": "Convert modern CSS into something browsers understand",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -28,9 +28,9 @@
+   "dependencies": {
+     "autoprefixer": "^9.1.5",
+     "browserslist": "^4.1.1",
+-    "caniuse-lite": "^1.0.30000887",
++    "caniuse-lite": "^1.0.30000888",
+     "cssdb": "^3.2.1",
+-    "postcss": "^7.0.3",
++    "postcss": "^7.0.4",
+     "postcss-attribute-case-insensitive": "^4.0.0",
+     "postcss-color-functional-notation": "^2.0.1",
+     "postcss-color-hex-alpha": "^5.0.2",
+@@ -60,10 +60,10 @@
+     "postcss-selector-not": "^4.0.0"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.1.0",
++    "@babel/core": "^7.1.2",
+     "@babel/preset-env": "^7.1.0",
+-    "babel-eslint": "^10.0.0",
+-    "eslint": "^5.6.0",
++    "babel-eslint": "^10.0.1",
++    "eslint": "^5.6.1",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-simple-vars": "^5.0.1",
+     "postcss-tape": "^2.2.0",
+-- 
+2.33.1
+

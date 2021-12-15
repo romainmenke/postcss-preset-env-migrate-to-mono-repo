@@ -1,0 +1,948 @@
+From 99de157add131dcfe4586b87056e5ef127bfdcd7 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 18 Sep 2020 14:49:21 -0400
+Subject: [PATCH 34/38] Support Node 10 (csstools/postcss-tape#7)
+
+---
+ .gitignore                            |   2 +-
+ .travis.yml                           |  16 +---
+ README.md                             |  11 +--
+ package.json                          |  60 ++++++++-----
+ rollup.config.js                      |  36 +++++---
+ src/index.js                          | 124 +++++++++++++-------------
+ src/lib/color.js                      |   4 +-
+ src/lib/exit.js                       |   6 +-
+ src/lib/get-error-message.js          |   2 +-
+ src/lib/get-options-from-arguments.js |  24 ++---
+ src/lib/get-options.js                |  68 ++++++++------
+ src/lib/log.js                        |  56 ++++++------
+ src/lib/utils.js                      |  24 ++---
+ test/postcss-tape.config.js           |  34 +++----
+ test/postcss7-plugin.js               |   8 +-
+ test/postcss8-plugin.js               |  24 ++---
+ 16 files changed, 259 insertions(+), 240 deletions(-)
+
+diff --git a/.gitignore b/.gitignore
+index d5cc2c0..606c1c5 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,3 +1,4 @@
++dist
+ node_modules
+ package-lock.json
+ .*
+@@ -6,4 +7,3 @@ package-lock.json
+ !.travis.yml
+ *.log*
+ *.result.css
+-/index.*
+diff --git a/.travis.yml b/.travis.yml
+index 3e1b0d4..1dfa391 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -8,21 +8,9 @@ os:
+   - osx
+ 
+ node_js:
+-  - 14
+-  - 12
+   - 10
+-
+-jobs:
+-  include:
+-    - node_js: 8
+-      os: windows
+-      before_script: |
+-        npm install postcss@7
+-        nvs add 12
+-        nvs use 12
+-        npm run pretest:tape
+-        nvs use 8
+-      script: npm run test:tape:7 -- --ci true
++  - 12
++  - 14
+ 
+ install:
+   - git config --global core.autocrlf false
+diff --git a/README.md b/README.md
+index c36627d..6bb14fd 100644
+--- a/README.md
++++ b/README.md
+@@ -1,8 +1,8 @@
+ # PostCSS Tape [<img src="http://postcss.github.io/postcss/logo.svg" alt="PostCSS" width="90" height="90" align="right">][PostCSS]
+ 
+-[![NPM Version][npm-img]][npm-url]
+-[![Build Status][cli-img]][cli-url]
+-[![Gitter Chat][git-img]][git-url]
++[<img alt="NPM Version" src="https://img.shields.io/npm/v/postcss-tape.svg" height="20">][npm-url]
++[<img alt="Build Status" src="https://img.shields.io/travis/csstools/postcss-tape/master.svg" height="20">][cli-url]
++[<img alt="Support Chat" src="https://img.shields.io/badge/support-chat-blue.svg" height="20">][git-url]
+ 
+ [PostCSS Tape] lets you quickly test [PostCSS] plugins.
+ 
+@@ -22,7 +22,7 @@
+ 
+ 3. Add tests to your `.tape.js` file:
+    ```js
+-   module.exports = {
++   export default {
+      'basic': {
+        message: 'supports basic usage'
+      }
+@@ -310,11 +310,8 @@ postcss-tape --fixtures path/to/tests
+ }
+ ```
+ 
+-[npm-img]: https://img.shields.io/npm/v/postcss-tape.svg
+ [npm-url]: https://www.npmjs.com/package/postcss-tape
+-[cli-img]: https://img.shields.io/travis/csstools/postcss-tape/master.svg
+ [cli-url]: https://travis-ci.org/csstools/postcss-tape
+-[git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
+ [git-url]: https://gitter.im/postcss/postcss
+ 
+ [PostCSS]: https://github.com/postcss/postcss
+diff --git a/package.json b/package.json
+index 84f94d7..367740c 100644
+--- a/package.json
++++ b/package.json
+@@ -1,20 +1,20 @@
+ {
+   "name": "postcss-tape",
+-  "version": "5.0.2",
+   "description": "Quickly test PostCSS plugins",
++  "version": "5.0.2",
++  "type": "commonjs",
++  "main": "./dist/index.js",
++  "bin": {
++    "postcss-tape": "./dist/index.js"
++  },
++  "repository": {
++    "type": "git",
++    "url": "https://github.com/csstools/postcss-tape.git"
++  },
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+-  "license": "CC0-1.0",
+-  "repository": "csstools/postcss-tape",
+   "homepage": "https://github.com/csstools/postcss-tape#readme",
+   "bugs": "https://github.com/csstools/postcss-tape/issues",
+-  "main": "index.js",
+-  "bin": {
+-    "postcss-tape": "index.js"
+-  },
+-  "files": [
+-    "index.js",
+-    "index.js.map"
+-  ],
++  "license": "CC0-1.0",
+   "scripts": {
+     "build": "rollup --config --silent",
+     "prepublish": "npm test",
+@@ -27,21 +27,19 @@
+     "test:tape:ci": "npm run test:tape:7 -- --ci true && npm run test:tape:8 -- --ci true"
+   },
+   "engines": {
+-    "node": ">=8.0.0"
++    "node": "^10 || ^12 || ^14"
+   },
+   "peerDependencies": {
+-    "postcss": "^7.0.0 || ^8.0.0"
++    "postcss": "^7 || ^8"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.7.2",
+-    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+-    "@babel/preset-env": "^7.7.1",
+-    "babel-eslint": "^10.0.3",
+-    "eslint": "^6.6.0",
++    "@babel/core": "^7.11.6",
++    "@babel/preset-env": "^7.11.5",
++    "eslint": "^7.9.0",
++    "magic-string": "^0.25.7",
+     "postcss": "^8.0.5",
+     "rollup": "^2.27.1",
+-    "rollup-plugin-babel": "^4.3.3",
+-    "rollup-plugin-terser": "^5.1.2"
++    "rollup-plugin-babel": "^4.4.0"
+   },
+   "eslintConfig": {
+     "env": {
+@@ -50,13 +48,29 @@
+       "node": true
+     },
+     "extends": "eslint:recommended",
+-    "parser": "babel-eslint",
+     "parserOptions": {
+-      "ecmaVersion": 2018,
++      "ecmaVersion": 12,
+       "impliedStrict": true,
+       "sourceType": "module"
+     },
+-    "root": true
++    "root": true,
++    "rules": {
++      "semi": [
++        "error",
++        "never"
++      ]
++    }
++  },
++  "prettier": {
++    "arrowParens": "avoid",
++    "bracketSpacing": true,
++    "endOfLine": "lf",
++    "printWidth": 360,
++    "quoteProps": "consistent",
++    "semi": false,
++    "singleQuote": true,
++    "trailingComma": "all",
++    "useTabs": true
+   },
+   "keywords": [
+     "postcss",
+diff --git a/rollup.config.js b/rollup.config.js
+index fabbf5f..a7aae43 100644
+--- a/rollup.config.js
++++ b/rollup.config.js
+@@ -1,24 +1,32 @@
+-import babel from 'rollup-plugin-babel';
+-import { terser } from 'rollup-plugin-terser';
++import babel from 'rollup-plugin-babel'
++import MagicString from 'magic-string'
+ 
+ export default {
+ 	input: 'src/index.js',
+-	output: { file: 'index.js', format: 'cjs', sourcemap: true, strict: false },
++	output: {
++		file: 'dist/index.js',
++		format: 'cjs',
++		sourcemap: true,
++		strict: true,
++	},
+ 	plugins: [
+ 		babel({
+-			plugins: [ '@babel/syntax-dynamic-import' ],
+-			presets: [ ['@babel/env', { targets: { node: 8 } }] ]
++			presets: [['@babel/env', { targets: { node: 10 } }]],
+ 		}),
+-		terser(),
+-		addHashBang()
+-	]
+-};
++		addHashBang(),
++	],
++}
+ 
+-function addHashBang () {
++function addHashBang() {
+ 	return {
+ 		name: 'add-hash-bang',
+-		renderChunk (code) {
+-			return `#!/usr/bin/env node\n${code}`;
+-		}
+-	};
++		renderChunk(code) {
++			const str = new MagicString(code)
++			str.prepend(`#!/usr/bin/env node\n`)
++			return {
++				code: str.toString(),
++				map: str.generateMap({ hires: true }),
++			}
++		},
++	}
+ }
+diff --git a/src/index.js b/src/index.js
+index 4938bb1..7a0fdeb 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -1,46 +1,46 @@
+-import { exitFail, exitPass } from './lib/exit';
+-import { readOrWriteFile, safelyReadFile, writeFile } from './lib/utils';
+-import * as log from './lib/log';
+-import getErrorMessage from './lib/get-error-message';
+-import getOptions from './lib/get-options';
+-import path from 'path';
++import { exitFail, exitPass } from './lib/exit'
++import { readOrWriteFile, safelyReadFile, writeFile } from './lib/utils'
++import * as log from './lib/log'
++import getErrorMessage from './lib/get-error-message'
++import getOptions from './lib/get-options'
++import path from 'path'
+ 
+ async function postcss8(plugins) {
+-	const pkg = await import('postcss/package.json');
++	const pkg = await import('postcss/package.json')
+ 	if (pkg.version[0] === '8') {
+-		const m = await import('postcss');
+-		return m.default(plugins);
++		const m = await import('postcss')
++		return m.default(plugins)
+ 	} else {
+-		throw new Error(`postcss@8 must be installed, found ${pkg.version}`);
++		throw new Error(`postcss@8 must be installed, found ${pkg.version}`)
+ 	}
+ }
+ 
+ function isPostcss8Plugin(plugin) {
+-	return typeof plugin === 'function' && Object(plugin).postcss === true;
++	return typeof plugin === 'function' && Object(plugin).postcss === true
+ }
+ 
+ getOptions().then(
+ 	async options => {
+-		let hadError = false;
++		let hadError = false
+ 
+ 		// runner
+ 		for (const name in options.config) {
+-			const test = options.config[name];
++			const test = options.config[name]
+ 
+-			const testBase = name.split(':')[0];
+-			const testFull = name.split(':').join('.');
++			const testBase = name.split(':')[0]
++			const testFull = name.split(':').join('.')
+ 
+ 			// test paths
+-			const sourcePath = path.resolve(options.fixtures, test.source || `${testBase}.css`);
+-			const expectPath = path.resolve(options.fixtures, test.expect || `${testFull}.expect.css`);
+-			const resultPath = path.resolve(options.fixtures, test.result || `${testFull}.result.css`);
++			const sourcePath = path.resolve(options.fixtures, test.source || `${testBase}.css`)
++			const expectPath = path.resolve(options.fixtures, test.expect || `${testFull}.expect.css`)
++			const resultPath = path.resolve(options.fixtures, test.result || `${testFull}.result.css`)
+ 
+-			const processOptions = Object.assign({ from: sourcePath, to: resultPath }, test.processOptions);
+-			const pluginOptions = test.options;
++			const processOptions = Object.assign({ from: sourcePath, to: resultPath }, test.processOptions)
++			const pluginOptions = test.options
+ 
+-			let rawPlugin = test.plugin || options.plugin;
++			let rawPlugin = test.plugin || options.plugin
+ 			if (rawPlugin.default) {
+-				rawPlugin = rawPlugin.default;
++				rawPlugin = rawPlugin.default
+ 			}
+ 			const plugin = isPostcss8Plugin(rawPlugin)
+ 				? rawPlugin(pluginOptions)
+@@ -48,50 +48,50 @@ getOptions().then(
+ 				? rawPlugin
+ 			: typeof rawPlugin === 'function'
+ 				? { process: rawPlugin }
+-			: Object(rawPlugin).postcssPlugin;
++			: Object(rawPlugin).postcssPlugin
+ 
+-			const pluginName = plugin.postcssPlugin || Object(rawPlugin.postcss).postcssPlugin || 'postcss';
++			const pluginName = plugin.postcssPlugin || Object(rawPlugin.postcss).postcssPlugin || 'postcss'
+ 
+-			log.wait(pluginName, test.message, options.ci);
++			log.wait(pluginName, test.message, options.ci)
+ 
+ 			try {
+ 				if (Object(test.before) instanceof Function) {
+-					await test.before();
++					await test.before()
+ 				}
+ 
+-				const expectCSS = await safelyReadFile(expectPath);
+-				const sourceCSS = await readOrWriteFile(sourcePath, expectCSS);
++				const expectCSS = await safelyReadFile(expectPath)
++				const sourceCSS = await readOrWriteFile(sourcePath, expectCSS)
+ 
+-				let result;
++				let result
+ 				if (isPostcss8Plugin(rawPlugin)) {
+-					const postcss = await postcss8([ plugin ]);
+-					result = await postcss.process(sourceCSS, processOptions);
++					const postcss = await postcss8([ plugin ])
++					result = await postcss.process(sourceCSS, processOptions)
+ 				} else {
+-					result = await plugin.process(sourceCSS, processOptions, pluginOptions);
++					result = await plugin.process(sourceCSS, processOptions, pluginOptions)
+ 				}
+-				const resultCSS = result.css;
++				const resultCSS = result.css
+ 
+ 				if (options.fix) {
+-					await writeFile(expectPath, resultCSS);
+-					await writeFile(resultPath, resultCSS);
++					await writeFile(expectPath, resultCSS)
++					await writeFile(resultPath, resultCSS)
+ 				} else {
+-					await writeFile(resultPath, resultCSS);
++					await writeFile(resultPath, resultCSS)
+ 
+ 					if (expectCSS !== resultCSS) {
+ 						throw new Error([
+ 							`Expected: ${JSON.stringify(expectCSS).slice(1, -1)}`,
+ 							`Received: ${JSON.stringify(resultCSS).slice(1, -1)}`
+-						].join('\n'));
++						].join('\n'))
+ 					}
+ 				}
+ 
+-				const warnings = result.warnings();
++				const warnings = result.warnings()
+ 
+ 				if (typeof test.warnings === 'number') {
+ 					if (test.warnings !== warnings.length) {
+-						const s = warnings.length !== 1 ? 's' : '';
++						const s = warnings.length !== 1 ? 's' : ''
+ 
+-						throw new Error(`Expected: ${test.warnings} warning${s}\nReceived: ${warnings.length} warnings`);
++						throw new Error(`Expected: ${test.warnings} warning${s}\nReceived: ${warnings.length} warnings`)
+ 					}
+ 				} else if (warnings.length) {
+ 					const areExpectedWarnings = warnings.every(
+@@ -100,74 +100,74 @@ getOptions().then(
+ 								? test.warnings[key].test(warning[key])
+ 							: test.warnings[key] === warning[key]
+ 						)
+-					);
++					)
+ 
+ 					if (!areExpectedWarnings) {
+-						const s = warnings.length !== 1 ? 's' : '';
++						const s = warnings.length !== 1 ? 's' : ''
+ 
+-						throw new Error(`Unexpected warning${s}:\n${warnings.join('\n')}`);
++						throw new Error(`Unexpected warning${s}:\n${warnings.join('\n')}`)
+ 					}
+ 				} else if (test.warnings) {
+-					throw new Error(`Expected a warning`);
++					throw new Error(`Expected a warning`)
+ 				} else if (test.errors) {
+-					throw new Error(`Expected an error`);
++					throw new Error(`Expected an error`)
+ 				}
+ 
+ 				if (Object(test.after) instanceof Function) {
+-					await test.after();
++					await test.after()
+ 				}
+ 
+-				log.pass(pluginName, test.message, options.ci);
++				log.pass(pluginName, test.message, options.ci)
+ 			} catch (error) {
+ 				if ('error' in test) {
+-					const isObjectError = test.error === Object(test.error);
++					const isObjectError = test.error === Object(test.error)
+ 
+ 					if (isObjectError) {
+ 						const isExpectedError = Object.keys(test.error).every(
+ 							key => test.error[key] instanceof RegExp
+ 								? test.error[key].test(Object(error)[key])
+ 							: test.error[key] === Object(error)[key]
+-						);
++						)
+ 
+ 						if (isExpectedError) {
+-							log.pass(pluginName, test.message, options.ci);
++							log.pass(pluginName, test.message, options.ci)
+ 						} else {
+ 							const reportedError = Object.keys(test.error).reduce(
+ 								(reportedError, key) => Object.assign(reportedError, { [key]: Object(error)[key] }),
+ 								{}
+-							);
++							)
+ 
+-							hadError = error;
++							hadError = error
+ 
+-							log.fail(pluginName, test.message, `  Expected Error: ${JSON.stringify(test.error)}\n  Received Error: ${JSON.stringify(reportedError)}`, options.ci);
++							log.fail(pluginName, test.message, `  Expected Error: ${JSON.stringify(test.error)}\n  Received Error: ${JSON.stringify(reportedError)}`, options.ci)
+ 						}
+ 					} else {
+-						const isExpectedError = typeof test.error === 'boolean' && test.error;
++						const isExpectedError = typeof test.error === 'boolean' && test.error
+ 
+ 						if (isExpectedError) {
+-							log.pass(pluginName, test.message, options.ci);
++							log.pass(pluginName, test.message, options.ci)
+ 						} else {
+-							hadError = error;
++							hadError = error
+ 
+-							log.fail(pluginName, test.message, `  Expected Error`, options.ci);
++							log.fail(pluginName, test.message, `  Expected Error`, options.ci)
+ 						}
+ 
+ 						if (options.ci) {
+-							break;
++							break
+ 						}
+ 					}
+ 				} else {
+-					hadError = error;
++					hadError = error
+ 
+-					log.fail(pluginName, test.message, getErrorMessage(error), options.ci);
++					log.fail(pluginName, test.message, getErrorMessage(error), options.ci)
+ 				}
+ 			}
+ 		}
+ 
+ 		if (hadError) {
+-			throw hadError;
++			throw hadError
+ 		}
+ 	}
+-).then(exitPass, exitFail);
++).then(exitPass, exitFail)
+ 
+ 
+diff --git a/src/lib/color.js b/src/lib/color.js
+index 144bb92..dadf489 100644
+--- a/src/lib/color.js
++++ b/src/lib/color.js
+@@ -22,8 +22,8 @@ const colors = {
+ 	bgMagenta: '\x1b[45m',
+ 	bgCyan: '\x1b[46m',
+ 	bgWhite: '\x1b[47m'
+-};
++}
+ 
+ export default function color (name, string) {
+-	return colors[name] + string.replace(colors.reset, colors.reset + colors[name]) + colors.reset;
++	return colors[name] + string.replace(colors.reset, colors.reset + colors[name]) + colors.reset
+ }
+diff --git a/src/lib/exit.js b/src/lib/exit.js
+index d801abc..69556f2 100644
+--- a/src/lib/exit.js
++++ b/src/lib/exit.js
+@@ -1,9 +1,9 @@
+ export function exitFail (error) {
+-	console.log(error);
++	console.log(error)
+ 
+-	process.exit(1);
++	process.exit(1)
+ }
+ 
+ export function exitPass () {
+-	process.exit(0);
++	process.exit(0)
+ }
+diff --git a/src/lib/get-error-message.js b/src/lib/get-error-message.js
+index b2bbf6d..abce20e 100644
+--- a/src/lib/get-error-message.js
++++ b/src/lib/get-error-message.js
+@@ -1,3 +1,3 @@
+ export default function getErrorMessage (error) {
+-	return Object(error).message || error;
++	return Object(error).message || error
+ }
+diff --git a/src/lib/get-options-from-arguments.js b/src/lib/get-options-from-arguments.js
+index dcd3de9..21bbdee 100644
+--- a/src/lib/get-options-from-arguments.js
++++ b/src/lib/get-options-from-arguments.js
+@@ -1,20 +1,20 @@
+-const argRegExp = /^--([\w-]+)$/;
+-const primativeRegExp = /^(false|null|true|undefined|(\d+\.)?\d+|\{.*\}|\[.*\])$/;
+-const relaxedJsonPropRegExp = /(['"])?([a-z0-9A-Z_]+)\1:/g;
+-const relaxedJsonValueRegExp = /("[a-z0-9A-Z_]+":\s*)(?!true|false|null|\d+)'?([A-z0-9]+)'?([,}])/g;
++const argRegExp = /^--([\w-]+)$/
++const primativeRegExp = /^(false|null|true|undefined|(\d+\.)?\d+|\{.*\}|\[.*\])$/
++const relaxedJsonPropRegExp = /(['"])?([a-z0-9A-Z_]+)\1:/g
++const relaxedJsonValueRegExp = /("[a-z0-9A-Z_]+":\s*)(?!true|false|null|\d+)'?([A-z0-9]+)'?([,}])/g
+ 
+ export default function getOptionsFromArguments (defaultOptions) {
+ 	return process.argv.slice(2).reduce(
+ 		(args, arg, index, argv) => {
+-			const nextIndex = index + 1;
+-			const nextArg = argv[nextIndex];
+-			const argMatch = arg.match(argRegExp);
++			const nextIndex = index + 1
++			const nextArg = argv[nextIndex]
++			const argMatch = arg.match(argRegExp)
+ 
+ 			if (argMatch) {
+-				const [, name] = argMatch;
++				const [, name] = argMatch
+ 
+ 				if (!nextArg || argRegExp.test(nextArg)) {
+-					args[name] = true;
++					args[name] = true
+ 				} else {
+ 					args[name] = primativeRegExp.test(nextArg)
+ 						? JSON.parse(
+@@ -22,12 +22,12 @@ export default function getOptionsFromArguments (defaultOptions) {
+ 							.replace(relaxedJsonPropRegExp, '"$2": ')
+ 							.replace(relaxedJsonValueRegExp, '$1"$2"$3')
+ 						)
+-					: nextArg;
++					: nextArg
+ 				}
+ 			}
+ 
+-			return args;
++			return args
+ 		},
+ 		Object.assign({}, defaultOptions)
+-	);
++	)
+ }
+diff --git a/src/lib/get-options.js b/src/lib/get-options.js
+index ad15dd3..39faed0 100644
+--- a/src/lib/get-options.js
++++ b/src/lib/get-options.js
+@@ -1,42 +1,54 @@
+-import getOptionsFromArguments from './get-options-from-arguments';
+-import { readJSON } from './utils';
+-import path from 'path';
++import getOptionsFromArguments from './get-options-from-arguments'
++import { readJSON } from './utils'
++import path from 'path'
+ 
+-export default async function getOptions () {
+-	const cwd = process.cwd();
++export default async function getOptions() {
++	const cwd = process.cwd()
+ 
+ 	// default options
+ 	const defaultOptions = {
+-		plugin:   cwd,
+-		config:   cwd,
+-		fixtures: path.resolve(cwd, 'test')
++		plugin: cwd,
++		config: cwd,
++		fixtures: path.resolve(cwd, 'test'),
+ 	}
+ 
+-	const options = await readJSON('package.json', 'postcss', 'postcssConfig').then(
+-		packageOptions => getOptionsFromArguments(
+-			Object.assign(defaultOptions, packageOptions)
+-		)
+-	);
++	const options = await readJSON('package.json', 'postcss', 'postcssConfig').then(packageOptions => getOptionsFromArguments(Object.assign(defaultOptions, packageOptions)))
+ 
+-	const importedPluginFile = path.resolve(options.plugin);
+-	const importedPlugin = await import(importedPluginFile);
++	const importedPluginFile = path.resolve(options.plugin)
++	const importedPlugin = await import(importedPluginFile)
+ 
+-	options.plugin = importedPlugin;
++	options.plugin = importedPlugin
+ 
+-	try {
+-		const importedConfigFile = path.extname(options.config)
+-			? path.resolve(options.config)
+-		: path.resolve(options.config, 'postcss-tape.config.js');
++	if (path.extname(options.config)) {
++		const importedConfig = await import(path.resolve(options.config))
+ 
+-		const importedConfig = await import(importedConfigFile);
++		options.config = importedConfig.default || importedConfig
+ 
+-		options.config = importedConfig.default || importedConfig;
+-	} catch (ignoredError) {
+-		const importedConfigFile = path.resolve(options.config, '.tape.js');
+-		const importedConfig = await import(importedConfigFile);
++		return options
++	} else {
++		const postcssTapeConfigFiles = [
++			'postcss-tape.config.js',
++			'postcss-tape.config.mjs',
++			'postcss-tape.config.cjs',
++			'.tape.js',
++			'.tape.mjs',
++			'.tape.cjs'
++		]
++		let returnError
+ 
+-		options.config = importedConfig.default || importedConfig;
+-	}
++		while (postcssTapeConfigFiles.length) {
++			const postcssTapeConfigFile = path.resolve(options.config, postcssTapeConfigFiles.shift())
++
++			try {
++				const importedConfig = await import(postcssTapeConfigFile)
++				options.config = importedConfig.default || importedConfig
++				return options
++			} catch (error) {
++				if (!returnError) returnError = error
++				continue
++			}
++		}
+ 
+-	return options;
++		throw returnError
++	}
+ }
+diff --git a/src/lib/log.js b/src/lib/log.js
+index bce7867..d8cc637 100644
+--- a/src/lib/log.js
++++ b/src/lib/log.js
+@@ -1,65 +1,65 @@
+-import color from './color';
+-import readline from 'readline';
++import color from './color'
++import readline from 'readline'
+ 
+ // symbols
+-const isWin32 = process.platform === 'win32';
+-const tick    = isWin32 ? '√' : '✔';
+-const cross   = isWin32 ? '×' : '✖';
+-const stdout  = process.stdout;
++const isWin32 = process.platform === 'win32'
++const tick    = isWin32 ? '√' : '✔'
++const cross   = isWin32 ? '×' : '✖'
++const stdout  = process.stdout
+ 
+-let interval;
++let interval
+ 
+ export function pass (name, message, ci) {
+-	clearInterval(interval);
++	clearInterval(interval)
+ 
+ 	if (ci) {
+-		stdout.write(` ${color('green', tick)}\n`);
++		stdout.write(` ${color('green', tick)}\n`)
+ 	} else {
+ 		// reset current stream line
+-		readline.clearLine(stdout, 0);
+-		readline.cursorTo(stdout, 0);
++		readline.clearLine(stdout, 0)
++		readline.cursorTo(stdout, 0)
+ 
+-		stdout.write(`${color('green', tick)} ${name} ${color('dim', message)}\n`);
++		stdout.write(`${color('green', tick)} ${name} ${color('dim', message)}\n`)
+ 	}
+ }
+ 
+ export function fail (name, message, details, ci) {
+-	clearInterval(interval);
++	clearInterval(interval)
+ 
+ 	if (ci) {
+-		stdout.write(` ${color('red', cross)}\n${details}\n`);
++		stdout.write(` ${color('red', cross)}\n${details}\n`)
+ 	} else {
+ 		// reset current stream line
+-		readline.clearLine(stdout, 0);
+-		readline.cursorTo(stdout, 0);
++		readline.clearLine(stdout, 0)
++		readline.cursorTo(stdout, 0)
+ 
+-		stdout.write(`${color('red', cross)} ${name} ${color('dim', message)}\n${details}\n`);
++		stdout.write(`${color('red', cross)} ${name} ${color('dim', message)}\n${details}\n`)
+ 	}
+ }
+ 
+ // log with a waiting appearance
+ export function wait (name, message, ci) {
+ 	if (ci) {
+-		stdout.write(`${name} ${color('dim', message)}`);
++		stdout.write(`${name} ${color('dim', message)}`)
+ 	} else {
+-		const spinner = isWin32 ? '-–—–-' : '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
++		const spinner = isWin32 ? '-–—–-' : '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+ 
+-		let index = 0;
++		let index = 0
+ 
+-		clearInterval(interval);
++		clearInterval(interval)
+ 
+ 		// reset current stream line
+-		readline.clearLine(stdout, 0);
+-		readline.cursorTo(stdout, 0);
++		readline.clearLine(stdout, 0)
++		readline.cursorTo(stdout, 0)
+ 
+-		stdout.write(`${color('yellow', spinner[index])} ${name} ${color('dim', message)}`);
++		stdout.write(`${color('yellow', spinner[index])} ${name} ${color('dim', message)}`)
+ 
+ 		interval = setInterval(() => {
+-			index = (index + 1) % spinner.length;
++			index = (index + 1) % spinner.length
+ 
+-			readline.cursorTo(stdout, 0);
++			readline.cursorTo(stdout, 0)
+ 
+-			stdout.write(`${color('yellow', spinner[index])} ${name} ${color('dim', message)}`);
+-		}, 60);
++			stdout.write(`${color('yellow', spinner[index])} ${name} ${color('dim', message)}`)
++		}, 60)
+ 	}
+ }
+diff --git a/src/lib/utils.js b/src/lib/utils.js
+index 7470721..b0bfffe 100644
+--- a/src/lib/utils.js
++++ b/src/lib/utils.js
+@@ -1,15 +1,15 @@
+-import fs from 'fs';
++import fs from 'fs'
+ 
+ export function readFile (pathname) {
+ 	return new Promise((resolve, reject) => {
+ 		fs.readFile(pathname, 'utf8', (error, data) => {
+ 			if (error) {
+-				reject(error);
++				reject(error)
+ 			} else {
+-				resolve(data);
++				resolve(data)
+ 			}
+-		});
+-	});
++		})
++	})
+ }
+ 
+ export function readJSON (pathname, ...keys) {
+@@ -23,7 +23,7 @@ export function readJSON (pathname, ...keys) {
+ 		: options
+ 	).catch(
+ 		() => ({})
+-	);
++	)
+ }
+ 
+ export function readOrWriteFile (pathname, data) {
+@@ -31,23 +31,23 @@ export function readOrWriteFile (pathname, data) {
+ 		() => writeFile(pathname, data || '').then(
+ 			() => ''
+ 		)
+-	);
++	)
+ }
+ 
+ export function safelyReadFile (pathname) {
+ 	return readFile(pathname).catch(
+ 		() => ''
+-	);
++	)
+ }
+ 
+ export function writeFile (pathname, data) {
+ 	return new Promise((resolve, reject) => {
+ 		fs.writeFile(pathname, data, (error) => {
+ 			if (error) {
+-				reject(error);
++				reject(error)
+ 			} else {
+-				resolve();
++				resolve()
+ 			}
+-		});
+-	});
++		})
++	})
+ }
+diff --git a/test/postcss-tape.config.js b/test/postcss-tape.config.js
+index 9c03071..33a2b8e 100644
+--- a/test/postcss-tape.config.js
++++ b/test/postcss-tape.config.js
+@@ -1,41 +1,41 @@
+ module.exports = {
+ 	'basic': {
+-		message: 'supports basic usage'
++		message: 'supports basic usage',
+ 	},
+ 	'basic:generate': {
+ 		message: 'supports generating all files',
+ 		after() {
+-			require('fs').unlinkSync('test/basic.generate.result.css');
+-		}
++			require('fs').unlinkSync('test/basic.generate.result.css')
++		},
+ 	},
+ 	'basic:sources': {
+ 		message: 'supports specifying files',
+-		source:  'basic.css',
+-		expect:  'basic.custom-expect.css',
+-		result:  'basic.custom-result.css',
++		source: 'basic.css',
++		expect: 'basic.custom-expect.css',
++		result: 'basic.custom-result.css',
+ 		after() {
+-			require('fs').unlinkSync('test/basic.custom-result.css');
+-		}
++			require('fs').unlinkSync('test/basic.custom-result.css')
++		},
+ 	},
+ 	'basic:error': {
+ 		message: 'supports failing',
+ 		options: {
+-			shouldFail: true
++			shouldFail: true,
+ 		},
+ 		error: {
+-			message: /should fail/
+-		}
++			message: /should fail/,
++		},
+ 	},
+ 	'basic:warnings': {
+ 		message: 'supports warnings',
+ 		options: {
+-			shouldWarn: true
++			shouldWarn: true,
+ 		},
+ 		warnings: {
+-			text: /should warn/
++			text: /should warn/,
+ 		},
+ 		after() {
+-			require('fs').unlinkSync('test/basic.warnings.result.css');
+-		}
+-	}
+-};
++			require('fs').unlinkSync('test/basic.warnings.result.css')
++		},
++	},
++}
+diff --git a/test/postcss7-plugin.js b/test/postcss7-plugin.js
+index ce547af..6995e42 100644
+--- a/test/postcss7-plugin.js
++++ b/test/postcss7-plugin.js
+@@ -1,11 +1,11 @@
+-const postcss = require('postcss');
++const postcss = require('postcss')
+ 
+ module.exports = postcss.plugin('test-plugin', options => {
+ 	return (root, result) => {
+ 		if (Object(options).shouldFail) {
+-			throw new Error('This should fail.');
++			throw new Error('This should fail.')
+ 		} else if (Object(options).shouldWarn) {
+-			result.warn('This should warn.');
++			result.warn('This should warn.')
+ 		}
+ 	}
+-});
++})
+diff --git a/test/postcss8-plugin.js b/test/postcss8-plugin.js
+index b4e1bc1..59b9ff3 100644
+--- a/test/postcss8-plugin.js
++++ b/test/postcss8-plugin.js
+@@ -1,14 +1,14 @@
+ module.exports = function testPlugin(options) {
+-  return {
+-    postcssPlugin: 'test-plugin',
+-    Root (root, { result }) {
+-      if (Object(options).shouldFail) {
+-        throw new Error('This should fail.');
+-      } else if (Object(options).shouldWarn) {
+-        result.warn('This should warn.');
+-      }
+-    }
+-  };
+-};
++	return {
++		postcssPlugin: 'test-plugin',
++		Root(root, { result }) {
++			if (Object(options).shouldFail) {
++				throw new Error('This should fail.')
++			} else if (Object(options).shouldWarn) {
++				result.warn('This should warn.')
++			}
++		},
++	}
++}
+ 
+-module.exports.postcss = true;
++module.exports.postcss = true
+-- 
+2.33.1
+

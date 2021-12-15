@@ -1,0 +1,522 @@
+From a3ed30cc50a71449131fd3369f78d36580740adb Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 26 Apr 2020 19:03:56 -0400
+Subject: [PATCH 02/18] 2.0.0
+
+---
+ .gitattributes                 |  1 +
+ .gitignore                     |  3 +-
+ .rollup.js                     | 21 +++------
+ .tape.js                       | 14 +++---
+ .travis.yml                    |  2 +-
+ CHANGELOG.md                   |  6 +++
+ CONTRIBUTING.md                |  2 +-
+ INSTALL.md                     |  2 +-
+ README.md                      | 15 +++---
+ index.js                       | 60 ------------------------
+ package.json                   | 84 ++++++++++++++++++++++------------
+ src/index.js                   | 18 ++++++++
+ src/onCSSDeclaration.js        | 31 +++++++++++++
+ src/onCSSFunction.js           | 36 +++++++++++++++
+ src/options.js                 |  4 ++
+ test/basic.css                 |  2 +-
+ test/basic.expect.css          |  4 +-
+ test/basic.preserve.expect.css |  2 +-
+ 18 files changed, 181 insertions(+), 126 deletions(-)
+ create mode 100644 .gitattributes
+ delete mode 100644 index.js
+ create mode 100644 src/index.js
+ create mode 100644 src/onCSSDeclaration.js
+ create mode 100644 src/onCSSFunction.js
+ create mode 100644 src/options.js
+
+diff --git a/.gitattributes b/.gitattributes
+new file mode 100644
+index 0000000..6313b56
+--- /dev/null
++++ b/.gitattributes
+@@ -0,0 +1 @@
++* text=auto eol=lf
+diff --git a/.gitignore b/.gitignore
+index d920b78..5bd3ef6 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,10 +1,11 @@
++dist
+ node_modules
+-index.*.*
+ package-lock.json
+ *.log*
+ *.result.css
+ .*
+ !.editorconfig
++!.gitattributes
+ !.gitignore
+ !.rollup.js
+ !.tape.js
+diff --git a/.rollup.js b/.rollup.js
+index ebe39f9..1fb0d87 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -1,16 +1,9 @@
+-import babel from 'rollup-plugin-babel';
++import pkg from './package.json'
+ 
+ export default {
+-	input: 'index.js',
+-	output: [
+-		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
+-		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
+-	],
+-	plugins: [
+-		babel({
+-			presets: [
+-				['@babel/env', { modules: false, targets: { node: 6 } }]
+-			]
+-		})
+-	]
+-};
++	...pkg.rollup,
++	plugins: pkg.rollup.plugins.map(plugin => require(plugin)()),
++	onwarn(warning, warn) {
++		if (warning.code !== 'UNRESOLVED_IMPORT') warn(warning)
++	}
++}
+diff --git a/.tape.js b/.tape.js
+index 353d9b9..d5a22c2 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,11 +1,9 @@
+ module.exports = {
+-	'postcss-double-position-gradients': {
+-		'basic': {
+-			message: 'supports basic usage'
+-		},
+-		'basic:preserve': {
+-			message: 'supports { preserve: false } usage',
+-			options: { preserve: false }
+-		}
++	'basic': {
++		message: 'supports basic usage'
++	},
++	'basic:preserve': {
++		message: 'supports { preserve: false } usage',
++		options: { preserve: false }
+ 	}
+ };
+diff --git a/.travis.yml b/.travis.yml
+index e1f11a5..a9e32cd 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 6
++  - 10
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index b99c7f3..16a6999 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,11 @@
+ # Changes to PostCSS Double Position Gradients
+ 
++### 2.0.0 (April 25, 2020)
++
++- Updated: `postcss` to 7.0.27 (patch)
++- Updated: `postcss-value-parser` to 3.2.1 (major)
++- Updated: Support for Node 10+ (major)
++
+ ### 1.0.0 (October 28, 2018)
+ 
+ - Initial version
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+index 703ce0b..6989039 100644
+--- a/CONTRIBUTING.md
++++ b/CONTRIBUTING.md
+@@ -26,7 +26,7 @@ scope and avoid unrelated commits.
+    cd postcss-double-position-gradients
+ 
+    # Assign the original repo to a remote called "upstream"
+-   git remote add upstream git@github.com:jonathantneal/postcss-double-position-gradients.git
++   git remote add upstream git@github.com:csstools/postcss-double-position-gradients.git
+ 
+    # Install the tools necessary for testing
+    npm install
+diff --git a/INSTALL.md b/INSTALL.md
+index 5eb5660..f10a1da 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -165,6 +165,6 @@ grunt.initConfig({
+ [PostCSS]: https://github.com/postcss/postcss
+ [PostCSS CLI]: https://github.com/postcss/postcss-cli
+ [PostCSS Loader]: https://github.com/postcss/postcss-loader
+-[PostCSS Double Position Gradients]: https://github.com/jonathantneal/postcss-double-position-gradients
++[PostCSS Double Position Gradients]: https://github.com/csstools/postcss-double-position-gradients
+ [React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
+ [React App Rewired]: https://github.com/timarney/react-app-rewired
+diff --git a/README.md b/README.md
+index e6c2025..25d9702 100644
+--- a/README.md
++++ b/README.md
+@@ -1,8 +1,9 @@
+ # PostCSS Double Position Gradients [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS" width="90" height="90" align="right">][postcss]
+ 
+-[![NPM Version][npm-img]][npm-url]
+-[![Build Status][cli-img]][cli-url]
+-[![Support Chat][git-img]][git-url]
++[<img alt="NPM Version" src="https://img.shields.io/npm/v/postcss-double-position-gradients.svg" height="20">][npm-url]
++[<img alt="CSS Standard Status" src="https://cssdb.org/badge/double-position-gradients.svg" height="20">][css-url]
++[<img alt="Build Status" src="https://img.shields.io/travis/csstools/postcss-double-position-gradients/master.svg" height="20">][cli-url]
++[<img alt="Support Chat" src="https://img.shields.io/badge/support-chat-blue.svg" height="20">][git-url]
+ 
+ [PostCSS Double Position Gradients] lets you use double-position gradients in
+ CSS, following the [CSS Image Values and Replaced Content] specification.
+@@ -92,13 +93,11 @@ postcssDoublePositionGradients({ preserve: false })
+ }
+ ```
+ 
+-[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-double-position-gradients/master.svg
+-[cli-url]: https://travis-ci.org/jonathantneal/postcss-double-position-gradients
+-[git-img]: https://img.shields.io/badge/support-chat-blue.svg
++[css-url]: https://cssdb.org/#double-position-gradients
++[cli-url]: https://travis-ci.org/csstools/postcss-double-position-gradients
+ [git-url]: https://gitter.im/postcss/postcss
+-[npm-img]: https://img.shields.io/npm/v/postcss-double-position-gradients.svg
+ [npm-url]: https://www.npmjs.com/package/postcss-double-position-gradients
+ 
+ [CSS Image Values and Replaced Content]: https://www.w3.org/TR/css-images-4/#color-stop-syntax
+ [PostCSS]: https://github.com/postcss/postcss
+-[PostCSS Double Position Gradients]: https://github.com/jonathantneal/postcss-double-position-gradients
++[PostCSS Double Position Gradients]: https://github.com/csstools/postcss-double-position-gradients
+diff --git a/index.js b/index.js
+deleted file mode 100644
+index e4652f4..0000000
+--- a/index.js
++++ /dev/null
+@@ -1,60 +0,0 @@
+-import postcss from 'postcss';
+-import valueParser from 'postcss-values-parser';
+-
+-export default postcss.plugin('postcss-double-position-gradients', opts => {
+-	const preserve = 'preserve' in Object(opts) ? Boolean(opts.preserve) : true;
+-
+-	return root => {
+-		// walk every declaration
+-		root.walkDecls(decl => {
+-			const { value: originalValue } = decl;
+-
+-			// if the declaration value contains a gradient
+-			if (gradientFunctionRegExp.test(originalValue)) {
+-				const ast = valueParser(originalValue).parse();
+-
+-				// walk every function in the declaration value
+-				ast.walkFunctionNodes(fn => {
+-					// if the function is a gradient
+-					if (gradientFunctionNameRegExp.test(fn.value)) {
+-						const nodes = fn.nodes.slice(1, -1);
+-
+-						// walk every argument to the function
+-						nodes.forEach((node, index) => {
+-							const node1back = Object(nodes[index - 1]);
+-							const node2back = Object(nodes[index - 2]);
+-
+-							const isDoublePositionLength = node2back.type && node1back.type === 'number' && node.type === 'number';
+-
+-							// if the argument concludes a double-position gradient
+-							if (isDoublePositionLength) {
+-								// insert the fallback colors
+-								const color = node2back.clone();
+-								const comma = valueParser.comma({ value: ',', raws: { after: ' ' } });
+-
+-								fn.insertBefore(node, comma);
+-								fn.insertBefore(node, color);
+-							}
+-						})
+-					}
+-				});
+-
+-				const modifiedValue = ast.toString();
+-
+-				// if the value has changed due to double-position gradients
+-				if (originalValue !== modifiedValue) {
+-					// add the fallback value
+-					decl.cloneBefore({ value: modifiedValue });
+-
+-					// conditionally remove the double-position gradient
+-					if (!preserve) {
+-						decl.remove();
+-					}
+-				}
+-			}
+-		});
+-	};
+-});
+-
+-const gradientFunctionRegExp = /(repeating-)?(conic|linear|radial)-gradient\([\W\w]*\)/i;
+-const gradientFunctionNameRegExp = /^(repeating-)?(conic|linear|radial)-gradient$/i;
+diff --git a/package.json b/package.json
+index e1897e2..78ba280 100644
+--- a/package.json
++++ b/package.json
+@@ -1,50 +1,78 @@
+ {
+   "name": "postcss-double-position-gradients",
+-  "version": "1.0.0",
++  "version": "2.0.0",
+   "description": "Use double-position gradients in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-  "repository": "jonathantneal/postcss-double-position-gradients",
+-  "homepage": "https://github.com/jonathantneal/postcss-double-position-gradients#readme",
+-  "bugs": "https://github.com/jonathantneal/postcss-double-position-gradients/issues",
+-  "main": "index.cjs.js",
+-  "module": "index.es.mjs",
++  "repository": "csstools/postcss-double-position-gradients",
++  "homepage": "https://github.com/csstools/postcss-double-position-gradients#readme",
++  "bugs": "https://github.com/csstools/postcss-double-position-gradients/issues",
++  "main": "dist/index.js",
++  "module": "dist/index.mjs",
+   "files": [
+-    "index.cjs.js",
+-    "index.cjs.js.map",
+-    "index.es.mjs",
+-    "index.es.mjs.map"
++    "dist"
+   ],
+   "scripts": {
+-    "prepublishOnly": "npm test",
+-    "pretest": "rollup -c .rollup.js --silent",
+-    "test": "npm run test:js && npm run test:tape",
+-    "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+-    "test:tape": "postcss-tape"
++    "build": "npx rollup -c .rollup.js",
++    "build:watch": "npx rollup -c .rollup.js --watch",
++    "lint": "npx eslint --cache src",
++    "lint:fix": "npx eslint --cache --fix",
++    "pretest": "npm install && npm run build",
++    "test": "npm run lint && npm run tape",
++    "tape": "npx postcss-tape",
++    "prepublishOnly": "npm test"
+   },
+   "engines": {
+-    "node": ">=6.0.0"
++    "node": ">=10.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.5",
+-    "postcss-values-parser": "^2.0.0"
++    "postcss": "^7.0.27",
++    "postcss-values-parser": "^3.2.1"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.1.2",
+-    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+-    "@babel/preset-env": "^7.1.0",
+-    "babel-eslint": "^10.0.1",
+-    "eslint": "^5.8.0",
+-    "eslint-config-dev": "^2.0.0",
+-    "postcss-tape": "^2.2.0",
++    "@babel/core": "^7.9.0",
++    "@babel/preset-env": "^7.9.5",
++    "babel-eslint": "^10.1.0",
++    "eslint": "^6.8.0",
++    "postcss-tape": "^5.0.2",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.6",
+-    "rollup-plugin-babel": "^4.0.3"
++    "rollup": "^2.7.2",
++    "rollup-plugin-babel": "^4.4.0"
++  },
++  "babel": {
++    "presets": [
++      [
++        "@babel/env",
++        {
++          "targets": "maintained node versions"
++        }
++      ]
++    ]
+   },
+   "eslintConfig": {
+-    "extends": "dev",
++    "env": {
++      "es6": true,
++      "node": true
++    },
++    "extends": "eslint:recommended",
+     "parser": "babel-eslint"
+   },
++  "rollup": {
++    "input": "src/index.js",
++    "plugins": [
++      "rollup-plugin-babel"
++    ],
++    "output": [
++      {
++        "file": "dist/index.js",
++        "format": "cjs"
++      },
++      {
++        "file": "dist/index.mjs",
++        "format": "esm"
++      }
++    ]
++  },
+   "keywords": [
+     "postcss",
+     "css",
+diff --git a/src/index.js b/src/index.js
+new file mode 100644
+index 0000000..dcea23f
+--- /dev/null
++++ b/src/index.js
+@@ -0,0 +1,18 @@
++import postcss from 'postcss'
++import onCSSDeclaration from './onCSSDeclaration'
++import options from './options'
++
++/** Transform double-position gradients in CSS. */
++const postcssPlugin = postcss.plugin('postcss-double-position-gradients', /** @type {PostCSSPluginInitializer} */ opts => {
++	if ('preserve' in Object(opts)) options.preserve = Boolean(opts.preserve)
++
++	return root => {
++		root.walkDecls(onCSSDeclaration)
++	}
++})
++
++export default postcssPlugin
++
++/** @typedef {import('postcss').Root} CSSRoot */ 
++/** @typedef {(root: CSSRoot) => void} PostCSSTransformCallback */ 
++/** @typedef {(opts: options) => PostCSSTransformCallback} PostCSSPluginInitializer */ 
+diff --git a/src/onCSSDeclaration.js b/src/onCSSDeclaration.js
+new file mode 100644
+index 0000000..4f11a8e
+--- /dev/null
++++ b/src/onCSSDeclaration.js
+@@ -0,0 +1,31 @@
++import { parse } from 'postcss-values-parser'
++import onCSSFunction from './onCSSFunction'
++import options from './options'
++
++/** @type {(decl: CSSDeclaration) => void} Transform double-position gradients in CSS Declarations. */
++const onCSSDeclaration = decl => {
++	const { value: originalValue } = decl
++
++	if (hasGradientFunction(originalValue)) {
++		const valueAST = parse(originalValue, { ignoreUnknownWords: true })
++
++		valueAST.walkType('func', onCSSFunction)
++
++		const modifiedValue = String(valueAST)
++
++		if (modifiedValue !== originalValue) {
++			if (options.preserve) decl.cloneBefore({ value: modifiedValue })
++			else decl.value = modifiedValue
++		}
++	}
++}
++
++export default onCSSDeclaration
++
++/** @type {(value: RegExp) => (value: string) => boolean} Return a function that checks whether the expression exists in a value. */
++const createRegExpTest = Function.bind.bind(RegExp.prototype.test)
++
++/** Return whether the value has a lab() or lch() function. */
++const hasGradientFunction = createRegExpTest(/(repeating-)?(conic|linear|radial)-gradient\([\W\w]*\)/i)
++
++/** @typedef {import('postcss').Declaration} CSSDeclaration */
+diff --git a/src/onCSSFunction.js b/src/onCSSFunction.js
+new file mode 100644
+index 0000000..61fd4aa
+--- /dev/null
++++ b/src/onCSSFunction.js
+@@ -0,0 +1,36 @@
++import Punctuation from 'postcss-values-parser/lib/nodes/Punctuation';
++
++/** @type {(decl: CSSFunction) => void} Transform lab() and lch() functions. */
++const onCSSFunction = func => {
++	/** @type {{ name: string, nodes: CSSNode[] }} */
++	const { name, nodes } = func
++	
++	if (isGradientFunctionName(name)) {
++		nodes.slice(0).forEach((node, index, nodes) => {
++			const node1back = Object(nodes[index - 1]);
++			const node2back = Object(nodes[index - 2]);
++			const node1next = Object(nodes[index + 1]);
++
++			const isDoublePositionLength = node2back.type && node1back.type === 'numeric' && node.type === 'numeric';
++
++			// if the argument concludes a double-position gradient
++			if (isDoublePositionLength) {
++				// insert the fallback colors
++				const color = node2back.clone();
++				const comma = new Punctuation({ value: ',', raws: isPunctuationCommaNode(node1next) ? { ...node1next.clone().raws } : { before: '', after: '' } })
++
++				func.insertBefore(node, [comma, color]);
++			}
++		})
++	}
++}
++
++export default onCSSFunction
++
++/** @type {(value: RegExp) => (value: string) => boolean} Return a function that checks whether the expression exists in a value. */
++const createRegExpTest = Function.bind.bind(RegExp.prototype.test)
++
++/** Return whether the function name is `lab` or `lch`. */
++const isGradientFunctionName = createRegExpTest(/^(repeating-)?(conic|linear|radial)-gradient$/i)
++
++const isPunctuationCommaNode = node => node.type === 'punctuation' && node.value === ','
+diff --git a/src/options.js b/src/options.js
+new file mode 100644
+index 0000000..eadf617
+--- /dev/null
++++ b/src/options.js
+@@ -0,0 +1,4 @@
++export default {
++	/** Whether to preserve the original hexa. */
++	preserve: true
++}
+diff --git a/test/basic.css b/test/basic.css
+index 3873c9e..411bc7f 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -3,5 +3,5 @@
+ }
+ 
+ .test-conic-gradient {
+-	background-image: conic-gradient(yellowgreen 40%, gold 0deg 75%, #f06 0deg);
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg 75% , #f06 0deg);
+ }
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index aba649d..7be528e 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -4,6 +4,6 @@
+ }
+ 
+ .test-conic-gradient {
+-	background-image: conic-gradient(yellowgreen 40%, gold 0deg, gold 75%, #f06 0deg);
+-	background-image: conic-gradient(yellowgreen 40%, gold 0deg 75%, #f06 0deg);
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg , gold 75% , #f06 0deg);
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg 75% , #f06 0deg);
+ }
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index 730427d..f1f4664 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -3,5 +3,5 @@
+ }
+ 
+ .test-conic-gradient {
+-	background-image: conic-gradient(yellowgreen 40%, gold 0deg, gold 75%, #f06 0deg);
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg , gold 75% , #f06 0deg);
+ }
+-- 
+2.33.1
+

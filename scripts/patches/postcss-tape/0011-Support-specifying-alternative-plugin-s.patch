@@ -1,0 +1,34 @@
+From a134318fc035c2ef205f34f37b6a4ce84e23eefe Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 16 Sep 2017 19:32:56 -0400
+Subject: [PATCH 11/38] Support specifying alternative plugin(s)
+
+---
+ index.js | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index 978046e..27cecab 100644
+--- a/index.js
++++ b/index.js
+@@ -53,6 +53,8 @@ Object.keys(tests).reduce(
+ 				(passing) => {
+ 					const test = tests[section][name];
+ 
++					const testPlugin = typeof test.plugin === 'function' ? test.plugin() : plugin;
++
+ 					log.wait(section, test.message);
+ 
+ 					const testBase = name.split(':')[0];
+@@ -69,7 +71,7 @@ Object.keys(tests).reduce(
+ 					}
+ 
+ 					return readFile(sourcePath, 'utf8').then(
+-						(css) => plugin.process(
++						(css) => testPlugin.process(
+ 							css,
+ 							{
+ 								from: sourcePath,
+-- 
+2.33.1
+

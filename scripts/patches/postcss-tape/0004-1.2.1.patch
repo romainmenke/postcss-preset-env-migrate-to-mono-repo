@@ -1,0 +1,70 @@
+From cb967b0655960b96c08e552af228b1eede1af24d Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 14 Dec 2016 08:49:15 -0800
+Subject: [PATCH 04/38] 1.2.1
+
+---
+ CHANGELOG.md |  5 +++++
+ index.js     | 10 +++++++---
+ package.json |  2 +-
+ 3 files changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 158e769..4a2038c 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Tape
+ 
++### 1.2.1 (December 14, 2016)
++
++- Updated: Throw existing error
++- Updated: Run `after` even if test fails
++
+ ### 1.2.0 (December 14, 2016)
+ 
+ - Added: Expected `error` option
+diff --git a/index.js b/index.js
+index a957ee0..d3dae3a 100644
+--- a/index.js
++++ b/index.js
+@@ -106,6 +106,10 @@ Promise.all(Object.keys(tests).map(
+ 							if (expectedError) {
+ 								return `  ${ pass }  ${ test.message }`;
+ 							} else {
++								if (test.after) {
++									test.after();
++								}
++
+ 								throw error;
+ 							}
+ 						}
+@@ -124,10 +128,10 @@ Promise.all(Object.keys(tests).map(
+ 	).then(
+ 		(messages) => process.stdout.write(`${ pass } ${ section }\n${ messages.join('\n') }\n`)
+ 	).catch(
+-		(error)    => {
+-			process.stdout.write(`${ fail } ${ section }\n${ error.message }\n`);
++		(error) => {
++			process.stdout.write(`${ fail } ${ section }\n${ error }\n`);
+ 
+-			throw Error;
++			throw error;
+ 		}
+ 	)
+ )).then(
+diff --git a/package.json b/package.json
+index c356fa9..231f375 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-tape",
+-  "version": "1.2.0",
++  "version": "1.2.1",
+   "description": "Quickly test a PostCSS Plugin",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-- 
+2.33.1
+

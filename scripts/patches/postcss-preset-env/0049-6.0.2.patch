@@ -1,0 +1,250 @@
+From 621503d409a44b3ed30d07e3bb3e5708906420d2 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 20 Sep 2018 18:43:37 -0400
+Subject: [PATCH 049/103] 6.0.2
+
+---
+ .tape.js                           |  9 ++++---
+ CHANGELOG.md                       |  5 ++++
+ lib/ids-by-execution-order.js      | 38 +++++++++++++++---------------
+ lib/plugins-by-id.js               |  2 ++
+ package.json                       | 10 ++++----
+ test/basic.autoprefixer.expect.css |  1 +
+ test/basic.expect.css              |  2 ++
+ test/basic.stage0.expect.css       |  2 ++
+ test/import.css                    |  4 ++--
+ test/import.expect.css             |  6 ++---
+ 10 files changed, 47 insertions(+), 32 deletions(-)
+
+diff --git a/.tape.js b/.tape.js
+index 99e28ec..2f0d9f7 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -122,21 +122,24 @@ module.exports = {
+ 			expect: 'insert.after.expect.css'
+ 		},
+ 		'import': {
+-			message: 'supports { importFrom: { customMedia, customProperties, customSelectors }, stage: 0 } usage',
++			message: 'supports { importFrom: { customMedia, customProperties, customSelectors, environmentVariables } } usage',
+ 			options: {
+ 				importFrom: {
+ 					customMedia: {
+-						'--narrow-window': '(max-width: 30em)'
++						'--narrow-window': '(max-width: env(--sm))'
+ 					},
+ 					customProperties: {
+ 						'--order': '1'
+ 					},
+ 					customSelectors: {
+ 						':--heading': 'h1, h2, h3, h4, h5, h6'
++					},
++					environmentVariables: {
++						'--sm': '40rem'
+ 					}
+ 				},
+ 				stage: 0
+ 			}
+-		},
++		}
+ 	}
+ };
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 421d9bc..7687f55 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Preset Env
+ 
++### 6.0.2 (September 20, 2018)
++
++- Fixed: Do not break on an empty `importFrom` object
++- Fixed: Actually run `postcss-env-function`
++
+ ### 6.0.1 (September 20, 2018)
+ 
+ - Fixed: Issue with the `system-ui` font family polyfill by replacing
+diff --git a/lib/ids-by-execution-order.js b/lib/ids-by-execution-order.js
+index b8c2c08..1defbeb 100644
+--- a/lib/ids-by-execution-order.js
++++ b/lib/ids-by-execution-order.js
+@@ -1,31 +1,31 @@
+-// ids ordered by execution
++// ids ordered by required execution, then alphabetically
+ export default [
++	'custom-media-queries',
+ 	'custom-properties',
+-	'custom-property-sets',
+-	'image-set-function',
++	'environment-variables', // run environment-variables here to access transpiled custom media params and properties
++	'image-set-function', // run images-set-function before nesting-rules so that it may fix nested media
++	'media-query-ranges', // run media-query-range here to prevent duplicate transpilation after nesting-rules
+ 	'nesting-rules',
+-	'logical-properties-and-values',
+-	'custom-media-queries',
+-	'media-query-ranges',
+-	'custom-selectors',
++	'custom-selectors', // run custom-selectors after nesting-rules to correctly transpile &:--custom-selector
++	'any-link-pseudo-class',
+ 	'case-insensitive-attributes',
+-	'rebeccapurple-color',
+-	'hexadecimal-alpha-notation',
+-	'lab-function',
+-	'color-mod-function',
+-	'color-functional-notation',
+-	'system-ui-font-family',
+-	'font-variant-property',
+-	'all-property',
++	'focus-visible-pseudo-class',
++	'focus-within-pseudo-class',
+ 	'matches-pseudo-class',
+-	'not-pseudo-class',
+-	'any-link-pseudo-class',
++	'not-pseudo-class', // run matches-pseudo-class and bit-pseudo-class after other selectors have been transpiled
++	'logical-properties-and-values', // run logical-properties-and-values before dir-pseudo-class
+ 	'dir-pseudo-class',
++	'all-property', // run all-property before other property polyfills
++	'color-functional-notation',
++	'hexadecimal-alpha-notation',
++	'lab-function',
++	'rebeccapurple-color',
++	'color-mod-function', // run color-mod after other color modifications have finished
+ 	'break-properties',
++	'font-variant-property',
+ 	'gap-properties',
+ 	'overflow-property',
+ 	'overflow-wrap-property',
+ 	'place-properties',
+-	'focus-visible-pseudo-class',
+-	'focus-within-pseudo-class'
++	'system-ui-font-family'
+ ];
+diff --git a/lib/plugins-by-id.js b/lib/plugins-by-id.js
+index fef0ca1..e40ea56 100644
+--- a/lib/plugins-by-id.js
++++ b/lib/plugins-by-id.js
+@@ -7,6 +7,7 @@ import postcssCustomMedia from 'postcss-custom-media';
+ import postcssCustomProperties from 'postcss-custom-properties';
+ import postcssCustomSelectors from 'postcss-custom-selectors';
+ import postcssDirPseudoClass from 'postcss-dir-pseudo-class';
++import postcssEnvFunction from 'postcss-env-function';
+ import postcssFocusVisible from 'postcss-focus-visible';
+ import postcssFocusWithin from 'postcss-focus-within';
+ import postcssFontVariant from 'postcss-font-variant';
+@@ -38,6 +39,7 @@ export default {
+ 	'custom-properties': postcssCustomProperties,
+ 	'custom-selectors': postcssCustomSelectors,
+ 	'dir-pseudo-class': postcssDirPseudoClass,
++	'environment-variables': postcssEnvFunction,
+ 	'focus-visible-pseudo-class': postcssFocusVisible,
+ 	'focus-within-pseudo-class': postcssFocusWithin,
+ 	'font-variant-property': postcssFontVariant,
+diff --git a/package.json b/package.json
+index fdb799d..217cb1d 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-preset-env",
+-  "version": "6.0.1",
++  "version": "6.0.2",
+   "description": "Convert modern CSS into something browsers understand",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -36,11 +36,11 @@
+     "postcss-color-hex-alpha": "^5.0.2",
+     "postcss-color-mod-function": "^3.0.1",
+     "postcss-color-rebeccapurple": "^4.0.1",
+-    "postcss-custom-media": "^7.0.2",
+-    "postcss-custom-properties": "^8.0.3",
+-    "postcss-custom-selectors": "^5.1.1",
++    "postcss-custom-media": "^7.0.3",
++    "postcss-custom-properties": "^8.0.4",
++    "postcss-custom-selectors": "^5.1.2",
+     "postcss-dir-pseudo-class": "^5.0.0",
+-    "postcss-env-function": "^2.0.1",
++    "postcss-env-function": "^2.0.2",
+     "postcss-focus-visible": "^4.0.0",
+     "postcss-focus-within": "^3.0.0",
+     "postcss-font-variant": "^4.0.0",
+diff --git a/test/basic.autoprefixer.expect.css b/test/basic.autoprefixer.expect.css
+index e938d55..63920cc 100644
+--- a/test/basic.autoprefixer.expect.css
++++ b/test/basic.autoprefixer.expect.css
+@@ -139,6 +139,7 @@
+ 	font-family: serif;
+ 	font-size: medium;
+ 	font-style: normal;
++	font-feature-settings: normal;
+ 	font-variant: normal;
+ 	font-weight: normal;
+ 	font-stretch: normal;
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 62ccb96..957174e 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -151,6 +151,8 @@
+ 	font-family: serif;
+ 	font-size: medium;
+ 	font-style: normal;
++	-webkit-font-feature-settings: normal;
++	        font-feature-settings: normal;
+ 	font-variant: normal;
+ 	font-weight: normal;
+ 	font-stretch: normal;
+diff --git a/test/basic.stage0.expect.css b/test/basic.stage0.expect.css
+index b3ba0c9..0f9e4a4 100644
+--- a/test/basic.stage0.expect.css
++++ b/test/basic.stage0.expect.css
+@@ -150,6 +150,8 @@ h1.test-custom-selectors,h2.test-custom-selectors,h3.test-custom-selectors,h4.te
+ 	font-family: serif;
+ 	font-size: medium;
+ 	font-style: normal;
++	-webkit-font-feature-settings: normal;
++	        font-feature-settings: normal;
+ 	font-variant: normal;
+ 	font-weight: normal;
+ 	font-stretch: normal;
+diff --git a/test/import.css b/test/import.css
+index 0289426..e562695 100644
+--- a/test/import.css
++++ b/test/import.css
+@@ -4,13 +4,13 @@
+ 
+ @media (--narrow-window) {
+ 	.test-custom-media-queries {
+-		order: 7;
++		order: 2;
+ 	}
+ }
+ 
+ .test-custom-selectors {
+ 	&:--heading {
+-		order: 9;
++		order: 3;
+ 	}
+ }
+ 
+diff --git a/test/import.expect.css b/test/import.expect.css
+index 1567ce9..ded9c5e 100644
+--- a/test/import.expect.css
++++ b/test/import.expect.css
+@@ -3,13 +3,13 @@
+ 	order: var(--order);
+ }
+ 
+-@media (max-width: 30em) {
++@media (max-width: 40rem) {
+ 	.test-custom-media-queries {
+-		order: 7;
++		order: 2;
+ 	}
+ }
+ 
+ h1.test-custom-selectors,h2.test-custom-selectors,h3.test-custom-selectors,h4.test-custom-selectors,h5.test-custom-selectors,h6.test-custom-selectors {
+-		order: 9;
++		order: 3;
+ 	}
+ 
+-- 
+2.33.1
+

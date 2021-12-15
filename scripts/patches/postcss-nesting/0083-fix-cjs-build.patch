@@ -1,0 +1,318 @@
+From efc8b3d51591e642a5ed5735bcc8fe3088827614 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 1 May 2021 22:23:41 -0400
+Subject: [PATCH 083/108] fix: cjs build
+
+---
+ .bin/build.js                                 | 85 ++++++++++++++-----
+ .bin/test-tape.js                             |  2 +-
+ .gitignore                                    |  4 +-
+ .rollup.js                                    | 19 -----
+ package.json                                  | 31 +++++--
+ postcss-7/package.json                        |  4 -
+ .../index.js => src/postcss-7-nesting.js      |  4 +-
+ src/{index.js => postcss-8-nesting.js}        |  0
+ 8 files changed, 96 insertions(+), 53 deletions(-)
+ delete mode 100644 .rollup.js
+ delete mode 100644 postcss-7/package.json
+ rename postcss-7/index.js => src/postcss-7-nesting.js (66%)
+ rename src/{index.js => postcss-8-nesting.js} (100%)
+
+diff --git a/.bin/build.js b/.bin/build.js
+index 7e65fae..9093bcc 100644
+--- a/.bin/build.js
++++ b/.bin/build.js
+@@ -2,45 +2,65 @@ import esbuild from 'esbuild'
+ import fs from 'node:fs/promises'
+ import zlib from 'node:zlib'
+ 
++/** @typedef {{ [name: string]: string }} Exports */
++/** @typedef {{ extension: string, transform(code: string, exports: Exports): string }} Variant */
++/** @type {{ [name: string]: Variant }} */
+ const variants = {
+ 	esm: {
+ 		extension: 'mjs',
+ 		transform(code, exports) {
++			/** @type {string[]} */
+ 			const esmExports = []
+ 			for (const name in exports) esmExports.push(`${exports[name]} as ${name}`)
+-			return `${code}export{${esmExports.join(',')}}`
++			return (
++				esmExports.length
++					? `${code}export{${esmExports.join(',')}}`
++				: code
++			)
+ 		},
+ 	},
+ 	cjs: {
+ 		extension: 'cjs',
+ 		transform(code, exports) {
+-			const cjsExports = ['__esModule:!0']
++			/** @type {string[]} */
++			const cjsExports = []
+ 			for (const name in exports) cjsExports.push(`${name}:${exports[name]}`)
+-			return `${code}module.exports={${cjsExports.join(',')}}`
++			return (
++				cjsExports.length
++					? 'default' in exports
++						? `${code}module.exports=Object.assign(${exports.default},{${cjsExports.join(',')}})`
++					: `${code}module.exports={${cjsExports.join(',')}}`
++				: code
++			)
+ 		},
+ 	},
+ }
+ 
+-async function buildPackage(src) {
+-	const packageUrl = src
+-	const initPackageUrl = new URL('src/', packageUrl)
+-	const distPackageUrl = new URL('dist/', packageUrl)
++/** @type {(pkgUrl: URL, name: string) => Promise<void>} */
++async function buildPackage(pkgUrl, base) {
++	const srcDirUrl = new URL(`src/`, pkgUrl)
++	const outDirUrl = new URL(`${base}/`, pkgUrl)
+ 
+-	const packageJsonUrl = new URL(`package.json`, packageUrl)
+-	const packageName = JSON.parse(await fs.readFile(packageJsonUrl, 'utf8')).name
++	/** @type {{ name: string }} */
++	const { name } = JSON.parse(
++		await fs.readFile(
++			new URL('package.json', pkgUrl),
++			'utf8'
++		)
++	)
+ 
+-	console.log(packageName)
++	console.log(base)
+ 	console.log()
+ 
+-	const targetPathname = new URL('index.js', initPackageUrl).pathname
+-	const outputPathname = new URL('index.js', distPackageUrl).pathname
++	const srcPath = new URL(`${base}.js`, srcDirUrl).pathname
++	const outPath = new URL(`${base}.js`, outDirUrl).pathname
+ 
+ 	// Build ESM version
+ 	const {
+ 		outputFiles: [cmapResult, codeResult],
+ 	} = await esbuild.build({
+-		entryPoints: [targetPathname],
+-		outfile: outputPathname,
++		entryPoints: [srcPath],
++		outfile: outPath,
+ 		bundle: true,
+ 		format: 'esm',
+ 		sourcemap: 'external',
+@@ -52,21 +72,24 @@ async function buildPackage(src) {
+ 	const map = cmapResult.text
+ 
+ 	// ensure empty dist directory
+-	await fs.mkdir(distPackageUrl, { recursive: true })
++	await fs.mkdir(outDirUrl, { recursive: true })
+ 
+ 	// write map
+-	fs.writeFile(new URL(`index.map`, distPackageUrl), map)
++	await fs.writeFile(new URL(`${name}.map`, outDirUrl), map)
+ 
+ 	// prepare variations
++	/** @type {(code: string, index?: number) => [string, string]} */
+ 	const splitByExport = (code, index = code.indexOf('export')) => [code.slice(0, index), code.slice(index)]
+ 	const [lead, tail] = splitByExport(code)
+ 
++	/** @type {{ [name: string]: string }} */
+ 	const exports = Array.from(tail.matchAll(/([$\w]+) as (\w+)/g)).reduce((exports, each) => Object.assign(exports, { [each[2]]: each[1] }), Object.create(null))
+ 
+ 	// write variation builds
+ 	for (const variant in variants) {
++		/** @type {Variant} */
+ 		const variantInfo = variants[variant]
+-		const variantPath = new URL(`dist/index.${variantInfo.extension}`, packageUrl).pathname
++		const variantPath = new URL(`${base}/${name}.${variantInfo.extension}`, pkgUrl).pathname
+ 		const variantCode = variantInfo.transform(lead, exports)
+ 		const variantSize = (Buffer.byteLength(variantCode, 'utf8') / 1000).toFixed()
+ 		const variantGzip = Number((zlib.gzipSync(variantCode, { level: 9 }).length / 1000).toFixed(2))
+@@ -74,6 +97,28 @@ async function buildPackage(src) {
+ 		console.log(' ', `\x1b[33m${variantSize} kB\x1b[0m \x1b[2m/\x1b[0m \x1b[33m${variantGzip} kB\x1b[0m`, `\x1b[2m(${variant})\x1b[0m`)
+ 
+ 		await fs.writeFile(variantPath, variantCode + `\n//# sourceMappingUrl=index.map`)
++
++		const packageJSON = JSON.stringify({
++			private: true,
++			type: 'module',
++			main: `${name}.cjs`,
++			module: `${name}.mjs`,
++			jsdelivr: `${name}.mjs`,
++			unpkg: `${name}.mjs`,
++			files: [
++				`${name}.cjs`,
++				`${name}.mjs`
++			],
++			exports: {
++				'.': {
++					import: `./${name}.mjs`,
++					require: `./${name}.cjs`,
++					default: `./${name}.mjs`
++				}
++			}
++		}, null, '  ')
++
++		await fs.writeFile(new URL('package.json', outDirUrl), packageJSON)
+ 	}
+ }
+ 
+@@ -84,9 +129,11 @@ const argvUrl = new URL(process.argv[1], 'file:')
+ 
+ if (metaUrl.href === argvUrl.href) {
+ 	/** Root directory. */
+-	const rootUrl = new URL('../', metaUrl)
++	const pkgUrl = new URL('../', metaUrl)
+ 
+ 	console.log()
++	await buildPackage(pkgUrl, 'postcss-8-nesting')
+ 
+-	await buildPackage(rootUrl)
++	console.log()
++	await buildPackage(pkgUrl, 'postcss-7-nesting')
+ }
+diff --git a/.bin/test-tape.js b/.bin/test-tape.js
+index 9070888..db0f25d 100644
+--- a/.bin/test-tape.js
++++ b/.bin/test-tape.js
+@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs'
+ import postcss from 'postcss'
+ import process from 'node:process'
+ 
+-import plugin from '../src/index.js'
++import plugin from '../src/postcss-8-nesting.js'
+ 
+ let workingUrl = new URL(`${process.cwd()}/`, `file:`)
+ 
+diff --git a/.gitignore b/.gitignore
+index 453769a..1611041 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,6 +1,6 @@
+-dist
+ node_modules
+-index.*.*
++postcss-7-nesting
++postcss-8-nesting
+ package-lock.json
+ yarn.lock
+ *.log*
+diff --git a/.rollup.js b/.rollup.js
+deleted file mode 100644
+index db8409c..0000000
+--- a/.rollup.js
++++ /dev/null
+@@ -1,19 +0,0 @@
+-import babel from 'rollup-plugin-babel';
+-
+-export default {
+-	input: 'index.js',
+-	output: [
+-		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
+-		{ file: 'index.es.js', format: 'es', sourcemap: true }
+-	],
+-	plugins: [
+-		babel({
+-			plugins: [
+-				'array-includes'
+-			],
+-			presets: [
+-				['@babel/env', { modules: false, targets: { node: 6 } }]
+-			]
+-		})
+-	]
+-};
+diff --git a/package.json b/package.json
+index 124006a..9d9c9f0 100644
+--- a/package.json
++++ b/package.json
+@@ -4,9 +4,10 @@
+   "license": "CC0-1.0",
+   "version": "8.0.0",
+   "type": "module",
+-  "main": "dist/index.cjs",
+-  "module": "dist/index.mjs",
+-  "typings": "dist/index.d.ts",
++  "main": "postcss-8-nesting/postcss-nesting.cjs",
++  "module": "postcss-8-nesting/postcss-nesting.mjs",
++  "jsdelivr": "postcss-8-nesting/postcss-nesting.mjs",
++  "unpkg": "postcss-8-nesting/postcss-nesting.mjs",
+   "publishConfig": {
+     "access": "public"
+   },
+@@ -14,9 +15,26 @@
+   "bugs": "https://github.com/csstools/postcss-nesting/issues",
+   "homepage": "https://github.com/csstools/postcss-nesting#readme",
+   "repository": "csstools/postcss-nesting",
++  "exports": {
++    ".": {
++      "import": "./postcss-8-nesting/postcss-nesting.mjs",
++      "require": "./postcss-8-nesting/postcss-nesting.cjs",
++      "default": "./postcss-8-nesting/postcss-nesting.mjs"
++    },
++    "./postcss-7-nesting": {
++      "import": "./postcss-7-nesting/postcss-nesting.mjs",
++      "require": "./postcss-7-nesting/postcss-nesting.cjs",
++      "default": "./postcss-7-nesting/postcss-nesting.mjs"
++    },
++    "./postcss-8-nesting": {
++      "import": "./postcss-8-nesting/postcss-nesting.mjs",
++      "require": "./postcss-8-nesting/postcss-nesting.cjs",
++      "default": "./postcss-8-nesting/postcss-nesting.mjs"
++    }
++  },
+   "files": [
+-    "dist",
+-    "postcss-7"
++    "postcss-7-nesting",
++    "postcss-8-nesting"
+   ],
+   "scripts": {
+     "prepublishOnly": "npm test",
+@@ -26,9 +44,10 @@
+     "test:tape": "node .bin/test-tape.js"
+   },
+   "devDependencies": {
+-    "esbuild": "0.11.15",
++    "esbuild": "0.11.17",
+     "eslint": "7.25.0",
+     "eslint-config-dev": "2.0.0",
++    "nodemon": "2.0.7",
+     "postcss": "8.2.6",
+     "pre-commit": "1.2.2"
+   },
+diff --git a/postcss-7/package.json b/postcss-7/package.json
+deleted file mode 100644
+index 53820f7..0000000
+--- a/postcss-7/package.json
++++ /dev/null
+@@ -1,4 +0,0 @@
+-{
+-  "type": "commonjs",
+-  "private": true
+-}
+diff --git a/postcss-7/index.js b/src/postcss-7-nesting.js
+similarity index 66%
+rename from postcss-7/index.js
+rename to src/postcss-7-nesting.js
+index d55da66..30e1479 100644
+--- a/postcss-7/index.js
++++ b/src/postcss-7-nesting.js
+@@ -1,6 +1,6 @@
+-const postcssNesting = require('../dist/index.cjs').default
++import postcssNesting from './postcss-8-nesting.js'
+ 
+-module.exports = Object.defineProperties(postcssNesting, Object.getOwnPropertyDescriptors({
++export default Object.defineProperties(postcssNesting, Object.getOwnPropertyDescriptors({
+ 	get postcss() {
+ 		function postcssPlugin(cssRoot) {
+ 			const visitors = postcssNesting()
+diff --git a/src/index.js b/src/postcss-8-nesting.js
+similarity index 100%
+rename from src/index.js
+rename to src/postcss-8-nesting.js
+-- 
+2.33.1
+

@@ -1,0 +1,25 @@
+From 268e8a3d8b827028288d447f72dca96c9dd99b59 Mon Sep 17 00:00:00 2001
+From: Ruben Bridgewater <ruben@bridgewater.de>
+Date: Wed, 27 Oct 2021 16:31:52 +0200
+Subject: [PATCH 091/103] Update postcss-focus-withinto v4 (csstools/postcss-preset-env#172)
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 168fbe3..ba6f30e 100644
+--- a/package.json
++++ b/package.json
+@@ -48,7 +48,7 @@
+     "postcss-double-position-gradients": "^1.0.0",
+     "postcss-env-function": "^2.0.2",
+     "postcss-focus-visible": "^4.0.0",
+-    "postcss-focus-within": "^3.0.0",
++    "postcss-focus-within": "^4.0.0",
+     "postcss-font-variant": "^4.0.0",
+     "postcss-gap-properties": "^2.0.0",
+     "postcss-image-set-function": "^3.0.1",
+-- 
+2.33.1
+

@@ -1,0 +1,49 @@
+From 4b6b237e8e9c8cd729826f790be5efbdc356c497 Mon Sep 17 00:00:00 2001
+From: Adam Argyle <argyle@google.com>
+Date: Sat, 11 Apr 2020 12:19:26 -0700
+Subject: [PATCH 11/24] update examples to use lab/lch lightness as % (csstools/postcss-lab-function#4)
+
+---
+ README.md | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/README.md b/README.md
+index 79cd580..54194c3 100644
+--- a/README.md
++++ b/README.md
+@@ -10,8 +10,8 @@ CSS, following the [CSS Color] specification.
+ 
+ ```pcss
+ :root {
+-  --firebrick: lab(40 56.6 39);
+-  --firebrick-a50: lch(40 68.8 34.5 / 50%);
++  --firebrick: lab(40% 56.6 39);
++  --firebrick-a50: lch(40% 68.8 34.5 / 50%);
+   --gray-40: gray(40);
+   --gray-40a50: gray(40 / .5);
+ }
+@@ -72,17 +72,17 @@ postcssLabFunction({ preserve: true })
+ 
+ ```pcss
+ :root {
+-  --firebrick: lab(40 56.6 39);
+-  --firebrick-a50: lch(40 68.8 34.5 / 50%);
++  --firebrick: lab(40% 56.6 39);
++  --firebrick-a50: lch(40% 68.8 34.5 / 50%);
+ }
+ 
+ /* becomes */
+ 
+ :root {
+   --firebrick: rgb(178, 34, 34);
+-  --firebrick: lab(40 56.6 39);
++  --firebrick: lab(40% 56.6 39);
+   --firebrick-a50: rgba(178, 34, 34, .5);
+-  --firebrick-a50: lch(40 68.8 34.5 / 50%);
++  --firebrick-a50: lch(40% 68.8 34.5 / 50%);
+ }
+ ```
+ 
+-- 
+2.33.1
+

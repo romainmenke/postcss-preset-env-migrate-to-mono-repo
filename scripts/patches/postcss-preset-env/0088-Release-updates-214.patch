@@ -1,0 +1,650 @@
+From ea8c3b5a8a8a98800826e265a713f6c703bb83d9 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Wed, 27 Oct 2021 16:30:50 +0200
+Subject: [PATCH 088/103] Release updates (csstools/postcss-preset-env#214)
+
+* Updating as per plugin spec
+
+See https://github.com/postcss/postcss-font-variant/pull/15
+
+* Adding all property back
+
+* Updating System UI plugin to be compatible with PostCSS 8
+
+* Removing no longer existing property
+
+* Autoprefixer false doesn't mess with the rest of the file
+
+* Updating with up to spec from image set plugin
+
+* Using last mod since color-mod was rejected and no longer within pack
+
+* Updating main file to be up to PostCSS 8
+---
+ .tape.js                                   |  13 +-
+ package.json                               |   1 +
+ src/lib/plugins-by-id.js                   |   2 +
+ src/patch/postcss-system-ui-font-family.js |   6 +-
+ src/postcss.js                             | 101 ++++++++-------
+ test/basic.autoprefixer.expect.css         |   3 +-
+ test/basic.autoprefixer.false.expect.css   | 141 +++++++++++++++++++--
+ test/basic.ch38.expect.css                 |  15 ++-
+ test/basic.expect.css                      |   3 +-
+ test/basic.stage0.expect.css               |   3 +-
+ test/insert.after.expect.css               |   6 +-
+ test/insert.before.expect.css              |   4 +-
+ test/insert.css                            |   6 +-
+ 13 files changed, 216 insertions(+), 88 deletions(-)
+
+diff --git a/.tape.js b/.tape.js
+index fa748df..40df4f4 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -89,29 +89,18 @@ module.exports = {
+ 		}
+ 	},
+ 	'insert:after': {
+-		message: 'supports { stage: 1, features: { "color-mod-function": { unresolved: "warn" } }, insertAfter: { "color-mod-function": [ require("postcss-simple-vars")() ] } } usage',
++		message: 'supports { stage: 1, insertAfter: { "color-mod-function": [ require("postcss-simple-vars")() ] } } usage',
+ 		options: {
+ 			stage: 1,
+-			features: {
+-				'color-mod-function': {
+-					unresolved: 'warn'
+-				}
+-			},
+ 			insertAfter: {
+ 				'color-mod-function': require('postcss-simple-vars')
+ 			}
+ 		},
+-		warnings: 2
+ 	},
+ 	'insert:after:exec': {
+ 		message: 'supports { stage: 2, features: { "color-mod-function": { unresolved: "ignore" } }, insertAfter: { "color-mod-function": require("postcss-simple-vars")() } } usage',
+ 		options: {
+ 			stage: 2,
+-			features: {
+-				'color-mod-function': {
+-					unresolved: 'ignore'
+-				}
+-			},
+ 			insertAfter: {
+ 				'color-mod-function': require('postcss-simple-vars')()
+ 			}
+diff --git a/package.json b/package.json
+index 02a9ad0..5cf9971 100644
+--- a/package.json
++++ b/package.json
+@@ -52,6 +52,7 @@
+     "postcss-font-variant": "^5.0.0",
+     "postcss-gap-properties": "^3.0.0",
+     "postcss-image-set-function": "^4.0.0",
++    "postcss-initial": "^3.0.4",
+     "postcss-lab-function": "^4.0.0",
+     "postcss-logical": "^5.0.0",
+     "postcss-media-minmax": "^5.0.0",
+diff --git a/src/lib/plugins-by-id.js b/src/lib/plugins-by-id.js
+index e2a6f12..5c4090e 100644
+--- a/src/lib/plugins-by-id.js
++++ b/src/lib/plugins-by-id.js
+@@ -16,6 +16,7 @@ import postcssFontFamilySystemUi from '../patch/postcss-system-ui-font-family';
+ import postcssGapProperties from 'postcss-gap-properties';
+ import postcssHasPseudo from 'css-has-pseudo/postcss';
+ import postcssImageSetPolyfill from 'postcss-image-set-function';
++import postcssInitial from 'postcss-initial';
+ import postcssLabFunction from 'postcss-lab-function';
+ import postcssLogical from 'postcss-logical';
+ import postcssMediaMinmax from 'postcss-media-minmax';
+@@ -30,6 +31,7 @@ import postcssSelectorNot from 'postcss-selector-not';
+ 
+ // postcss plugins ordered by id
+ export default {
++	'all-property': postcssInitial,
+ 	'any-link-pseudo-class': postcssPseudoClassAnyLink,
+ 	'blank-pseudo-class': postcssBlankPseudo,
+ 	'break-properties': postcssPageBreak,
+diff --git a/src/patch/postcss-system-ui-font-family.js b/src/patch/postcss-system-ui-font-family.js
+index 69eb48e..d50cb56 100644
+--- a/src/patch/postcss-system-ui-font-family.js
++++ b/src/patch/postcss-system-ui-font-family.js
+@@ -3,12 +3,16 @@ export default function postcssSystemUiFont() {
+ 		postcssPlugin: 'postcss-system-ui-font',
+ 		Declaration(/** @type {import('postcss').Declaration} */ node) {
+ 			if (propertyRegExp.test(node.prop)) {
+-				node.value = node.value.replace(systemUiMatch, systemUiReplace);
++				if (!node.value.includes(systemUiFamily.join(', '))) {
++					node.value = node.value.replace(systemUiMatch, systemUiReplace);
++				}
+ 			}
+ 		}
+ 	}
+ }
+ 
++postcssSystemUiFont.postcss = true;
++
+ const propertyRegExp = /(?:^(?:-|\\002d){2})|(?:^font(?:-family)?$)/i;
+ const whitespace = '[\\f\\n\\r\\x09\\x20]';
+ const systemUiFamily = [
+diff --git a/src/postcss.js b/src/postcss.js
+index 4ac5888..55ff2fe 100644
+--- a/src/postcss.js
++++ b/src/postcss.js
+@@ -1,14 +1,13 @@
+-import autoprefixer from 'autoprefixer'
++import autoprefixer from 'autoprefixer';
+ import browserslist from 'browserslist';
+ import cssdb from 'cssdb';
+-import postcss from 'postcss';
+ import plugins from './lib/plugins-by-id';
+ import getTransformedInsertions from './lib/get-transformed-insertions';
+ import getUnsupportedBrowsersByFeature from './lib/get-unsupported-browsers-by-feature';
+ import idsByExecutionOrder from './lib/ids-by-execution-order';
+ import writeToExports from './lib/write-to-exports';
+ 
+-export default postcss.plugin('postcss-preset-env', opts => {
++const plugin = opts => {
+ 	// initialize options
+ 	const features = Object(Object(opts).features);
+ 	const insertBefore = Object(Object(opts).insertBefore);
+@@ -17,13 +16,13 @@ export default postcss.plugin('postcss-preset-env', opts => {
+ 	const stage = 'stage' in Object(opts)
+ 		? opts.stage === false
+ 			? 5
+-		: parseInt(opts.stage) || 0
+-	: 2;
++			: parseInt(opts.stage) || 0
++		: 2;
+ 	const autoprefixerOptions = Object(opts).autoprefixer;
+ 	const sharedOpts = initializeSharedOpts(Object(opts));
+ 	const stagedAutoprefixer = autoprefixerOptions === false
+ 		? () => {}
+-	: autoprefixer(Object.assign({ overrideBrowserslist: browsers }, autoprefixerOptions));
++		: autoprefixer(Object.assign({ overrideBrowserslist: browsers }, autoprefixerOptions));
+ 
+ 	// polyfillable features (those with an available postcss plugin)
+ 	const polyfillableFeatures = cssdb.concat(
+@@ -61,26 +60,35 @@ export default postcss.plugin('postcss-preset-env', opts => {
+ 	const stagedFeatures = polyfillableFeatures.filter(
+ 		feature => feature.id in features
+ 			? features[feature.id]
+-		: feature.stage >= stage
++			: feature.stage >= stage
+ 	).map(
+-		feature => ({
+-			browsers: feature.browsers,
+-			plugin: typeof feature.plugin.process === 'function'
+-				? features[feature.id] === true
+-					? sharedOpts
+-						// if the plugin is enabled and has shared options
+-						? feature.plugin(Object.assign({}, sharedOpts))
+-					// otherwise, if the plugin is enabled
+-					: feature.plugin()
+-				: sharedOpts
++		feature => {
++			let options;
++			let plugin;
++
++			if (features[feature.id] === true) {
++				// if the plugin is enabled
++				options = sharedOpts ? Object.assign({}, sharedOpts) : undefined;
++			} else {
++				options = sharedOpts
+ 					// if the plugin has shared options and individual options
+-					? feature.plugin(Object.assign({}, sharedOpts, features[feature.id]))
+-				// if the plugin has individual options
+-				: feature.plugin(Object.assign({}, features[feature.id]))
+-			// if the plugin is already initialized
+-			: feature.plugin,
+-			id: feature.id
+-		})
++					? Object.assign({}, sharedOpts, features[feature.id])
++					// if the plugin has individual options
++					: Object.assign({}, features[feature.id]);
++			}
++
++			if (feature.plugin.postcss) {
++				plugin = feature.plugin(options);
++			} else {
++				plugin = feature.plugin;
++			}
++
++			return {
++				browsers: feature.browsers,
++				plugin,
++				id: feature.id
++			};
++		}
+ 	);
+ 
+ 	// browsers supported by the configuration
+@@ -90,35 +98,28 @@ export default postcss.plugin('postcss-preset-env', opts => {
+ 	const supportedFeatures = stagedFeatures.filter(
+ 		feature => feature.id in features
+ 			? features[feature.id]
+-		: supportedBrowsers.some(
+-			supportedBrowser => browserslist(feature.browsers, {
+-				ignoreUnknownVersions: true
+-			}).some(
+-				polyfillBrowser => polyfillBrowser === supportedBrowser
++			: supportedBrowsers.some(
++				supportedBrowser => browserslist(feature.browsers, {
++					ignoreUnknownVersions: true
++				}).some(
++					polyfillBrowser => polyfillBrowser === supportedBrowser
++				)
+ 			)
+-		)
+ 	);
+ 
+-	return (root, result) => {
+-		// polyfills run in execution order
+-		const polyfills = supportedFeatures.reduce(
+-			(promise, feature) => promise.then(
+-				() => feature.plugin(result.root, result)
+-			),
+-			Promise.resolve()
+-		).then(
+-			() => stagedAutoprefixer(result.root, result)
+-		).then(
+-			() => {
+-				if (Object(opts).exportTo) {
+-					writeToExports(sharedOpts.exportTo, opts.exportTo);
+-				}
+-			}
+-		)
++	const usedPlugins = supportedFeatures.map(feature => feature.plugin);
++	usedPlugins.push(stagedAutoprefixer);
+ 
+-		return polyfills;
++	return {
++		postcssPlugin: 'postcss-preset-env',
++		plugins: usedPlugins,
++		OnceExit: function() {
++			if ( Object( opts ).exportTo ) {
++				writeToExports( sharedOpts.exportTo, opts.exportTo );
++			}
++		}
+ 	};
+-});
++}
+ 
+ const initializeSharedOpts = opts => {
+ 	if ('importFrom' in opts || 'exportTo' in opts || 'preserve' in opts) {
+@@ -145,3 +146,7 @@ const initializeSharedOpts = opts => {
+ 
+ 	return false;
+ };
++
++plugin.postcss = true;
++
++export default plugin;
+diff --git a/test/basic.autoprefixer.expect.css b/test/basic.autoprefixer.expect.css
+index 24b7724..98fc6c0 100644
+--- a/test/basic.autoprefixer.expect.css
++++ b/test/basic.autoprefixer.expect.css
+@@ -108,7 +108,7 @@
+ }
+ 
+ .test-font-variant-property {
+-	font-feature-settings: "c2sc";
++	font-feature-settings: "smcp";
+ 	font-variant-caps: small-caps;
+ 	order: 16;
+ }
+@@ -132,7 +132,6 @@
+ 	columns: auto;
+ 	column-count: auto;
+ 	column-fill: balance;
+-	grid-column-gap: normal;
+ 	column-gap: normal;
+ 	column-rule: medium none currentColor;
+ 	column-span: 1;
+diff --git a/test/basic.autoprefixer.false.expect.css b/test/basic.autoprefixer.false.expect.css
+index 86ddd4c..98fc6c0 100644
+--- a/test/basic.autoprefixer.false.expect.css
++++ b/test/basic.autoprefixer.false.expect.css
+@@ -3,18 +3,38 @@
+ }
+ 
+ .test-custom-properties {
++	order: 1;
+ 	order: var(--order);
+ }
+ 
++.test-image-set-function {
++	background-image: url(img/test.png);
++}
++
++@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
++
++.test-image-set-function {
++	background-image:  url(img/test-2x.png);
++}
++}
++
+ .test-image-set-function {
+ 	background-image: image-set(url(img/test.png) 1x, url(img/test-2x.png) 2x);
+ 	order: 2;
+ }
+ 
++[dir="ltr"] .test-logical-properties-and-values {
++	margin: 1px 4px 3px 2px;
++}
++
++[dir="rtl"] .test-logical-properties-and-values {
++	margin: 1px 2px 3px 4px;
++}
++
+ .test-logical-properties-and-values {
+-	margin: logical 1px 2px 3px 4px;
+ 	order: 3;
+-	padding-block: 5px;
++	padding-top: 5px;
++	padding-bottom: 5px;
+ }
+ 
+ .test-nesting-rules {
+@@ -35,7 +55,7 @@
+ 	}
+ }
+ 
+-@media (480px <= width < 768px) {
++@media (min-width: 480px) and (max-width: 767px) {
+ 	.test-media-query-ranges {
+ 		order: 8;
+ 	}
+@@ -56,18 +76,18 @@
+ 	order: 9;
+ }
+ 
+-.test-case-insensitive-attributes[frame=hsides i] {
++.test-case-insensitive-attributes[frame=hsides],.test-case-insensitive-attributes[frame=Hsides],.test-case-insensitive-attributes[frame=hSides],.test-case-insensitive-attributes[frame=HSides],.test-case-insensitive-attributes[frame=hsIdes],.test-case-insensitive-attributes[frame=HsIdes],.test-case-insensitive-attributes[frame=hSIdes],.test-case-insensitive-attributes[frame=HSIdes],.test-case-insensitive-attributes[frame=hsiDes],.test-case-insensitive-attributes[frame=HsiDes],.test-case-insensitive-attributes[frame=hSiDes],.test-case-insensitive-attributes[frame=HSiDes],.test-case-insensitive-attributes[frame=hsIDes],.test-case-insensitive-attributes[frame=HsIDes],.test-case-insensitive-attributes[frame=hSIDes],.test-case-insensitive-attributes[frame=HSIDes],.test-case-insensitive-attributes[frame=hsidEs],.test-case-insensitive-attributes[frame=HsidEs],.test-case-insensitive-attributes[frame=hSidEs],.test-case-insensitive-attributes[frame=HSidEs],.test-case-insensitive-attributes[frame=hsIdEs],.test-case-insensitive-attributes[frame=HsIdEs],.test-case-insensitive-attributes[frame=hSIdEs],.test-case-insensitive-attributes[frame=HSIdEs],.test-case-insensitive-attributes[frame=hsiDEs],.test-case-insensitive-attributes[frame=HsiDEs],.test-case-insensitive-attributes[frame=hSiDEs],.test-case-insensitive-attributes[frame=HSiDEs],.test-case-insensitive-attributes[frame=hsIDEs],.test-case-insensitive-attributes[frame=HsIDEs],.test-case-insensitive-attributes[frame=hSIDEs],.test-case-insensitive-attributes[frame=HSIDEs],.test-case-insensitive-attributes[frame=hsideS],.test-case-insensitive-attributes[frame=HsideS],.test-case-insensitive-attributes[frame=hSideS],.test-case-insensitive-attributes[frame=HSideS],.test-case-insensitive-attributes[frame=hsIdeS],.test-case-insensitive-attributes[frame=HsIdeS],.test-case-insensitive-attributes[frame=hSIdeS],.test-case-insensitive-attributes[frame=HSIdeS],.test-case-insensitive-attributes[frame=hsiDeS],.test-case-insensitive-attributes[frame=HsiDeS],.test-case-insensitive-attributes[frame=hSiDeS],.test-case-insensitive-attributes[frame=HSiDeS],.test-case-insensitive-attributes[frame=hsIDeS],.test-case-insensitive-attributes[frame=HsIDeS],.test-case-insensitive-attributes[frame=hSIDeS],.test-case-insensitive-attributes[frame=HSIDeS],.test-case-insensitive-attributes[frame=hsidES],.test-case-insensitive-attributes[frame=HsidES],.test-case-insensitive-attributes[frame=hSidES],.test-case-insensitive-attributes[frame=HSidES],.test-case-insensitive-attributes[frame=hsIdES],.test-case-insensitive-attributes[frame=HsIdES],.test-case-insensitive-attributes[frame=hSIdES],.test-case-insensitive-attributes[frame=HSIdES],.test-case-insensitive-attributes[frame=hsiDES],.test-case-insensitive-attributes[frame=HsiDES],.test-case-insensitive-attributes[frame=hSiDES],.test-case-insensitive-attributes[frame=HSiDES],.test-case-insensitive-attributes[frame=hsIDES],.test-case-insensitive-attributes[frame=HsIDES],.test-case-insensitive-attributes[frame=hSIDES],.test-case-insensitive-attributes[frame=HSIDES] {
+ 	order: 10;
+ }
+ 
+ .test-rebeccapurple-color {
+-	color: rebeccapurple;
++	color: #639;
+ 	order: 11;
+ }
+ 
+ .test-hexadecimal-alpha-notation {
+-	background-color: #f3f3f3f3;
+-	color: #0003;
++	background-color: rgba(243,243,243,0.95294);
++	color: rgba(0,0,0,0.2);
+ 	order: 12;
+ }
+ 
+@@ -77,8 +97,8 @@
+ }
+ 
+ .test-lab-function {
+-	background-color: lab(40% 56.6 39);
+-	color: lch(40% 68.8 34.5 / 50%);
++	background-color: rgb(178, 34, 34);
++	color: rgba(178, 34, 34, 0.5);
+ 	order: 14;
+ }
+ 
+@@ -88,11 +108,95 @@
+ }
+ 
+ .test-font-variant-property {
++	font-feature-settings: "smcp";
+ 	font-variant-caps: small-caps;
+ 	order: 16;
+ }
+ 
+ .test-all-property {
++	animation: none 0s ease 0s 1 normal none running;
++	backface-visibility: visible;
++	background: transparent none repeat 0 0 / auto auto padding-box border-box scroll;
++	border: medium none currentColor;
++	border-collapse: separate;
++	border-image: none;
++	border-radius: 0;
++	border-spacing: 0;
++	bottom: auto;
++	box-shadow: none;
++	box-sizing: content-box;
++	caption-side: top;
++	clear: none;
++	clip: auto;
++	color: #000;
++	columns: auto;
++	column-count: auto;
++	column-fill: balance;
++	column-gap: normal;
++	column-rule: medium none currentColor;
++	column-span: 1;
++	column-width: auto;
++	content: normal;
++	counter-increment: none;
++	counter-reset: none;
++	cursor: auto;
++	direction: ltr;
++	display: inline;
++	empty-cells: show;
++	float: none;
++	font-family: serif;
++	font-size: medium;
++	font-style: normal;
++	font-feature-settings: normal;
++	font-variant: normal;
++	font-weight: normal;
++	font-stretch: normal;
++	line-height: normal;
++	height: auto;
++	hyphens: none;
++	left: auto;
++	letter-spacing: normal;
++	list-style: disc outside none;
++	margin: 0;
++	max-height: none;
++	max-width: none;
++	min-height: 0;
++	min-width: 0;
++	opacity: 1;
++	orphans: 2;
++	outline: medium none invert;
++	overflow: visible;
++	overflow-x: visible;
++	overflow-y: visible;
++	padding: 0;
++	page-break-after: auto;
++	page-break-before: auto;
++	page-break-inside: auto;
++	perspective: none;
++	perspective-origin: 50% 50%;
++	position: static;
++	right: auto;
++	tab-size: 8;
++	table-layout: auto;
++	text-align: left;
++	text-align-last: auto;
++	text-decoration: none;
++	text-indent: 0;
++	text-shadow: none;
++	text-transform: none;
++	top: auto;
++	transform: none;
++	transform-origin: 50% 50% 0;
++	transform-style: flat;
++	transition: none 0s ease 0s;
++	unicode-bidi: normal;
++	vertical-align: baseline;
++	visibility: visible;
++	white-space: normal;
++	widows: 2;
++	width: auto;
++	word-spacing: normal;
++	z-index: auto;
+ 	all: initial;
+ 	order: 17;
+ }
+@@ -101,21 +205,29 @@
+ 	order: 18;
+ }
+ 
+-.test-not-pseudo-class:not(:first-child, .special) {
++.test-not-pseudo-class:not(:first-child):not(.special) {
+ 	order: 19;
+ }
+ 
++.test-any-link-pseudo-class:link,.test-any-link-pseudo-class:visited {
++	order: 20;
++}
++
+ .test-any-link-pseudo-class:any-link {
+ 	order: 20;
+ }
+ 
+-.test-dir-pseudo-class:dir(rtl) {
++[dir="rtl"] .test-dir-pseudo-class {
+ 	order: 21;
+ }
+ 
+ .test-overflow-wrap-property {
+ 	order: 22;
+-	overflow-wrap: break-word;
++	word-wrap: break-word;
++}
++
++.test-focus-visible-pseudo-class.focus-visible {
++	order: 23;
+ }
+ 
+ .test-focus-visible-pseudo-class:focus-visible {
+@@ -123,6 +235,7 @@
+ }
+ 
+ .test-double-position-gradients {
++	background-image: conic-gradient(yellowgreen 40%, gold 0deg, gold 75%, #f06 0deg);
+ 	background-image: conic-gradient(yellowgreen 40%, gold 0deg 75%, #f06 0deg);
+ }
+ 
+@@ -130,6 +243,10 @@
+ 	background-color: yellow;
+ }
+ 
++.test-has-pseudo-class[\:has\(.inner-class\)] {
++	background-color: yellow;
++}
++
+ .test-has-pseudo-class:has(.inner-class) {
+ 	background-color: yellow;
+ }
+diff --git a/test/basic.ch38.expect.css b/test/basic.ch38.expect.css
+index 234ae12..286e861 100644
+--- a/test/basic.ch38.expect.css
++++ b/test/basic.ch38.expect.css
+@@ -7,6 +7,17 @@
+ 	order: var(--order);
+ }
+ 
++.test-image-set-function {
++	background-image: url(img/test.png);
++}
++
++@media (min-resolution: 192dpi) {
++
++.test-image-set-function {
++	background-image:  url(img/test-2x.png);
++}
++}
++
+ .test-image-set-function {
+ 	background-image: -webkit-image-set(url(img/test.png) 1x, url(img/test-2x.png) 2x);
+ 	background-image: image-set(url(img/test.png) 1x, url(img/test-2x.png) 2x);
+@@ -98,8 +109,8 @@
+ }
+ 
+ .test-font-variant-property {
+-	-webkit-font-feature-settings: "c2sc";
+-	        font-feature-settings: "c2sc";
++	-webkit-font-feature-settings: "smcp";
++	        font-feature-settings: "smcp";
+ 	font-variant-caps: small-caps;
+ 	order: 16;
+ }
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index bbeb6e3..d2147fe 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -109,7 +109,7 @@
+ }
+ 
+ .test-font-variant-property {
+-	font-feature-settings: "c2sc";
++	font-feature-settings: "smcp";
+ 	font-variant-caps: small-caps;
+ 	order: 16;
+ }
+@@ -139,7 +139,6 @@
+ 	     column-count: auto;
+ 	-moz-column-fill: balance;
+ 	     column-fill: balance;
+-	grid-column-gap: normal;
+ 	-moz-column-gap: normal;
+ 	     column-gap: normal;
+ 	-moz-column-rule: medium none currentColor;
+diff --git a/test/basic.stage0.expect.css b/test/basic.stage0.expect.css
+index c419c2f..dc8cfe9 100644
+--- a/test/basic.stage0.expect.css
++++ b/test/basic.stage0.expect.css
+@@ -113,7 +113,7 @@ h1.test-custom-selectors,h2.test-custom-selectors,h3.test-custom-selectors,h4.te
+ }
+ 
+ .test-font-variant-property {
+-	font-feature-settings: "c2sc";
++	font-feature-settings: "smcp";
+ 	font-variant-caps: small-caps;
+ 	order: 16;
+ }
+@@ -143,7 +143,6 @@ h1.test-custom-selectors,h2.test-custom-selectors,h3.test-custom-selectors,h4.te
+ 	     column-count: auto;
+ 	-moz-column-fill: balance;
+ 	     column-fill: balance;
+-	grid-column-gap: normal;
+ 	-moz-column-gap: normal;
+ 	     column-gap: normal;
+ 	-moz-column-rule: medium none currentColor;
+diff --git a/test/insert.after.expect.css b/test/insert.after.expect.css
+index 611769c..f58436e 100644
+--- a/test/insert.after.expect.css
++++ b/test/insert.after.expect.css
+@@ -1,3 +1,5 @@
+-test-css-color-modifying-colors {
+-	color: color-mod(#639 alpha(80%));
++$font: system-ui;
++
++.test-variable {
++	font-family: $font;
+ }
+diff --git a/test/insert.before.expect.css b/test/insert.before.expect.css
+index a31f12d..4952078 100644
+--- a/test/insert.before.expect.css
++++ b/test/insert.before.expect.css
+@@ -1,3 +1,3 @@
+-test-css-color-modifying-colors {
+-	color: rgba(102, 51, 153, 0.8);
++.test-variable {
++	font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+ }
+diff --git a/test/insert.css b/test/insert.css
+index 12d2d1a..f58436e 100644
+--- a/test/insert.css
++++ b/test/insert.css
+@@ -1,5 +1,5 @@
+-$color: rebeccapurple;
++$font: system-ui;
+ 
+-test-css-color-modifying-colors {
+-	color: color-mod($color alpha(80%));
++.test-variable {
++	font-family: $font;
+ }
+-- 
+2.33.1
+

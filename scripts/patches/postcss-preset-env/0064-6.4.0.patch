@@ -1,0 +1,680 @@
+From f53ea9b859fa4d1f57894a6e845a815cf8b4562f Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 6 Nov 2018 07:41:21 -0500
+Subject: [PATCH 064/103] 6.4.0
+
+---
+ .tape.js                                 |  36 +++++
+ CHANGELOG.md                             |   7 +
+ index.js                                 |  18 ++-
+ lib/ids-by-execution-order.js            |   7 +-
+ lib/plugins-by-id.js                     |   2 +
+ lib/write-to-exports.js                  | 196 +++++++++++++++++++++++
+ package.json                             |   5 +-
+ test/basic.autoprefixer.expect.css       |   9 ++
+ test/basic.autoprefixer.false.expect.css |   9 ++
+ test/basic.ch38.expect.css               |   9 ++
+ test/basic.css                           |   9 ++
+ test/basic.expect.css                    |   9 ++
+ test/basic.ff49.expect.css               |   9 ++
+ test/basic.nesting.expect.css            |   9 ++
+ test/basic.stage0-ff49.expect.css        |  14 ++
+ test/basic.stage0.expect.css             |  14 ++
+ test/generated-custom-exports.css        |   8 +
+ test/generated-custom-exports.js         |  12 ++
+ test/generated-custom-exports.json       |  12 ++
+ test/generated-custom-exports.mjs        |  12 ++
+ 20 files changed, 397 insertions(+), 9 deletions(-)
+ create mode 100644 lib/write-to-exports.js
+ create mode 100644 test/generated-custom-exports.css
+ create mode 100644 test/generated-custom-exports.js
+ create mode 100644 test/generated-custom-exports.json
+ create mode 100644 test/generated-custom-exports.mjs
+
+diff --git a/.tape.js b/.tape.js
+index eb4126d..f330885 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -146,6 +146,42 @@ module.exports = {
+ 				},
+ 				stage: 0
+ 			}
++		},
++		'basic:export': {
++			message: 'supports { stage: 0 } usage',
++			options: {
++				stage: 0,
++				exportTo: [
++					'test/generated-custom-exports.css',
++					'test/generated-custom-exports.js',
++					'test/generated-custom-exports.json',
++					'test/generated-custom-exports.mjs'
++				]
++			},
++			expect: 'basic.stage0.expect.css',
++			result: 'basic.stage0.result.css',
++			before() {
++				global.__exportTo = {
++					css: require('fs').readFileSync('test/generated-custom-exports.css', 'utf8'),
++					js: require('fs').readFileSync('test/generated-custom-exports.js', 'utf8'),
++					json: require('fs').readFileSync('test/generated-custom-exports.json', 'utf8'),
++					mjs: require('fs').readFileSync('test/generated-custom-exports.mjs', 'utf8')
++				};
++			},
++			after() {
++				global.__exportAs = {
++					css: require('fs').readFileSync('test/generated-custom-exports.css', 'utf8'),
++					js: require('fs').readFileSync('test/generated-custom-exports.js', 'utf8'),
++					json: require('fs').readFileSync('test/generated-custom-exports.json', 'utf8'),
++					mjs: require('fs').readFileSync('test/generated-custom-exports.mjs', 'utf8')
++				};
++
++				Object.keys(global.__exportTo).forEach(key => {
++					if (global.__exportTo[key] !== global.__exportAs[key]) {
++						throw new Error(`The original ${key} file did not match the freshly exported copy`);
++					}
++				});
++			}
+ 		}
+ 	}
+ };
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 0e8e91f..6ff901c 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,12 @@
+ # Changes to PostCSS Preset Env
+ 
++### 6.4.0 (November 6, 2018)
++
++- Fixed `exportTo` option to export Custom Media, Custom Properties, and Custom
++  Selectors all to the same function, object, or file
++- Added `css-prefers-color-scheme` 3.0.0 (major, non-breaking for this project)
++- Updated `cssdb` to 4.2.0 (minor)
++
+ ### 6.3.1 (November 5, 2018)
+ 
+ - Updated `caniuse-lite` to 1.0.30000905 (patch)
+diff --git a/index.js b/index.js
+index 191da26..671854c 100644
+--- a/index.js
++++ b/index.js
+@@ -6,6 +6,7 @@ import plugins from './lib/plugins-by-id';
+ import getTransformedInsertions from './lib/get-transformed-insertions';
+ import getUnsupportedBrowsersByFeature from './lib/get-unsupported-browsers-by-feature';
+ import idsByExecutionOrder from './lib/ids-by-execution-order';
++import writeToExports from './lib/write-to-exports';
+ 
+ export default postcss.plugin('postcss-preset-env', opts => {
+ 	// initialize options
+@@ -20,7 +21,6 @@ export default postcss.plugin('postcss-preset-env', opts => {
+ 	: 2;
+ 	const autoprefixerOptions = Object(opts).autoprefixer;
+ 	const sharedOpts = initializeSharedOpts(Object(opts));
+-
+ 	const stagedAutoprefixer = autoprefixerOptions === false
+ 		? () => {}
+ 	: autoprefixer(Object.assign({ browsers }, autoprefixerOptions));
+@@ -109,7 +109,13 @@ export default postcss.plugin('postcss-preset-env', opts => {
+ 			Promise.resolve()
+ 		).then(
+ 			() => stagedAutoprefixer(result.root, result)
+-		);
++		).then(
++			() => {
++				if (Object(opts).exportTo) {
++					writeToExports(sharedOpts.exportTo, opts.exportTo);
++				}
++			}
++		)
+ 
+ 		return polyfills;
+ 	};
+@@ -124,7 +130,11 @@ const initializeSharedOpts = opts => {
+ 		}
+ 
+ 		if ('exportTo' in opts) {
+-			sharedOpts.exportTo = opts.exportTo;
++			sharedOpts.exportTo = {
++				customMedia: {},
++				customProperties: {},
++				customSelectors: {},
++			};
+ 		}
+ 
+ 		if ('preserve' in opts) {
+@@ -135,4 +145,4 @@ const initializeSharedOpts = opts => {
+ 	}
+ 
+ 	return false;
+-}
++};
+diff --git a/lib/ids-by-execution-order.js b/lib/ids-by-execution-order.js
+index f853e34..fd1855a 100644
+--- a/lib/ids-by-execution-order.js
++++ b/lib/ids-by-execution-order.js
+@@ -4,15 +4,16 @@ export default [
+ 	'custom-properties',
+ 	'environment-variables', // run environment-variables here to access transpiled custom media params and properties
+ 	'image-set-function', // run images-set-function before nesting-rules so that it may fix nested media
+-	'media-query-ranges', // run media-query-range here to prevent duplicate transpilation after nesting-rules
++	'media-query-ranges', // run media-query-range and
++	'prefers-color-scheme-query', // run prefers-color-scheme-query here to prevent duplicate transpilation after nesting-rules
+ 	'nesting-rules',
+ 	'custom-selectors', // run custom-selectors after nesting-rules to correctly transpile &:--custom-selector
+ 	'any-link-pseudo-class',
+ 	'case-insensitive-attributes',
+ 	'focus-visible-pseudo-class',
+ 	'focus-within-pseudo-class',
+-	'matches-pseudo-class',
+-	'not-pseudo-class', // run matches-pseudo-class and bit-pseudo-class after other selectors have been transpiled
++	'matches-pseudo-class', // run matches-pseudo-class and
++	'not-pseudo-class', // run not-pseudo-class after other selectors have been transpiled
+ 	'logical-properties-and-values', // run logical-properties-and-values before dir-pseudo-class
+ 	'dir-pseudo-class',
+ 	'all-property', // run all-property before other property polyfills
+diff --git a/lib/plugins-by-id.js b/lib/plugins-by-id.js
+index 44f5c22..375aad3 100644
+--- a/lib/plugins-by-id.js
++++ b/lib/plugins-by-id.js
+@@ -24,6 +24,7 @@ import postcssNesting from 'postcss-nesting';
+ import postcssOverflowShorthand from 'postcss-overflow-shorthand';
+ import postcssPageBreak from 'postcss-page-break';
+ import postcssPlace from 'postcss-place';
++import postcssPrefersColorScheme from 'css-prefers-color-scheme/postcss';
+ import postcssPseudoClassAnyLink from 'postcss-pseudo-class-any-link';
+ import postcssReplaceOverflowWrap from 'postcss-replace-overflow-wrap';
+ import postcssSelectorMatches from 'postcss-selector-matches';
+@@ -59,6 +60,7 @@ export default {
+ 	'overflow-property': postcssOverflowShorthand,
+ 	'overflow-wrap-property': postcssReplaceOverflowWrap,
+ 	'place-properties': postcssPlace,
++	'prefers-color-scheme-query': postcssPrefersColorScheme,
+ 	'rebeccapurple-color': postcssColorRebeccapurple,
+ 	'system-ui-font-family': postcssFontFamilySystemUi
+ };
+diff --git a/lib/write-to-exports.js b/lib/write-to-exports.js
+new file mode 100644
+index 0000000..c7e3032
+--- /dev/null
++++ b/lib/write-to-exports.js
+@@ -0,0 +1,196 @@
++/* eslint max-params: ["error", 4] */
++
++import fs from 'fs';
++import path from 'path';
++
++/* Write Exports to CSS File
++/* ========================================================================== */
++
++function getCustomMediaAsCss(customMedia) {
++	const cssContent = Object.keys(customMedia).reduce((cssLines, name) => {
++		cssLines.push(`@custom-media ${name} ${customMedia[name]};`);
++
++		return cssLines;
++	}, []).join('\n');
++	const css = `${cssContent}\n`;
++
++	return css;
++}
++
++function getCustomPropertiesAsCss(customProperties) {
++	const cssContent = Object.keys(customProperties).reduce((cssLines, name) => {
++		cssLines.push(`\t${name}: ${customProperties[name]};`);
++
++		return cssLines;
++	}, []).join('\n');
++	const css = `:root {\n${cssContent}\n}\n`;
++
++	return css;
++}
++
++function getCustomSelectorsAsCss(customSelectors) {
++	const cssContent = Object.keys(customSelectors).reduce((cssLines, name) => {
++		cssLines.push(`@custom-selector ${name} ${customSelectors[name]};`);
++
++		return cssLines;
++	}, []).join('\n');
++	const css = `${cssContent}\n`;
++
++	return css;
++}
++
++async function writeExportsToCssFile(to, customMedia, customProperties, customSelectors) {
++	const customPropertiesAsCss = getCustomPropertiesAsCss(customProperties);
++	const customMediaAsCss = getCustomMediaAsCss(customMedia);
++	const customSelectorsAsCss = getCustomSelectorsAsCss(customSelectors);
++	const css = `${customMediaAsCss}\n${customSelectorsAsCss}\n${customPropertiesAsCss}`;
++
++	await writeFile(to, css);
++}
++
++/* Write Exports to JSON file
++/* ========================================================================== */
++
++async function writeExportsToJsonFile(to, customMedia, customProperties, customSelectors) {
++	const jsonContent = JSON.stringify({
++		'custom-media': customMedia,
++		'custom-properties': customProperties,
++		'custom-selectors': customSelectors
++	}, null, '  ');
++	const json = `${jsonContent}\n`;
++
++	await writeFile(to, json);
++}
++
++/* Write Exports to Common JS file
++/* ========================================================================== */
++
++function getObjectWithKeyAsCjs(key, object) {
++	const jsContents = Object.keys(object).reduce((jsLines, name) => {
++		jsLines.push(`\t\t'${escapeForJS(name)}': '${escapeForJS(object[name])}'`);
++
++		return jsLines;
++	}, []).join(',\n');
++	const cjs = `\n\t${key}: {\n${jsContents}\n\t}`;
++
++	return cjs;
++}
++
++async function writeExportsToCjsFile(to, customMedia, customProperties, customSelectors) {
++	const customMediaAsCjs = getObjectWithKeyAsCjs('customMedia', customMedia);
++	const customPropertiesAsCjs = getObjectWithKeyAsCjs('customProperties', customProperties);
++	const customSelectorsAsCjs = getObjectWithKeyAsCjs('customSelectors', customSelectors);
++	const cjs = `module.exports = {${customMediaAsCjs},${customPropertiesAsCjs},${customSelectorsAsCjs}\n};\n`;
++
++	await writeFile(to, cjs);
++}
++
++/* Write Exports to Module JS file
++/* ========================================================================== */
++
++function getObjectWithKeyAsMjs(key, object) {
++	const mjsContents = Object.keys(object).reduce((mjsLines, name) => {
++		mjsLines.push(`\t'${escapeForJS(name)}': '${escapeForJS(object[name])}'`);
++
++		return mjsLines;
++	}, []).join(',\n');
++	const mjs = `export const ${key} = {\n${mjsContents}\n};\n`;
++
++	return mjs;
++}
++
++async function writeExportsToMjsFile(to, customMedia, customProperties, customSelectors) {
++	const customMediaAsMjs = getObjectWithKeyAsMjs('customMedia', customMedia);
++	const customPropertiesAsMjs = getObjectWithKeyAsMjs('customProperties', customProperties);
++	const customSelectorsAsMjs = getObjectWithKeyAsMjs('customSelectors', customSelectors);
++	const mjs = `${customMediaAsMjs}\n${customPropertiesAsMjs}\n${customSelectorsAsMjs}`;
++
++	await writeFile(to, mjs);
++}
++
++/* Write Exports to Exports
++/* ========================================================================== */
++
++export default function writeToExports(customExports, destinations) {
++	return Promise.all([].concat(destinations).map(async destination => {
++		if (destination instanceof Function) {
++			await destination({
++				customMedia: getObjectWithStringifiedKeys(customExports.customMedia),
++				customProperties: getObjectWithStringifiedKeys(customExports.customProperties),
++				customSelectors: getObjectWithStringifiedKeys(customExports.customSelectors)
++			});
++		} else {
++			// read the destination as an object
++			const opts = destination === Object(destination) ? destination : { to: String(destination) };
++
++			// transformer for Exports into a JSON-compatible object
++			const toJSON = opts.toJSON || getObjectWithStringifiedKeys;
++
++			if ('customMedia' in opts || 'customProperties' in opts || 'customSelectors' in opts) {
++				// write directly to an object as customProperties
++				opts.customMedia = toJSON(customExports.customMedia);
++				opts.customProperties = toJSON(customExports.customProperties);
++				opts.customSelectors = toJSON(customExports.customSelectors);
++			} else if ('custom-media' in opts || 'custom-properties' in opts || 'custom-selectors' in opts) {
++				// write directly to an object as custom-properties
++				opts['custom-media'] = toJSON(customExports.customMedia);
++				opts['custom-properties'] = toJSON(customExports.customProperties);
++				opts['custom-selectors'] = toJSON(customExports.customSelectors);
++			} else {
++				// destination pathname
++				const to = String(opts.to || '');
++
++				// type of file being written to
++				const type = (opts.type || path.extname(opts.to).slice(1)).toLowerCase();
++
++				// transformed Exports
++				const customMediaJSON = toJSON(customExports.customMedia);
++				const customPropertiesJSON = toJSON(customExports.customProperties);
++				const customSelectorsJSON = toJSON(customExports.customSelectors);
++
++				if (type === 'css') {
++					await writeExportsToCssFile(to, customMediaJSON, customPropertiesJSON, customSelectorsJSON);
++				}
++
++				if (type === 'js') {
++					await writeExportsToCjsFile(to, customMediaJSON, customPropertiesJSON, customSelectorsJSON);
++				}
++
++				if (type === 'json') {
++					await writeExportsToJsonFile(to, customMediaJSON, customPropertiesJSON, customSelectorsJSON);
++				}
++
++				if (type === 'mjs') {
++					await writeExportsToMjsFile(to, customMediaJSON, customPropertiesJSON, customSelectorsJSON);
++				}
++			}
++		}
++	}));
++}
++
++/* Helper utilities
++/* ========================================================================== */
++
++function getObjectWithStringifiedKeys(object) {
++	return Object.keys(object).reduce((objectJSON, key) => {
++		objectJSON[key] = String(object[key]);
++
++		return objectJSON;
++	}, {});
++}
++
++function writeFile(to, text) {
++	return new Promise((resolve, reject) => {
++		fs.writeFile(to, text, error => {
++			if (error) {
++				reject(error);
++			} else {
++				resolve();
++			}
++		});
++	});
++}
++
++function escapeForJS(string) {
++	return string.replace(/\\([\s\S])|(')/g, '\\$1$2').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
++}
+diff --git a/package.json b/package.json
+index 54bacda..24ecc69 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-preset-env",
+-  "version": "6.3.1",
++  "version": "6.4.0",
+   "description": "Convert modern CSS into something browsers understand",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -29,7 +29,8 @@
+     "autoprefixer": "^9.3.1",
+     "browserslist": "^4.3.4",
+     "caniuse-lite": "^1.0.30000905",
+-    "cssdb": "^4.1.0",
++    "css-prefers-color-scheme": "^3.0.0",
++    "cssdb": "^4.2.0",
+     "postcss": "^7.0.5",
+     "postcss-attribute-case-insensitive": "^4.0.0",
+     "postcss-color-functional-notation": "^2.0.1",
+diff --git a/test/basic.autoprefixer.expect.css b/test/basic.autoprefixer.expect.css
+index 07b5882..fba019f 100644
+--- a/test/basic.autoprefixer.expect.css
++++ b/test/basic.autoprefixer.expect.css
+@@ -61,6 +61,15 @@
+ 	}
+ }
+ 
++@custom-media --dark-mode (prefers-color-scheme: dark);
++
++@media (--dark-mode) {
++	body {
++		background-color: black;
++		color: white;
++	}
++}
++
+ @custom-selector :--heading h1, h2, h3, h4, h5, h6;
+ 
+ .test-custom-selectors:--heading {
+diff --git a/test/basic.autoprefixer.false.expect.css b/test/basic.autoprefixer.false.expect.css
+index 07b5882..fba019f 100644
+--- a/test/basic.autoprefixer.false.expect.css
++++ b/test/basic.autoprefixer.false.expect.css
+@@ -61,6 +61,15 @@
+ 	}
+ }
+ 
++@custom-media --dark-mode (prefers-color-scheme: dark);
++
++@media (--dark-mode) {
++	body {
++		background-color: black;
++		color: white;
++	}
++}
++
+ @custom-selector :--heading h1, h2, h3, h4, h5, h6;
+ 
+ .test-custom-selectors:--heading {
+diff --git a/test/basic.ch38.expect.css b/test/basic.ch38.expect.css
+index 842f0c8..9ff7a72 100644
+--- a/test/basic.ch38.expect.css
++++ b/test/basic.ch38.expect.css
+@@ -51,6 +51,15 @@
+ 	}
+ }
+ 
++@custom-media --dark-mode (prefers-color-scheme: dark);
++
++@media (--dark-mode) {
++	body {
++		background-color: black;
++		color: white;
++	}
++}
++
+ @custom-selector :--heading h1, h2, h3, h4, h5, h6;
+ 
+ .test-custom-selectors:--heading {
+diff --git a/test/basic.css b/test/basic.css
+index 0cd53a5..a73746a 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -41,6 +41,15 @@
+ 	}
+ }
+ 
++@custom-media --dark-mode (prefers-color-scheme: dark);
++
++@media (--dark-mode) {
++	body {
++		background-color: black;
++		color: white;
++	}
++}
++
+ @custom-selector :--heading h1, h2, h3, h4, h5, h6;
+ 
+ .test-custom-selectors:--heading {
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 87be838..d52bea0 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -62,6 +62,15 @@
+ 	}
+ }
+ 
++@custom-media --dark-mode (prefers-color-scheme: dark);
++
++@media (--dark-mode) {
++	body {
++		background-color: black;
++		color: white;
++	}
++}
++
+ @custom-selector :--heading h1, h2, h3, h4, h5, h6;
+ 
+ .test-custom-selectors:--heading {
+diff --git a/test/basic.ff49.expect.css b/test/basic.ff49.expect.css
+index a1d26c6..319ddef 100644
+--- a/test/basic.ff49.expect.css
++++ b/test/basic.ff49.expect.css
+@@ -52,6 +52,15 @@
+ 	}
+ }
+ 
++@custom-media --dark-mode (prefers-color-scheme: dark);
++
++@media (--dark-mode) {
++	body {
++		background-color: black;
++		color: white;
++	}
++}
++
+ @custom-selector :--heading h1, h2, h3, h4, h5, h6;
+ 
+ .test-custom-selectors:--heading {
+diff --git a/test/basic.nesting.expect.css b/test/basic.nesting.expect.css
+index 66928e5..bbd75b2 100644
+--- a/test/basic.nesting.expect.css
++++ b/test/basic.nesting.expect.css
+@@ -45,6 +45,15 @@
+ 	}
+ }
+ 
++@custom-media --dark-mode (prefers-color-scheme: dark);
++
++@media (--dark-mode) {
++	body {
++		background-color: black;
++		color: white;
++	}
++}
++
+ @custom-selector :--heading h1, h2, h3, h4, h5, h6;
+ 
+ .test-custom-selectors:--heading {
+diff --git a/test/basic.stage0-ff49.expect.css b/test/basic.stage0-ff49.expect.css
+index ce70f8e..f241024 100644
+--- a/test/basic.stage0-ff49.expect.css
++++ b/test/basic.stage0-ff49.expect.css
+@@ -53,6 +53,20 @@
+ 	}
+ }
+ 
++@media (color-index: 48) {
++	body {
++		background-color: black;
++		color: white;
++	}
++}
++
++@media (prefers-color-scheme: dark) {
++	body {
++		background-color: black;
++		color: white;
++	}
++}
++
+ h1.test-custom-selectors,h2.test-custom-selectors,h3.test-custom-selectors,h4.test-custom-selectors,h5.test-custom-selectors,h6.test-custom-selectors {
+ 	order: 9;
+ }
+diff --git a/test/basic.stage0.expect.css b/test/basic.stage0.expect.css
+index 9409d7a..76d04dd 100644
+--- a/test/basic.stage0.expect.css
++++ b/test/basic.stage0.expect.css
+@@ -63,6 +63,20 @@
+ 	}
+ }
+ 
++@media (color-index: 48) {
++	body {
++		background-color: black;
++		color: white;
++	}
++}
++
++@media (prefers-color-scheme: dark) {
++	body {
++		background-color: black;
++		color: white;
++	}
++}
++
+ h1.test-custom-selectors,h2.test-custom-selectors,h3.test-custom-selectors,h4.test-custom-selectors,h5.test-custom-selectors,h6.test-custom-selectors {
+ 	order: 9;
+ }
+diff --git a/test/generated-custom-exports.css b/test/generated-custom-exports.css
+new file mode 100644
+index 0000000..50d9e70
+--- /dev/null
++++ b/test/generated-custom-exports.css
+@@ -0,0 +1,8 @@
++@custom-media --narrow-window (max-width: 30em);
++@custom-media --dark-mode (prefers-color-scheme: dark);
++
++@custom-selector :--heading h1, h2, h3, h4, h5, h6;
++
++:root {
++	--order: 1;
++}
+diff --git a/test/generated-custom-exports.js b/test/generated-custom-exports.js
+new file mode 100644
+index 0000000..b3f90c6
+--- /dev/null
++++ b/test/generated-custom-exports.js
+@@ -0,0 +1,12 @@
++module.exports = {
++	customMedia: {
++		'--narrow-window': '(max-width: 30em)',
++		'--dark-mode': '(prefers-color-scheme: dark)'
++	},
++	customProperties: {
++		'--order': '1'
++	},
++	customSelectors: {
++		':--heading': 'h1, h2, h3, h4, h5, h6'
++	}
++};
+diff --git a/test/generated-custom-exports.json b/test/generated-custom-exports.json
+new file mode 100644
+index 0000000..3da969a
+--- /dev/null
++++ b/test/generated-custom-exports.json
+@@ -0,0 +1,12 @@
++{
++  "custom-media": {
++    "--narrow-window": "(max-width: 30em)",
++    "--dark-mode": "(prefers-color-scheme: dark)"
++  },
++  "custom-properties": {
++    "--order": "1"
++  },
++  "custom-selectors": {
++    ":--heading": "h1, h2, h3, h4, h5, h6"
++  }
++}
+diff --git a/test/generated-custom-exports.mjs b/test/generated-custom-exports.mjs
+new file mode 100644
+index 0000000..5d7eb1c
+--- /dev/null
++++ b/test/generated-custom-exports.mjs
+@@ -0,0 +1,12 @@
++export const customMedia = {
++	'--narrow-window': '(max-width: 30em)',
++	'--dark-mode': '(prefers-color-scheme: dark)'
++};
++
++export const customProperties = {
++	'--order': '1'
++};
++
++export const customSelectors = {
++	':--heading': 'h1, h2, h3, h4, h5, h6'
++};
+-- 
+2.33.1
+

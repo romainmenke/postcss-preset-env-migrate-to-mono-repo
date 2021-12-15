@@ -1,0 +1,36 @@
+From e30c992c4f4d2b2dac1386fc6d75581bd4d25217 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 17 Sep 2015 08:13:57 -0400
+Subject: [PATCH 022/108] Update CONTRIBUTING.md
+
+---
+ CONTRIBUTING.md | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+index a33aec2..d4c8b8e 100644
+--- a/CONTRIBUTING.md
++++ b/CONTRIBUTING.md
+@@ -7,7 +7,7 @@ Found a problem? Want a new feature?
+ - See if your issue or idea has [already been reported].
+ - Provide a [reduced test case] or a [live example].
+ 
+-Remember, a bug is a _demonstrable problem_ caused by _our_ code.
++Remember, a bug is a _demonstrable problem_ caused by _our_ code. Please use this [demo] as a testing platform. You can share code entered here at any time by pressing the Meta and S keys (`⌘S`) to save the current code as a URL.
+ 
+ ## Submitting Pull Requests
+ 
+@@ -54,7 +54,8 @@ Pull requests are the greatest contributions, so be sure they are focused in sco
+ 5. Now [open a pull request] with a clear title and description.
+ 
+ [already been reported]: issues
++[demo]:                  http://jonathantneal.github.io/postcss-nesting/
+ [fork this project]:     fork
+ [live example]:          http://codepen.io/pen
+ [open a pull request]:   https://help.github.com/articles/using-pull-requests/
+-[reduced test case]:     https://css-tricks.com/reduced-test-cases/
++[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+\ No newline at end of file
+-- 
+2.33.1
+

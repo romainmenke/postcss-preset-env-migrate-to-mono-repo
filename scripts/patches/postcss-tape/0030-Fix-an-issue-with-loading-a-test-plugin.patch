@@ -1,0 +1,29 @@
+From 5ab6d37a7e36e2abe843e8ae5d6195b24725e5b7 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 29 Jul 2019 08:44:23 -0400
+Subject: [PATCH 30/38] Fix an issue with loading a test plugin
+
+---
+ src/index.js | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/index.js b/src/index.js
+index 88bc0f6..8d2a7cb 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -13,7 +13,11 @@ getOptions().then(
+ 		for (const name in options.config) {
+ 			const test = options.config[name];
+ 
+-			const testPlugin = test.plugin instanceof Function ? test.plugin : options.plugin;
++			const testPlugin = typeof Object(test.plugin).process === 'function'
++				? test.plugin
++			: typeof test.plugin === 'function'
++				? { process: test.plugin }
++			: options.plugin;
+ 
+ 			const testBase = name.split(':')[0];
+ 			const testFull = name.split(':').join('.');
+-- 
+2.33.1
+

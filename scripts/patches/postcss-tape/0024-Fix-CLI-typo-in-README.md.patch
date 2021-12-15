@@ -1,0 +1,57 @@
+From 8e22f725cdb7201ee489e47a11f4f57fb3061e80 Mon Sep 17 00:00:00 2001
+From: Wesley B <wesleyboar@users.noreply.github.com>
+Date: Wed, 17 Jul 2019 03:53:34 -0500
+Subject: [PATCH 24/38] Fix CLI typo in README.md
+
+The CLI (i.e. "arguments") instructions included an `=` sign; the equals sign is not accurate nor necessary. Just to be sure, I tested:
+
+1. I copied `.tape.js` as `.tape.test.js`, and removed several test cases.
+2. Command `postcss-tape --config=./tape.test.js # used existing `/.tape.js` (saw many test cases).
+3. Command `postcss-tape --config=./tape.test.js # used new file `/.tape.test.js` (saw few test cases).
+---
+ README.md | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/README.md b/README.md
+index 2153945..f07679c 100644
+--- a/README.md
++++ b/README.md
+@@ -52,7 +52,7 @@ Options may be passed through `package.json` using `postcssConfig`:
+ Options may be passed through arguments:
+ 
+ ```sh
+-postcss-tape --plugin=path/to/plugin.js --config=path/to/.tape.js
++postcss-tape --plugin path/to/plugin.js --config path/to/.tape.js
+ ```
+ 
+ ## Test Options
+@@ -261,7 +261,7 @@ Options can be passed into the `postcss-tape` function or defined in
+ The path to the plugin being tested.
+ 
+ ```bash
+-postcss-tape --plugin=path/to/plugin.js
++postcss-tape --plugin path/to/plugin.js
+ ```
+ 
+ ```json
+@@ -279,7 +279,7 @@ By default, `plugin` is the resolved file from the current working directory.
+ The path to the configuration file used to run tests.
+ 
+ ```bash
+-postcss-tape --config=path/to/config.js
++postcss-tape --config path/to/config.js
+ ```
+ 
+ ```json
+@@ -299,7 +299,7 @@ default, `config` is the current working directory.
+ The path to the fixtures used by tests.
+ 
+ ```bash
+-postcss-tape --fixtures=path/to/tests
++postcss-tape --fixtures path/to/tests
+ ```
+ 
+ ```json
+-- 
+2.33.1
+

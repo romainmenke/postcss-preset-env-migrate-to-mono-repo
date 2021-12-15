@@ -1,0 +1,35 @@
+From b638e5a76ebd673c95e006185a09315a78e4cb9a Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 22 May 2017 13:24:23 -0400
+Subject: [PATCH 055/108] Improve selector validity testing
+
+---
+ lib/transform-nesting-atrule.js | 2 +-
+ lib/transform-nesting-rule.js   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/lib/transform-nesting-atrule.js b/lib/transform-nesting-atrule.js
+index a7f954e..08ece98 100644
+--- a/lib/transform-nesting-atrule.js
++++ b/lib/transform-nesting-atrule.js
+@@ -39,5 +39,5 @@ module.exports = (node) => {
+ 
+ // whether the node is a nesting atrule (e.g. @nest .something &)
+ module.exports.test = (node) => node.type === 'atrule' && node.name === 'nest' && node.parent && node.parent.type === 'rule' && comma(node.params).every(
+-	(selector) => selector.split('&').length === 2 && /&([^A-z]|$)/.test(selector)
++	(selector) => selector.split('&').length === 2 && /&([^\w-]|$)/.test(selector)
+ );
+diff --git a/lib/transform-nesting-rule.js b/lib/transform-nesting-rule.js
+index 40ee9c8..4ace658 100644
+--- a/lib/transform-nesting-rule.js
++++ b/lib/transform-nesting-rule.js
+@@ -25,5 +25,5 @@ module.exports = (node) => {
+ 
+ // whether the node is a nesting rule (e.g. &.something)
+ module.exports.test = (node) => node.type === 'rule' && node.parent && node.parent.type === 'rule' && node.selectors.every(
+-	(selector) => selector.trim().lastIndexOf('&') === 0 && /^&([^A-z]|$)/.test(selector)
++	(selector) => selector.trim().lastIndexOf('&') === 0 && /^&([^\w-]|$)/.test(selector)
+ );
+-- 
+2.33.1
+

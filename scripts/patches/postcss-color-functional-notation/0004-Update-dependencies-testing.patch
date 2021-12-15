@@ -1,0 +1,69 @@
+From 17acc21f7d6c1486808cf960d81d42782e84eb47 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 13 Jul 2018 15:05:03 -0400
+Subject: [PATCH 04/22] Update dependencies / testing
+
+---
+ .appveyor.yml |  2 +-
+ .travis.yml   |  2 +-
+ package.json  | 10 +++++-----
+ 3 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+index acbf8a5..73f0d8f 100644
+--- a/.appveyor.yml
++++ b/.appveyor.yml
+@@ -2,7 +2,7 @@
+ 
+ environment:
+   matrix:
+-    - nodejs_version: 4
++    - nodejs_version: 6
+ 
+ version: "{build}"
+ build: off
+diff --git a/.travis.yml b/.travis.yml
+index c564664..e1f11a5 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 4
++  - 6
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/package.json b/package.json
+index db870cc..622e328 100644
+--- a/package.json
++++ b/package.json
+@@ -25,19 +25,19 @@
+     "node": ">=4.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^6.0.22",
++    "postcss": "^6.0.23",
+     "postcss-values-parser": "^1.5.0"
+   },
+   "devDependencies": {
+     "babel-core": "^6.26.3",
+-    "babel-eslint": "^8.2.3",
++    "babel-eslint": "^8.2.6",
+     "babel-preset-env": "^1.7.0",
+-    "eslint": "^4.19.1",
++    "eslint": "^5.1.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.58.2",
+-    "rollup-plugin-babel": "^3.0.4"
++    "rollup": "^0.62.0",
++    "rollup-plugin-babel": "^3.0.7"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+-- 
+2.33.1
+

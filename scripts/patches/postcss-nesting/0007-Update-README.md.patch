@@ -1,0 +1,23 @@
+From d07a7323ac4d9a6a4cdf92359f69c92b78164f31 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 17 Jun 2015 12:28:54 -0400
+Subject: [PATCH 007/108] Update README.md
+
+---
+ README.md | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/README.md b/README.md
+index 76ce83a..2dae9f7 100644
+--- a/README.md
++++ b/README.md
+@@ -94,5 +94,6 @@ grunt.initConfig({
+ [ci]: https://travis-ci.org/jonathantneal/postcss-nesting
+ [ci-img]: https://travis-ci.org/jonathantneal/postcss-nesting.svg
+ [CSS Nesting Module Level 3]: http://tabatkins.github.io/specs/css-nesting/
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
+ [PostCSS Nesting]: https://github.com/jonathantneal/postcss-nesting
+-- 
+2.33.1
+

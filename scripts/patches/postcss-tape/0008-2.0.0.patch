@@ -1,0 +1,626 @@
+From 9fa0cb79e55c945876159bcc6aabd1c2f51c8b62 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 8 May 2017 19:54:27 -0400
+Subject: [PATCH 08/38] 2.0.0
+
+- Updated: Support for PostCSS v6
+- Updated: Support Node v4
+- Added: Another test
+---
+ .gitignore   |   3 +-
+ .tape.js     |  10 +++
+ .travis.yml  |   2 +-
+ README.md    |  39 +++------
+ index.js     | 225 ++++++++++++++++++++++++++-------------------------
+ lib/color.js |  38 +++++++++
+ lib/log.js   |  94 +++++++++++++++++++++
+ package.json |  24 +++---
+ 8 files changed, 280 insertions(+), 155 deletions(-)
+ create mode 100644 lib/color.js
+ create mode 100644 lib/log.js
+
+diff --git a/.gitignore b/.gitignore
+index 40408b3..b2b5b45 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,9 +1,8 @@
+ node_modules
+-
+ .*
+ !.gitignore
+ !.tape.js
+ !.travis.yml
+ *.log*
+-
+ *.result.css
++basic.generate.expect.css
+diff --git a/.tape.js b/.tape.js
+index 1610da7..64166ff 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -2,6 +2,16 @@ module.exports = {
+ 	'postcss-tape': {
+ 		'basic': {
+ 			'message': 'supports basic usage'
++		},
++		'basic:generate': {
++			'message': 'supports generating all files',
++			'error':   /Expected: \n/
++		},
++		'basic:sources': {
++			'message': 'supports specifying files',
++			'source':  'basic.css',
++			'expect':  'basic.result.css',
++			'result':  'basic.result.css'
+ 		}
+ 	}
+ };
+diff --git a/.travis.yml b/.travis.yml
+index 833d09d..63f7b35 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -1,3 +1,3 @@
+ language: node_js
+ node_js:
+-  - stable
++  - "4"
+diff --git a/README.md b/README.md
+index 5b38a21..5eb8fc9 100644
+--- a/README.md
++++ b/README.md
+@@ -11,7 +11,7 @@
+ 1. Install this dependency to your project:
+ 
+    ```sh
+-   npm install jonathantneal/postcss-tape
++   npm install postcss-tape --save-dev
+    ```
+ 
+ 2. Add the `postcss-tape` task to your `package.json`:
+@@ -19,7 +19,7 @@
+    ```json
+    {
+       "scripts": {
+-        "tape": "postcss-tape"
++        "test": "postcss-tape"
+       }
+    }
+    ```
+@@ -28,15 +28,15 @@
+ 
+    ```js
+    module.exports = {
+-		'postcss-my-plugin': {
+-			'basic': {
+-				message: 'supports basic usage'
+-			}
+-		}
++     'postcss-my-plugin': {
++       'basic': {
++         message: 'supports basic usage'
++       }
++     }
+    };
+    ```
+ 
+-That’s it! Now you can use the `tape` task:
++That’s it! Empty tests will be auto-generated. Now you can use the `tape` task:
+ 
+ ```sh
+ npm run tape
+@@ -48,11 +48,11 @@ Options may be passed through `package.json` using `postcssConfig`:
+ 
+ ```json
+ {
+-	"postcssConfig": {
+-		"plugin": "path/to/plugin.js",
+-		"config": "path/to/.tape.js",
+-		"fixtures": "path/to/cssdir"
+-	}
++  "postcssConfig": {
++    "plugin": "path/to/plugin.js",
++    "config": "path/to/.tape.js",
++    "fixtures": "path/to/cssdir"
++  }
+ }
+ ```
+ 
+@@ -62,19 +62,6 @@ Options may be passed through arguments:
+ postcss-tape --plugin=path/to/plugin.js --config=path/to/.tape.js
+ ```
+ 
+-## Advanced usage
+-
+-Overriding the `plugin#process` method in your plugin allows you to separate plugin options from process options. This is useful when testing plugins that need to work when no options are passed, or when testing plugins that need to use options that share the namespace of process options.
+-
+-```js
+-// override plugin#process
+-module.exports.process = function (cssString, pluginOptions, processOptions) {
+-	return postcss([
+-		1 in arguments ? module.exports(pluginOptions) : module.exports()
+-	]).process(cssString, processOptions);
+-};
+-```
+-
+ [npm-url]: https://www.npmjs.com/package/postcss-tape
+ [npm-img]: https://img.shields.io/npm/v/postcss-tape.svg
+ [cli-url]: https://travis-ci.org/jonathantneal/postcss-tape
+diff --git a/index.js b/index.js
+index af1bd80..c763025 100644
+--- a/index.js
++++ b/index.js
+@@ -1,38 +1,39 @@
+-#!/usr/bin/env node
++#!/usr/bin/env node --use_strict
+ 
+ // tooling
++const log  = require('./lib/log');
+ const fs   = require('fs');
+ const path = require('path');
+ 
+ // current directory
+ const cwd = process.cwd();
+ 
+-// error symbols
+-const pass = '\x1b[32m\✔\x1b[0m';
+-const fail = '\x1b[31m\✖\x1b[0m';
+-
+ // argument option matcher
+ const optionMatch = /^--([\w-]+)=(["']?)(.+?)\2$/;
+ 
+ // options
+-const opts = Object.assign(
+-	// default options
+-	{
+-		plugin:   cwd,
+-		config:   path.join(cwd, '.tape.js'),
+-		fixtures: path.join(cwd, 'test')
+-	},
+-	// package.json[postcssConfig] options
+-	requireOrThrow(path.join(cwd, 'package.json')).postcssConfig,
+-	// argument options
+-	...process.argv.filter(
+-		(arg) => optionMatch.test(arg)
+-	).map(
+-		(arg) => arg.match(optionMatch)
+-	).map(
+-		(arg) => ({
+-			[arg[1]]: arg[3]
+-		})
++const opts = Object.assign.apply(
++	null,
++	[
++		// default options
++		{
++			plugin:   cwd,
++			config:   path.join(cwd, '.tape.js'),
++			fixtures: path.join(cwd, 'test')
++		},
++		// package.json[postcssConfig] options
++		requireOrThrow(path.join(cwd, 'package.json')).postcssConfig
++	].concat(
++		// argument options
++		process.argv.filter(
++			(arg) => optionMatch.test(arg)
++		).map(
++			(arg) => arg.match(optionMatch)
++		).map(
++			(arg) => ({
++				[arg[1]]: arg[3]
++			})
++		)
+ 	)
+ );
+ 
+@@ -43,102 +44,115 @@ const plugin = requireOrThrow(path.resolve(cwd, opts.plugin));
+ const tests = requireOrThrow(path.resolve(cwd, opts.config));
+ 
+ // runner
+-Promise.all(Object.keys(tests).map(
+-	(section) => Promise.all(
+-		Object.keys(tests[section]).map(
+-			(name) => {
+-				// test options
+-				const test = tests[section][name];
+-
+-				const baseName = name.split(':')[0];
+-				const testName = name.split(':').join('.');
+-				const warnings = test.warning || 0;
+-
+-				// test paths
+-				const sourcePath = path.resolve(opts.fixtures, baseName + '.css');
+-				const expectPath = path.resolve(opts.fixtures, testName + '.expect.css');
+-				const resultPath = path.resolve(opts.fixtures, testName + '.result.css');
+-
+-				// promise source css and expected css contents
+-				return Promise.all([
+-					readFile(sourcePath, 'utf8'),
+-					readFile(expectPath, 'utf8')
+-				]).then(
+-					([sourceCSS, expectCSS]) => plugin.process.apply(
+-						null,
+-						plugin.process.length === 3 ? [
+-							sourceCSS,
+-							test.options,
++Object.keys(tests).reduce(
++	(testpromise, section) => testpromise.then(
++		() => Object.keys(tests[section]).reduce(
++			(sectionpromise, name) => sectionpromise.then(
++				() => {
++					const test = tests[section][name];
++
++					log.wait(section, test.message);
++
++					const testBase = name.split(':')[0];
++					const testFull = name.split(':').join('.');
++					const warnings = test.warning || 0;
++
++					// test paths
++					const sourcePath = path.resolve(opts.fixtures, test.source || `${testBase}.css`);
++					const expectPath = path.resolve(opts.fixtures, test.expect || `${testFull}.expect.css`);
++					const resultPath = path.resolve(opts.fixtures, test.result || `${testFull}.result.css`);
++
++					if (test.before) {
++						test.before();
++					}
++
++					return readFile(sourcePath, 'utf8').then(
++						(css) => plugin.process(
++							css,
+ 							{
+ 								from: sourcePath,
+ 								to:   resultPath
+-							}
+-						] : [
+-							sourceCSS,
+-							Object.assign(
+-								{
+-									from: sourcePath,
+-									to:   resultPath
+-								},
+-								test.options
+-							)
+-						]
++							},
++							test.options
++						),
++						() => writeFile(sourcePath, '').then(
++							() => ''
++						)
+ 					).then(
+ 						(result) => writeFile(resultPath, result.css).then(
+-							() => {
+-								if (result.css !== expectCSS) {
+-									throw new Error(`  ${ fail }  ${ test.message }\n${ JSON.stringify({
+-										expect: expectCSS,
+-										result: result.css
+-									}, null, '  ') }`);
++							() => readFile(expectPath, 'utf8').catch(
++								() => writeFile(expectPath, '').then(
++									() => ''
++								)
++							)
++						).then(
++							(css) => {
++								if (result.css !== css) {
++									return Promise.reject([
++										`Expected: ${JSON.stringify(css).slice(1, -1)}`,
++										`Rendered: ${JSON.stringify(result.css).slice(1, -1)}`
++									])
+ 								} else if (result.warnings().length !== warnings) {
+-									throw Error(`  ${ fail } ${ test.message } (${ result.warnings().length } warnings, expected ${ warnings })`);
+-								} else {
+-									return `  ${ pass }  ${ test.message }`;
++									return Promise.reject([
++										`Expected: ${result.warnings().length} warnings`,
++										`Rendered: ${warnings} warnings`
++									]);
+ 								}
++
++								return true;
+ 							}
+-						),
++						)
++					).then(
++						() => {
++							if (test.after) {
++								test.after();
++							}
++
++							log.pass(section, test.message);
++						},
+ 						(error) => {
++							if (test.after) {
++								test.after();
++							}
++
+ 							const expectedError = test.error && Object.keys(test.error).every(
+ 								(key) => test.error[key] instanceof RegExp ? test.error[key].test(error[key]) : test.error[key] === error[key]
+ 							);
+ 
+ 							if (expectedError) {
+-								return `  ${ pass }  ${ test.message }`;
+-							} else {
+-								if (test.after) {
+-									test.after();
+-								}
++								log.pass(section, test.message);
+ 
+-								throw error;
++								return true;
+ 							}
+-						}
+-					)
+-				).then(
+-					(result) => {
+-						if (test.after) {
+-							test.after();
+-						}
+ 
+-						return result;
+-					}
+-				);
+-			}
+-		)
+-	).then(
+-		(messages) => console.log(`${ pass } ${ section }\n${ messages.join('\n') }\n`),
+-		(error) => {
+-			console.log(`${ fail } ${ section }\n${ error }\n`);
++							log.fail(section, test.message, error);
+ 
+-			throw error;
+-		}
+-	)
+-)).then(
+-	() => console.log(`\n${ pass } Test passed\n`) && process.exit(0),
+-	() => console.log(`\n${ fail } Test failed\n`) && process.exit(1)
++							return Promise.reject();
++						}
++					);
++				}
++			),
++			Promise.resolve()
++		)
++	),
++	Promise.resolve()
++).then(
++	() => process.exit(0),
++	() => process.exit(1)
+ );
+ 
+-// Promise fs.readFile
++// load modules or throw an error
++function requireOrThrow(name) {
++	try {
++		return require(name);
++	} catch (error) {
++		log.fail(name, 'failed to load');
++
++		return process.exit(1);
++	}
++}
++
++// fs.readFile then-ified
+ function readFile(filename) {
+ 	return new Promise(
+ 		(resolve, reject) => fs.readFile(filename, 'utf8',
+@@ -147,7 +161,7 @@ function readFile(filename) {
+ 	);
+ }
+ 
+-// Promise fs.writeFile
++// fs.writeFile then-ified
+ function writeFile(filename, data) {
+ 	return new Promise(
+ 		(resolve, reject) => fs.writeFile(filename, data,
+@@ -155,14 +169,3 @@ function writeFile(filename, data) {
+ 		)
+ 	);
+ }
+-
+-// load modules or throw an error
+-function requireOrThrow(name) {
+-	try {
+-		return require(name);
+-	} catch (error) {
+-		console.log(`${ fail } Failed to load "${ name }"\n`);
+-
+-		return process.exit(1);
+-	}
+-}
+diff --git a/lib/color.js b/lib/color.js
+new file mode 100644
+index 0000000..0eff257
+--- /dev/null
++++ b/lib/color.js
+@@ -0,0 +1,38 @@
++// colors
++const colors = {
++	reset: '\x1b[0m',
++	bold: '\x1b[1m',
++	dim: '\x1b[2m',
++	underline: '\x1b[4m',
++	blink: '\x1b[5m',
++	reverse: '\x1b[7m',
++	hidden: '\x1b[8m',
++	black: '\x1b[30m',
++	red: '\x1b[31m',
++	green: '\x1b[32m',
++	yellow: '\x1b[33m',
++	blue: '\x1b[34m',
++	magenta: '\x1b[35m',
++	cyan: '\x1b[36m',
++	white: '\x1b[37m',
++	bgBlack: '\x1b[40m',
++	bgRed: '\x1b[41m',
++	bgGreen: '\x1b[42m',
++	bgYellow: '\x1b[43m',
++	bgBlue: '\x1b[44m',
++	bgMagenta: '\x1b[45m',
++	bgCyan: '\x1b[46m',
++	bgWhite: '\x1b[47m'
++};
++
++// colors as wrapping methods
++Object.assign.apply(
++	null,
++	[exports].concat(
++		Object.keys(colors).map(
++			(color) => ({
++				[color]: (string) => colors[color] + string.replace(colors.reset, colors.reset + colors[color]) + colors.reset
++			})
++		)
++	)
++);
+diff --git a/lib/log.js b/lib/log.js
+new file mode 100644
+index 0000000..8d87502
+--- /dev/null
++++ b/lib/log.js
+@@ -0,0 +1,94 @@
++// tooling
++const color    = require('./color');
++const readline = require('readline');
++
++// symbols
++const isWin32 = process.platform === 'win32';
++const tick    = isWin32 ? '√' : '✔';
++const cross   = isWin32 ? '×' : '✖';
++
++// log methods
++Object.assign(exports, {
++	// log with a passing appearance
++	pass(name, message, size) {
++		clearInterval(exports.interval);
++
++		// reset current stream line
++		readline.clearLine(process.stdout, 0);
++		readline.cursorTo(process.stdout, 0);
++
++		process.stdout.write(color.green(tick) + ' ' + name + ' ' + color.dim(message) + (size ? ' ' + color.green('[' + size + ']') : '') + '\n');
++
++		return exports;
++	},
++
++	// log with a failing appearance
++	fail(name, message, errors) {
++		clearInterval(exports.interval);
++
++		// reset current stream line
++		readline.clearLine(process.stdout, 0);
++		readline.cursorTo(process.stdout, 0);
++
++		process.stdout.write(color.red(cross) + ' ' + name + ' ' + color.dim(message) + '\n');
++
++		if (errors) {
++			if (Array.isArray(errors)) {
++				errors.forEach((error) => {
++					process.stdout.write('  → ' + color.dim(error) + '\n');
++				});
++			} else {
++				process.stdout.write('  → ' + color.dim(errors) + '\n');
++			}
++		}
++
++		return exports;
++	},
++
++	// log with a waiting appearance
++	wait(name, message) {
++		const spinner = isWin32 ? '-–—–-' : '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
++
++		let index = 0;
++
++		clearInterval(exports.interval);
++
++		// reset current stream line
++		readline.clearLine(process.stdout, 0);
++		readline.cursorTo(process.stdout, 0);
++
++		process.stdout.write(color.yellow(spinner[index]) + ' ' + name + ' ' + color.dim(message));
++
++		exports.interval = setInterval(() => {
++			index = (index + 1) % spinner.length;
++
++			readline.cursorTo(process.stdout, 0);
++
++			process.stdout.write(color.yellow(spinner[index]) + ' ' + name + ' ' + color.dim(message));
++		}, 60);
++
++		return exports;
++	},
++
++	// stopped waiting log
++	stop() {
++		clearInterval(exports.interval);
++
++		// reset current stream line
++		readline.clearLine(process.stdout, 0);
++		readline.cursorTo(process.stdout, 0);
++
++		return exports;
++	},
++
++	// log
++	line(message) {
++		// reset current stream line
++		readline.clearLine(process.stdout, 0);
++		readline.cursorTo(process.stdout, 0);
++
++		process.stdout.write(Array.isArray(message) ? message.join('\n') + '\n' : String(message || '') + '\n');
++
++		return exports;
++	}
++});
+diff --git a/package.json b/package.json
+index 4815a5a..e9b0ffa 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-tape",
+-  "version": "1.3.1",
++  "version": "2.0.0",
+   "description": "Quickly test PostCSS plugins",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -12,28 +12,22 @@
+     "postcss-tape": "index.js"
+   },
+   "files": [
+-    "index.js"
++    "index.js",
++    "lib"
+   ],
+   "scripts": {
+     "clean": "git clean -X -d -f",
+-    "lint": "npm run lint:ec && npm run lint:js",
+-    "lint:ec": "echint",
+-    "lint:js": "eslint *.js --cache --ignore-pattern .gitignore",
+     "prepublish": "npm test",
+-    "tape": "node index --plugin=test.js",
+-    "test": "npm run lint && npm run tape"
++    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
++    "test:js": "eslint *.js --cache --ignore-pattern .gitignore",
++    "test:tape": "node --use_strict index --plugin=test.js"
+   },
+   "engines": {
+-    "node": ">=6.5.0"
++    "node": ">=4.0.0"
+   },
+   "devDependencies": {
+-    "echint": "^4.0.1",
+-    "echint-config-dev": "1.0.0",
+-    "eslint": "^3.15.0",
+-    "eslint-config-dev": "1.0.0"
+-  },
+-  "echint": {
+-    "extends": "dev"
++    "eslint": "^3.19.0",
++    "eslint-config-dev": "2.0.0"
+   },
+   "eslintConfig": {
+     "extends": "dev"
+-- 
+2.33.1
+

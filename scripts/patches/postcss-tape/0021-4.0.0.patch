@@ -1,0 +1,522 @@
+From 9bc2ba39545ef1666b3ec39f03a7ad723a834e02 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 22 Dec 2018 16:33:05 -0500
+Subject: [PATCH 21/38] 4.0.0
+
+---
+ .editorconfig                         |  15 +++
+ .gitignore                            |   2 +-
+ CHANGELOG.md                          |  11 ++
+ CONTRIBUTING.md                       |   2 +-
+ LICENSE.md                            | 138 +++++++++++++-------------
+ README.md                             |  82 +++++++++++++--
+ package.json                          |  32 +++---
+ src/index.js                          |   9 +-
+ src/lib/get-options-from-arguments.js |  49 ++++-----
+ 9 files changed, 218 insertions(+), 122 deletions(-)
+ create mode 100644 .editorconfig
+
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..e06d798
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,15 @@
++root = true
++
++[*]
++charset = utf-8
++end_of_line = lf
++indent_style = tab
++insert_final_newline = true
++trim_trailing_whitespace = true
++
++[*.md]
++trim_trailing_whitespace = false
++
++[*.{json,md,yml}]
++indent_size = 2
++indent_style = space
+diff --git a/.gitignore b/.gitignore
+index 7609255..d5f386a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,8 +1,8 @@
+ node_modules
+ package-lock.json
+ .*
++!.editorconfig
+ !.gitignore
+-!.tape.js
+ !.travis.yml
+ *.log*
+ *.result.css
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 7aaa925..377d6e3 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,16 @@
+ # Changes to PostCSS Tape
+ 
++### 4.0.0 (December 22, 2018)
++
++- Changes the nested `postcss-plugin: { "test-name": {} }` with
++`{ "test-name": {} }`.
++- Supports a `--ci true` mode for full logging
++
++I’ve rewritten the plugin in less lines of code and hopefully more clearly.
++I had a lot of trouble following the old version, so it’s very hard to know
++what changes there are. I also accidentally published an incompatible version,
++so version 3 is skipped for 4.
++
+ ### 2.2.0 (November 2, 2017)
+ 
+ - Added: New `processOptions` option for controlling the PostCSS process
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+index 6d38ae9..11b2f92 100644
+--- a/CONTRIBUTING.md
++++ b/CONTRIBUTING.md
+@@ -24,7 +24,7 @@ scope, and do avoid unrelated commits.
+ 	# Navigate to the newly cloned directory
+ 	cd postcss-tape
+ 	# Assign the original repo to a remote called "upstream"
+-	git remote add upstream https://github.com/jonathantneal/postcss-tape
++	git remote add upstream https://github.com/csstools/postcss-tape
+ 	# Install the tools necessary for development
+ 	npm install
+ 	```
+diff --git a/LICENSE.md b/LICENSE.md
+index 34f902f..0bc1fa7 100644
+--- a/LICENSE.md
++++ b/LICENSE.md
+@@ -27,80 +27,82 @@ Copyright and Related Rights in the Work and the meaning and intended legal
+ effect of CC0 on those rights.
+ 
+ 1. Copyright and Related Rights. A Work made available under CC0 may be
+-	 protected by copyright and related or neighboring rights (“Copyright and
+-	 Related Rights”). Copyright and Related Rights include, but are not limited
+-	 to, the following:
+-	1. the right to reproduce, adapt, distribute, perform, display,
+-		 communicate, and translate a Work;
+-	2. moral rights retained by the original author(s) and/or performer(s);
+-	3. publicity and privacy rights pertaining to a person’s image or likeness
+-		 depicted in a Work;
+-	4. rights protecting against unfair competition in regards to a Work,
+-		 subject to the limitations in paragraph 4(i), below;
+-	5. rights protecting the extraction, dissemination, use and reuse of data
+-		 in a Work;
+-	6. database rights (such as those arising under Directive 96/9/EC of the
+-		 European Parliament and of the Council of 11 March 1996 on the legal
+-		 protection of databases, and under any national implementation thereof,
+-		 including any amended or successor version of such directive); and
+-	7. other similar, equivalent or corresponding rights throughout the world
+-		 based on applicable law or treaty, and any national implementations
+-		 thereof.
++   protected by copyright and related or neighboring rights (“Copyright and
++   Related Rights”). Copyright and Related Rights include, but are not limited
++   to, the following:
++   1. the right to reproduce, adapt, distribute, perform, display, communicate,
++      and translate a Work;
++   2. moral rights retained by the original author(s) and/or performer(s);
++   3. publicity and privacy rights pertaining to a person’s image or likeness
++      depicted in a Work;
++   4. rights protecting against unfair competition in regards to a Work,
++      subject to the limitations in paragraph 4(i), below;
++   5. rights protecting the extraction, dissemination, use and reuse of data in
++      a Work;
++   6. database rights (such as those arising under Directive 96/9/EC of the
++      European Parliament and of the Council of 11 March 1996 on the legal
++      protection of databases, and under any national implementation thereof,
++      including any amended or successor version of such directive); and
++   7. other similar, equivalent or corresponding rights throughout the world
++      based on applicable law or treaty, and any national implementations
++      thereof.
+ 
+ 2. Waiver. To the greatest extent permitted by, but not in contravention of,
+-applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
+-unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
+-and Related Rights and associated claims and causes of action, whether now
+-known or unknown (including existing as well as future claims and causes of
+-action), in the Work (i) in all territories worldwide, (ii) for the maximum
+-duration provided by applicable law or treaty (including future time
+-extensions), (iii) in any current or future medium and for any number of
+-copies, and (iv) for any purpose whatsoever, including without limitation
+-commercial, advertising or promotional purposes (the “Waiver”). Affirmer makes
+-the Waiver for the benefit of each member of the public at large and to the
+-detriment of Affirmer’s heirs and successors, fully intending that such Waiver
+-shall not be subject to revocation, rescission, cancellation, termination, or
+-any other legal or equitable action to disrupt the quiet enjoyment of the Work
+-by the public as contemplated by Affirmer’s express Statement of Purpose.
++   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++   and Related Rights and associated claims and causes of action, whether now
++   known or unknown (including existing as well as future claims and causes of
++   action), in the Work (i) in all territories worldwide, (ii) for the maximum
++   duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
++   makes the Waiver for the benefit of each member of the public at large and
++   to the detriment of Affirmer’s heirs and successors, fully intending that
++   such Waiver shall not be subject to revocation, rescission, cancellation,
++   termination, or any other legal or equitable action to disrupt the quiet
++   enjoyment of the Work by the public as contemplated by Affirmer’s express
++   Statement of Purpose.
+ 
+ 3. Public License Fallback. Should any part of the Waiver for any reason be
+-judged legally invalid or ineffective under applicable law, then the Waiver
+-shall be preserved to the maximum extent permitted taking into account
+-Affirmer’s express Statement of Purpose. In addition, to the extent the Waiver
+-is so judged Affirmer hereby grants to each affected person a royalty-free, non
+-transferable, non sublicensable, non exclusive, irrevocable and unconditional
+-license to exercise Affirmer’s Copyright and Related Rights in the Work (i) in
+-all territories worldwide, (ii) for the maximum duration provided by applicable
+-law or treaty (including future time extensions), (iii) in any current or
+-future medium and for any number of copies, and (iv) for any purpose
+-whatsoever, including without limitation commercial, advertising or promotional
+-purposes (the “License”). The License shall be deemed effective as of the date
+-CC0 was applied by Affirmer to the Work. Should any part of the License for any
+-reason be judged legally invalid or ineffective under applicable law, such
+-partial invalidity or ineffectiveness shall not invalidate the remainder of the
+-License, and in such case Affirmer hereby affirms that he or she will not (i)
+-exercise any of his or her remaining Copyright and Related Rights in the Work
+-or (ii) assert any associated claims and causes of action with respect to the
+-Work, in either case contrary to Affirmer’s express Statement of Purpose.
++   judged legally invalid or ineffective under applicable law, then the Waiver
++   shall be preserved to the maximum extent permitted taking into account
++   Affirmer’s express Statement of Purpose. In addition, to the extent the
++   Waiver is so judged Affirmer hereby grants to each affected person a
++   royalty-free, non transferable, non sublicensable, non exclusive,
++   irrevocable and unconditional license to exercise Affirmer’s Copyright and
++   Related Rights in the Work (i) in all territories worldwide, (ii) for the
++   maximum duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “License”). The License
++   shall be deemed effective as of the date CC0 was applied by Affirmer to the
++   Work. Should any part of the License for any reason be judged legally
++   invalid or ineffective under applicable law, such partial invalidity or
++   ineffectiveness shall not invalidate the remainder of the License, and in
++   such case Affirmer hereby affirms that he or she will not (i) exercise any
++   of his or her remaining Copyright and Related Rights in the Work or (ii)
++   assert any associated claims and causes of action with respect to the Work,
++   in either case contrary to Affirmer’s express Statement of Purpose.
+ 
+ 4. Limitations and Disclaimers.
+-		1. No trademark or patent rights held by Affirmer are waived, abandoned,
+-			 surrendered, licensed or otherwise affected by this document.
+-		2. Affirmer offers the Work as-is and makes no representations or
+-			 warranties of any kind concerning the Work, express, implied, statutory
+-			 or otherwise, including without limitation warranties of title,
+-			 merchantability, fitness for a particular purpose, non infringement, or
+-			 the absence of latent or other defects, accuracy, or the present or
+-			 absence of errors, whether or not discoverable, all to the greatest
+-			 extent permissible under applicable law.
+-		3. Affirmer disclaims responsibility for clearing rights of other persons
+-			 that may apply to the Work or any use thereof, including without
+-			 limitation any person’s Copyright and Related Rights in the Work.
+-			 Further, Affirmer disclaims responsibility for obtaining any necessary
+-			 consents, permissions or other rights required for any use of the Work.
+-		4. Affirmer understands and acknowledges that Creative Commons is not a
+-			 party to this document and has no duty or obligation with respect to
+-			 this CC0 or use of the Work.
++   1. No trademark or patent rights held by Affirmer are waived, abandoned,
++      surrendered, licensed or otherwise affected by this document.
++   2. Affirmer offers the Work as-is and makes no representations or warranties
++      of any kind concerning the Work, express, implied, statutory or
++      otherwise, including without limitation warranties of title,
++      merchantability, fitness for a particular purpose, non infringement, or
++      the absence of latent or other defects, accuracy, or the present or
++      absence of errors, whether or not discoverable, all to the greatest
++      extent permissible under applicable law.
++   3. Affirmer disclaims responsibility for clearing rights of other persons
++      that may apply to the Work or any use thereof, including without
++      limitation any person’s Copyright and Related Rights in the Work.
++      Further, Affirmer disclaims responsibility for obtaining any necessary
++      consents, permissions or other rights required for any use of the Work.
++   4. Affirmer understands and acknowledges that Creative Commons is not a
++      party to this document and has no duty or obligation with respect to this
++      CC0 or use of the Work.
+ 
+ For more information, please see
+ http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/README.md b/README.md
+index fff8de3..5e7e546 100644
+--- a/README.md
++++ b/README.md
+@@ -104,9 +104,10 @@ more details.
+ }
+ ```
+ 
+-### warning
++### warnings
+ 
+-The number of warnings expected to be generated by the test.
++Either the number of warnings expected to be generated by the test, or an
++object used to match warnings given by the test.
+ 
+ ```js
+ {
+@@ -116,9 +117,19 @@ The number of warnings expected to be generated by the test.
+ }
+ ```
+ 
++```js
++{
++  'some-test': {
++    warnings: {
++      text: /should warn/
++    }
++  }
++}
++```
++
+ ### error
+ 
+-An identifying feature of an error expected to be thrown by the test.
++An object used to match errors thrown by the test.
+ 
+ ```js
+ {
+@@ -240,12 +251,71 @@ A plugin or array of plugins that will specifying alternative plugin
+ }
+ ```
+ 
++## CLI Options
++
++Options can be passed into the `postcss-tape` function or defined in
++`package.json` using the `postcssConfig` property.
++
++### plugin
++
++The path to the plugin being tested.
++
++```bash
++postcss-tape --plugin=path/to/plugin.js
++```
++
++```json
++{
++  "postcssConfig": {
++    "plugin": "path/to/plugin.js"
++  }
++}
++```
++
++By default, `plugin` is the resolved file from the current working directory.
++
++### config
++
++The path to the configuration file used to run tests.
++
++```bash
++postcss-tape --config=path/to/config.js
++```
++
++```json
++{
++  "postcssConfig": {
++    "config": "path/to/config.js"
++  }
++}
++```
++
++By default, [PostCSS Tape] will try to use the file defined by `config`, or
++the `config` directory’s `postcss-tape.config.js` or `.tape.js` file. By
++default, `config` is the current working directory.
++
++### fixtures
++
++The path to the fixtures used by tests.
++
++```bash
++postcss-tape --fixtures=path/to/tests
++```
++
++```json
++{
++  "postcssConfig": {
++    "fixtures": "path/to/tests"
++  }
++}
++```
++
+ [npm-img]: https://img.shields.io/npm/v/postcss-tape.svg
+ [npm-url]: https://www.npmjs.com/package/postcss-tape
+-[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-tape.svg
+-[cli-url]: https://travis-ci.org/jonathantneal/postcss-tape
++[cli-img]: https://img.shields.io/travis/csstools/postcss-tape.svg
++[cli-url]: https://travis-ci.org/csstools/postcss-tape
+ [git-img]: https://img.shields.io/badge/chat-gitter-blue.svg
+ [git-url]: https://gitter.im/postcss/postcss
+ 
+ [PostCSS]: https://github.com/postcss/postcss
+-[PostCSS Tape]: https://github.com/jonathantneal/postcss-tape
++[PostCSS Tape]: https://github.com/csstools/postcss-tape
+diff --git a/package.json b/package.json
+index 9291abe..4b30866 100644
+--- a/package.json
++++ b/package.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "postcss-tape",
+-  "version": "3.0.0-rc.2",
++  "version": "4.0.0",
+   "description": "Quickly test PostCSS plugins",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+-  "repository": "jonathantneal/postcss-tape",
+-  "homepage": "https://github.com/jonathantneal/postcss-tape#readme",
+-  "bugs": "https://github.com/jonathantneal/postcss-tape/issues",
++  "repository": "csstools/postcss-tape",
++  "homepage": "https://github.com/csstools/postcss-tape#readme",
++  "bugs": "https://github.com/csstools/postcss-tape/issues",
+   "main": "index.js",
+   "bin": {
+     "postcss-tape": "index.js"
+@@ -15,27 +15,27 @@
+     "index.js"
+   ],
+   "scripts": {
+-    "build": "rollup -c --silent",
++    "build": "rollup --config --silent",
+     "prepublish": "npm test",
+     "pretest:tape": "npm run build",
+     "test": "npm run test:js && npm run test:tape",
+     "test:js": "eslint src/*.js src/lib/*.js --cache --ignore-pattern .gitignore",
+-    "test:tape": "node . --plugin=test/plugin.js --config=test",
+-    "test:tape:ci": "node . --ci=true --plugin=test/plugin.js --config=test"
++    "test:tape": "node . --plugin test/plugin.js --config test",
++    "test:tape:ci": "node . --ci true --plugin test/plugin.js --config test"
+   },
+   "engines": {
+     "node": ">=6.0.0"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.2.0",
++    "@babel/core": "^7.2.2",
+     "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+-    "@babel/preset-env": "^7.2.0",
++    "@babel/preset-env": "^7.2.3",
+     "babel-eslint": "^10.0.1",
+-    "eslint": "^5.9.0",
++    "eslint": "^5.10.0",
+     "eslint-config-dev": "2.0.0",
+-    "postcss": "^7.0.6",
+-    "rollup": "^0.67.4",
+-    "rollup-plugin-babel": "^4.0.3",
++    "postcss": "^7.0.7",
++    "rollup": "^0.68.1",
++    "rollup-plugin-babel": "^4.1.0",
+     "rollup-plugin-terser": "^3.0.0"
+   },
+   "eslintConfig": {
+@@ -44,7 +44,11 @@
+     "rules": {
+       "complexity": [
+         1,
+-        23
++        24
++      ],
++      "max-params": [
++        1,
++        4
+       ]
+     }
+   },
+diff --git a/src/index.js b/src/index.js
+index 34ac8a1..d799d2a 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -24,7 +24,7 @@ getOptions().then(
+ 			const processOptions = Object.assign({ from: sourcePath, to: resultPath }, test.processOptions);
+ 			const pluginOptions = test.options;
+ 
+-			const pluginName = Object(testPlugin.postcss).postcssPlugin;
++			const pluginName = Object(testPlugin.postcss).postcssPlugin || 'postcss';
+ 
+ 			log.wait(pluginName, test.message, options.ci);
+ 
+@@ -116,8 +116,11 @@ getOptions().then(
+ 	() => {
+ 		process.exit(0);
+ 	},
+-	(error) => {
+-		console.error(error);
++	error => {
++		if (Object(error).message) {
++			console.error(error);
++		}
++
+ 		process.exit(1);
+ 	}
+ )
+diff --git a/src/lib/get-options-from-arguments.js b/src/lib/get-options-from-arguments.js
+index 4055de8..a437214 100644
+--- a/src/lib/get-options-from-arguments.js
++++ b/src/lib/get-options-from-arguments.js
+@@ -1,41 +1,32 @@
+-export default function getOptionsFromArguments(defaultOptions) {
+-	// argument option matcher
+-	const fileRegExp = /^[\w\/.]+$/;
+-	const argRegExp = /^--(\w+)=("|')?(.+)\2$/;
+-	const primativeRegExp = /^(false|null|true|undefined|\d+|\{.*\}|\[.*\])$/;
+-	const relaxedJsonPropRegExp = /(['"])?([a-z0-9A-Z_]+)\1:/g;
+-	const relaxedJsonValueRegExp = /("[a-z0-9A-Z_]+":\s*)(?!true|false|null|\d+)'?([A-z0-9]+)'?([,}])/g;
+-	const argNames = {};
++const argRegExp = /^--([\w-]+)$/;
++const primativeRegExp = /^(false|null|true|undefined|(\d+\.)?\d+|\{.*\}|\[.*\])$/;
++const relaxedJsonPropRegExp = /(['"])?([a-z0-9A-Z_]+)\1:/g;
++const relaxedJsonValueRegExp = /("[a-z0-9A-Z_]+":\s*)(?!true|false|null|\d+)'?([A-z0-9]+)'?([,}])/g;
+ 
++export default function getOptionsFromArguments(defaultOptions) {
+ 	return process.argv.slice(2).reduce(
+-		(options, arg) => {
++		(args, arg, index, argv) => {
++			const nextIndex = index + 1;
++			const nextArg = argv[nextIndex];
+ 			const argMatch = arg.match(argRegExp);
+-			const fileMatch = arg.match(fileRegExp);
+ 
+ 			if (argMatch) {
+-				const name = argMatch[1];
+-				const value = name !== 'from' && name !== 'to' && primativeRegExp.test(argMatch[3])
+-					? JSON.parse(
+-						argMatch[3]
+-						.replace(relaxedJsonPropRegExp, '"$2": ')
+-						.replace(relaxedJsonValueRegExp, '$1"$2"$3')
+-					)
+-				: argMatch[3];
+-
+-				options[name] = argNames[name]
+-					? [].concat(options[name], value)
+-				: value;
++				const [, name] = argMatch;
+ 
+-				argNames[name] = true;
+-			} else if (fileMatch) {
+-				if (options.from === '<stdin>') {
+-					options.from = arg;
+-				} else if (options.to === '<stdout>') {
+-					options.to = arg;
++				if (!nextArg || argRegExp.test(nextArg)) {
++					args[name] = true;
++				} else {
++					args[name] = primativeRegExp.test(nextArg)
++						? JSON.parse(
++							nextArg
++							.replace(relaxedJsonPropRegExp, '"$2": ')
++							.replace(relaxedJsonValueRegExp, '$1"$2"$3')
++						)
++					: nextArg;
+ 				}
+ 			}
+ 
+-			return options;
++			return args;
+ 		},
+ 		Object.assign({}, defaultOptions)
+ 	);
+-- 
+2.33.1
+

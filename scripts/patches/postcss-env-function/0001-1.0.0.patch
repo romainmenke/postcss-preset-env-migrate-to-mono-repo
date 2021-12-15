@@ -1,0 +1,813 @@
+From c7f2f6c3fa4dc1feac82e5c4bc75aec33ee88e9d Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 28 Apr 2018 15:02:04 -0400
+Subject: [PATCH 01/21] 1.0.0
+
+---
+ .appveyor.yml              |  18 ++++
+ .editorconfig              |  15 ++++
+ .gitignore                 |  12 +++
+ .rollup.js                 |  16 ++++
+ .tape.js                   |  13 +++
+ .travis.yml                |   9 ++
+ CHANGELOG.md               |   5 ++
+ CONTRIBUTING.md            |  65 ++++++++++++++
+ LICENSE.md                 | 108 ++++++++++++++++++++++++
+ README.md                  | 169 +++++++++++++++++++++++++++++++++++++
+ index.js                   |  20 +++++
+ lib/get-fn-value.js        |   8 ++
+ lib/get-replaced-value.js  |  18 ++++
+ lib/get-supported-value.js |   5 ++
+ lib/is-atrule.js           |   2 +
+ lib/is-decl.js             |   2 +
+ lib/is-env-func.js         |   2 +
+ lib/replace-with-word.js   |   8 ++
+ lib/set-supported-value.js |  13 +++
+ lib/update-env-value.js    |  12 +++
+ lib/walk-env-funcs.js      |  14 +++
+ package.json               |  56 ++++++++++++
+ test/basic.css             |  10 +++
+ test/basic.expect.css      |  10 +++
+ 24 files changed, 610 insertions(+)
+ create mode 100644 .appveyor.yml
+ create mode 100644 .editorconfig
+ create mode 100644 .gitignore
+ create mode 100644 .rollup.js
+ create mode 100644 .tape.js
+ create mode 100644 .travis.yml
+ create mode 100644 CHANGELOG.md
+ create mode 100644 CONTRIBUTING.md
+ create mode 100644 LICENSE.md
+ create mode 100644 README.md
+ create mode 100644 index.js
+ create mode 100644 lib/get-fn-value.js
+ create mode 100644 lib/get-replaced-value.js
+ create mode 100644 lib/get-supported-value.js
+ create mode 100644 lib/is-atrule.js
+ create mode 100644 lib/is-decl.js
+ create mode 100644 lib/is-env-func.js
+ create mode 100644 lib/replace-with-word.js
+ create mode 100644 lib/set-supported-value.js
+ create mode 100644 lib/update-env-value.js
+ create mode 100644 lib/walk-env-funcs.js
+ create mode 100644 package.json
+ create mode 100644 test/basic.css
+ create mode 100644 test/basic.expect.css
+
+diff --git a/.appveyor.yml b/.appveyor.yml
+new file mode 100644
+index 0000000..acbf8a5
+--- /dev/null
++++ b/.appveyor.yml
+@@ -0,0 +1,18 @@
++# https://www.appveyor.com/docs/appveyor-yml
++
++environment:
++  matrix:
++    - nodejs_version: 4
++
++version: "{build}"
++build: off
++deploy: off
++
++install:
++  - ps: Install-Product node $env:nodejs_version
++  - npm install --ignore-scripts
++
++test_script:
++  - node --version
++  - npm --version
++  - cmd: "npm test"
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..e06d798
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,15 @@
++root = true
++
++[*]
++charset = utf-8
++end_of_line = lf
++indent_style = tab
++insert_final_newline = true
++trim_trailing_whitespace = true
++
++[*.md]
++trim_trailing_whitespace = false
++
++[*.{json,md,yml}]
++indent_size = 2
++indent_style = space
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..de73e5a
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,12 @@
++node_modules
++index.*.js
++package-lock.json
++*.log*
++*.result.css
++.*
++!.appveyor.yml
++!.editorconfig
++!.gitignore
++!.rollup.js
++!.tape.js
++!.travis.yml
+diff --git a/.rollup.js b/.rollup.js
+new file mode 100644
+index 0000000..0436758
+--- /dev/null
++++ b/.rollup.js
+@@ -0,0 +1,16 @@
++import babel from 'rollup-plugin-babel';
++
++export default {
++	input: 'index.js',
++	output: [
++		{ file: 'index.cjs.js', format: 'cjs' },
++		{ file: 'index.es.js', format: 'es' }
++	],
++	plugins: [
++		babel({
++			presets: [
++				['env', { modules: false, targets: { node: 4 } }]
++			]
++		})
++	]
++};
+diff --git a/.tape.js b/.tape.js
+new file mode 100644
+index 0000000..f6b23c8
+--- /dev/null
++++ b/.tape.js
+@@ -0,0 +1,13 @@
++module.exports = {
++	'postcss-env-function': {
++		'basic': {
++			message: 'supports basic usage',
++			options: {
++				variables: {
++					'--some-custom-padding': '20px',
++					'--another-custom-width': '600px'
++				}
++			}
++		}
++	}
++};
+diff --git a/.travis.yml b/.travis.yml
+new file mode 100644
+index 0000000..c564664
+--- /dev/null
++++ b/.travis.yml
+@@ -0,0 +1,9 @@
++# https://docs.travis-ci.com/user/travis-lint
++
++language: node_js
++
++node_js:
++  - 4
++
++install:
++  - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100644
+index 0000000..8bcc451
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,5 @@
++# Changes to PostCSS Environment Variables
++
++### 1.0.0 (April 28, 2018)
++
++- Initial version
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+new file mode 100644
+index 0000000..69d4440
+--- /dev/null
++++ b/CONTRIBUTING.md
+@@ -0,0 +1,65 @@
++# Contributing to PostCSS Environment Variables
++
++You want to help? You rock! Now, take a moment to be sure your contributions
++make sense to everyone else.
++
++## Reporting Issues
++
++Found a problem? Want a new feature?
++
++- See if your issue or idea has [already been reported].
++- Provide a [reduced test case] or a [live example].
++
++Remember, a bug is a _demonstrable problem_ caused by _our_ code.
++
++## Submitting Pull Requests
++
++Pull requests are the greatest contributions, so be sure they are focused in
++scope and avoid unrelated commits.
++
++1. To begin; [fork this project], clone your fork, and add our upstream.
++   ```bash
++   # Clone your fork of the repo into the current directory
++   git clone git@github.com:YOUR_USER/postcss-env-function.git
++
++   # Navigate to the newly cloned directory
++   cd postcss-env-function
++
++   # Assign the original repo to a remote called "upstream"
++   git remote add upstream git@github.com:jonathantneal/postcss-env-function.git
++
++   # Install the tools necessary for testing
++   npm install
++   ```
++
++2. Create a branch for your feature or fix:
++   ```bash
++   # Move into a new branch for your feature
++   git checkout -b feature/thing
++   ```
++   ```bash
++   # Move into a new branch for your fix
++   git checkout -b fix/something
++   ```
++
++3. If your code follows our practices, then push your feature branch:
++   ```bash
++   # Test current code
++   npm test
++   ```
++   ```bash
++   # Push the branch for your new feature
++   git push origin feature/thing
++   ```
++   ```bash
++   # Or, push the branch for your update
++   git push origin update/something
++   ```
++
++That’s it! Now [open a pull request] with a clear title and description.
++
++[already been reported]: issues
++[fork this project]:     fork
++[live example]:          https://codepen.io/pen
++[open a pull request]:   https://help.github.com/articles/using-pull-requests/
++[reduced test case]:     https://css-tricks.com/reduced-test-cases/
+diff --git a/LICENSE.md b/LICENSE.md
+new file mode 100644
+index 0000000..0bc1fa7
+--- /dev/null
++++ b/LICENSE.md
+@@ -0,0 +1,108 @@
++# CC0 1.0 Universal
++
++## Statement of Purpose
++
++The laws of most jurisdictions throughout the world automatically confer
++exclusive Copyright and Related Rights (defined below) upon the creator and
++subsequent owner(s) (each and all, an “owner”) of an original work of
++authorship and/or a database (each, a “Work”).
++
++Certain owners wish to permanently relinquish those rights to a Work for the
++purpose of contributing to a commons of creative, cultural and scientific works
++(“Commons”) that the public can reliably and without fear of later claims of
++infringement build upon, modify, incorporate in other works, reuse and
++redistribute as freely as possible in any form whatsoever and for any purposes,
++including without limitation commercial purposes. These owners may contribute
++to the Commons to promote the ideal of a free culture and the further
++production of creative, cultural and scientific works, or to gain reputation or
++greater distribution for their Work in part through the use and efforts of
++others.
++
++For these and/or other purposes and motivations, and without any expectation of
++additional consideration or compensation, the person associating CC0 with a
++Work (the “Affirmer”), to the extent that he or she is an owner of Copyright
++and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and
++publicly distribute the Work under its terms, with knowledge of his or her
++Copyright and Related Rights in the Work and the meaning and intended legal
++effect of CC0 on those rights.
++
++1. Copyright and Related Rights. A Work made available under CC0 may be
++   protected by copyright and related or neighboring rights (“Copyright and
++   Related Rights”). Copyright and Related Rights include, but are not limited
++   to, the following:
++   1. the right to reproduce, adapt, distribute, perform, display, communicate,
++      and translate a Work;
++   2. moral rights retained by the original author(s) and/or performer(s);
++   3. publicity and privacy rights pertaining to a person’s image or likeness
++      depicted in a Work;
++   4. rights protecting against unfair competition in regards to a Work,
++      subject to the limitations in paragraph 4(i), below;
++   5. rights protecting the extraction, dissemination, use and reuse of data in
++      a Work;
++   6. database rights (such as those arising under Directive 96/9/EC of the
++      European Parliament and of the Council of 11 March 1996 on the legal
++      protection of databases, and under any national implementation thereof,
++      including any amended or successor version of such directive); and
++   7. other similar, equivalent or corresponding rights throughout the world
++      based on applicable law or treaty, and any national implementations
++      thereof.
++
++2. Waiver. To the greatest extent permitted by, but not in contravention of,
++   applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and
++   unconditionally waives, abandons, and surrenders all of Affirmer’s Copyright
++   and Related Rights and associated claims and causes of action, whether now
++   known or unknown (including existing as well as future claims and causes of
++   action), in the Work (i) in all territories worldwide, (ii) for the maximum
++   duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “Waiver”). Affirmer
++   makes the Waiver for the benefit of each member of the public at large and
++   to the detriment of Affirmer’s heirs and successors, fully intending that
++   such Waiver shall not be subject to revocation, rescission, cancellation,
++   termination, or any other legal or equitable action to disrupt the quiet
++   enjoyment of the Work by the public as contemplated by Affirmer’s express
++   Statement of Purpose.
++
++3. Public License Fallback. Should any part of the Waiver for any reason be
++   judged legally invalid or ineffective under applicable law, then the Waiver
++   shall be preserved to the maximum extent permitted taking into account
++   Affirmer’s express Statement of Purpose. In addition, to the extent the
++   Waiver is so judged Affirmer hereby grants to each affected person a
++   royalty-free, non transferable, non sublicensable, non exclusive,
++   irrevocable and unconditional license to exercise Affirmer’s Copyright and
++   Related Rights in the Work (i) in all territories worldwide, (ii) for the
++   maximum duration provided by applicable law or treaty (including future time
++   extensions), (iii) in any current or future medium and for any number of
++   copies, and (iv) for any purpose whatsoever, including without limitation
++   commercial, advertising or promotional purposes (the “License”). The License
++   shall be deemed effective as of the date CC0 was applied by Affirmer to the
++   Work. Should any part of the License for any reason be judged legally
++   invalid or ineffective under applicable law, such partial invalidity or
++   ineffectiveness shall not invalidate the remainder of the License, and in
++   such case Affirmer hereby affirms that he or she will not (i) exercise any
++   of his or her remaining Copyright and Related Rights in the Work or (ii)
++   assert any associated claims and causes of action with respect to the Work,
++   in either case contrary to Affirmer’s express Statement of Purpose.
++
++4. Limitations and Disclaimers.
++   1. No trademark or patent rights held by Affirmer are waived, abandoned,
++      surrendered, licensed or otherwise affected by this document.
++   2. Affirmer offers the Work as-is and makes no representations or warranties
++      of any kind concerning the Work, express, implied, statutory or
++      otherwise, including without limitation warranties of title,
++      merchantability, fitness for a particular purpose, non infringement, or
++      the absence of latent or other defects, accuracy, or the present or
++      absence of errors, whether or not discoverable, all to the greatest
++      extent permissible under applicable law.
++   3. Affirmer disclaims responsibility for clearing rights of other persons
++      that may apply to the Work or any use thereof, including without
++      limitation any person’s Copyright and Related Rights in the Work.
++      Further, Affirmer disclaims responsibility for obtaining any necessary
++      consents, permissions or other rights required for any use of the Work.
++   4. Affirmer understands and acknowledges that Creative Commons is not a
++      party to this document and has no duty or obligation with respect to this
++      CC0 or use of the Work.
++
++For more information, please see
++http://creativecommons.org/publicdomain/zero/1.0/.
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..a0c72b5
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,169 @@
++# PostCSS Environment Variables [<img src="https://postcss.github.io/postcss/logo.svg" alt="PostCSS Logo" width="90" height="90" align="right">][postcss]
++
++[![NPM Version][npm-img]][npm-url]
++[![Build Status][cli-img]][cli-url]
++[![Windows Build Status][win-img]][win-url]
++[![Support Chat][git-img]][git-url]
++
++[PostCSS Environment Variables] lets you use `env()` variables in CSS,
++following the [CSS Environment Variables] specification.
++
++```pcss
++@media (max-width: env(--branding-small)) {
++  body {
++    padding: env(--branding-padding);
++  }
++}
++
++/* becomes */
++
++@media (min-width: 600px) {
++  body {
++    padding: 20px;
++  }
++}
++
++/* when the `variables` option is: {
++  "--branding-small": "600px",
++  "--branding-padding": "20px"
++} */
++```
++
++## Usage
++
++Add [PostCSS Environment Variables] to your build tool:
++
++```bash
++npm install postcss-env-function --save-dev
++```
++
++#### Node
++
++Use [PostCSS Environment Variables] to process your CSS:
++
++```js
++import postcssEnvFunction from 'postcss-env-function';
++
++postcssEnvFunction.process(YOUR_CSS, /* processOptions */, /* pluginOptions */);
++```
++
++#### PostCSS
++
++Add [PostCSS] to your build tool:
++
++```bash
++npm install postcss --save-dev
++```
++
++Use [PostCSS Environment Variables] as a plugin:
++
++```js
++import postcss from 'gulp-postcss';
++import postcssEnvFunction from 'postcss-env-function';
++
++postcss([
++  postcssEnvFunction(/* pluginOptions */)
++]).process(YOUR_CSS);
++```
++
++#### Webpack
++
++Add [PostCSS Loader] to your build tool:
++
++```bash
++npm install postcss-loader --save-dev
++```
++
++Use [PostCSS Environment Variables] in your Webpack configuration:
++
++```js
++import postcssEnvFunction from 'postcss-env-function';
++
++module.exports = {
++  module: {
++    rules: [
++      {
++        test: /\.css$/,
++        use: [
++          'style-loader',
++          { loader: 'css-loader', options: { importLoaders: 1 } },
++          { loader: 'postcss-loader', options: {
++            ident: 'postcss',
++            plugins: () => [
++              postcssEnvFunction(/* pluginOptions */)
++            ]
++          } }
++        ]
++      }
++    ]
++  }
++}
++```
++
++#### Gulp
++
++Add [Gulp PostCSS] to your build tool:
++
++```bash
++npm install gulp-postcss --save-dev
++```
++
++Use [PostCSS Environment Variables] in your Gulpfile:
++
++```js
++import postcss from 'gulp-postcss';
++import postcssEnvFunction from 'postcss-env-function';
++
++gulp.task('css', () => gulp.src('./src/*.css').pipe(
++  postcss([
++    postcssEnvFunction(/* pluginOptions */)
++  ])
++).pipe(
++  gulp.dest('.')
++));
++```
++
++#### Grunt
++
++Add [Grunt PostCSS] to your build tool:
++
++```bash
++npm install grunt-postcss --save-dev
++```
++
++Use [PostCSS Environment Variables] in your Gruntfile:
++
++```js
++import postcssEnvFunction from 'postcss-env-function';
++
++grunt.loadNpmTasks('grunt-postcss');
++
++grunt.initConfig({
++  postcss: {
++    options: {
++      use: [
++       postcssEnvFunction(/* pluginOptions */)
++      ]
++    },
++    dist: {
++      src: '*.css'
++    }
++  }
++});
++```
++
++[cli-img]: https://img.shields.io/travis/jonathantneal/postcss-env-function.svg
++[cli-url]: https://travis-ci.org/jonathantneal/postcss-env-function
++[git-img]: https://img.shields.io/badge/support-chat-blue.svg
++[git-url]: https://gitter.im/postcss/postcss
++[npm-img]: https://img.shields.io/npm/v/postcss-env-function.svg
++[npm-url]: https://www.npmjs.com/package/postcss-env-function
++[win-img]: https://img.shields.io/appveyor/ci/jonathantneal/postcss-env-function.svg
++[win-url]: https://ci.appveyor.com/project/jonathantneal/postcss-env-function
++
++[CSS Environment Variables]: https://drafts.csswg.org/css-env-1/
++[Gulp PostCSS]: https://github.com/postcss/gulp-postcss
++[Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
++[PostCSS]: https://github.com/postcss/postcss
++[PostCSS Environment Variables]: https://github.com/jonathantneal/postcss-env-function
++[PostCSS Loader]: https://github.com/postcss/postcss-loader
+diff --git a/index.js b/index.js
+new file mode 100644
+index 0000000..f458df6
+--- /dev/null
++++ b/index.js
+@@ -0,0 +1,20 @@
++import postcss from 'postcss';
++import getReplacedValue from './lib/get-replaced-value';
++import getSupportedValue from './lib/get-supported-value';
++import setSupportedValue from './lib/set-supported-value';
++
++export default postcss.plugin('postcss-env-fn', opts => root => {
++	const variables = Object(Object(opts).variables);
++
++	root.walk(node => {
++		const supportedValue = getSupportedValue(node);
++
++		if (supportedValue) {
++			const replacedValue = getReplacedValue(supportedValue, variables);
++
++			if (replacedValue !== supportedValue) {
++				setSupportedValue(node, replacedValue);
++			}
++		}
++	});
++});
+diff --git a/lib/get-fn-value.js b/lib/get-fn-value.js
+new file mode 100644
+index 0000000..1f61a05
+--- /dev/null
++++ b/lib/get-fn-value.js
+@@ -0,0 +1,8 @@
++const dashedMatch = /^--/;
++
++// returns the value of a css function as a string
++export default (node) => {
++	const value = String(node.nodes.slice(1, -1));
++
++	return dashedMatch.test(value) ? value : undefined;
++};
+diff --git a/lib/get-replaced-value.js b/lib/get-replaced-value.js
+new file mode 100644
+index 0000000..32b166c
+--- /dev/null
++++ b/lib/get-replaced-value.js
+@@ -0,0 +1,18 @@
++import parser from 'postcss-values-parser';
++import updateEnvValue from './update-env-value';
++import walkEnvFuncs from './walk-env-funcs';
++
++// returns a value replaced with environment variables
++export default (originalValue, variables) => {
++	// get the ast of the original value
++	const ast = parser(originalValue).parse();
++
++	// walk all of the css env() functions
++	walkEnvFuncs(ast, node => {
++		// update the environment value for the css env() function
++		updateEnvValue(node, variables);
++	});
++
++	// return the stringified ast
++	return String(ast);
++};
+diff --git a/lib/get-supported-value.js b/lib/get-supported-value.js
+new file mode 100644
+index 0000000..1bbc83f
+--- /dev/null
++++ b/lib/get-supported-value.js
+@@ -0,0 +1,5 @@
++import isAtrule from './is-atrule';
++import isDecl from './is-decl';
++
++// returns a value from an at-rule or declaration
++export default (node) => isAtrule(node) && node.params || isDecl(node) && node.value;
+diff --git a/lib/is-atrule.js b/lib/is-atrule.js
+new file mode 100644
+index 0000000..233a7a1
+--- /dev/null
++++ b/lib/is-atrule.js
+@@ -0,0 +1,2 @@
++// returns whether a node is an at-rule
++export default (node) => node && node.type === 'atrule';
+diff --git a/lib/is-decl.js b/lib/is-decl.js
+new file mode 100644
+index 0000000..1b36284
+--- /dev/null
++++ b/lib/is-decl.js
+@@ -0,0 +1,2 @@
++// returns whether a node is a declaration
++export default (node) => node && node.type === 'decl';
+diff --git a/lib/is-env-func.js b/lib/is-env-func.js
+new file mode 100644
+index 0000000..ac3da5a
+--- /dev/null
++++ b/lib/is-env-func.js
+@@ -0,0 +1,2 @@
++// returns whether a node is a css env() function
++export default (node) => node && node.type === 'func' && node.value === 'env';
+diff --git a/lib/replace-with-word.js b/lib/replace-with-word.js
+new file mode 100644
+index 0000000..59800c1
+--- /dev/null
++++ b/lib/replace-with-word.js
+@@ -0,0 +1,8 @@
++import parser from 'postcss-values-parser';
++
++// replaces a node with a word node
++export default function (node, value) {
++	const raws = node.raws;
++
++	node.replaceWith(parser.word({ value, raws }));
++}
+diff --git a/lib/set-supported-value.js b/lib/set-supported-value.js
+new file mode 100644
+index 0000000..c7fb8ae
+--- /dev/null
++++ b/lib/set-supported-value.js
+@@ -0,0 +1,13 @@
++import isAtrule from './is-atrule';
++import isDecl from './is-decl';
++
++// assigns a value to an at-rule or declaration
++export default function (node, value) {
++	if (isAtrule(node)) {
++		node.params = value;
++	}
++
++	if (isDecl(node)) {
++		node.value = value;
++	}
++}
+diff --git a/lib/update-env-value.js b/lib/update-env-value.js
+new file mode 100644
+index 0000000..89523f0
+--- /dev/null
++++ b/lib/update-env-value.js
+@@ -0,0 +1,12 @@
++import getFnValue from './get-fn-value';
++import replaceWithWord from './replace-with-word';
++
++// update a node with an environment value
++export default function (node, variables) {
++	// get the value of a css function as a string
++	const value = getFnValue(node);
++
++	if (typeof value === 'string') {
++		replaceWithWord(node, variables[value])
++	}
++}
+diff --git a/lib/walk-env-funcs.js b/lib/walk-env-funcs.js
+new file mode 100644
+index 0000000..a709527
+--- /dev/null
++++ b/lib/walk-env-funcs.js
+@@ -0,0 +1,14 @@
++import isEnvFunc from './is-env-func';
++
++// walks a node recursively and runs a function using its children
++export default function walk(node, fn) {
++	node.nodes.slice(0).forEach(childNode => {
++		if (childNode.nodes) {
++			walk(childNode, fn);
++		}
++
++		if (isEnvFunc(childNode)) {
++			fn(childNode);
++		}
++	});
++}
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..87c6e92
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,56 @@
++{
++  "name": "postcss-env-function",
++  "version": "1.0.0",
++  "description": "",
++  "author": "Jonathan Neal <jonathantneal@hotmail.com>",
++  "license": "CC0-1.0",
++  "repository": "jonathantneal/postcss-env-function",
++  "homepage": "https://github.com/jonathantneal/postcss-env-function#readme",
++  "bugs": "https://github.com/jonathantneal/postcss-env-function/issues",
++  "main": "index.cjs.js",
++  "module": "index.es.js",
++  "files": [
++    "index.cjs.js",
++    "index.es.js"
++  ],
++  "scripts": {
++    "prepublishOnly": "npm test",
++    "pretest": "rollup -c .rollup.js --silent",
++    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
++    "test:ec": "echint --ignore index.*.js test",
++    "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
++    "test:tape": "postcss-tape"
++  },
++  "engines": {
++    "node": ">=4.0.0"
++  },
++  "dependencies": {
++    "postcss": "^6.0.22",
++    "postcss-values-parser": "^1.5.0"
++  },
++  "devDependencies": {
++    "babel-core": "^6.26.3",
++    "babel-eslint": "^8.2.3",
++    "babel-preset-env": "^1.6.1",
++    "eslint": "^4.19.1",
++    "eslint-config-dev": "^2.0.0",
++    "postcss-tape": "^2.2.0",
++    "pre-commit": "^1.2.2",
++    "rollup": "^0.58.2",
++    "rollup-plugin-babel": "^3.0.4"
++  },
++  "eslintConfig": {
++    "extends": "dev",
++    "parser": "babel-eslint"
++  },
++  "keywords": [
++    "postcss",
++    "css",
++    "postcss-plugin",
++    "environments",
++    "variables",
++    "envs",
++    "constants",
++    "functions"
++  ]
++}
+diff --git a/test/basic.css b/test/basic.css
+new file mode 100644
+index 0000000..5199c9f
+--- /dev/null
++++ b/test/basic.css
+@@ -0,0 +1,10 @@
++body {
++	order: 1;
++	padding: env(--some-custom-padding);
++}
++
++@media (min-width: env(--another-custom-width)) {
++	body {
++		order: 2;
++	}
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+new file mode 100644
+index 0000000..762c0d0
+--- /dev/null
++++ b/test/basic.expect.css
+@@ -0,0 +1,10 @@
++body {
++	order: 1;
++	padding: 20px;
++}
++
++@media (min-width: 600px) {
++	body {
++		order: 2;
++	}
++}
+-- 
+2.33.1
+

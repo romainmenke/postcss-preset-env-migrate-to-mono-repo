@@ -1,0 +1,299 @@
+From c017a63358dc9b5ad934c31b5be79da7a5b01990 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 4 Dec 2018 23:43:03 -0500
+Subject: [PATCH 19/38] 3.0.0
+
+---
+ .gitignore               |  1 +
+ .travis.yml              |  2 +
+ package.json             | 20 +++++----
+ rollup.config.js         |  2 +-
+ src/{cli.js => index.js} | 18 +++++---
+ src/lib/log.js           | 91 ++++++++++++++++------------------------
+ 6 files changed, 63 insertions(+), 71 deletions(-)
+ rename src/{cli.js => index.js} (88%)
+
+diff --git a/.gitignore b/.gitignore
+index f8f9cbd..7609255 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,4 +1,5 @@
+ node_modules
++package-lock.json
+ .*
+ !.gitignore
+ !.tape.js
+diff --git a/.travis.yml b/.travis.yml
+index 6a81966..2a28c6c 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -14,4 +14,6 @@ node_js:
+   - 6
+ 
+ install:
++  - git config --global core.autocrlf false
++  - git checkout -qf ${TRAVIS_COMMIT}
+   - npm install --ignore-scripts
+diff --git a/package.json b/package.json
+index 549ac68..9291abe 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-tape",
+-  "version": "3.0.0",
++  "version": "3.0.0-rc.2",
+   "description": "Quickly test PostCSS plugins",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -17,23 +17,24 @@
+   "scripts": {
+     "build": "rollup -c --silent",
+     "prepublish": "npm test",
+-    "pretest": "npm run build",
++    "pretest:tape": "npm run build",
+     "test": "npm run test:js && npm run test:tape",
+     "test:js": "eslint src/*.js src/lib/*.js --cache --ignore-pattern .gitignore",
+-    "test:tape": "node . --plugin=test/plugin.js --config=test"
++    "test:tape": "node . --plugin=test/plugin.js --config=test",
++    "test:tape:ci": "node . --ci=true --plugin=test/plugin.js --config=test"
+   },
+   "engines": {
+     "node": ">=6.0.0"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.1.6",
+-    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+-    "@babel/preset-env": "^7.1.6",
++    "@babel/core": "^7.2.0",
++    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
++    "@babel/preset-env": "^7.2.0",
+     "babel-eslint": "^10.0.1",
+     "eslint": "^5.9.0",
+     "eslint-config-dev": "2.0.0",
+     "postcss": "^7.0.6",
+-    "rollup": "^0.67.3",
++    "rollup": "^0.67.4",
+     "rollup-plugin-babel": "^4.0.3",
+     "rollup-plugin-terser": "^3.0.0"
+   },
+@@ -41,7 +42,10 @@
+     "extends": "dev",
+     "parser": "babel-eslint",
+     "rules": {
+-      "complexity": [1, 23]
++      "complexity": [
++        1,
++        23
++      ]
+     }
+   },
+   "keywords": [
+diff --git a/rollup.config.js b/rollup.config.js
+index f7edc6b..d979407 100644
+--- a/rollup.config.js
++++ b/rollup.config.js
+@@ -2,7 +2,7 @@ import babel from 'rollup-plugin-babel';
+ import { terser } from 'rollup-plugin-terser';
+ 
+ export default {
+-	input: 'src/cli.js',
++	input: 'src/index.js',
+ 	output: { file: 'index.js', format: 'cjs' },
+ 	plugins: [
+ 		babel({
+diff --git a/src/cli.js b/src/index.js
+similarity index 88%
+rename from src/cli.js
+rename to src/index.js
+index 0b55f11..58ca8c5 100644
+--- a/src/cli.js
++++ b/src/index.js
+@@ -1,7 +1,7 @@
+ import getOptions from './lib/get-options';
+ import path from 'path';
+ import { readOrWriteFile, safelyReadFile, writeFile } from './lib/utils';
+-import { fail, pass, wait } from './lib/log';
++import * as log from './lib/log';
+ 
+ getOptions().then(
+ 	async options => {
+@@ -26,7 +26,7 @@ getOptions().then(
+ 
+ 			const pluginName = Object(testPlugin.postcss).postcssPlugin;
+ 
+-			wait(pluginName, test.message);
++			log.wait(pluginName, test.message, options.ci);
+ 
+ 			try {
+ 				if (Object(test.before) instanceof Function) {
+@@ -48,7 +48,7 @@ getOptions().then(
+ 					if (expectCSS !== resultCSS) {
+ 						throw new Error([
+ 							`Expected: ${JSON.stringify(expectCSS).slice(1, -1)}`,
+-							`Rendered: ${JSON.stringify(resultCSS).slice(1, -1)}`
++							`Received: ${JSON.stringify(resultCSS).slice(1, -1)}`
+ 						].join('\n'));
+ 					}
+ 				}
+@@ -59,7 +59,7 @@ getOptions().then(
+ 					if (test.warnings !== warnings.length) {
+ 						const s = warnings.length !== 1 ? 's' : '';
+ 
+-						throw new Error(`Expected: ${test.warnings} warning${s}\nRecieved: ${warnings.length} warnings`);
++						throw new Error(`Expected: ${test.warnings} warning${s}\nReceived: ${warnings.length} warnings`);
+ 					}
+ 				} else if (test.warnings) {
+ 					if (warnings.length) {
+@@ -85,7 +85,7 @@ getOptions().then(
+ 					await test.after();
+ 				}
+ 
+-				pass(pluginName, test.message);
++				log.pass(pluginName, test.message, options.ci);
+ 			} catch (error) {
+ 				const areExpectedErrors = test.errors === Object(test.errors) && Object.keys(test.errors).every(
+ 					key => test.errors[key] instanceof RegExp
+@@ -94,10 +94,16 @@ getOptions().then(
+ 				);
+ 
+ 				if (!areExpectedErrors) {
+-					fail(pluginName, test.message);
++					log.fail(pluginName, test.message, options.ci);
+ 					console.error(error.message);
+ 
+ 					hadErrors = true;
++
++					if (options.ci) {
++						break;
++					}
++				} else {
++					log.pass(pluginName, test.message, options.ci);
+ 				}
+ 			}
+ 		}
+diff --git a/src/lib/log.js b/src/lib/log.js
+index 0196827..d51812d 100644
+--- a/src/lib/log.js
++++ b/src/lib/log.js
+@@ -5,82 +5,61 @@ import readline from 'readline';
+ const isWin32 = process.platform === 'win32';
+ const tick    = isWin32 ? '√' : '✔';
+ const cross   = isWin32 ? '×' : '✖';
++const stdout  = process.stdout;
+ 
+ let interval;
+ 
+-export function pass(name, message, size) {
++export function pass(name, message, ci) {
+ 	clearInterval(interval);
+ 
+-	// reset current stream line
+-	readline.clearLine(process.stdout, 0);
+-	readline.cursorTo(process.stdout, 0);
++	if (ci) {
++		stdout.write(` ${color('green', tick)}\n`);
++	} else {
++		// reset current stream line
++		readline.clearLine(stdout, 0);
++		readline.cursorTo(stdout, 0);
+ 
+-	process.stdout.write(color('green', tick) + ' ' + name + ' ' + color('dim', message) + (size ? ' ' + color('green', '[' + size + ']') : '') + '\n');
++		stdout.write(`${color('green', tick)} ${name} ${color('dim', message)}\n`);
++	}
+ }
+ 
+-export function fail(name, message, errors) {
++export function fail(name, message, ci) {
+ 	clearInterval(interval);
+ 
+-	// reset current stream line
+-	readline.clearLine(process.stdout, 0);
+-	readline.cursorTo(process.stdout, 0);
+-
+-	process.stdout.write(color('red', cross) + ' ' + name + ' ' + color('dim', message) + '\n');
++	if (ci) {
++		stdout.write(` ${color('red', cross)}\n`);
++	} else {
++		// reset current stream line
++		readline.clearLine(stdout, 0);
++		readline.cursorTo(stdout, 0);
+ 
+-	if (errors) {
+-		if (Array.isArray(errors)) {
+-			errors.forEach((error) => {
+-				process.stdout.write('  → ' + color('dim', error) + '\n');
+-			});
+-		} else {
+-			process.stdout.write('  → ' + color('dim', errors) + '\n');
+-		}
++		stdout.write(`${color('red', cross)} ${name} ${color('dim', message)}\n`);
+ 	}
+ }
+ 
+ // log with a waiting appearance
+-export function wait(name, message) {
+-	const spinner = isWin32 ? '-–—–-' : '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
+-
+-	let index = 0;
+-
+-	clearInterval(interval);
+-
+-	// reset current stream line
+-	readline.clearLine(process.stdout, 0);
+-	readline.cursorTo(process.stdout, 0);
+-
+-	process.stdout.write(color('yellow', spinner[index]) + ' ' + name + ' ' + color('dim', message));
++export function wait(name, message, ci) {
++	if (ci) {
++		stdout.write(`${name} ${color('dim', message)}`);
++	} else {
++		const spinner = isWin32 ? '-–—–-' : '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
+ 
+-	interval = setInterval(() => {
+-		index = (index + 1) % spinner.length;
++		let index = 0;
+ 
+-		readline.cursorTo(process.stdout, 0);
++		clearInterval(interval);
+ 
+-		process.stdout.write(color('yellow', spinner[index]) + ' ' + name + ' ' + color('dim', message));
+-	}, 60);
++		// reset current stream line
++		readline.clearLine(stdout, 0);
++		readline.cursorTo(stdout, 0);
+ 
+-	return exports;
+-}
+-
+-// stopped waiting log
+-export function stop() {
+-	clearInterval(interval);
++		stdout.write(`${color('yellow', spinner[index])} ${name} ${color('dim', message)}`);
+ 
+-	// reset current stream line
+-	readline.clearLine(process.stdout, 0);
+-	readline.cursorTo(process.stdout, 0);
++		interval = setInterval(() => {
++			index = (index + 1) % spinner.length;
+ 
+-	return exports;
+-}
++			readline.cursorTo(stdout, 0);
+ 
+-// log
+-export function line(message) {
+-	// reset current stream line
+-	readline.clearLine(process.stdout, 0);
+-	readline.cursorTo(process.stdout, 0);
+-
+-	process.stdout.write(Array.isArray(message) ? message.join('\n') + '\n' : String(message || '') + '\n');
+-
+-	return exports;
++			stdout.write(`${color('yellow', spinner[index])} ${name} ${color('dim', message)}`);
++		}, 60);
++	}
+ }
+-- 
+2.33.1
+

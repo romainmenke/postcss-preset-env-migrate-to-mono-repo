@@ -1,0 +1,48 @@
+From 608f408ae5afae393066340887c98f952a666720 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 12 Oct 2018 08:50:05 -0400
+Subject: [PATCH 059/103] 6.1.1
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 4 ++--
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index baafea8..7bb8bde 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Preset Env
+ 
++### 6.1.1 (October 12, 2018)
++
++- Updated: `postcss-custom-media` to 7.0.6 (patch)
++
+ ### 6.1.0 (October 10, 2018)
+ 
+ - Added: `postcss-color-gray`
+diff --git a/package.json b/package.json
+index 389104b..9888ef0 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-preset-env",
+-  "version": "6.1.0",
++  "version": "6.1.1",
+   "description": "Convert modern CSS into something browsers understand",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "license": "CC0-1.0",
+@@ -37,7 +37,7 @@
+     "postcss-color-hex-alpha": "^5.0.2",
+     "postcss-color-mod-function": "^3.0.3",
+     "postcss-color-rebeccapurple": "^4.0.1",
+-    "postcss-custom-media": "^7.0.4",
++    "postcss-custom-media": "^7.0.6",
+     "postcss-custom-properties": "^8.0.8",
+     "postcss-custom-selectors": "^5.1.2",
+     "postcss-dir-pseudo-class": "^5.0.0",
+-- 
+2.33.1
+
