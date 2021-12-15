@@ -1,0 +1,25 @@
+From 4a8a46c51a86817459cd7945a856118ddc6c0dc5 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 7 Oct 2014 08:24:41 +0200
+Subject: [PATCH 03/34] Close #2
+
+---
+ README.md | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/README.md b/README.md
+index 0f702e9..c047128 100755
+--- a/README.md
++++ b/README.md
+@@ -2,6 +2,8 @@
+ 
+ > [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS `rebeccapurple` color](http://dev.w3.org/csswg/css-color/#valuedef-color-rebeccapurple) to more compatible CSS (rgb()).
+ 
++_[Why this plugin ?](http://meyerweb.com/eric/thoughts/2014/06/19/rebeccapurple/)_
++
+ ## Installation
+ 
+ ```bash
+-- 
+2.33.1
+

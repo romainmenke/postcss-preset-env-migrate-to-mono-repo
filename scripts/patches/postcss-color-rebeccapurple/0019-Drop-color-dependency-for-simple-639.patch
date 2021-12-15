@@ -1,0 +1,50 @@
+From 932246cd51918540fdc390787467df0a79e018a2 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 10 May 2017 15:39:05 -0400
+Subject: [PATCH 19/34] Drop color dependency for simple #639
+
+---
+ index.js                                 | 2 +-
+ package.json                             | 1 -
+ test/fixtures/rebeccapurple.expected.css | 4 ++--
+ 3 files changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/index.js b/index.js
+index 8908522..a0f7243 100755
+--- a/index.js
++++ b/index.js
+@@ -2,7 +2,7 @@
+  * Module dependencies.
+  */
+ var postcss = require("postcss")
+-var color = require("color")("rebeccapurple").rgbString()
++var color = "#639"
+ 
+ /**
+  * PostCSS plugin to convert colors
+diff --git a/package.json b/package.json
+index 5f6f9bc..9777677 100644
+--- a/package.json
++++ b/package.json
+@@ -21,7 +21,6 @@
+     "index.js"
+   ],
+   "dependencies": {
+-    "color": "^0.11.4",
+     "postcss": "^6.0.1"
+   },
+   "devDependencies": {
+diff --git a/test/fixtures/rebeccapurple.expected.css b/test/fixtures/rebeccapurple.expected.css
+index 00f9305..b6cd293 100644
+--- a/test/fixtures/rebeccapurple.expected.css
++++ b/test/fixtures/rebeccapurple.expected.css
+@@ -1,4 +1,4 @@
+ body {
+-  color: rgb(102, 51, 153);
+-  background: linear-gradient(rgb(102, 51, 153), blue 50%, rgb(102, 51, 153));
++  color: #639;
++  background: linear-gradient(#639, blue 50%, #639);
+ }
+-- 
+2.33.1
+

@@ -1,0 +1,170 @@
+From 614a2f942b7caaa071779948723b66b4c7e5b42a Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 17 Sep 2018 17:14:44 -0400
+Subject: [PATCH 139/186] 8.0.2
+
+---
+ CHANGELOG.md                   |  4 ++++
+ lib/transform-value-ast.js     | 44 +++++++++++++++++++---------------
+ package.json                   |  2 +-
+ test/basic.css                 |  4 ++++
+ test/basic.expect.css          |  5 ++++
+ test/basic.import.expect.css   |  5 ++++
+ test/basic.preserve.expect.css |  4 ++++
+ 7 files changed, 48 insertions(+), 20 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index adc6513..4106ce5 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Custom Properties
+ 
++### 8.0.2 (September 17, 2018)
++
++- Fixed: Spacing is preserved before replaced variables.
++
+ ### 8.0.1 (September 17, 2018)
+ 
+ - Fixed: Workaround issue in `postcss-values-parser` incorrectly cloning nodes.
+diff --git a/lib/transform-value-ast.js b/lib/transform-value-ast.js
+index a8db9fa..2d744a7 100644
+--- a/lib/transform-value-ast.js
++++ b/lib/transform-value-ast.js
+@@ -8,28 +8,14 @@ export default function transformValueAST(root, customProperties) {
+ 
+ 				if (name in customProperties) {
+ 					// conditionally replace a known custom property
+-					child.replaceWith(
+-						...asClonedArray(customProperties[name], null)
+-					);
++					child.replaceWith(...asClonedArrayWithBeforeSpacing(customProperties[name], child.raws.before));
+ 
+-					const nextCustomProperties = Object.assign({}, customProperties);
+-
+-					delete nextCustomProperties[name];
+-
+-					transformValueAST(root, nextCustomProperties);
++					retransformValueAST(root, customProperties, name);
+ 				} else if (fallbacks.length) {
+ 					// conditionally replace a custom property with a fallback
+-					const clonedFallbacks = asClonedArray(fallbacks);
+-
+-					Object.assign(clonedFallbacks[0].raws, { before: '' });
+-
+-					child.replaceWith(...clonedFallbacks);
++					child.replaceWith(...asClonedArrayWithBeforeSpacing(fallbacks, child.raws.before));
+ 
+-					const nextCustomProperties = Object.assign({}, customProperties);
+-
+-					delete nextCustomProperties[name];
+-
+-					transformValueAST(root, nextCustomProperties);
++					transformValueAST(root, customProperties);
+ 				}
+ 			} else {
+ 				transformValueAST(child, customProperties);
+@@ -40,12 +26,32 @@ export default function transformValueAST(root, customProperties) {
+ 	return root;
+ }
+ 
++// retransform the current ast without a custom property (to prevent recursion)
++function retransformValueAST(root, customProperties, withoutProperty) {
++	const nextCustomProperties = Object.assign({}, customProperties);
++
++	delete nextCustomProperties[withoutProperty];
++
++	return transformValueAST(root, nextCustomProperties);
++}
++
+ // match var() functions
+ const varRegExp = /^var$/i;
+ 
+ // whether the node is a var() function
+ const isVarFunction = node => node.type === 'func' && varRegExp.test(node.value) && Object(node.nodes).length > 0;
+ 
++// return an array with its nodes cloned, preserving the raw
++const asClonedArrayWithBeforeSpacing = (array, beforeSpacing) => {
++	const clonedArray = asClonedArray(array, null);
++
++	if (clonedArray[0]) {
++		clonedArray[0].raws.before = beforeSpacing;
++	}
++
++	return clonedArray;
++};
++
+ // return an array with its nodes cloned
+ const asClonedArray = (array, parent) => array.map(node => asClonedNode(node, parent));
+ 
+@@ -64,4 +70,4 @@ const asClonedNode = (node, parent) => {
+ 	}
+ 
+ 	return cloneNode;
+-}
++};
+diff --git a/package.json b/package.json
+index dae5872..ff831f5 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "8.0.1",
++  "version": "8.0.2",
+   "description": "Use Custom Properties Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+diff --git a/test/basic.css b/test/basic.css
+index c99e71a..f42d93e 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -25,3 +25,7 @@ html {
+ .test--circular_var {
+ 	color: var(--circular);
+ }
++
++.test--color_spacing {
++	box-shadow: inset 0 -3px 0        var(--color);
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 0ffbdb1..90691d5 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -28,3 +28,8 @@ html {
+ .test--circular_var {
+ 	color: var(--circular);
+ }
++
++.test--color_spacing {
++	box-shadow: inset 0 -3px 0        rgb(255, 0, 0);
++	box-shadow: inset 0 -3px 0        var(--color);
++}
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+index d120fcf..597054f 100644
+--- a/test/basic.import.expect.css
++++ b/test/basic.import.expect.css
+@@ -28,3 +28,8 @@ html {
+ .test--circular_var {
+ 	color: var(--circular);
+ }
++
++.test--color_spacing {
++	box-shadow: inset 0 -3px 0        rgb(255, 0, 0);
++	box-shadow: inset 0 -3px 0        var(--color);
++}
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index e430ce1..c6b575b 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -14,3 +14,7 @@
+ .test--circular_var {
+ 	color: var(--circular);
+ }
++
++.test--color_spacing {
++	box-shadow: inset 0 -3px 0        rgb(255, 0, 0);
++}
+-- 
+2.33.1
+

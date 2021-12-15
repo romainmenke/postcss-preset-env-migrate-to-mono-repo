@@ -1,0 +1,44 @@
+From 5f10e21af6e20a231cee366bd76cd18fb21c6f88 Mon Sep 17 00:00:00 2001
+From: David Clark <david.dave.clark@gmail.com>
+Date: Sat, 17 Jan 2015 15:57:22 -0700
+Subject: [PATCH 050/186] Upgrade to postcss 4
+
+---
+ index.js     | 4 ++--
+ package.json | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/index.js b/index.js
+index 09422d6..c321ec6 100755
+--- a/index.js
++++ b/index.js
+@@ -64,11 +64,11 @@ module.exports = function(options) {
+       // optionally remove `--*` properties from the rule
+       if (!preserve) {
+         for (var i = toRemove.length - 1; i >= 0; i--) {
+-          rule.childs.splice(toRemove[i], 1)
++          rule.nodes.splice(toRemove[i], 1)
+         }
+ 
+         // remove empty :root {}
+-        if (rule.childs.length === 0) {
++        if (rule.nodes.length === 0) {
+           rule.removeSelf()
+         }
+       }
+diff --git a/package.json b/package.json
+index 8e064ce..abfc30a 100644
+--- a/package.json
++++ b/package.json
+@@ -28,7 +28,7 @@
+   "devDependencies": {
+     "jscs": "^1.6.2",
+     "jshint": "^2.5.6",
+-    "postcss": "^3.0.0",
++    "postcss": "^4.0.0",
+     "tape": "^3.0.0"
+   },
+   "scripts": {
+-- 
+2.33.1
+

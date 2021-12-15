@@ -1,0 +1,39 @@
+From 7c6705ac7b665d5524990d9e133f98dc31f8ad4c Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 6 Aug 2014 09:32:05 +0200
+Subject: [PATCH 009/186] Normalize description
+
+---
+ README.md    | 3 +--
+ package.json | 2 +-
+ 2 files changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/README.md b/README.md
+index 578dd48..18b5734 100755
+--- a/README.md
++++ b/README.md
+@@ -1,7 +1,6 @@
+ # postcss-custom-properties [![Build Status](https://travis-ci.org/postcss/postcss-custom-properties.png)](https://travis-ci.org/postcss/postcss-custom-properties)
+ 
+-A [PostCSS](https://github.com/postcss/postcss) plugin to polyfill the
+-[W3C-style CSS Custom Properties for cascading variables](http://www.w3.org/TR/css-variables/).
++> [PostCSS](https://github.com/postcss/postcss) plugin to polyfill [W3C CSS Custom Properties for cascading variables](http://www.w3.org/TR/css-variables/).
+ 
+ **N.B.** For now the polyfill _is not complete_. It currently just aims to provide a future-proof way of using a _limited subset_ of the features provided by native CSS variables.  
+ 
+diff --git a/package.json b/package.json
+index 7df3f3b..72e21f8 100755
+--- a/package.json
++++ b/package.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "postcss-custom-properties",
+   "version": "0.1.0",
+-  "description": "PostCSS that polyfills CSS custom properties for cascading variable module",
++  "description": "PostCSS plugin to polyfill W3C CSS Custom Properties for cascading variables",
+   "keywords": [
+     "css",
+     "postcss",
+-- 
+2.33.1
+

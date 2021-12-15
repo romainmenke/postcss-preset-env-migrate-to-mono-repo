@@ -1,0 +1,46 @@
+From edb250466fbd81de046abdc40fbbb761cc530539 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 8 Apr 2015 06:52:03 +0200
+Subject: [PATCH 073/186] Prevent mutability issue
+
+---
+ index.js     | 3 ++-
+ package.json | 1 +
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index 0c1e251..438533a 100755
+--- a/index.js
++++ b/index.js
+@@ -2,6 +2,7 @@
+  * Module dependencies.
+  */
+ 
++var assign = require("object-assign")
+ var postcss = require("postcss")
+ var balanced = require("balanced-match")
+ var helpers = require("postcss-message-helpers")
+@@ -120,7 +121,7 @@ function resolveValue(value, variables, source) {
+ module.exports = function(options) {
+   return function(style) {
+     options = options || {}
+-    var variables = options.variables || {}
++    var variables = assign({}, options.variables || {})
+     Object.keys(variables).forEach(function(name) {
+       if (name.slice(0, 2) !== "--") {
+         variables["--" + name] = variables[name]
+diff --git a/package.json b/package.json
+index e07d7ac..4670d57 100644
+--- a/package.json
++++ b/package.json
+@@ -23,6 +23,7 @@
+   ],
+   "dependencies": {
+     "balanced-match": "~0.1.0",
++    "object-assign": "^2.0.0",
+     "postcss": "^4.1.4",
+     "postcss-message-helpers": "^2.0.0"
+   },
+-- 
+2.33.1
+

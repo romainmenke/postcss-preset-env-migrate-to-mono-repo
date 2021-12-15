@@ -1,0 +1,30 @@
+From f8cae4a457dea16e228b31a74e5141b8b7d3544e Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 8 Oct 2014 08:03:36 +0200
+Subject: [PATCH 04/34] Better "why this plugin" section
+
+Ref #2
+poke @ai
+---
+ README.md | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index c047128..e943902 100755
+--- a/README.md
++++ b/README.md
+@@ -2,7 +2,10 @@
+ 
+ > [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS `rebeccapurple` color](http://dev.w3.org/csswg/css-color/#valuedef-color-rebeccapurple) to more compatible CSS (rgb()).
+ 
+-_[Why this plugin ?](http://meyerweb.com/eric/thoughts/2014/06/19/rebeccapurple/)_
++## Why this plugin ?
++
++If you did some CSS, I'm sure you know who [Eric Meyer](https://en.wikipedia.org/wiki/Eric_A._Meyer) is, & what he did for this language.  
++In memory of [Eric Meyer’s daughter](http://meyerweb.com/eric/thoughts/2014/06/09/in-memoriam-2/), [W3C added new color rebeccapurple to CSS 4 Color Module](http://lists.w3.org/Archives/Public/www-style/2014Jun/0312.html).
+ 
+ ## Installation
+ 
+-- 
+2.33.1
+

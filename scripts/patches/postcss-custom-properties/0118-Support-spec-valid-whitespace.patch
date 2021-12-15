@@ -1,0 +1,26 @@
+From 7cbf23941a5ca3294f291a068507e37e490fc92e Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 15 Feb 2018 18:02:44 -0500
+Subject: [PATCH 118/186] Support spec-valid whitespace
+
+https://www.w3.org/TR/css-syntax-3/#whitespace-diagram
+---
+ index.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index d95ad76..acb982d 100755
+--- a/index.js
++++ b/index.js
+@@ -5,7 +5,7 @@ const VAR_PROP_IDENTIFIER = "--"
+ const VAR_FUNC_IDENTIFIER = "var"
+ const VAR_FUNC_REGEX = /(^|[^\w-])var\(/
+ // matches `name[, fallback]`, captures "name" and "fallback"
+-const RE_VAR = /([\w-]+)(?:\s*,\s*)?\s*(.*)?/
++const RE_VAR = /[\f\n\r\t ]*([\w-]+)(?:[\f\n\r\t ]*,[\f\n\r\t ]*([\W\w]+))?/
+ 
+ /**
+  * Module variables
+-- 
+2.33.1
+

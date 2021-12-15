@@ -1,0 +1,35 @@
+From 690781a274d0a24297466c47a2945d5d9ae29b58 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Daniel=20Rodr=C3=ADguez=20Rivero?= <rdanielo@gmail.com>
+Date: Wed, 5 May 2021 04:38:30 +0200
+Subject: [PATCH 173/186] fix/webpack-options (#243)
+
+* fix/webpack-options
+
+fixes #241
+
+* Update INSTALL.md
+---
+ INSTALL.md | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/INSTALL.md b/INSTALL.md
+index 62348a9..db6b249 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -74,10 +74,9 @@ module.exports = {
+           'style-loader',
+           { loader: 'css-loader', options: { importLoaders: 1 } },
+           { loader: 'postcss-loader', options: {
+-            ident: 'postcss',
+-            plugins: () => [
+-              postcssCustomProperties(/* pluginOptions */)
+-            ]
++            postcssOptions: {
++                plugins: [postcssCustomProperties(/* pluginOptions */)],
++              }
+           } }
+         ]
+       }
+-- 
+2.33.1
+

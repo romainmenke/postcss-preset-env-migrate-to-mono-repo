@@ -1,0 +1,100 @@
+From a5aa2bfe92d7b5414a9037efa3da95609f2ffdff Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 31 Mar 2015 10:09:14 +0200
+Subject: [PATCH 059/186] Added: JS defined variables are now resolved too
+ (3.2.0)
+
+---
+ CHANGELOG.md                          | 4 ++++
+ index.js                              | 2 +-
+ package.json                          | 2 +-
+ test/fixtures/js-defined.css          | 8 +++++---
+ test/fixtures/js-defined.expected.css | 8 +++++---
+ test/index.js                         | 2 ++
+ 6 files changed, 18 insertions(+), 8 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 7f336d2..beb3db5 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 3.2.0 - 2015-03-31
++
++- Added: JS defined variables are now resolved too ([#22](https://github.com/postcss/postcss-custom-properties/issues/22))
++
+ # 3.1.0 - 2015-03-16
+ 
+ - Added: variables defined in JS are now automatically prefixed with `--`
+diff --git a/index.js b/index.js
+index cf6896c..adbd987 100755
+--- a/index.js
++++ b/index.js
+@@ -155,7 +155,7 @@ module.exports = function(options) {
+ 
+     // apply js-defined custom properties
+     Object.keys(variables).forEach(function(variable) {
+-      map[variable] = variables[variable]
++      map[variable] = resolveValue(variables[variable], map)
+     })
+ 
+     // resolve variables
+diff --git a/package.json b/package.json
+index 5c30b80..92ee6af 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "3.1.0",
++  "version": "3.2.0",
+   "description": "PostCSS plugin to polyfill W3C CSS Custom Properties for cascading variables",
+   "keywords": [
+     "css",
+diff --git a/test/fixtures/js-defined.css b/test/fixtures/js-defined.css
+index 68c6ec6..0a90407 100755
+--- a/test/fixtures/js-defined.css
++++ b/test/fixtures/js-defined.css
+@@ -4,7 +4,9 @@
+ }
+ 
+ div {
+-  color: var(--test-one);
+-  color: var(--test-two);
+-  color: var(--test-three);
++  p: var(--test-one);
++  p: var(--test-two);
++  p: var(--test-three);
++  p: var(--test-varception);
++  p: var(--test-jsception);
+ }
+diff --git a/test/fixtures/js-defined.expected.css b/test/fixtures/js-defined.expected.css
+index c4fcd97..79a663e 100755
+--- a/test/fixtures/js-defined.expected.css
++++ b/test/fixtures/js-defined.expected.css
+@@ -1,5 +1,7 @@
+ div {
+-  color: js-one;
+-  color: js-two;
+-  color: js-three;
++  p: js-one;
++  p: js-two;
++  p: js-three;
++  p: js-one;
++  p: js-one;
+ }
+diff --git a/test/index.js b/test/index.js
+index 0820bf9..b7836d0 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -51,6 +51,8 @@ test("accepts variables defined from JavaScript, and overrides local definitions
+       "--test-one": "js-one",
+       "--test-two": "js-two",
+       "--test-three": "js-three",
++      "--test-varception": "var(--test-one)",
++      "--test-jsception": "var(--test-varception)",
+     },
+   })
+   t.end()
+-- 
+2.33.1
+

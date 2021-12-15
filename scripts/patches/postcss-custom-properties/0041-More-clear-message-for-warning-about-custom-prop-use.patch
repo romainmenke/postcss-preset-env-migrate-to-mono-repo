@@ -1,0 +1,83 @@
+From 1c90a45ba79cae09888ea51df3b0171cba5d3ca1 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 4 Nov 2014 06:58:30 +0100
+Subject: [PATCH 041/186] More clear message for warning about custom prop used
+ in non top-level :root
+
+Ref
+https://github.com/postcss/postcss-custom-properties/commit/d39303bbd75e
+d961662a764f7a086cbe1f3f49a9#commitcomment-8418027
+---
+ CHANGELOG.md |  4 ++++
+ README.md    | 17 +++++++++++------
+ index.js     |  2 +-
+ 3 files changed, 16 insertions(+), 7 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index e608391..67ba545 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 1.0.2 - 2014-11-04
++
++- More clear message for warning about custom prop used in non top-level :root
++
+ # 1.0.1 - 2014-11-03
+ 
+ - fix warning about custom prop used in non :root
+diff --git a/README.md b/README.md
+index 8a23693..f097715 100755
+--- a/README.md
++++ b/README.md
+@@ -2,13 +2,16 @@
+ 
+ > [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Properties for cascading variables](http://www.w3.org/TR/css-variables/) syntax to more compatible CSS.
+ 
+-**N.B.** The transformation _is not complete_. It currently just aims to provide a future-proof way of using a **limited subset (to `:root` selector)** of the features provided by native CSS custom properties. Read [#1](https://github.com/postcss/postcss-custom-properties/issues/1) & [#9](https://github.com/postcss/postcss-custom-properties/issues/9) to know why this limitation exists.
++**N.B.** The transformation _is not complete_. It currently just aims to provide a future-proof way of using a **limited subset (to top-level `:root` selector)** of the features provided by native CSS custom properties.  
++Read [#1](https://github.com/postcss/postcss-custom-properties/issues/1) & [#9](https://github.com/postcss/postcss-custom-properties/issues/9) to know why this limitation exists.
+ 
+ Works great with [postcss-calc](https://github.com/postcss/postcss-calc).
+ 
+ ## Installation
+ 
+-    $ npm install postcss-custom-properties
++```console
++$ npm install postcss-custom-properties
++```
+ 
+ ## Usage
+ 
+@@ -73,10 +76,12 @@ Allow you to pass an object of variables for `:root`. These definitions will ove
+ 
+ Work on a branch, install dev-dependencies, respect coding style & run tests before submitting a bug fix or a feature.
+ 
+-    $ git clone https://github.com/postcss/postcss-custom-properties.git
+-    $ git checkout -b patch-1
+-    $ npm install
+-    $ npm test
++```console
++$ git clone https://github.com/postcss/postcss-custom-properties.git
++$ git checkout -b patch-1
++$ npm install
++$ npm test
++```
+ 
+ ## [Changelog](CHANGELOG.md)
+ 
+diff --git a/index.js b/index.js
+index 1e54840..20b4207 100755
+--- a/index.js
++++ b/index.js
+@@ -36,7 +36,7 @@ module.exports = function(options) {
+         rule.each(function(decl) {
+           var prop = decl.prop
+           if (prop && prop.indexOf(VAR_PROP_IDENTIFIER) === 0) {
+-            console.warn(gnuMessage("Custom property ignored: found in another place than top level :root (" +  rule.selectors + " { ... " + prop + ": ... })" + (rule.parent.type !== "root" ? ", in " + rule.parent.type : "")))
++            console.warn(gnuMessage("Custom property ignored: not scoped to the top-level :root element (" +  rule.selectors + " { ... " + prop + ": ... })" + (rule.parent.type !== "root" ? ", in " + rule.parent.type : "")))
+           }
+         })
+         return
+-- 
+2.33.1
+

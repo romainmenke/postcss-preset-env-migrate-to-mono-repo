@@ -1,0 +1,27 @@
+From 817c42ae25acb9e48dff52704413932982e677d4 Mon Sep 17 00:00:00 2001
+From: "Cerino O. Ligutom III"
+ <6721822+cerino-ligutom@users.noreply.github.com>
+Date: Fri, 18 Sep 2020 16:02:09 +0800
+Subject: [PATCH 162/186] Added a note on readme (#214)
+
+Added a note that this plugin only processes variables that are defined in the `:root` selector as per #213 .
+---
+ README.md | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/README.md b/README.md
+index 1bf86d5..d1d83b7 100755
+--- a/README.md
++++ b/README.md
+@@ -31,6 +31,8 @@ h1 {
+ }
+ ```
+ 
++**Note:** This plugin only processes variables that are defined in the `:root` selector.
++
+ ## Usage
+ 
+ Add [PostCSS Custom Properties] to your project:
+-- 
+2.33.1
+

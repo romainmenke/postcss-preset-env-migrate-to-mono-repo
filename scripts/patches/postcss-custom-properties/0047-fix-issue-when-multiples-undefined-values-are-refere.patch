@@ -1,0 +1,86 @@
+From 93f0d5b3fdaeed7ed9d62723bb10c5496724b2d1 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 2 Dec 2014 16:25:46 +0100
+Subject: [PATCH 047/186] fix issue when multiples undefined values are
+ referenced
+
+Close #
+---
+ CHANGELOG.md                                      | 4 ++++
+ index.js                                          | 4 ++--
+ test/fixtures/substitution-undefined.css          | 9 +++++++--
+ test/fixtures/substitution-undefined.expected.css | 7 ++++---
+ 4 files changed, 17 insertions(+), 7 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 5f499ab..9b5fd29 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 2.1.1 - 2014-12-02
++
++- Fix issue when multiples undefined custom properties are referenced ([#16](https://github.com/postcss/postcss-custom-properties/issues/16))
++
+ # 2.1.0 - 2014-11-25
+ 
+ - Enhanced exceptions & messages
+diff --git a/index.js b/index.js
+index 902f897..0e99c1a 100755
+--- a/index.js
++++ b/index.js
+@@ -114,7 +114,7 @@ module.exports = function(options) {
+ function resolveValue(value, variables, source) {
+   var results = []
+ 
+-  var start = value.indexOf("var(")
++  var start = value.indexOf(VAR_FUNC_IDENTIFIER + "(")
+   if (start === -1) {
+     return [value]
+   }
+@@ -161,7 +161,7 @@ function resolveValue(value, variables, source) {
+     if (!replacement && !fallback) {
+       // resolve the end of the expression
+       (matches.post ? resolveValue(matches.post, variables, source) : [""]).forEach(function(afterValue) {
+-        results.push(value.slice(0, start) + value + afterValue)
++        results.push(value.slice(0, start) + VAR_FUNC_IDENTIFIER + "(" + name + ")" + afterValue)
+       })
+     }
+   })
+diff --git a/test/fixtures/substitution-undefined.css b/test/fixtures/substitution-undefined.css
+index d6af72a..718af27 100755
+--- a/test/fixtures/substitution-undefined.css
++++ b/test/fixtures/substitution-undefined.css
+@@ -1,7 +1,12 @@
+-div {
+-  color: var(--test);
++:root {
++  --defined: true
+ }
+ 
+ div {
++  color: var(--test);
+   color: var(--test, fallback);
++  background: linear-gradient(var(--a), var(--b));
++  background: linear-gradient(var(--a), var(--b), var(--defined));
++  background: linear-gradient(var(--a), var(--defined) , var(--b));
++  background: linear-gradient(var(--a), var(--defined) , var(--b), var(--defined));
+ }
+diff --git a/test/fixtures/substitution-undefined.expected.css b/test/fixtures/substitution-undefined.expected.css
+index c845cd2..a7f4a9b 100644
+--- a/test/fixtures/substitution-undefined.expected.css
++++ b/test/fixtures/substitution-undefined.expected.css
+@@ -1,7 +1,8 @@
+ div {
+   color: var(--test);
+-}
+-
+-div {
+   color: fallback;
++  background: linear-gradient(var(--a), var(--b));
++  background: linear-gradient(var(--a), var(--b), true);
++  background: linear-gradient(var(--a), true , var(--b));
++  background: linear-gradient(var(--a), true , var(--b), true);
+ }
+-- 
+2.33.1
+

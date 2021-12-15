@@ -1,0 +1,202 @@
+From a250907b9ca0b336d6c0ca948a1db2fe2d145309 Mon Sep 17 00:00:00 2001
+From: Yvain Liechti <ryuran@gmail.com>
+Date: Sat, 7 Mar 2020 18:46:33 +0100
+Subject: [PATCH 161/186] fix multiple var on a single property (#210)
+
+---
+ test/basic.css                        | 8 ++++++++
+ test/basic.expect.css                 | 9 +++++++++
+ test/basic.import-is-empty.expect.css | 9 +++++++++
+ test/basic.import.expect.css          | 9 +++++++++
+ test/basic.preserve.expect.css        | 4 ++++
+ test/export-properties.css            | 4 ++++
+ test/export-properties.js             | 4 ++++
+ test/export-properties.json           | 4 ++++
+ test/export-properties.mjs            | 4 ++++
+ 9 files changed, 55 insertions(+)
+
+diff --git a/test/basic.css b/test/basic.css
+index de125b9..d5abe7a 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -4,6 +4,10 @@ html {
+ 
+ :root {
+ 	--color: rgb(255, 0, 0);
++	--color-h: 0;
++	--color-s: 100%;
++	--color-l: 50%;
++	--color-hsl: hsl(var(--color-h), var(--color-s), var(--color-l));
+ 	--ref-color: var(--color);
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
+@@ -42,6 +46,10 @@ html {
+ 	color: var(--ref-color);
+ }
+ 
++.test--color_w_vars {
++	color: var(--color-hsl);
++}
++
+ .test--circular_var {
+ 	color: var(--circular);
+ }
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 79a0a8a..68ef47d 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -4,6 +4,10 @@ html {
+ 
+ :root {
+ 	--color: rgb(255, 0, 0);
++	--color-h: 0;
++	--color-s: 100%;
++	--color-l: 50%;
++	--color-hsl: hsl(var(--color-h), var(--color-s), var(--color-l));
+ 	--ref-color: var(--color);
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
+@@ -47,6 +51,11 @@ html {
+ 	color: var(--ref-color);
+ }
+ 
++.test--color_w_vars {
++	color: hsl(0, 100%, 50%);
++	color: var(--color-hsl);
++}
++
+ .test--circular_var {
+ 	color: var(--circular);
+ }
+diff --git a/test/basic.import-is-empty.expect.css b/test/basic.import-is-empty.expect.css
+index 79a0a8a..68ef47d 100644
+--- a/test/basic.import-is-empty.expect.css
++++ b/test/basic.import-is-empty.expect.css
+@@ -4,6 +4,10 @@ html {
+ 
+ :root {
+ 	--color: rgb(255, 0, 0);
++	--color-h: 0;
++	--color-s: 100%;
++	--color-l: 50%;
++	--color-hsl: hsl(var(--color-h), var(--color-s), var(--color-l));
+ 	--ref-color: var(--color);
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
+@@ -47,6 +51,11 @@ html {
+ 	color: var(--ref-color);
+ }
+ 
++.test--color_w_vars {
++	color: hsl(0, 100%, 50%);
++	color: var(--color-hsl);
++}
++
+ .test--circular_var {
+ 	color: var(--circular);
+ }
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+index 5e796f9..6f9d71f 100644
+--- a/test/basic.import.expect.css
++++ b/test/basic.import.expect.css
+@@ -4,6 +4,10 @@ html {
+ 
+ :root {
+ 	--color: rgb(255, 0, 0);
++	--color-h: 0;
++	--color-s: 100%;
++	--color-l: 50%;
++	--color-hsl: hsl(var(--color-h), var(--color-s), var(--color-l));
+ 	--ref-color: var(--color);
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
+@@ -47,6 +51,11 @@ html {
+ 	color: var(--ref-color);
+ }
+ 
++.test--color_w_vars {
++	color: hsl(0, 100%, 50%);
++	color: var(--color-hsl);
++}
++
+ .test--circular_var {
+ 	color: var(--circular);
+ }
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index c43cb4e..082a519 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -28,6 +28,10 @@
+ 	color: rgb(255, 0, 0);
+ }
+ 
++.test--color_w_vars {
++	color: hsl(0, 100%, 50%);
++}
++
+ .test--circular_var {
+ 	color: var(--circular);
+ }
+diff --git a/test/export-properties.css b/test/export-properties.css
+index 649487f..42b896b 100644
+--- a/test/export-properties.css
++++ b/test/export-properties.css
+@@ -1,6 +1,10 @@
+ :root {
+ 	--ref-color: var(--color);
+ 	--color: rgb(255, 0, 0);
++	--color-h: 0;
++	--color-s: 100%;
++	--color-l: 50%;
++	--color-hsl: hsl(var(--color-h), var(--color-s), var(--color-l));
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
+ 	--margin: 0 10px 20px 30px;
+diff --git a/test/export-properties.js b/test/export-properties.js
+index 333bcda..3bf6561 100644
+--- a/test/export-properties.js
++++ b/test/export-properties.js
+@@ -2,6 +2,10 @@ module.exports = {
+ 	customProperties: {
+ 		'--ref-color': 'var(--color)',
+ 		'--color': 'rgb(255, 0, 0)',
++		'--color-h': '0',
++		'--color-s': '100%',
++		'--color-l': '50%',
++		'--color-hsl': 'hsl(var(--color-h), var(--color-s), var(--color-l))',
+ 		'--circular': 'var(--circular-2)',
+ 		'--circular-2': 'var(--circular)',
+ 		'--margin': '0 10px 20px 30px',
+diff --git a/test/export-properties.json b/test/export-properties.json
+index d35faf9..83bbca4 100644
+--- a/test/export-properties.json
++++ b/test/export-properties.json
+@@ -2,6 +2,10 @@
+   "custom-properties": {
+     "--ref-color": "var(--color)",
+     "--color": "rgb(255, 0, 0)",
++    "--color-h": "0",
++    "--color-s": "100%",
++    "--color-l": "50%",
++    "--color-hsl": "hsl(var(--color-h), var(--color-s), var(--color-l))",
+     "--circular": "var(--circular-2)",
+     "--circular-2": "var(--circular)",
+     "--margin": "0 10px 20px 30px",
+diff --git a/test/export-properties.mjs b/test/export-properties.mjs
+index 31af59c..2950e73 100644
+--- a/test/export-properties.mjs
++++ b/test/export-properties.mjs
+@@ -1,6 +1,10 @@
+ export const customProperties = {
+ 	'--ref-color': 'var(--color)',
+ 	'--color': 'rgb(255, 0, 0)',
++	'--color-h': '0',
++	'--color-s': '100%',
++	'--color-l': '50%',
++	'--color-hsl': 'hsl(var(--color-h), var(--color-s), var(--color-l))',
+ 	'--circular': 'var(--circular-2)',
+ 	'--circular-2': 'var(--circular)',
+ 	'--margin': '0 10px 20px 30px',
+-- 
+2.33.1
+

@@ -1,0 +1,47 @@
+From 86498f9eb5f0fa0cfcba1dc50efa92a9c2f4f7be Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Mon, 3 Nov 2014 06:09:01 +0100
+Subject: [PATCH 039/186] fix warning about custom prop used in non :root
+
+---
+ CHANGELOG.md | 6 +++++-
+ index.js     | 7 ++++++-
+ 2 files changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 40dbd4a..e608391 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,6 +1,10 @@
++# 1.0.1 - 2014-11-03
++
++- fix warning about custom prop used in non :root
++
+ # 1.0.0 - 2014-11-02
+ 
+-- Add warning when a custom prop is used in another place that :root
++- Add warning when a custom prop is used in another place than :root
+ - handle !important
+ 
+ # 0.4.0 - 2014-09-30
+diff --git a/index.js b/index.js
+index 65b837b..1e54840 100755
+--- a/index.js
++++ b/index.js
+@@ -33,7 +33,12 @@ module.exports = function(options) {
+ 
+       // only variables declared for `:root` are supported for now
+       if (rule.selectors.length !== 1 || rule.selectors[0] !== ":root" || rule.parent.type !== "root") {
+-        console.warn(gnuMessage("Non :root only custom properties in non root level are not supported (" +  rule.selectors + ")"))
++        rule.each(function(decl) {
++          var prop = decl.prop
++          if (prop && prop.indexOf(VAR_PROP_IDENTIFIER) === 0) {
++            console.warn(gnuMessage("Custom property ignored: found in another place than top level :root (" +  rule.selectors + " { ... " + prop + ": ... })" + (rule.parent.type !== "root" ? ", in " + rule.parent.type : "")))
++          }
++        })
+         return
+       }
+ 
+-- 
+2.33.1
+

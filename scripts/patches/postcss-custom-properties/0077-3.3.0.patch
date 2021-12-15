@@ -1,0 +1,39 @@
+From d8c4db5f94fcea5421e4a5bacd9e60f7d3d18bb8 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 8 Apr 2015 07:13:46 +0200
+Subject: [PATCH 077/186] 3.3.0
+
+---
+ CHANGELOG.md | 6 ++++++
+ package.json | 2 +-
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index beb3db5..2d69071 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,9 @@
++# 3.3.0 - 2015-04-0
++
++- Added: `preserve` now support `"computed"` so only preserve resolved custom properties (see new option below)
++- Added: `appendVariables` allows you (when `preserve` is trulthy) to append your variables as custom properties
++- Added: `strict: false` allows your to avoid too many fallbacks added in your CSS.
++
+ # 3.2.0 - 2015-03-31
+ 
+ - Added: JS defined variables are now resolved too ([#22](https://github.com/postcss/postcss-custom-properties/issues/22))
+diff --git a/package.json b/package.json
+index 99ac6b6..752cc1e 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "3.2.0",
++  "version": "3.3.0",
+   "description": "PostCSS plugin to polyfill W3C CSS Custom Properties for cascading variables",
+   "keywords": [
+     "css",
+-- 
+2.33.1
+

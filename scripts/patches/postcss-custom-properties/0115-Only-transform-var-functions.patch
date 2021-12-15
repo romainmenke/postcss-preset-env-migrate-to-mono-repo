@@ -1,0 +1,68 @@
+From 86637d12722a42b9440a6788e2c79e9ac98e8209 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 10 Feb 2018 17:02:19 -0500
+Subject: [PATCH 115/186] Only transform var() functions
+
+---
+ index.js                                        | 9 +++++++--
+ test/fixtures/substitution-defined.css          | 3 +++
+ test/fixtures/substitution-defined.expected.css | 3 +++
+ 3 files changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/index.js b/index.js
+index c2d1e90..d95ad76 100755
+--- a/index.js
++++ b/index.js
+@@ -3,6 +3,7 @@ import balanced from "balanced-match"
+ 
+ const VAR_PROP_IDENTIFIER = "--"
+ const VAR_FUNC_IDENTIFIER = "var"
++const VAR_FUNC_REGEX = /(^|[^\w-])var\(/
+ // matches `name[, fallback]`, captures "name" and "fallback"
+ const RE_VAR = /([\w-]+)(?:\s*,\s*)?\s*(.*)?/
+ 
+@@ -27,11 +28,15 @@ let globalOpts
+ function resolveValue(value, variables, result, decl) {
+   const results = []
+ 
+-  const start = value.indexOf(VAR_FUNC_IDENTIFIER + "(")
+-  if (start === -1) {
++  const hasVarFunction = VAR_FUNC_REGEX.test(value)
++
++  if (!hasVarFunction) {
+     return [value]
+   }
+ 
++  const match = value.match(VAR_FUNC_REGEX)
++  const start = match.index + match[1].length
++
+   const matches = balanced("(", ")", value.substring(start))
+ 
+   if (!matches) {
+diff --git a/test/fixtures/substitution-defined.css b/test/fixtures/substitution-defined.css
+index c1f7a40..f6dc84b 100755
+--- a/test/fixtures/substitution-defined.css
++++ b/test/fixtures/substitution-defined.css
+@@ -35,4 +35,7 @@ div {
+ 
+   /* multiple variables within a function */
+   background: linear-gradient(to top, var(--test-one), var(--test-two));
++
++  /* untouched custom function */
++  color: myvar(--test-one);
+ }
+diff --git a/test/fixtures/substitution-defined.expected.css b/test/fixtures/substitution-defined.expected.css
+index 5d38f7a..531b6ee 100755
+--- a/test/fixtures/substitution-defined.expected.css
++++ b/test/fixtures/substitution-defined.expected.css
+@@ -28,4 +28,7 @@ div {
+ 
+   /* multiple variables within a function */
+   background: linear-gradient(to top, green, blue);
++
++  /* untouched custom function */
++  color: myvar(--test-one);
+ }
+-- 
+2.33.1
+

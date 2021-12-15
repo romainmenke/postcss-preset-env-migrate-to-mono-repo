@@ -1,0 +1,32 @@
+From 0bf934da640e3150c20056fc8242af8c64bac547 Mon Sep 17 00:00:00 2001
+From: Aditya Agarwal <adityaa803@gmail.com>
+Date: Sat, 14 Apr 2018 00:54:25 +0530
+Subject: [PATCH 128/186] change "preserve-computed" to "computed"
+
+In my case "preserve-computed" didn't work although "computed" works. Please check if this is actually correct or not.
+---
+ README.md | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/README.md b/README.md
+index 5b79d91..65397d8 100755
+--- a/README.md
++++ b/README.md
+@@ -198,12 +198,12 @@ h1 {
+ }
+ ```
+ 
+-The option may also be set to `"preserve-computed"`, where Custom Properties
++The option may also be set to `"computed"`, where Custom Properties
+ will remain, but declarations containing `var()` will be removed:
+ 
+ ```js
+ postCSSCustomProperties({
+-  preserve: 'preserve-computed'
++  preserve: 'computed'
+ })
+ ```
+ 
+-- 
+2.33.1
+

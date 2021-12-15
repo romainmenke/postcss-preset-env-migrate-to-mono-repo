@@ -1,0 +1,39 @@
+From c572e60bbd91d1dbb43bdca93b89f275378ac5d4 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 6 Oct 2017 10:34:50 -0700
+Subject: [PATCH 112/186] Bump deps
+
+---
+ package.json | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/package.json b/package.json
+index d38f38b..0b7d0e1 100644
+--- a/package.json
++++ b/package.json
+@@ -19,16 +19,16 @@
+   ],
+   "dependencies": {
+     "balanced-match": "^1.0.0",
+-    "postcss": "^6.0.3"
++    "postcss": "^6.0.13"
+   },
+   "devDependencies": {
+-    "babel-cli": "^6.24.1",
++    "babel-cli": "^6.26.0",
+     "babel-plugin-add-module-exports": "^0.2.1",
+-    "babel-preset-env": "^1.5.2",
+-    "babel-register": "^6.24.1",
+-    "eslint": "^4.1.1",
++    "babel-preset-env": "^1.6.0",
++    "babel-register": "^6.26.0",
++    "eslint": "^4.8.0",
+     "npmpub": "^3.1.0",
+-    "tape": "^4.7.0"
++    "tape": "^4.8.0"
+   },
+   "scripts": {
+     "lint": "eslint *.js index.js ./test/",
+-- 
+2.33.1
+

@@ -1,0 +1,50 @@
+From 6828438cd26283bdd2d26eecc4b120155f7e9b25 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 8 Apr 2015 06:50:39 +0200
+Subject: [PATCH 071/186] Rename `append` option to `appendVariables`
+
+To make it clear.
+---
+ index.js      | 4 ++--
+ test/index.js | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/index.js b/index.js
+index 9eabc0e..0c1e251 100755
+--- a/index.js
++++ b/index.js
+@@ -127,7 +127,7 @@ module.exports = function(options) {
+         delete variables[name]
+       }
+     })
+-    var append = options.append
++    var appendVariables = options.appendVariables
+     var preserve = options.preserve
+     var map = {}
+     var importantMap = {}
+@@ -224,7 +224,7 @@ module.exports = function(options) {
+       }
+     })
+ 
+-    if (preserve && append) {
++    if (preserve && appendVariables) {
+       var names = Object.keys(map)
+       if (names.length) {
+         var container = postcss.rule({
+diff --git a/test/index.js b/test/index.js
+index 26b78a5..61d534f 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -131,8 +131,8 @@ test("append variables", function(t) {
+       "test-two": "js-two",
+       "test-three": "var(--test-one, one) var(--test-two, two)",
+     },
+-    append: true,
+     preserve: "computed",
++    appendVariables: true,
+   })
+   t.end()
+ })
+-- 
+2.33.1
+

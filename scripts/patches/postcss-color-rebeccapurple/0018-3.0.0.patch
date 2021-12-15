@@ -1,0 +1,46 @@
+From 64eb63c035279d67ca782e3b13c3ca73a0b06422 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 10 May 2017 15:35:27 -0400
+Subject: [PATCH 18/34] 3.0.0
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 4 ++--
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 3be46c3..9b508dd 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 3.0.0 - 2016-05-10
++
++- Added: compatibility with postcss v6.x
++
+ # 2.0.1 - 2016-11-28
+ 
+ - Bump `color` dependency version
+diff --git a/package.json b/package.json
+index 46fe2b3..5f6f9bc 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-rebeccapurple",
+-  "version": "2.0.1",
++  "version": "3.0.0",
+   "description": "PostCSS plugin to transform W3C CSS rebeccapurple color to more compatible CSS (rgb())",
+   "keywords": [
+     "css",
+@@ -22,7 +22,7 @@
+   ],
+   "dependencies": {
+     "color": "^0.11.4",
+-    "postcss": "^5.0.4"
++    "postcss": "^6.0.1"
+   },
+   "devDependencies": {
+     "jscs": "^1.6.2",
+-- 
+2.33.1
+

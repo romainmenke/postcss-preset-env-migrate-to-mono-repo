@@ -1,0 +1,25 @@
+From 480240cf15097df2f716036493f3cf6d9da2d468 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 8 Apr 2015 06:52:59 +0200
+Subject: [PATCH 075/186] Upgrade tape to 4.x
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index d743b6d..99ac6b6 100644
+--- a/package.json
++++ b/package.json
+@@ -29,7 +29,7 @@
+   },
+   "devDependencies": {
+     "eslint": "^0.18.0",
+-    "tape": "^3.0.0"
++    "tape": "^4.0.0"
+   },
+   "scripts": {
+     "test": "eslint . && tape test"
+-- 
+2.33.1
+

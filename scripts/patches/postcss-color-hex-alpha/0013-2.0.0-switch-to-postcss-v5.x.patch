@@ -1,0 +1,47 @@
+From 382fd873556753edf890250100058942cba5b507 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 8 Sep 2015 06:24:25 +0200
+Subject: [PATCH 13/31] 2.0.0 (switch to postcss v5.x)
+
+---
+ CHANGELOG.md | 5 +++++
+ package.json | 4 +---
+ 2 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 1961215..11aa4be 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,8 @@
++# 2.0.0 - 2015-09-08
++
++- Added: compatibility with postcss v5.x
++- Removed: compatiblity with postcss v4.x
++
+ # 1.3.0 - 2015-08-13
+ 
+ - Added: compatibility with postcss v4.1.x
+diff --git a/package.json b/package.json
+index 9972cd0..8b25823 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-hex-alpha",
+-  "version": "1.3.0",
++  "version": "2.0.0",
+   "description": "PostCSS plugin to transform W3C RGBA hexadecimal notations (#RRGGBBAA or #RGBA) to more compatible CSS (rgba())",
+   "keywords": [
+     "css",
+@@ -18,8 +18,6 @@
+     "url": "https://github.com/postcss/postcss-color-hex-alpha.git"
+   },
+   "files": [
+-    "CHANGELOG.md",
+-    "LICENSE",
+     "index.js"
+   ],
+   "dependencies": {
+-- 
+2.33.1
+

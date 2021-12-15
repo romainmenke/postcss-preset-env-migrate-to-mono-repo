@@ -1,0 +1,24 @@
+From 256df27a9994d7ce42875f50b06c36ccd814e6f6 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Fri, 22 Aug 2014 06:09:31 +0200
+Subject: [PATCH 014/186] it's about syntax
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 05915fd..f01d40d 100755
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # postcss-custom-properties [![Build Status](https://travis-ci.org/postcss/postcss-custom-properties.png)](https://travis-ci.org/postcss/postcss-custom-properties)
+ 
+-> [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Properties for cascading variables](http://www.w3.org/TR/css-variables/) to more compatible CSS.
++> [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Properties for cascading variables](http://www.w3.org/TR/css-variables/) syntax to more compatible CSS.
+ 
+ **N.B.** For now the transformation _is not complete_. It currently just aims to provide a future-proof way of using a _limited subset_ of the features provided by native CSS variables.  
+ 
+-- 
+2.33.1
+

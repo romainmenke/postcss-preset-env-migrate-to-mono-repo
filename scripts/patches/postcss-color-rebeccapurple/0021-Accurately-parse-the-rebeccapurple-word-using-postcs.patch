@@ -1,0 +1,79 @@
+From caf793e40f5b12fab4c9b265f44a85b0a10812ca Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 10 May 2017 15:57:28 -0400
+Subject: [PATCH 21/34] Accurately parse the rebeccapurple word using
+ postcss-value-parser
+
+---
+ index.js                                 | 7 ++++++-
+ package.json                             | 3 ++-
+ test/fixtures/rebeccapurple.css          | 4 ++++
+ test/fixtures/rebeccapurple.expected.css | 4 ++++
+ 4 files changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/index.js b/index.js
+index a0f7243..49c4bf6 100755
+--- a/index.js
++++ b/index.js
+@@ -2,6 +2,7 @@
+  * Module dependencies.
+  */
+ var postcss = require("postcss")
++var valueParser = require("postcss-value-parser")
+ var color = "#639"
+ 
+ /**
+@@ -13,7 +14,11 @@ module.exports = postcss.plugin("postcss-color-rebeccapurple", function() {
+       var value = decl.value;
+ 
+       if (value && value.indexOf("rebeccapurple") !== -1) {
+-        decl.value = value.replace(/(rebeccapurple)\b/gi, color)
++        decl.value = valueParser(value).walk(function(node) {
++          if (node.type === "word" && node.value === "rebeccapurple") {
++            node.value = color
++          }
++        }).toString()
+       }
+     })
+   }
+diff --git a/package.json b/package.json
+index 697ee8a..683d4c2 100644
+--- a/package.json
++++ b/package.json
+@@ -21,7 +21,8 @@
+     "index.js"
+   ],
+   "dependencies": {
+-    "postcss": "^6.0.1"
++    "postcss": "^6.0.1",
++    "postcss-value-parser": "^3.3.0"
+   },
+   "devDependencies": {
+     "jscs": "^3.0.7",
+diff --git a/test/fixtures/rebeccapurple.css b/test/fixtures/rebeccapurple.css
+index 27b88a4..ebd14a9 100644
+--- a/test/fixtures/rebeccapurple.css
++++ b/test/fixtures/rebeccapurple.css
+@@ -2,3 +2,7 @@ body {
+   color: rebeccapurple;
+   background: linear-gradient(rebeccapurple, blue 50%, rebeccapurple);
+ }
++
++a {
++  color: oldrebeccapurple;
++}
+diff --git a/test/fixtures/rebeccapurple.expected.css b/test/fixtures/rebeccapurple.expected.css
+index b6cd293..e9838f2 100644
+--- a/test/fixtures/rebeccapurple.expected.css
++++ b/test/fixtures/rebeccapurple.expected.css
+@@ -2,3 +2,7 @@ body {
+   color: #639;
+   background: linear-gradient(#639, blue 50%, #639);
+ }
++
++a {
++  color: oldrebeccapurple;
++}
+-- 
+2.33.1
+

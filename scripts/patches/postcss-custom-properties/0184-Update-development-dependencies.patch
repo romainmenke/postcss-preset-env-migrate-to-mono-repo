@@ -1,0 +1,25 @@
+From eddd28dee125accb6a842df7d32fcbef41797cbb Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 22 Sep 2021 09:47:57 -0400
+Subject: [PATCH 184/186] Update development dependencies
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 4b35c8d..3a3ceec 100644
+--- a/package.json
++++ b/package.json
+@@ -51,7 +51,7 @@
+     "postcss": "8.3.6",
+     "postcss-tape": "6.0.1",
+     "pre-commit": "1.2.2",
+-    "rollup": "2.56.3"
++    "rollup": "2.57.0"
+   },
+   "eslintConfig": {
+     "env": {
+-- 
+2.33.1
+

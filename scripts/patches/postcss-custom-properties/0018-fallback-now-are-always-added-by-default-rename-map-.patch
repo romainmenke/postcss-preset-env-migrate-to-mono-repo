@@ -1,0 +1,256 @@
+From d1cb117b9a49587e176f69b29c6224e5289d79d7 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 26 Aug 2014 07:53:52 +0200
+Subject: [PATCH 018/186] fallback now are always added by default + rename map
+ option
+
+see why: http://www.w3.org/TR/css-variables/#invalid-variables
+
+Close #4
+---
+ CHANGELOG.md                                |  9 ++-
+ README.md                                   |  2 +-
+ index.js                                    | 77 +++++++++++----------
+ test/fixtures/substitution-defined.out.css  |  1 +
+ test/fixtures/substitution-fallback.css     |  2 +
+ test/fixtures/substitution-fallback.out.css |  3 +
+ test/index.js                               | 10 ++-
+ 7 files changed, 61 insertions(+), 43 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index a99811d..941e283 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,6 +1,11 @@
+-# 0.2.0 - 2014-08-212
++# 0.3.0 - 2014-08-25
+ 
+-* Add map option
++* fallback now are always added by default ([see why](http://www.w3.org/TR/css-variables/#invalid-variables))
++* `map` option renamed to `variables`
++
++# 0.2.0 - 2014-08-22
++
++* Add `map` option
+ * GNU style error message
+ 
+ # 0.1.0 - 2014-08-01
+diff --git a/README.md b/README.md
+index f01d40d..2976670 100755
+--- a/README.md
++++ b/README.md
+@@ -66,7 +66,7 @@ var out = postcss()
+   .css
+ ```
+ 
+-#### `map` (default: `{}`)
++#### `variables` (default: `{}`)
+ 
+ Allow you to pass an object of variables
+ 
+diff --git a/index.js b/index.js
+index 7bc4f80..e448afe 100755
+--- a/index.js
++++ b/index.js
+@@ -10,6 +10,7 @@ var balanced = require("balanced-match")
+ 
+ var VAR_PROP_IDENTIFIER = "--"
+ var VAR_FUNC_IDENTIFIER = "var"
++var RE_VAR = /([\w-]+)(?:\s*,\s*)?(.*)?/ // matches `name[, fallback]`, captures "name" and "fallback"
+ 
+ /**
+  * Module export.
+@@ -18,7 +19,7 @@ var VAR_FUNC_IDENTIFIER = "var"
+ module.exports = function(options) {
+   return function(style) {
+     options = options || {}
+-    var map = options.map || {}
++    var variables = options.variables || {}
+     var preserve = (options.preserve === true ? true : false)
+ 
+     // define variables
+@@ -38,7 +39,7 @@ module.exports = function(options) {
+         var value = decl.value
+ 
+         if (prop && prop.indexOf(VAR_PROP_IDENTIFIER) === 0) {
+-          map[prop] = value
++          variables[prop] = value
+           varNameIndices.push(i)
+         }
+       })
+@@ -58,7 +59,6 @@ module.exports = function(options) {
+ 
+     // resolve variables
+     style.eachDecl(function(decl) {
+-      var resolvedValue
+       var value = decl.value
+ 
+       // skip values that don’t contain variable functions
+@@ -66,16 +66,14 @@ module.exports = function(options) {
+         return
+       }
+ 
+-      resolvedValue = resolveValue(value, map, decl.source)
++      resolveValue(value, variables, decl.source).forEach(function(resolvedValue) {
++        var clone = decl.clone()
++        clone.value = resolvedValue
++        decl.parent.insertBefore(decl, clone)
++      })
+ 
+       if (!preserve) {
+-        decl.value = resolvedValue
+-      }
+-      else {
+-        decl.parent.insertBefore(decl, {
+-          prop: decl.prop,
+-          value: resolvedValue
+-        })
++        decl.removeSelf()
+       }
+     })
+   }
+@@ -91,48 +89,53 @@ module.exports = function(options) {
+  * var(name[, fallback])
+  *
+  * @param {String} value A property value known to contain CSS variable functions
+- * @param {Object} map A map of variable names and values
++ * @param {Object} variables A map of variable names and values
+  * @param {Object} source source object of the declaration containing the rule
+  * @return {String} A property value with all CSS variables substituted.
+  */
+ 
+-function resolveValue(value, map, source) {
+-  // matches `name[, fallback]`, captures "name" and "fallback"
+-  var RE_VAR = /([\w-]+)(?:\s*,\s*)?(.*)?/
+-  var balancedParens = balanced("(", ")", value)
+-  var varStartIndex = value.indexOf("var(")
++function resolveValue(value, variables, source) {
++  var results = []
++
++  var start = value.indexOf("var(")
++  if (start === -1) {
++    return [value]
++  }
++
++  var matches = balanced("(", ")", value.substring(start))
+ 
+-  if (!balancedParens) {
++  if (!matches) {
+     throw new SyntaxError(gnuMessage("missing closing ')' in the value '" + value + "'", source))
+   }
+ 
+-  var varRef = balanced("(", ")", value.substring(varStartIndex)).body
+-  if (varRef === "") {
++  if (matches.body === "") {
+     throw new Error(gnuMessage("var() must contain a non-whitespace string", source))
+   }
+ 
+-  var varFunc = VAR_FUNC_IDENTIFIER + "(" + varRef + ")"
+-
+-  var varResult = varRef.replace(RE_VAR, function(_, name, fallback) {
+-    var replacement = map[name]
++  matches.body.replace(RE_VAR, function(_, name, fallback) {
++    var replacement = variables[name]
+     if (!replacement && !fallback) {
+-      throw new Error(gnuMessage("variable '" + name + "' is undefined", source))
++      throw new Error(gnuMessage("variable '" + name + "' is undefined & don't have any fallback", source))
+     }
+-    if (!replacement && fallback) {
+-      return fallback
++    if (fallback) {
++      // resolve the end of the expression before the rest
++      (matches.post ? resolveValue(matches.post, variables, source) : [""]).forEach(function(afterValue) {
++        // resolve fallback values
++        resolveValue(fallback, variables, source).forEach(function(fbValue) {
++          results.push(value.slice(0, start) + fbValue + afterValue)
++        })
++      })
+     }
+-    return replacement
+-  })
+ 
+-  // resolve the variable
+-  value = value.split(varFunc).join(varResult)
+-
+-  // recursively resolve any remaining variables in the value
+-  if (value.indexOf(VAR_FUNC_IDENTIFIER) !== -1) {
+-    value = resolveValue(value, map)
+-  }
++    if (replacement) {
++      // resolve the end of the expression
++      (matches.post ? resolveValue(matches.post, variables, source) : [""]).forEach(function(afterValue) {
++        results.push(value.slice(0, start) + replacement + afterValue)
++      })
++    }
++  })
+ 
+-  return value
++  return results
+ }
+ 
+ /**
+diff --git a/test/fixtures/substitution-defined.out.css b/test/fixtures/substitution-defined.out.css
+index 5d50ed3..b995db5 100755
+--- a/test/fixtures/substitution-defined.out.css
++++ b/test/fixtures/substitution-defined.out.css
+@@ -16,6 +16,7 @@ div {
+   /* multiple variables */
+   color: green, blue;
+   /* variable with function in fallback */
++  border: 1px solid rgba(0, 0, 0, 0.1);
+   border: green;
+   /* multiple variables within a function */
+   background: linear-gradient(to top, green, blue);
+diff --git a/test/fixtures/substitution-fallback.css b/test/fixtures/substitution-fallback.css
+index 3eba4c4..13b4041 100755
+--- a/test/fixtures/substitution-fallback.css
++++ b/test/fixtures/substitution-fallback.css
+@@ -19,4 +19,6 @@ div {
+   background: var(--missing, linear-gradient(to top, #000, var(--nested)));
+   /* fallback contains an undefined variable with a fallack */
+   background: var(--missing, var(--also-missing, green));
++  /* fallback for invalid variables http://www.w3.org/TR/css-variables/#invalid-variables */
++  font-size: var(--nested, 1rem);
+ }
+diff --git a/test/fixtures/substitution-fallback.out.css b/test/fixtures/substitution-fallback.out.css
+index f42ba55..936b6d3 100755
+--- a/test/fixtures/substitution-fallback.out.css
++++ b/test/fixtures/substitution-fallback.out.css
+@@ -15,4 +15,7 @@ div {
+   background: linear-gradient(to top, #000, green);
+   /* fallback contains an undefined variable with a fallack */
+   background: green;
++  /* fallback for invalid variables http://www.w3.org/TR/css-variables/#invalid-variables */
++  font-size: 1rem;
++  font-size: green;
+ }
+diff --git a/test/index.js b/test/index.js
+index a6c2d8d..f1ce076 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -5,15 +5,19 @@ var test = require("tape")
+ var postcss = require("postcss")
+ var customProperties = require("..")
+ 
++function fixturePath(name) {
++  return "test/fixtures/" + name + ".css"
++}
++
+ function fixture(name) {
+-  return fs.readFileSync("test/fixtures/" + name + ".css", "utf8").trim()
++  return fs.readFileSync(fixturePath(name), "utf8").trim()
+ }
+ 
+ function compareFixtures(t, name, options) {
+-  var actual = postcss(customProperties(options)).process(fixture(name)).css.trim()
++  var actual = postcss(customProperties(options)).process(fixture(name), {from: fixturePath(name)}).css.trim()
+ 
+   // handy thing: checkout actual in the *.actual.css file
+-  fs.writeFile("test/fixtures/" + name + ".actual.css", actual)
++  fs.writeFile(fixturePath(name + ".actual"), actual)
+ 
+   var expected = fixture(name + ".out")
+   return t.equal(actual, expected, "processed fixture '" + name + "' should be equal to expected output")
+-- 
+2.33.1
+

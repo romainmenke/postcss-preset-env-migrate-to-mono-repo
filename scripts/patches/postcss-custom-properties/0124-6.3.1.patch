@@ -1,0 +1,58 @@
+From bb69518c935f48308354f3c6e505dd3544a119e1 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 16 Feb 2018 08:57:28 -0500
+Subject: [PATCH 124/186] 6.3.1
+
+Reverts option changes in 6.3.0
+---
+ CHANGELOG.md | 4 ++++
+ index.js     | 4 ++--
+ package.json | 2 +-
+ 3 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index ed245c1..0857e0d 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 6.3.1 - 2018-02-16
++
++- Reverted: `preserve` and `warnings` option to be added in major release
++
+ # 6.3.0 - 2018-02-15
+ 
+ - Fixed: `var()` captures strictly `var()` functions and not `xvar()`, etc
+diff --git a/index.js b/index.js
+index 645f981..7c0a304 100755
+--- a/index.js
++++ b/index.js
+@@ -166,12 +166,12 @@ export default postcss.plugin("postcss-custom-properties", (options = {}) => {
+     const strict = "strict" in options ? Boolean(options.strict) : true
+     const appendVariables = "appendVariables" in options
+       ? Boolean(options.appendVariables) : false
+-    const preserve = "preserve" in options ? options.preserve : true
++    const preserve = "preserve" in options ? options.preserve : false
+     const map = {}
+     const importantMap = {}
+ 
+     globalOpts = {
+-      warnings: "warnings" in options ? Boolean(options.warnings) : false,
++      warnings: "warnings" in options ? Boolean(options.warnings) : true,
+       noValueNotifications: "noValueNotifications" in options
+         ? String(options.noValueNotifications) : "warning",
+     }
+diff --git a/package.json b/package.json
+index e9bed16..85b530c 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "6.3.0",
++  "version": "6.3.1",
+   "description": "PostCSS plugin to polyfill W3C CSS Custom Properties for cascading variables",
+   "keywords": [
+     "css",
+-- 
+2.33.1
+

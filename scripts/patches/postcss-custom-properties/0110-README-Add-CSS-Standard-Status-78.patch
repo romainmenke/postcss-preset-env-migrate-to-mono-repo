@@ -1,0 +1,22 @@
+From 7acd5599a04ce95f8ed5a97aa12c9b9062a263ff Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 15 Sep 2017 12:58:58 -0400
+Subject: [PATCH 110/186] README: Add CSS Standard Status (#78)
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 3ecb202..33e5e1c 100755
+--- a/README.md
++++ b/README.md
+@@ -1,4 +1,4 @@
+-# postcss-custom-properties [![Build Status](https://travis-ci.org/postcss/postcss-custom-properties.svg)](https://travis-ci.org/postcss/postcss-custom-properties)
++# postcss-custom-properties [![CSS Standard Status](https://jonathantneal.github.io/css-db/badge/css-variables.svg)](https://jonathantneal.github.io/css-db/#css-variables) [![Build Status](https://travis-ci.org/postcss/postcss-custom-properties.svg)](https://travis-ci.org/postcss/postcss-custom-properties)
+ 
+ > [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Properties for ~~cascading~~ variables](http://www.w3.org/TR/css-variables/) syntax to more compatible CSS.
+ 
+-- 
+2.33.1
+

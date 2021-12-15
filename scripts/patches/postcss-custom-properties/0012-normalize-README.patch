@@ -1,0 +1,90 @@
+From 9752c738996737b4cfa30b55df99fb8acb215158 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 12 Aug 2014 14:47:32 +0200
+Subject: [PATCH 012/186] normalize README
+
+---
+ README.md | 46 ++++++++++++++++++++++++++++++++--------------
+ 1 file changed, 32 insertions(+), 14 deletions(-)
+
+diff --git a/README.md b/README.md
+index 9c63040..e295e26 100755
+--- a/README.md
++++ b/README.md
+@@ -11,28 +11,48 @@ But I look forward to merge those 2 plugins & deprecate this one ([see opened is
+ 
+ ## Installation
+ 
+-```
+-npm install postcss-custom-properties
+-```
++    $ npm install postcss-custom-properties
+ 
+ ## Usage
+ 
+ ```js
+ // dependencies
+-var fs = require('fs')
+-var postcss = require('postcss')
+-var customProperties = require('postcss-custom-properties')
++var fs = require("fs")
++var postcss = require("postcss")
++var customProperties = require("postcss-custom-properties")
+ 
+ // css to be processed
+-var css = fs.readFileSync('build/build.css', 'utf8')
++var css = fs.readFileSync("input.css", "utf8")
+ 
+ // process css using postcss-custom-properties
+-var out = postcss()
++var output = postcss()
+   .use(customProperties())
+   .process(css)
+   .css
+ ```
+ 
++Using this `input.css`:
++
++```css
++:root {
++  --color: red;
++}
++
++div {
++  color: var(--color);
++}
++```
++
++you will get:
++
++```css
++div {
++  color: red;
++}
++```
++
++Checkout [tests](test) for more.
++
+ ### Options
+ 
+ #### `preserve` (default: `false`)
+@@ -56,12 +76,10 @@ Allow you to pass an object of variables
+ 
+ Work on a branch, install dev-dependencies, respect coding style & run tests before submitting a bug fix or a feature.
+ 
+-```bash
+-git clone https://github.com/postcss/postcss-custom-properties.git
+-git checkout -b patch-1
+-npm install
+-npm test
+-```
++    $ git clone https://github.com/postcss/postcss-custom-properties.git
++    $ git checkout -b patch-1
++    $ npm install
++    $ npm test
+ 
+ ## [Changelog](CHANGELOG.md)
+ 
+-- 
+2.33.1
+

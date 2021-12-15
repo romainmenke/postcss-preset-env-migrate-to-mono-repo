@@ -1,0 +1,39 @@
+From 25258bf31f01803abfbfc6ea94095b4cfa8a2fe5 Mon Sep 17 00:00:00 2001
+From: Jed Mao <jedmao@outlook.com>
+Date: Mon, 7 Sep 2015 02:01:18 -0500
+Subject: [PATCH 14/34] Upgrade to PostCSS 5.x
+
+---
+ index.js     | 2 +-
+ package.json | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/index.js b/index.js
+index 7a36d07..8908522 100755
+--- a/index.js
++++ b/index.js
+@@ -9,7 +9,7 @@ var color = require("color")("rebeccapurple").rgbString()
+  */
+ module.exports = postcss.plugin("postcss-color-rebeccapurple", function() {
+   return function(style) {
+-    style.eachDecl(function(decl) {
++    style.walkDecls(function(decl) {
+       var value = decl.value;
+ 
+       if (value && value.indexOf("rebeccapurple") !== -1) {
+diff --git a/package.json b/package.json
+index c568c11..7aef2c2 100644
+--- a/package.json
++++ b/package.json
+@@ -24,7 +24,7 @@
+   ],
+   "dependencies": {
+     "color": "^0.9.0",
+-    "postcss": "^4.1.13"
++    "postcss": "^5.0.4"
+   },
+   "devDependencies": {
+     "jscs": "^1.6.2",
+-- 
+2.33.1
+

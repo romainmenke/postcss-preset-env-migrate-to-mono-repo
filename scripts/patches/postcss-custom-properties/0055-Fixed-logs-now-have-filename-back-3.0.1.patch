@@ -1,0 +1,114 @@
+From 8bba058fa92a1a197040c5e7fd7a4d68d4f33695 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Fri, 6 Feb 2015 07:30:30 +0100
+Subject: [PATCH 055/186] Fixed: logs now have filename back (3.0.1)
+
+Close #19
+---
+ CHANGELOG.md | 39 +++++++++++++++++++++------------------
+ package.json |  4 ++--
+ 2 files changed, 23 insertions(+), 20 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index c0d6e93..b40d677 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,53 +1,56 @@
++# 3.0.1 - 2015-02-06
++
++- Fixed: logs now have filename back ([#19](https://github.com/postcss/postcss-custom-properties/issues/19))
++
+ # 3.0.0 - 2015-01-20
+ 
+-- Upgrade to postcss 4 ([#18](https://github.com/postcss/postcss-custom-properties/pull/18))
+-- Remove some code that seems to be useless ([16ff3c2](https://github.com/postcss/postcss-custom-properties/commit/16ff3c22fe0563a1283411d7866791966fff4c58))
+-- Use a new postcss 4 method `cloneBefore` ([604168e](https://github.com/postcss/postcss-custom-properties/commit/604168e4e28379c3a42c8a8255957a65ec6b2c27))
++- Changed: upgrade to postcss 4 ([#18](https://github.com/postcss/postcss-custom-properties/pull/18))
++- Removed: some code that seems to be useless ([16ff3c2](https://github.com/postcss/postcss-custom-properties/commit/16ff3c22fe0563a1283411d7866791966fff4c58))
+ 
+ # 2.1.1 - 2014-12-02
+ 
+-- Fix issue when multiples undefined custom properties are referenced ([#16](https://github.com/postcss/postcss-custom-properties/issues/16))
++- Fixed: issue when multiples undefined custom properties are referenced ([#16](https://github.com/postcss/postcss-custom-properties/issues/16))
+ 
+ # 2.1.0 - 2014-11-25
+ 
+-- Enhanced exceptions & messages
++- Added: enhanced exceptions & messages
+ 
+ # 2.0.0 - 2014-11-12
+ 
+-- Upgrade to postcss 3
++- Changed: upgrade to postcss 3
+ 
+ # 1.0.2 - 2014-11-04
+ 
+-- More clear message for warning about custom prop used in non top-level :root
++- Fixed: more clear message for warning about custom prop used in non top-level :root
+ 
+ # 1.0.1 - 2014-11-03
+ 
+-- fix warning about custom prop used in non :root
++- Fixed: warning about custom prop used in non :root
+ 
+ # 1.0.0 - 2014-11-02
+ 
+-- Add warning when a custom prop is used in another place than :root
+-- handle !important
++- Added: warning when a custom prop is used in another place than :root
++- Added: handle !important
+ 
+ # 0.4.0 - 2014-09-30
+ 
+-- JS-defined properties override CSS-defined
++- Added: JS-defined properties override CSS-defined
+ 
+ # 0.3.1 - 2014-08-27
+ 
+-- Nested custom properties usages are now correctly resolved
+-- Undefined var doesn't throw error anymore (just a console warning) & are kept as is in the output
++- Added: nested custom properties usages are now correctly resolved
++- Changed: undefined var doesn't throw error anymore (just a console warning) & are kept as is in the output
+ 
+ # 0.3.0 - 2014-08-26
+ 
+-- Fallback now are always added by default ([see why](http://www.w3.org/TR/css-variables/#invalid-variables))
+-- `map` option renamed to `variables`
++- Changed: fallback now are always added by default ([see why](http://www.w3.org/TR/css-variables/#invalid-variables))
++- Changed: `map` option renamed to `variables`
+ 
+ # 0.2.0 - 2014-08-22
+ 
+-- Add `map` option
+-- GNU style error message
++- Added: `map` option
++- Changed: GNU style error message
+ 
+ # 0.1.0 - 2014-08-01
+ 
+-First release based on [rework-vars](https://github.com/reworkcss/rework-vars) v3.1.1
++✨ First release based on [rework-vars](https://github.com/reworkcss/rework-vars) v3.1.1
+diff --git a/package.json b/package.json
+index 27d5a1b..13ecb8c 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "3.0.0",
++  "version": "3.0.1",
+   "description": "PostCSS plugin to polyfill W3C CSS Custom Properties for cascading variables",
+   "keywords": [
+     "css",
+@@ -23,7 +23,7 @@
+   ],
+   "dependencies": {
+     "balanced-match": "~0.1.0",
+-    "postcss-message-helpers": "^1.1.0"
++    "postcss-message-helpers": "^2.0.0"
+   },
+   "devDependencies": {
+     "jscs": "^1.6.2",
+-- 
+2.33.1
+

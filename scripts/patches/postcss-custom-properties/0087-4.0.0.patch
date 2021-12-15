@@ -1,0 +1,503 @@
+From b843b93f6e4eca396c34872329da21c131e31d2f Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 17 Jun 2015 09:18:34 +0200
+Subject: [PATCH 087/186] 4.0.0
+
+---
+ .eslintrc     |  28 ++++++-----
+ .jscsrc       | 130 --------------------------------------------------
+ .jshintrc     |   9 ----
+ CHANGELOG.md  |   9 ++--
+ index.js      |  43 ++++++++++++-----
+ package.json  |   2 +-
+ test/index.js | 120 ++++++++++++++++++++++++++++++----------------
+ 7 files changed, 131 insertions(+), 210 deletions(-)
+ delete mode 100644 .jscsrc
+ delete mode 100644 .jshintrc
+
+diff --git a/.eslintrc b/.eslintrc
+index db38935..da2592a 100644
+--- a/.eslintrc
++++ b/.eslintrc
+@@ -7,20 +7,26 @@ env:
+   browser: true
+   node: true
+ 
+-# 0: off, 1: warning, 2: error
+ rules:
+-  # semicolons are useless
+-  semi: [2, "never"]
+-
++  indent: [2, 2] # 2 spaces indentation
++  max-len: [2, 80, 4]
+   quotes: [2, "double"]
++  semi: [2, "never"]
++  no-multiple-empty-lines: [2, {"max": 1}]
+ 
+-  # 2 spaces indentation
+-  indent: [2, 2]
+-
+-  # trailing coma are cool for diff
++  brace-style: [2, "stroustrup"]
+   comma-dangle: [2, "always-multiline"]
+-
+-  # enforce comma at eol (never before)
+   comma-style: [2, "last"]
++  computed-property-spacing: [2, "never"]
++  dot-location: [2, "property"]
++
++  one-var: [2, "never"]
++  no-bitwise: [2]
+ 
+-  valid-jsdoc: 2
++  object-shorthand: [2, "methods"]
++  space-after-keywords: [2, "always"]
++  space-before-blocks: [2, "always"]
++  space-before-function-paren: [2, "never"]
++  space-in-brackets: [2, "never"]
++  space-in-parens: [2, "never"]
++  spaced-line-comment: [2, "always"]
+diff --git a/.jscsrc b/.jscsrc
+deleted file mode 100644
+index 29720b3..0000000
+--- a/.jscsrc
++++ /dev/null
+@@ -1,130 +0,0 @@
+-{
+-  "excludeFiles": [
+-    "node_modules/**"
+-  ],
+-  "fileExtensions": [
+-    ".js"
+-  ],
+-  "requireCurlyBraces": [
+-    "if",
+-    "else",
+-    "for",
+-    "while",
+-    "do",
+-    "try",
+-    "catch"
+-  ],
+-  "requireSpaceAfterKeywords": [
+-    "if",
+-    "else",
+-    "for",
+-    "while",
+-    "do",
+-    "switch",
+-    "return",
+-    "try",
+-    "catch"
+-  ],
+-  "requireSpaceBeforeBlockStatements": true,
+-  "requireParenthesesAroundIIFE": true,
+-  "requireSpacesInConditionalExpression": {
+-    "afterTest": true,
+-    "beforeConsequent": true,
+-    "afterConsequent": true,
+-    "beforeAlternate": true
+-  },
+-  "requireSpacesInFunctionExpression": {
+-    "beforeOpeningCurlyBrace": true
+-  },
+-  "disallowSpacesInFunctionExpression": {
+-    "beforeOpeningRoundBrace": true
+-  },
+-  "disallowMultipleVarDecl": true,
+-  "requireBlocksOnNewline": 1,
+-  "disallowPaddingNewlinesInBlocks": true,
+-  "disallowEmptyBlocks": true,
+-  "disallowSpacesInsideObjectBrackets": true,
+-  "disallowSpacesInsideArrayBrackets": true,
+-  "disallowSpacesInsideParentheses": true,
+-  "disallowQuotedKeysInObjects": "allButReserved",
+-  "disallowSpaceAfterObjectKeys": true,
+-  "requireCommaBeforeLineBreak": true,
+-  "requireOperatorBeforeLineBreak": [
+-    "?",
+-    "+",
+-    "-",
+-    "/",
+-    "*",
+-    "=",
+-    "==",
+-    "===",
+-    "!=",
+-    "!==",
+-    ">",
+-    ">=",
+-    "<",
+-    "<="
+-  ],
+-  "disallowSpaceAfterPrefixUnaryOperators": [
+-    "++",
+-    "--",
+-    "+",
+-    "-",
+-    "~",
+-    "!"
+-  ],
+-  "disallowSpaceBeforePostfixUnaryOperators": [
+-    "++",
+-    "--"
+-  ],
+-  "requireSpaceBeforeBinaryOperators": [
+-    "+",
+-    "-",
+-    "/",
+-    "*",
+-    "=",
+-    "==",
+-    "===",
+-    "!=",
+-    "!=="
+-  ],
+-  "requireSpaceAfterBinaryOperators": [
+-    "+",
+-    "-",
+-    "/",
+-    "*",
+-    "=",
+-    "==",
+-    "===",
+-    "!=",
+-    "!=="
+-  ],
+-  "disallowImplicitTypeConversion": [
+-    "numeric",
+-    "boolean",
+-    "binary",
+-    "string"
+-  ],
+-  "requireCamelCaseOrUpperCaseIdentifiers": "ignoreProperties",
+-  "disallowKeywords": [
+-    "with"
+-  ],
+-  "disallowMultipleLineStrings": true,
+-  "validateQuoteMarks": "\"",
+-  "validateIndentation": 2,
+-  "disallowMixedSpacesAndTabs": true,
+-  "disallowTrailingWhitespace": true,
+-  "requireKeywordsOnNewLine": [
+-    "else"
+-  ],
+-  "requireLineFeedAtFileEnd": true,
+-  "requireCapitalizedConstructors": true,
+-  "safeContextKeyword": "that",
+-  "requireDotNotation": true,
+-  "validateJSDoc": {
+-    "checkParamNames": true,
+-    "checkRedundantParams": true,
+-    "requireParamTypes": true
+-  },
+-  "requireSpaceAfterLineComment": true
+-}
+diff --git a/.jshintrc b/.jshintrc
+deleted file mode 100644
+index 9f268f7..0000000
+--- a/.jshintrc
++++ /dev/null
+@@ -1,9 +0,0 @@
+-{
+-  "newcap": false,
+-  "undef": true,
+-  "unused": true,
+-  "asi": true,
+-  "esnext": true,
+-  "node": true,
+-  "browser": true
+-}
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 1f7dc91..2ad2b55 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,9 +1,8 @@
+-# 4.0.0 - Unreleased
++# 4.0.0 - 2015-06-17
+ 
+-- Changed: upgade to postcss ^4.1.x
+-- Changed: messages and exceptions are now using postcss API.
+-Messages are not outputted by default to console anymore.
+-# 3.3.0 - 2015-04-0
++- Changed: messages and exceptions are now sent using postcss message API.
++
++# 3.3.0 - 2015-04-08
+ 
+ - Added: `preserve` now support `"computed"` so only preserve resolved custom properties (see new option below)
+ - Added: `appendVariables` allows you (when `preserve` is truthy) to append your variables as custom properties
+diff --git a/index.js b/index.js
+index 79f8b02..8205c0b 100755
+--- a/index.js
++++ b/index.js
+@@ -11,7 +11,8 @@ var balanced = require("balanced-match")
+ 
+ var VAR_PROP_IDENTIFIER = "--"
+ var VAR_FUNC_IDENTIFIER = "var"
+-var RE_VAR = /([\w-]+)(?:\s*,\s*)?(.*)?/ // matches `name[, fallback]`, captures "name" and "fallback"
++// matches `name[, fallback]`, captures "name" and "fallback"
++var RE_VAR = /([\w-]+)(?:\s*,\s*)?(.*)?/
+ 
+ /**
+  * Resolve CSS variables in a value
+@@ -22,7 +23,8 @@ var RE_VAR = /([\w-]+)(?:\s*,\s*)?(.*)?/ // matches `name[, fallback]`, captures
+  *
+  * var(name[, fallback])
+  *
+- * @param {String} value A property value known to contain CSS variable functions
++ * @param {String} value A property value known to contain CSS variable
++ *                       functions
+  * @param {Object} variables A map of variable names and values
+  * @param {Object} source source object of the declaration containing the rule
+  * @return {String} A property value with all CSS variables substituted.
+@@ -51,11 +53,19 @@ function resolveValue(value, variables, result, decl) {
+     var post
+     // undefined and without fallback, just keep original value
+     if (!variable && !fallback) {
+-      result.warn("variable '" + name + "' is undefined and used without a fallback", {node: decl})
+-      post = matches.post ? resolveValue(matches.post, variables, result, decl) : [""]
++      result.warn(
++        "variable '" + name + "' is undefined and used without a fallback",
++        {node: decl}
++      )
++      post = matches.post
++        ? resolveValue(matches.post, variables, result, decl)
++        : [""]
+       // resolve the end of the expression
+       post.forEach(function(afterValue) {
+-        results.push(value.slice(0, start) + VAR_FUNC_IDENTIFIER + "(" + name + ")" + afterValue)
++        results.push(
++          value.slice(0, start) +
++          VAR_FUNC_IDENTIFIER + "(" + name + ")" + afterValue
++        )
+       })
+       return
+     }
+@@ -65,7 +75,9 @@ function resolveValue(value, variables, result, decl) {
+       // resolve fallback values
+       fallback = resolveValue(fallback, variables, result, decl)
+       // resolve the end of the expression before the rest
+-      post = matches.post ? resolveValue(matches.post, variables, result, decl) : [""]
++      post = matches.post
++        ? resolveValue(matches.post, variables, result, decl)
++        : [""]
+       fallback.forEach(function(fbValue) {
+         post.forEach(function(afterValue) {
+           results.push(value.slice(0, start) + fbValue + afterValue)
+@@ -101,7 +113,9 @@ function resolveValue(value, variables, result, decl) {
+       return
+     }
+     // resolve the end of the expression
+-    post = matches.post ? resolveValue(matches.post, variables, result, decl) : [""]
++    post = matches.post
++      ? resolveValue(matches.post, variables, result, decl)
++      : [""]
+     variable.value.forEach(function(replacementValue) {
+       post.forEach(function(afterValue) {
+         results.push(value.slice(0, start) + replacementValue + afterValue)
+@@ -140,14 +154,17 @@ module.exports = postcss.plugin("postcss-custom-properties", function(options) {
+       var toRemove = []
+ 
+       // only variables declared for `:root` are supported for now
+-      if (rule.selectors.length !== 1 || rule.selectors[0] !== ":root" || rule.parent.type !== "root") {
++      if (
++          rule.selectors.length !== 1 ||
++          rule.selectors[0] !== ":root" ||
++          rule.parent.type !== "root"
++      ) {
+         rule.each(function(decl) {
+           var prop = decl.prop
+           if (prop && prop.indexOf(VAR_PROP_IDENTIFIER) === 0) {
+             result.warn(
+-              "Custom property ignored: not scoped to the top-level :root element (" +
+-              rule.selectors +
+-              " { ... " + prop + ": ... })" +
++              "Custom property ignored: not scoped to the top-level :root " +
++              "element (" + rule.selectors + " { ... " + prop + ": ... })" +
+               (rule.parent.type !== "root" ? ", in " + rule.parent.type : ""),
+               {node: decl}
+             )
+@@ -238,7 +255,9 @@ module.exports = postcss.plugin("postcss-custom-properties", function(options) {
+         names.forEach(function(name) {
+           var variable = map[name]
+           var val = variable.value
+-          if (variable.resolved) { val = val[val.length - 1] }
++          if (variable.resolved) {
++            val = val[val.length - 1]
++          }
+           var decl = postcss.decl({
+             prop: name,
+             value: val,
+diff --git a/package.json b/package.json
+index 8819739..e1f78b4 100644
+--- a/package.json
++++ b/package.json
+@@ -26,7 +26,7 @@
+     "postcss": "^4.1.4"
+   },
+   "devDependencies": {
+-    "eslint": "^0.18.0",
++    "eslint": "^0.23.0",
+     "tape": "^4.0.0"
+   },
+   "scripts": {
+diff --git a/test/index.js b/test/index.js
+index fe44c19..bcba360 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -14,7 +14,8 @@ function fixture(name) {
+ }
+ 
+ function resolveFixture(name, options) {
+-  return postcss(customProperties(options)).process(fixture(name), {from: fixturePath(name)})
++  return postcss(customProperties(options))
++    .process(fixture(name), {from: fixturePath(name)})
+ }
+ 
+ function compareFixtures(t, name, options) {
+@@ -25,58 +26,89 @@ function compareFixtures(t, name, options) {
+   fs.writeFile(fixturePath(name + ".actual"), actual)
+ 
+   var expected = fixture(name + ".expected")
+-  t.equal(actual, expected, "processed fixture '" + name + "' should be equal to expected output")
++  t.equal(
++    actual, expected,
++    "processed fixture '" + name + "' should be equal to expected output"
++  )
+ 
+   return postcssResult
+ }
+ 
+ test("throw errors", function(t) {
+-  t.throws(function() {
+-    return postcss(customProperties()).process(fixture("substitution-empty")).css
+-  }, /must contain a non-whitespace string/, "throws an error when a variable function is empty")
+-
+-  t.throws(function() {
+-    return postcss(customProperties()).process(fixture("substitution-malformed")).css
+-  }, /missing closing/, "throws an error when a variable function is malformed")
++  t.throws(
++    function() {
++      return postcss(customProperties())
++        .process(fixture("substitution-empty"))
++        .css
++    },
++    /must contain a non-whitespace string/,
++    "throws an error when a variable function is empty"
++  )
++
++  t.throws(
++    function() {
++      return postcss(customProperties())
++        .process(fixture("substitution-malformed"))
++        .css
++    },
++    /missing closing/,
++    "throws an error when a variable function is malformed"
++  )
+ 
+   t.end()
+ })
+ 
+-test("substitutes nothing when a variable function references an undefined variable", function(t) {
+-  var result = compareFixtures(t, "substitution-undefined")
+-  t.equal(result.warnings()[0].text, "variable '--test' is undefined and used without a fallback", "should add a warning for undefined variable")
+-  t.end()
+-})
++test(
++  "substitutes nothing when a variable function references an undefined var",
++  function(t) {
++    var result = compareFixtures(t, "substitution-undefined")
++    t.equal(
++      result.warnings()[0].text,
++      "variable '--test' is undefined and used without a fallback",
++      "should add a warning for undefined variable"
++    )
++    t.end()
++  }
++)
+ 
+ test("substitutes defined variables in `:root` only", function(t) {
+   var result = compareFixtures(t, "substitution-defined")
+-  t.ok(result.warnings()[0].text.match(/^Custom property ignored/), "should add a warning for non root custom properties")
+-  t.end()
+-})
+-
+-test("accepts variables defined from JavaScript, and overrides local definitions", function(t) {
+-  compareFixtures(t, "js-defined", {
+-    variables: {
+-      "--test-one": "js-one",
+-      "--test-two": "js-two",
+-      "--test-three": "js-three",
+-      "--test-varception": "var(--test-one)",
+-      "--test-jsception": "var(--test-varception)",
+-      "--test-num": 1,
+-    },
+-  })
+-  t.end()
+-})
+-
+-test("prefixes js defined variabled with a double dash automatically", function(t) {
+-  compareFixtures(t, "automatic-variable-prefix", {
+-    variables: {
+-      unprefixed: "blue",
+-      "--prefixed": "white",
+-    },
+-  })
+-  t.end()
+-})
++  t.ok(
++    result.warnings()[0].text.match(/^Custom property ignored/),
++    "should add a warning for non root custom properties"
++  )
++  t.end()
++})
++
++test(
++  "accepts variables defined from JavaScript, and overrides local definitions",
++  function(t) {
++    compareFixtures(t, "js-defined", {
++      variables: {
++        "--test-one": "js-one",
++        "--test-two": "js-two",
++        "--test-three": "js-three",
++        "--test-varception": "var(--test-one)",
++        "--test-jsception": "var(--test-varception)",
++        "--test-num": 1,
++      },
++    })
++    t.end()
++  }
++)
++
++test(
++  "prefixes js defined variabled with a double dash automatically",
++  function(t) {
++    compareFixtures(t, "automatic-variable-prefix", {
++      variables: {
++        unprefixed: "blue",
++        "--prefixed": "white",
++      },
++    })
++    t.end()
++  }
++)
+ 
+ test("removes variable properties from the output", function(t) {
+   compareFixtures(t, "remove-properties")
+@@ -121,7 +153,11 @@ test("preserves computed value when `preserve` is `\"computed\"`", function(t) {
+ test("circular variable references", function(t) {
+   compareFixtures(t, "self-reference")
+   var result = compareFixtures(t, "circular-reference")
+-  t.equal(result.warnings()[0].text, "Circular variable reference: --color", "should add a warning for circular reference")
++  t.equal(
++    result.warnings()[0].text,
++    "Circular variable reference: --color",
++    "should add a warning for circular reference"
++  )
+   t.end()
+ })
+ 
+-- 
+2.33.1
+

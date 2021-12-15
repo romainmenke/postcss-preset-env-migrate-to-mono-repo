@@ -1,0 +1,40 @@
+From 8445f78024172ac24c3c522586689046fd80f934 Mon Sep 17 00:00:00 2001
+From: Dmitry Semigradsky <semigradskyd@gmail.com>
+Date: Fri, 18 Sep 2020 12:33:17 +0300
+Subject: [PATCH 170/186] 10.0.0
+
+---
+ CHANGELOG.md | 5 +++++
+ package.json | 2 +-
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index fc838c4..cdf131d 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Custom Properties
+ 
++### 10.0.0 (September 18, 2020)
++
++- Fixed: `url-regex` vulnerability ([#228](https://github.com/postcss/postcss-custom-properties/pull/228))
++- Breaking Change: Node v10+ now required
++
+ ### 9.2.0 (September 18, 2020)
+ 
+ - Added: Export variables to SCSS file ([#212](https://github.com/postcss/postcss-custom-properties/pull/212))
+diff --git a/package.json b/package.json
+index 8052233..3d733e0 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "9.2.0",
++  "version": "10.0.0",
+   "description": "Use Custom Properties Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+-- 
+2.33.1
+

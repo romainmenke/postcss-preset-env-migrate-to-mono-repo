@@ -1,0 +1,154 @@
+From 9b46ae805605842cfa3b0c2f8f8b4dd1c8c88dce Mon Sep 17 00:00:00 2001
+From: Sergey Astapov <sergeastapov@gmail.com>
+Date: Tue, 27 Jul 2021 22:13:27 -0400
+Subject: [PATCH 176/186] Use the new PostCSS 8.0 API
+
+---
+ src/index.js                    | 45 ++++++++++++-----------
+ src/lib/transform-properties.js | 63 ++++++++++++++++-----------------
+ 2 files changed, 54 insertions(+), 54 deletions(-)
+
+diff --git a/src/index.js b/src/index.js
+index 6d1e865..1a1542e 100755
+--- a/src/index.js
++++ b/src/index.js
+@@ -16,34 +16,37 @@ const creator = opts => {
+ 	// promise any custom selectors are imported
+ 	const customPropertiesPromise = getCustomPropertiesFromImports(importFrom);
+ 
+-	// synchronous transform
+-	const syncTransform = root => {
+-		const customProperties = getCustomPropertiesFromRoot(root, { preserve });
+-
+-		transformProperties(root, customProperties, { preserve });
+-	};
+-
+-	// asynchronous transform
+-	const asyncTransform = async root => {
+-		const customProperties = Object.assign(
+-			{},
+-			getCustomPropertiesFromRoot(root, { preserve }),
+-			await customPropertiesPromise,
+-		);
+-
+-		await writeCustomPropertiesToExports(customProperties, exportTo);
+-
+-		transformProperties(root, customProperties, { preserve });
+-	};
++	let customProperties;
+ 
+ 	// whether to return synchronous function if no asynchronous operations are requested
+ 	const canReturnSyncFunction = importFrom.length === 0 && exportTo.length === 0;
+ 
+ 	return {
+ 		postcssPlugin: 'postcss-custom-properties',
+-		Once: canReturnSyncFunction ? syncTransform : asyncTransform,
++		prepare ({ root }) {
++			if (canReturnSyncFunction) {
++				customProperties = getCustomPropertiesFromRoot(root, { preserve });
++
++				return {
++					Declaration: (decl) => transformProperties(decl, customProperties, { preserve })
++				}
++			} else {
++				return {
++					Once: async root => {
++						customProperties = Object.assign(
++							{},
++							getCustomPropertiesFromRoot(root, { preserve }),
++							await customPropertiesPromise,
++						);
++
++						await writeCustomPropertiesToExports(customProperties, exportTo);
++					},
++					Declaration: (decl) => transformProperties(decl, customProperties, { preserve })
++				}
++			}
++		}
+ 	}
+-};
++}
+ 
+ creator.postcss = true
+ 
+diff --git a/src/lib/transform-properties.js b/src/lib/transform-properties.js
+index b84d79e..4743410 100644
+--- a/src/lib/transform-properties.js
++++ b/src/lib/transform-properties.js
+@@ -3,43 +3,40 @@ import transformValueAST from './transform-value-ast';
+ import { isRuleIgnored } from './is-ignored';
+ 
+ // transform custom pseudo selectors with custom selectors
+-export default (root, customProperties, opts) => {
+-	// walk decls that can be transformed
+-	root.walkDecls(decl => {
+-		if (isTransformableDecl(decl) && !isRuleIgnored(decl)) {
+-			const originalValue = decl.value;
+-			const valueAST = parse(originalValue);
+-			let value = String(transformValueAST(valueAST, customProperties));
+-
+-			// protect against circular references
+-			const valueSet = new Set();
+-
+-			while (customPropertiesRegExp.test(value) && !valueSet.has(value)) {
+-				valueSet.add(value);
+-				const parsedValueAST = parse(valueAST);
+-				value = String(transformValueAST(parsedValueAST, customProperties));
+-			}
++export default (decl, customProperties, opts) => {
++	if (isTransformableDecl(decl) && !isRuleIgnored(decl)) {
++		const originalValue = decl.value;
++		const valueAST = parse(originalValue);
++		let value = String(transformValueAST(valueAST, customProperties));
++
++		// protect against circular references
++		const valueSet = new Set();
++
++		while (customPropertiesRegExp.test(value) && !valueSet.has(value)) {
++			valueSet.add(value);
++			const parsedValueAST = parse(valueAST);
++			value = String(transformValueAST(parsedValueAST, customProperties));
++		}
++
++		// conditionally transform values that have changed
++		if (value !== originalValue) {
++			if (opts.preserve) {
++				const beforeDecl = decl.cloneBefore({ value });
++
++				if (hasTrailingComment(beforeDecl)) {
++					beforeDecl.raws.value.value = beforeDecl.value.replace(trailingCommentRegExp, '$1');
++					beforeDecl.raws.value.raw = beforeDecl.raws.value.value + beforeDecl.raws.value.raw.replace(trailingCommentRegExp, '$2');
++				}
++			} else {
++				decl.value = value;
+ 
+-			// conditionally transform values that have changed
+-			if (value !== originalValue) {
+-				if (opts.preserve) {
+-					const beforeDecl = decl.cloneBefore({ value });
+-
+-					if (hasTrailingComment(beforeDecl)) {
+-						beforeDecl.raws.value.value = beforeDecl.value.replace(trailingCommentRegExp, '$1');
+-						beforeDecl.raws.value.raw = beforeDecl.raws.value.value + beforeDecl.raws.value.raw.replace(trailingCommentRegExp, '$2');
+-					}
+-				} else {
+-					decl.value = value;
+-
+-					if (hasTrailingComment(decl)) {
+-						decl.raws.value.value = decl.value.replace(trailingCommentRegExp, '$1');
+-						decl.raws.value.raw = decl.raws.value.value + decl.raws.value.raw.replace(trailingCommentRegExp, '$2');
+-					}
++				if (hasTrailingComment(decl)) {
++					decl.raws.value.value = decl.value.replace(trailingCommentRegExp, '$1');
++					decl.raws.value.raw = decl.raws.value.value + decl.raws.value.raw.replace(trailingCommentRegExp, '$2');
+ 				}
+ 			}
+ 		}
+-	});
++	}
+ };
+ 
+ // match custom properties
+-- 
+2.33.1
+

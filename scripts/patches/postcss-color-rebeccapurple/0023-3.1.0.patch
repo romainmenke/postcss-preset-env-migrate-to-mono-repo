@@ -1,0 +1,114 @@
+From b4acbc9ba31a5122840a671a133185359522ff17 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 2 May 2018 01:15:02 -0400
+Subject: [PATCH 23/34] 3.1.0
+
+---
+ CHANGELOG.md  |  8 +++++++-
+ index.js      | 13 +++++++++----
+ package.json  | 10 +++++-----
+ test/index.js |  3 +--
+ 4 files changed, 22 insertions(+), 12 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 9b508dd..397ef48 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,4 +1,10 @@
+-# 3.0.0 - 2016-05-10
++# 3.1.0 - 2018-05-01
++
++- Improve `rebeccapurple` pre-parse word detection
++- Switched from `postcss-value-parser` to `postcss-values-parser`
++- Bump `postcss` from `^6.0.1` to `^6.0.22`
++
++# 3.0.0 - 2017-05-10
+ 
+ - Added: compatibility with postcss v6.x
+ 
+diff --git a/index.js b/index.js
+index 11cde58..18ffab7 100755
+--- a/index.js
++++ b/index.js
+@@ -2,8 +2,9 @@
+  * Module dependencies.
+  */
+ const postcss = require("postcss")
+-const valueParser = require("postcss-value-parser")
++const valueParser = require("postcss-values-parser")
+ const color = "#639"
++const regexp = /(^|[^\w-])rebeccapurple([^\w-]|$)/
+ 
+ /**
+  * PostCSS plugin to convert colors
+@@ -12,12 +13,16 @@ module.exports = postcss.plugin("postcss-color-rebeccapurple", () => (style) =>
+   style.walkDecls((decl) => {
+     const value = decl.value;
+ 
+-    if (value && value.indexOf("rebeccapurple") !== -1) {
+-      decl.value = valueParser(value).walk((node) => {
++    if (value && regexp.test(value)) {
++      const ast = valueParser(value).parse()
++
++      ast.walk(node => {
+         if (node.type === "word" && node.value === "rebeccapurple") {
+           node.value = color
+         }
+-      }).toString()
++      })
++
++      decl.value = ast.toString()
+     }
+   })
+ })
+diff --git a/package.json b/package.json
+index 683d4c2..42fff4d 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-rebeccapurple",
+-  "version": "3.0.0",
++  "version": "3.1.0",
+   "description": "PostCSS plugin to transform W3C CSS rebeccapurple color to more compatible CSS (rgb())",
+   "keywords": [
+     "css",
+@@ -21,14 +21,14 @@
+     "index.js"
+   ],
+   "dependencies": {
+-    "postcss": "^6.0.1",
+-    "postcss-value-parser": "^3.3.0"
++    "postcss": "^6.0.22",
++    "postcss-values-parser": "^1.5.0"
+   },
+   "devDependencies": {
+     "jscs": "^3.0.7",
+-    "jshint": "^2.9.4",
++    "jshint": "^2.9.5",
+     "npmpub": "^3.1.0",
+-    "tape": "^4.6.3"
++    "tape": "^4.9.0"
+   },
+   "scripts": {
+     "lint": "npm run jscs && npm run jshint",
+diff --git a/test/index.js b/test/index.js
+index 650439b..ff7c5bd 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -14,11 +14,10 @@ function compareFixtures(t, name, msg, opts, postcssOpts) {
+   opts = opts || {}
+   var actual = postcss().use(plugin(opts)).process(read(postcssOpts.from), postcssOpts).css
+   var expected = read(filename("fixtures/" + name + ".expected"))
+-  fs.writeFile(filename("fixtures/" + name + ".actual"), actual)
++  fs.writeFile(filename("fixtures/" + name + ".actual"), actual, t.end)
+   t.equal(actual, expected, msg)
+ }
+ 
+ test("rebeccapurple", function(t) {
+   compareFixtures(t, "rebeccapurple", "should transform rebeccapurple")
+-  t.end()
+ })
+-- 
+2.33.1
+

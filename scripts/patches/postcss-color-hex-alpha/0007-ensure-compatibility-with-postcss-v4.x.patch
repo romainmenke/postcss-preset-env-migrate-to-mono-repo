@@ -1,0 +1,25 @@
+From 3079b4691090ded25ccc603eac053117deeacf6c Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 27 Jan 2015 07:53:22 +0100
+Subject: [PATCH 07/31] ensure compatibility with postcss v4.x
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index ea51571..3f2fcad 100644
+--- a/package.json
++++ b/package.json
+@@ -29,7 +29,7 @@
+   "devDependencies": {
+     "jscs": "^1.6.2",
+     "jshint": "^2.5.6",
+-    "postcss": "^3.0.0",
++    "postcss": "^4.0.2",
+     "tape": "^3.0.0"
+   },
+   "scripts": {
+-- 
+2.33.1
+

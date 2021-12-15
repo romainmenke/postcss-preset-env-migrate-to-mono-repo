@@ -1,0 +1,42 @@
+From 04d121b62b1d786be8578fa90518c49b6f3b9ad9 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 6 Aug 2014 09:17:51 +0200
+Subject: [PATCH 008/186] Show consistent API in README
+
+poke @jonathanong
+---
+ README.md | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/README.md b/README.md
+index 20b2b9d..578dd48 100755
+--- a/README.md
++++ b/README.md
+@@ -28,7 +28,10 @@ var customProperties = require('postcss-custom-properties')
+ var css = fs.readFileSync('build/build.css', 'utf8')
+ 
+ // process css using postcss-custom-properties
+-var out = postcss(customProperties()).process(css).css
++var out = postcss()
++  .use(customProperties())
++  .process(css)
++  .css
+ ```
+ 
+ ### Options
+@@ -38,7 +41,11 @@ var out = postcss(customProperties()).process(css).css
+ Allow you to preserve custom properties & var() usage in output.
+ 
+ ```js
+-var out = postcss(customProperties({preserve: true})).process(css).css
++var out = postcss()
++  .use(customProperties({preserve: true}))
++  .process(css)
++  .css
++```
+ 
+ ---
+ 
+-- 
+2.33.1
+

@@ -1,0 +1,212 @@
+From a2e2b49e38f0639676a73676c96a78f3ba4bf2a9 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 2 Oct 2018 12:12:57 -0400
+Subject: [PATCH 144/186] 8.0.7
+
+---
+ .tape.js                                  |  9 ++++++---
+ CHANGELOG.md                              |  5 +++++
+ lib/get-custom-properties-from-imports.js |  2 +-
+ package.json                              | 10 +++++-----
+ test/basic.css                            |  4 ++++
+ test/basic.expect.css                     |  4 ++++
+ test/basic.import-is-empty.expect.css     |  4 ++++
+ test/basic.import.expect.css              |  5 +++++
+ test/basic.preserve.expect.css            |  4 ++++
+ test/import-properties.css                |  1 +
+ test/import-properties.js                 |  3 ++-
+ test/import-properties.json               |  3 ++-
+ 12 files changed, 43 insertions(+), 11 deletions(-)
+
+diff --git a/.tape.js b/.tape.js
+index 1e7e7dc..f61ce9b 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -16,7 +16,8 @@ module.exports = {
+ 					customProperties: {
+ 						'--color': 'rgb(255, 0, 0)',
+ 						'--color-2': 'yellow',
+-						'--ref-color': 'var(--color)'
++						'--ref-color': 'var(--color)',
++						'--z-index': 10
+ 					}
+ 				}
+ 			}
+@@ -29,7 +30,8 @@ module.exports = {
+ 						customProperties: {
+ 							'--color': 'rgb(255, 0, 0)',
+ 							'--color-2': 'yellow',
+-							'--ref-color': 'var(--color)'
++							'--ref-color': 'var(--color)',
++							'--z-index': 10
+ 						}
+ 					};
+ 				}
+@@ -46,7 +48,8 @@ module.exports = {
+ 							customProperties: {
+ 								'--color': 'rgb(255, 0, 0)',
+ 								'--color-2': 'yellow',
+-								'--ref-color': 'var(--color)'
++								'--ref-color': 'var(--color)',
++								'--z-index': 10
+ 							}
+ 						})
+ 					});
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 8dc4cff..8f9eeb7 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Custom Properties
+ 
++### 8.0.7 (October 2, 2018)
++
++- Fixed: Issue with parsing custom properties that are not strings
++- Updated: `postcss` to 7.0.5 (patch)
++
+ ### 8.0.6 (September 21, 2018)
+ 
+ - Fixed: Issue with regular `:root` and `html` properties not getting polyfilled
+diff --git a/lib/get-custom-properties-from-imports.js b/lib/get-custom-properties-from-imports.js
+index d703778..9577129 100644
+--- a/lib/get-custom-properties-from-imports.js
++++ b/lib/get-custom-properties-from-imports.js
+@@ -25,7 +25,7 @@ function getCustomPropertiesFromObject(object) {
+ 	);
+ 
+ 	for (const key in customProperties) {
+-		customProperties[key] = valueParser(customProperties[key]).parse().nodes;
++		customProperties[key] = valueParser(String(customProperties[key])).parse().nodes;
+ 	}
+ 
+ 	return customProperties;
+diff --git a/package.json b/package.json
+index 6078fd1..56720ee 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "8.0.6",
++  "version": "8.0.7",
+   "description": "Use Custom Properties Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -29,15 +29,15 @@
+     "node": ">=6.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.3",
++    "postcss": "^7.0.5",
+     "postcss-values-parser": "^2.0.0"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.1.0",
++    "@babel/core": "^7.1.2",
+     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+     "@babel/preset-env": "^7.1.0",
+-    "babel-eslint": "^10.0.0",
+-    "eslint": "^5.6.0",
++    "babel-eslint": "^10.0.1",
++    "eslint": "^5.6.1",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+diff --git a/test/basic.css b/test/basic.css
+index 5f59534..a974108 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -30,3 +30,7 @@ html {
+ .test--color_spacing {
+ 	box-shadow: inset 0 -3px 0        var(--color);
+ }
++
++.test--z-index {
++	z-index: var(--z-index);
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 0d36404..b61105b 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -35,3 +35,7 @@ html {
+ 	box-shadow: inset 0 -3px 0        rgb(255, 0, 0);
+ 	box-shadow: inset 0 -3px 0        var(--color);
+ }
++
++.test--z-index {
++	z-index: var(--z-index);
++}
+diff --git a/test/basic.import-is-empty.expect.css b/test/basic.import-is-empty.expect.css
+index 0d36404..b61105b 100644
+--- a/test/basic.import-is-empty.expect.css
++++ b/test/basic.import-is-empty.expect.css
+@@ -35,3 +35,7 @@ html {
+ 	box-shadow: inset 0 -3px 0        rgb(255, 0, 0);
+ 	box-shadow: inset 0 -3px 0        var(--color);
+ }
++
++.test--z-index {
++	z-index: var(--z-index);
++}
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+index c2cea45..bfdd483 100644
+--- a/test/basic.import.expect.css
++++ b/test/basic.import.expect.css
+@@ -35,3 +35,8 @@ html {
+ 	box-shadow: inset 0 -3px 0        rgb(255, 0, 0);
+ 	box-shadow: inset 0 -3px 0        var(--color);
+ }
++
++.test--z-index {
++	z-index: 10;
++	z-index: var(--z-index);
++}
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index 216f5e8..642ab08 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -22,3 +22,7 @@
+ .test--color_spacing {
+ 	box-shadow: inset 0 -3px 0        rgb(255, 0, 0);
+ }
++
++.test--z-index {
++	z-index: var(--z-index);
++}
+diff --git a/test/import-properties.css b/test/import-properties.css
+index 24b0dd9..a01ea3e 100644
+--- a/test/import-properties.css
++++ b/test/import-properties.css
+@@ -1,3 +1,4 @@
+ :root {
+ 	--ref-color: var(--color);
++	--z-index: 10;
+ }
+diff --git a/test/import-properties.js b/test/import-properties.js
+index a6ea3b2..85417fa 100644
+--- a/test/import-properties.js
++++ b/test/import-properties.js
+@@ -1,5 +1,6 @@
+ module.exports = {
+ 	customProperties: {
+-		'--ref-color': 'var(--color)'
++		'--ref-color': 'var(--color)',
++		'--z-index': 10
+ 	}
+ };
+diff --git a/test/import-properties.json b/test/import-properties.json
+index 3687057..6312bf9 100644
+--- a/test/import-properties.json
++++ b/test/import-properties.json
+@@ -2,6 +2,7 @@
+   "custom-properties": {
+     "--color": "rgb(255, 0, 0)",
+     "--color-2": "yellow",
+-    "--ref-color": "var(--color)"
++    "--ref-color": "var(--color)",
++    "--z-index": 10
+   }
+ }
+-- 
+2.33.1
+

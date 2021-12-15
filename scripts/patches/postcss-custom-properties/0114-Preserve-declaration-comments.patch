@@ -1,0 +1,56 @@
+From 59ba7a6ceefb8c6d4eab461f7b1e03e3123cc767 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 10 Feb 2018 15:09:31 -0500
+Subject: [PATCH 114/186] Preserve declaration comments
+
+- Includes test
+---
+ index.js                                        | 2 +-
+ test/fixtures/substitution-defined.css          | 3 +++
+ test/fixtures/substitution-defined.expected.css | 3 +++
+ 3 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index 1ae92c9..c2d1e90 100755
+--- a/index.js
++++ b/index.js
+@@ -248,7 +248,7 @@ export default postcss.plugin("postcss-custom-properties", (options = {}) => {
+ 
+     // resolve variables
+     style.walkDecls((decl) => {
+-      const value = decl.value
++      const value = decl.raws.value ? decl.raws.value.raw : decl.value
+ 
+       // skip values that don’t contain variable functions
+       if (!value || value.indexOf(VAR_FUNC_IDENTIFIER + "(") === -1) {
+diff --git a/test/fixtures/substitution-defined.css b/test/fixtures/substitution-defined.css
+index af44bfa..c1f7a40 100755
+--- a/test/fixtures/substitution-defined.css
++++ b/test/fixtures/substitution-defined.css
+@@ -21,6 +21,9 @@ div {
+   /* single variable */
+   color: var(--test-one);
+ 
++  /* single variable with comments */
++  color: /*comment before*/var(--test-one)/*comment after*/;
++
+   /* single variable with tail */
+   color: var(--test-one) !important;
+ 
+diff --git a/test/fixtures/substitution-defined.expected.css b/test/fixtures/substitution-defined.expected.css
+index d330bfe..5d38f7a 100755
+--- a/test/fixtures/substitution-defined.expected.css
++++ b/test/fixtures/substitution-defined.expected.css
+@@ -13,6 +13,9 @@ div {
+   /* single variable */
+   color: green;
+ 
++  /* single variable with comments */
++  color: /*comment before*/green/*comment after*/;
++
+   /* single variable with tail */
+   color: green !important;
+ 
+-- 
+2.33.1
+

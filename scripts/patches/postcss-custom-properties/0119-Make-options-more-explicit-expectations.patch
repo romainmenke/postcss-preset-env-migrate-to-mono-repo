@@ -1,0 +1,39 @@
+From c51737874d9b0dd4351eeb9f34ff25c93bad8519 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 15 Feb 2018 18:08:25 -0500
+Subject: [PATCH 119/186] Make options more explicit expectations
+
+---
+ index.js | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/index.js b/index.js
+index acb982d..cb3c85d 100755
+--- a/index.js
++++ b/index.js
+@@ -163,15 +163,17 @@ export default postcss.plugin("postcss-custom-properties", (options = {}) => {
+ 
+   function plugin(style, result) {
+     const variables = prefixVariables(options.variables)
+-    const strict = options.strict === undefined ? true : options.strict
+-    const appendVariables = options.appendVariables
+-    const preserve = options.preserve
++    const strict = "strict" in options ? Boolean(options.strict) : true
++    const appendVariables = "appendVariables" in options
++      ? Boolean(options.appendVariables) : false
++    const preserve = "preserve" in options ? options.preserve : null
+     const map = {}
+     const importantMap = {}
+ 
+     globalOpts = {
+-      warnings: options.warnings === undefined ? true : options.warnings,
+-      noValueNotifications: options.noValueNotifications || "warning",
++      warnings: "warnings" in options ? Boolean(options.warnings) : true,
++      noValueNotifications: "noValueNotifications" in options
++        ? String(options.noValueNotifications) : "warning",
+     }
+ 
+     // define variables
+-- 
+2.33.1
+

@@ -1,0 +1,109 @@
+From 584656d40e35c74572bf337fbacf24aedcf29dfe Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 25 Nov 2014 08:45:30 +0100
+Subject: [PATCH 05/31] Enhanced exceptions
+
+---
+ CHANGELOG.md |  4 ++++
+ index.js     | 40 ++++++----------------------------------
+ package.json |  3 ++-
+ 3 files changed, 12 insertions(+), 35 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 3094675..f4168db 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 1.1.0 - 2014-11-25
++
++- Enhanced exceptions
++
+ # 1.0.0 - 2014-10-04
+ 
+ Initial release from [postcss-color](https://github.com/postcss/postcss-color)
+diff --git a/index.js b/index.js
+index cf161c7..750ae64 100755
+--- a/index.js
++++ b/index.js
+@@ -2,6 +2,7 @@
+  * Module dependencies.
+  */
+ var color = require("color")
++var helpers = require("postcss-message-helpers")
+ 
+ /**
+  * Constantes
+@@ -14,37 +15,18 @@ var DECIMAL_PRECISION = 100000 // 5 decimals
+  */
+ module.exports = function plugin() {
+   return function(style) {
+-    style.eachDecl(function transformDecl(dec) {
+-      if (!dec.value) {
++    style.eachDecl(function transformDecl(decl) {
++      if (!decl.value || decl.value.indexOf("#") === -1) {
+         return
+       }
+ 
+-      dec.value = transform(dec.value, dec.source)
++      decl.value = helpers.try(function transformHexAlphaValue() {
++        return transformHexAlpha(decl.value, decl.source)
++      }, decl.source)
+     })
+   }
+ }
+ 
+-/**
+- * Transform colors to rgb() or rgba() on a declaration value
+- *
+- * @param {String} string
+- * @return {String}
+- */
+-function transform(string, source) {
+-  // order of transformation is important
+-
+-  try {
+-    if (string.indexOf("#") > -1) {
+-      string = transformHexAlpha(string, source)
+-    }
+-  }
+-  catch (e) {
+-    throw new Error(gnuMessage(e.message, source))
+-  }
+-
+-  return string
+-}
+-
+ /**
+  * transform RGBA hexadecimal notations (#RRGGBBAA or #RGBA) to rgba().
+  *
+@@ -89,13 +71,3 @@ function hexaToRgba(hex) {
+ 
+   return color({r: rgb[0], g: rgb[1], b: rgb[2], a: rgb[3]}).rgbaString()
+ }
+-
+-/**
+- * return GNU style message
+- *
+- * @param {String} message
+- * @param {Object} source
+- */
+-function gnuMessage(message, source) {
+-  return (source ? (source.file ? source.file : "<css input>") + ":" + source.start.line + ":" + source.start.column + " " : "") + message
+-}
+diff --git a/package.json b/package.json
+index ffb11ff..ced4502 100644
+--- a/package.json
++++ b/package.json
+@@ -23,7 +23,8 @@
+     "index.js"
+   ],
+   "dependencies": {
+-    "color": "^0.7.1"
++    "color": "^0.7.1",
++    "postcss-message-helpers": "^1.1.0"
+   },
+   "devDependencies": {
+     "jscs": "^1.6.2",
+-- 
+2.33.1
+

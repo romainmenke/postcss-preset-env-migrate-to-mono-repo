@@ -1,0 +1,306 @@
+From 6c233a54617f6140c12b058c5e555b9ccf3851ce Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Wed, 15 Dec 2021 14:01:07 +0100
+Subject: [PATCH 186/186] Switching to postcss-value-parser (#260)
+
+* Using new package
+
+* Using the new parser
+
+* Simplifying logic given how new parser works
+
+* Reworking the transforming logic to use the new parser
+
+* Whitespaces changes
+---
+ package.json                                  |  2 +-
+ src/lib/get-custom-properties-from-imports.js |  8 +-
+ src/lib/get-custom-properties-from-root.js    |  4 +-
+ src/lib/transform-properties.js               | 10 +--
+ src/lib/transform-value-ast.js                | 73 ++++---------------
+ src/lib/write-custom-properties-to-exports.js |  4 +-
+ test/export-properties.css                    |  2 +-
+ test/export-properties.js                     |  2 +-
+ test/export-properties.json                   |  2 +-
+ test/export-properties.mjs                    |  2 +-
+ test/export-properties.scss                   |  2 +-
+ 11 files changed, 34 insertions(+), 77 deletions(-)
+
+diff --git a/package.json b/package.json
+index 3a3ceec..f31b143 100644
+--- a/package.json
++++ b/package.json
+@@ -36,7 +36,7 @@
+     "node": ">=12"
+   },
+   "dependencies": {
+-    "postcss-values-parser": "^6"
++    "postcss-value-parser": "^4.2.0"
+   },
+   "peerDependencies": {
+     "postcss": "^8.3"
+diff --git a/src/lib/get-custom-properties-from-imports.js b/src/lib/get-custom-properties-from-imports.js
+index c6aaf94..d0f2dd7 100644
+--- a/src/lib/get-custom-properties-from-imports.js
++++ b/src/lib/get-custom-properties-from-imports.js
+@@ -1,7 +1,7 @@
+ import fs from 'fs';
+ import path from 'path';
+-import { parse as postcssParse } from 'postcss';
+-import { parse } from 'postcss-values-parser';
++import { parse } from 'postcss';
++import valuesParser from 'postcss-value-parser';
+ import getCustomPropertiesFromRoot from './get-custom-properties-from-root';
+ 
+ /* Get Custom Properties from CSS File
+@@ -9,7 +9,7 @@ import getCustomPropertiesFromRoot from './get-custom-properties-from-root';
+ 
+ async function getCustomPropertiesFromCSSFile(from) {
+ 	const css = await readFile(from);
+-	const root = postcssParse(css, { from });
++	const root = parse(css, { from });
+ 
+ 	return getCustomPropertiesFromRoot(root, { preserve: true });
+ }
+@@ -25,7 +25,7 @@ function getCustomPropertiesFromObject(object) {
+ 	);
+ 
+ 	for (const key in customProperties) {
+-		customProperties[key] = parse(String(customProperties[key])).nodes;
++		customProperties[key] = valuesParser(String(customProperties[key]));
+ 	}
+ 
+ 	return customProperties;
+diff --git a/src/lib/get-custom-properties-from-root.js b/src/lib/get-custom-properties-from-root.js
+index b00ddeb..16dde0e 100644
+--- a/src/lib/get-custom-properties-from-root.js
++++ b/src/lib/get-custom-properties-from-root.js
+@@ -1,4 +1,4 @@
+-import { parse } from 'postcss-values-parser';
++import valuesParser from 'postcss-value-parser';
+ import { isBlockIgnored } from './is-ignored';
+ 
+ // return custom selectors from the css root, conditionally removing them
+@@ -22,7 +22,7 @@ export default function getCustomPropertiesFromRoot(root, opts) {
+ 					const { prop } = decl;
+ 
+ 					// write the parsed value to the custom property
+-					customPropertiesObject[prop] = parse(decl.value).nodes;
++					customPropertiesObject[prop] = valuesParser(decl.value);
+ 
+ 					// conditionally remove the custom property declaration
+ 					if (!opts.preserve) {
+diff --git a/src/lib/transform-properties.js b/src/lib/transform-properties.js
+index 4743410..e5651da 100644
+--- a/src/lib/transform-properties.js
++++ b/src/lib/transform-properties.js
+@@ -1,4 +1,4 @@
+-import { parse } from 'postcss-values-parser';
++import valuesParser from 'postcss-value-parser';
+ import transformValueAST from './transform-value-ast';
+ import { isRuleIgnored } from './is-ignored';
+ 
+@@ -6,16 +6,16 @@ import { isRuleIgnored } from './is-ignored';
+ export default (decl, customProperties, opts) => {
+ 	if (isTransformableDecl(decl) && !isRuleIgnored(decl)) {
+ 		const originalValue = decl.value;
+-		const valueAST = parse(originalValue);
+-		let value = String(transformValueAST(valueAST, customProperties));
++		const valueAST = valuesParser(originalValue);
++		let value = transformValueAST(valueAST, customProperties);
+ 
+ 		// protect against circular references
+ 		const valueSet = new Set();
+ 
+ 		while (customPropertiesRegExp.test(value) && !valueSet.has(value)) {
+ 			valueSet.add(value);
+-			const parsedValueAST = parse(valueAST);
+-			value = String(transformValueAST(parsedValueAST, customProperties));
++			const parsedValueAST = valuesParser(value);
++			value = transformValueAST(parsedValueAST, customProperties);
+ 		}
+ 
+ 		// conditionally transform values that have changed
+diff --git a/src/lib/transform-value-ast.js b/src/lib/transform-value-ast.js
+index ad4b28c..0070bdb 100644
+--- a/src/lib/transform-value-ast.js
++++ b/src/lib/transform-value-ast.js
+@@ -1,47 +1,37 @@
+ export default function transformValueAST(root, customProperties) {
+ 	if (root.nodes && root.nodes.length) {
+-		root.nodes.slice().forEach(child => {
++		root.nodes.slice().forEach((child) => {
+ 			if (isVarFunction(child)) {
+-				// eslint-disable-next-line no-unused-vars
+-				const [propertyNode, comma, ...fallbacks] = child.nodes;
++				const [propertyNode, ...fallbacks] = child.nodes.filter((node) => node.type !== 'div');
+ 				const { value: name } = propertyNode;
++				const index = root.nodes.indexOf(child);
+ 
+ 				if (name in Object(customProperties)) {
+-					// conditionally replace a known custom property
+-					const nodes = asClonedArrayWithBeforeSpacing(customProperties[name], child.raws.before);
+-
+-					/**
+-					 * https://github.com/postcss/postcss-custom-properties/issues/221
+-					 * https://github.com/postcss/postcss-custom-properties/issues/218
+-					 *
+-					 * replaceWith loses node.raws values, so we need to save it and restore
+-					 */
+-					const raws = nodes.map(node => ({...node.raws}));
+-
+-					child.replaceWith(...nodes);
+-
+-					nodes.forEach((node, index) => {
+-						node.raws = raws[index];
+-					});
++					// Direct match of a custom property to a parsed value
++					const nodes = customProperties[name].nodes;
+ 
++					// Re-transform nested properties without given one to avoid circular from keeping this forever
+ 					retransformValueAST({ nodes }, customProperties, name);
+-				} else if (fallbacks.length) {
+-					// conditionally replace a custom property with a fallback
+-					const index = root.nodes.indexOf(child);
+ 
+-					if (index !== -1) {
+-						root.nodes.splice(index, 1, ...asClonedArrayWithBeforeSpacing(fallbacks, child.raws.before));
++					if (index > -1) {
++						root.nodes.splice(index, 1, ...nodes);
++					}
++				} else if (fallbacks.length) {
++					// No match, but fallback available
++					if (index > -1) {
++						root.nodes.splice(index, 1, ...fallbacks);
+ 					}
+ 
+ 					transformValueAST(root, customProperties);
+ 				}
+ 			} else {
++				// Transform child nodes of current child
+ 				transformValueAST(child, customProperties);
+ 			}
+ 		});
+ 	}
+ 
+-	return root;
++	return root.toString();
+ }
+ 
+ // retransform the current ast without a custom property (to prevent recursion)
+@@ -57,35 +47,4 @@ function retransformValueAST(root, customProperties, withoutProperty) {
+ const varRegExp = /^var$/i;
+ 
+ // whether the node is a var() function
+-const isVarFunction = node => node.type === 'func' && varRegExp.test(node.name) && Object(node.nodes).length > 0;
+-
+-// return an array with its nodes cloned, preserving the raw
+-const asClonedArrayWithBeforeSpacing = (array, beforeSpacing) => {
+-	const clonedArray = asClonedArray(array, null);
+-
+-	if (clonedArray[0]) {
+-		clonedArray[0].raws.before = beforeSpacing;
+-	}
+-
+-	return clonedArray;
+-};
+-
+-// return an array with its nodes cloned
+-const asClonedArray = (array, parent) => array.map(node => asClonedNode(node, parent));
+-
+-// return a cloned node
+-const asClonedNode = (node, parent) => {
+-	const cloneNode = new node.constructor(node);
+-
+-	for (const key in node) {
+-		if (key === 'parent') {
+-			cloneNode.parent = parent;
+-		} else if (Object(node[key]).constructor === Array) {
+-			cloneNode[key] = asClonedArray(node.nodes, cloneNode);
+-		} else if (Object(node[key]).constructor === Object) {
+-			cloneNode[key] = Object.assign({}, node[key]);
+-		}
+-	}
+-
+-	return cloneNode;
+-};
++const isVarFunction = node => node.type === 'function' && varRegExp.test(node.value) && Object(node.nodes).length > 0;
+diff --git a/src/lib/write-custom-properties-to-exports.js b/src/lib/write-custom-properties-to-exports.js
+index e386452..649d702 100644
+--- a/src/lib/write-custom-properties-to-exports.js
++++ b/src/lib/write-custom-properties-to-exports.js
+@@ -130,9 +130,7 @@ export default function writeCustomPropertiesToExports(customProperties, destina
+ const defaultCustomPropertiesToJSON = customProperties => {
+ 	return Object.keys(customProperties).reduce((customPropertiesJSON, key) => {
+ 		const valueNodes = customProperties[key];
+-		customPropertiesJSON[key] = valueNodes.map((propertyObject) => {
+-			return propertyObject.toString();
+-		}).join(' ');
++		customPropertiesJSON[key] = valueNodes.toString();
+ 
+ 		return customPropertiesJSON;
+ 	}, {});
+diff --git a/test/export-properties.css b/test/export-properties.css
+index 2c70d9d..66aa2dc 100644
+--- a/test/export-properties.css
++++ b/test/export-properties.css
+@@ -10,6 +10,6 @@
+ 	--margin: 0 10px 20px 30px;
+ 	--shadow-color: rgb(255,0,0);
+ 	--shadow: 0 6px 14px 0 color(var(--shadow-color) a(.15));
+-	--font-family: "Open Sans" , sans-serif;
++	--font-family: "Open Sans", sans-serif;
+ 	--theme-color: #053;
+ }
+diff --git a/test/export-properties.js b/test/export-properties.js
+index f898cd3..cc73182 100644
+--- a/test/export-properties.js
++++ b/test/export-properties.js
+@@ -11,7 +11,7 @@ module.exports = {
+ 		'--margin': '0 10px 20px 30px',
+ 		'--shadow-color': 'rgb(255,0,0)',
+ 		'--shadow': '0 6px 14px 0 color(var(--shadow-color) a(.15))',
+-		'--font-family': '"Open Sans" , sans-serif',
++		'--font-family': '"Open Sans", sans-serif',
+ 		'--theme-color': '#053'
+ 	}
+ };
+diff --git a/test/export-properties.json b/test/export-properties.json
+index dd55ef8..b04500c 100644
+--- a/test/export-properties.json
++++ b/test/export-properties.json
+@@ -11,7 +11,7 @@
+     "--margin": "0 10px 20px 30px",
+     "--shadow-color": "rgb(255,0,0)",
+     "--shadow": "0 6px 14px 0 color(var(--shadow-color) a(.15))",
+-    "--font-family": "\"Open Sans\" , sans-serif",
++    "--font-family": "\"Open Sans\", sans-serif",
+     "--theme-color": "#053"
+   }
+ }
+diff --git a/test/export-properties.mjs b/test/export-properties.mjs
+index 0168900..374ff7c 100644
+--- a/test/export-properties.mjs
++++ b/test/export-properties.mjs
+@@ -10,6 +10,6 @@ export const customProperties = {
+ 	'--margin': '0 10px 20px 30px',
+ 	'--shadow-color': 'rgb(255,0,0)',
+ 	'--shadow': '0 6px 14px 0 color(var(--shadow-color) a(.15))',
+-	'--font-family': '"Open Sans" , sans-serif',
++	'--font-family': '"Open Sans", sans-serif',
+ 	'--theme-color': '#053'
+ };
+diff --git a/test/export-properties.scss b/test/export-properties.scss
+index 69303c3..e741500 100644
+--- a/test/export-properties.scss
++++ b/test/export-properties.scss
+@@ -9,5 +9,5 @@ $circular-2: var(--circular);
+ $margin: 0 10px 20px 30px;
+ $shadow-color: rgb(255,0,0);
+ $shadow: 0 6px 14px 0 color(var(--shadow-color) a(.15));
+-$font-family: "Open Sans" , sans-serif;
++$font-family: "Open Sans", sans-serif;
+ $theme-color: #053;
+-- 
+2.33.1
+

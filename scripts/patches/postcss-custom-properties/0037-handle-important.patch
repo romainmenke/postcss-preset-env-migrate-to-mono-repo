@@ -1,0 +1,108 @@
+From b4935663fa924a32473c5103a14a831ad0ba36a3 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Sun, 2 Nov 2014 07:47:21 +0100
+Subject: [PATCH 037/186] handle !important
+
+Close #12
+---
+ CHANGELOG.md                         |  3 ++-
+ index.js                             |  8 +++++---
+ test/fixtures/important.css          | 16 ++++++++++++++++
+ test/fixtures/important.expected.css |  5 +++++
+ test/index.js                        |  5 +++++
+ 5 files changed, 33 insertions(+), 4 deletions(-)
+ create mode 100644 test/fixtures/important.css
+ create mode 100644 test/fixtures/important.expected.css
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 0d3fd54..40dbd4a 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,6 +1,7 @@
+-# unreleased
++# 1.0.0 - 2014-11-02
+ 
+ - Add warning when a custom prop is used in another place that :root
++- handle !important
+ 
+ # 0.4.0 - 2014-09-30
+ 
+diff --git a/index.js b/index.js
+index 4eba302..65b837b 100755
+--- a/index.js
++++ b/index.js
+@@ -22,6 +22,7 @@ module.exports = function(options) {
+     var variables = options.variables || {}
+     var preserve = (options.preserve === true ? true : false)
+     var map = {}
++    var importantMap = {}
+ 
+     // define variables
+     style.eachRule(function(rule) {
+@@ -38,10 +39,11 @@ module.exports = function(options) {
+ 
+       rule.each(function(decl, i) {
+         var prop = decl.prop
+-        var value = decl.value
+-
+         if (prop && prop.indexOf(VAR_PROP_IDENTIFIER) === 0) {
+-          map[prop] = value
++          if (!map[prop] || !importantMap[prop] || decl.important) {
++            map[prop] = decl.value
++            importantMap[prop] = decl.important
++          }
+           toRemove.push(i)
+         }
+       })
+diff --git a/test/fixtures/important.css b/test/fixtures/important.css
+new file mode 100644
+index 0000000..f0172f2
+--- /dev/null
++++ b/test/fixtures/important.css
+@@ -0,0 +1,16 @@
++:root {
++ --one: not important;
++ --one: important !important;
++
++ --two: important !important;
++ --two: not important;
++
++ --three: important !important;
++ --three: more important !important;
++}
++
++selector {
++ one: var(--one);
++ two: var(--two);
++ three: var(--three);
++}
+diff --git a/test/fixtures/important.expected.css b/test/fixtures/important.expected.css
+new file mode 100644
+index 0000000..0439cf8
+--- /dev/null
++++ b/test/fixtures/important.expected.css
+@@ -0,0 +1,5 @@
++selector {
++ one: important;
++ two: important;
++ three: more important;
++}
+diff --git a/test/index.js b/test/index.js
+index 9f5d949..b6953b1 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -81,6 +81,11 @@ test("supports case-sensitive variables", function(t) {
+   t.end()
+ })
+ 
++test("supports !important", function(t) {
++  compareFixtures(t, "important")
++  t.end()
++})
++
+ test("preserves variables when `preserve` is `true`", function(t) {
+   compareFixtures(t, "preserve-variables", {preserve: true})
+   t.end()
+-- 
+2.33.1
+

@@ -1,0 +1,148 @@
+From 1e1ef6b1976d003d9491f46ceec1ba065e6afcba Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 15 Jul 2019 09:21:05 -0400
+Subject: [PATCH 156/186] 9.1.0
+
+---
+ CHANGELOG.md                          |  4 ++++
+ package.json                          |  2 +-
+ src/lib/transform-properties.js       | 16 +++++++++++++++-
+ test/basic.css                        |  2 +-
+ test/basic.expect.css                 |  4 ++--
+ test/basic.import-is-empty.expect.css |  4 ++--
+ test/basic.import.expect.css          |  4 ++--
+ test/basic.preserve.expect.css        |  2 +-
+ 8 files changed, 28 insertions(+), 10 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 9e67e2c..659976d 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Custom Properties
+ 
++### 9.1.0 (July 15, 2019)
++
++- Added: Support for preserving trailing comments within a declaration.
++
+ ### 9.0.2 (July 15, 2019)
+ 
+ - Updated: `postcss-values-parser` to 3.0.5 (patch)
+diff --git a/package.json b/package.json
+index 5bb974d..a7f7b74 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "9.0.2",
++  "version": "9.1.0",
+   "description": "Use Custom Properties Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+diff --git a/src/lib/transform-properties.js b/src/lib/transform-properties.js
+index 483383c..bbff261 100644
+--- a/src/lib/transform-properties.js
++++ b/src/lib/transform-properties.js
+@@ -14,9 +14,19 @@ export default (root, customProperties, opts) => {
+ 			// conditionally transform values that have changed
+ 			if (value !== originalValue) {
+ 				if (opts.preserve) {
+-					decl.cloneBefore({ value });
++					const beforeDecl = decl.cloneBefore({ value });
++
++					if (hasTrailingComment(beforeDecl)) {
++						beforeDecl.raws.value.value = beforeDecl.value.replace(trailingCommentRegExp, '$1');
++						beforeDecl.raws.value.raw = beforeDecl.raws.value.value + beforeDecl.raws.value.raw.replace(trailingCommentRegExp, '$2');
++					}
+ 				} else {
+ 					decl.value = value;
++
++					if (hasTrailingComment(decl)) {
++						decl.raws.value.value = decl.value.replace(trailingCommentRegExp, '$1');
++						decl.raws.value.raw = decl.raws.value.value + decl.raws.value.raw.replace(trailingCommentRegExp, '$2');
++					}
+ 				}
+ 			}
+ 		}
+@@ -31,3 +41,7 @@ const customPropertiesRegExp = /(^|[^\w-])var\([\W\w]+\)/;
+ 
+ // whether the declaration should be potentially transformed
+ const isTransformableDecl = decl => !customPropertyRegExp.test(decl.prop) && customPropertiesRegExp.test(decl.value);
++
++// whether the declaration has a trailing comment
++const hasTrailingComment = decl => 'value' in Object(Object(decl.raws).value) && 'raw' in decl.raws.value && trailingCommentRegExp.test(decl.raws.value.raw);
++const trailingCommentRegExp = /^([\W\w]+)(\s*\/\*[\W\w]+?\*\/)$/;
+diff --git a/test/basic.css b/test/basic.css
+index 3f0d29b..cfbca81 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -64,5 +64,5 @@ html {
+ 	color: var(
+ 		--color,
+ 		blue
+-	);
++	)/*rtl:red*/;
+ }
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 5a4e9c2..699ffaa 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -70,9 +70,9 @@ html {
+ }
+ 
+ .test--loose-formatting {
+-	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0)/*rtl:red*/;
+ 	color: var(
+ 		--color,
+ 		blue
+-	);
++	)/*rtl:red*/;
+ }
+diff --git a/test/basic.import-is-empty.expect.css b/test/basic.import-is-empty.expect.css
+index 5a4e9c2..699ffaa 100644
+--- a/test/basic.import-is-empty.expect.css
++++ b/test/basic.import-is-empty.expect.css
+@@ -70,9 +70,9 @@ html {
+ }
+ 
+ .test--loose-formatting {
+-	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0)/*rtl:red*/;
+ 	color: var(
+ 		--color,
+ 		blue
+-	);
++	)/*rtl:red*/;
+ }
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+index 23a0ffc..cb54190 100644
+--- a/test/basic.import.expect.css
++++ b/test/basic.import.expect.css
+@@ -71,9 +71,9 @@ html {
+ }
+ 
+ .test--loose-formatting {
+-	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0)/*rtl:red*/;
+ 	color: var(
+ 		--color,
+ 		blue
+-	);
++	)/*rtl:red*/;
+ }
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index 32a5301..38bb6ab 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -53,5 +53,5 @@
+ }
+ 
+ .test--loose-formatting {
+-	color: rgb(255, 0, 0);
++	color: rgb(255, 0, 0)/*rtl:red*/;
+ }
+-- 
+2.33.1
+

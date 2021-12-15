@@ -1,0 +1,38 @@
+From 1b495ce1c5acb50f58c1bd4cc1f594b8468e37b8 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 19 Feb 2018 01:48:58 -0500
+Subject: [PATCH 127/186] Fix documentation code examples for preserve option
+
+---
+ README.md | 8 ++------
+ 1 file changed, 2 insertions(+), 6 deletions(-)
+
+diff --git a/README.md b/README.md
+index cfa3a84..5b79d91 100755
+--- a/README.md
++++ b/README.md
+@@ -178,9 +178,7 @@ containing `var()` will be removed:
+ 
+ ```js
+ postCSSCustomProperties({
+-  variables: {
+-    preserve: false
+-  }
++  preserve: false
+ })
+ ```
+ 
+@@ -205,9 +203,7 @@ will remain, but declarations containing `var()` will be removed:
+ 
+ ```js
+ postCSSCustomProperties({
+-  variables: {
+-    preserve: 'preserve-computed'
+-  }
++  preserve: 'preserve-computed'
+ })
+ ```
+ 
+-- 
+2.33.1
+

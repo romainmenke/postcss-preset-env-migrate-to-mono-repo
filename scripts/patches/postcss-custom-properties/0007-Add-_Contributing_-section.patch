@@ -1,0 +1,35 @@
+From 0193beffe27417c0409c75bd197649dc7ffbd070 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 6 Aug 2014 09:17:29 +0200
+Subject: [PATCH 007/186] Add _Contributing_ section
+
+---
+ README.md | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/README.md b/README.md
+index 19dbc36..20b2b9d 100755
+--- a/README.md
++++ b/README.md
+@@ -39,6 +39,18 @@ Allow you to preserve custom properties & var() usage in output.
+ 
+ ```js
+ var out = postcss(customProperties({preserve: true})).process(css).css
++
++---
++
++## Contributing
++
++Work on a branch, install dev-dependencies, respect coding style & run tests before submitting a bug fix or a feature.
++
++```bash
++git clone https://github.com/postcss/postcss-custom-properties.git
++git checkout -b patch-1
++npm install
++npm test
+ ```
+ 
+ ## [Changelog](CHANGELOG.md)
+-- 
+2.33.1
+

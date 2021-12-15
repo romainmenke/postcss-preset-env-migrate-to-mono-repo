@@ -1,0 +1,52 @@
+From c1e190715ea23a86be85cdd6f2df95b05a15c524 Mon Sep 17 00:00:00 2001
+From: Matthias Le Brun <mlbli@me.com>
+Date: Mon, 16 Mar 2015 13:48:53 +0100
+Subject: [PATCH 057/186] documented JS keys auto-prefixing
+
+---
+ CHANGELOG.md | 5 +++++
+ README.md    | 2 ++
+ package.json | 2 +-
+ 3 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index b40d677..7f336d2 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,8 @@
++# 3.1.0 - 2015-03-16
++
++- Added: variables defined in JS are now automatically prefixed with `--`
++  ([0691784](https://github.com/postcss/postcss-custom-properties/commit/0691784ed2218d7e6b16da8c4df03e2ca0c4798c))
++
+ # 3.0.1 - 2015-02-06
+ 
+ - Fixed: logs now have filename back ([#19](https://github.com/postcss/postcss-custom-properties/issues/19))
+diff --git a/README.md b/README.md
+index f097715..076835a 100755
+--- a/README.md
++++ b/README.md
+@@ -69,6 +69,8 @@ var out = postcss()
+ #### `variables` (default: `{}`)
+ 
+ Allow you to pass an object of variables for `:root`. These definitions will override any that exist in the CSS.
++The keys are automatically prefixed with the CSS `--` to make it easier to share
++variables in your codebase.
+ 
+ ---
+ 
+diff --git a/package.json b/package.json
+index 13ecb8c..0c290f4 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "3.0.1",
++  "version": "3.1.0",
+   "description": "PostCSS plugin to polyfill W3C CSS Custom Properties for cascading variables",
+   "keywords": [
+     "css",
+-- 
+2.33.1
+

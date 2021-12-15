@@ -1,0 +1,130 @@
+From 4adb75ccf3fb05a1f1d0560ce6715400808cf09e Mon Sep 17 00:00:00 2001
+From: Joe Schmitt <josephschmitt@users.noreply.github.com>
+Date: Tue, 15 May 2018 22:05:46 -0400
+Subject: [PATCH 131/186] Fix appendVariables appending duplicate vars
+
+---
+ index.js                                     | 26 +++++++++++---------
+ test/fixtures/append.duplicates.css          |  8 ++++++
+ test/fixtures/append.duplicates.expected.css | 14 +++++++++++
+ test/index.js                                | 16 +++++++++++-
+ 4 files changed, 51 insertions(+), 13 deletions(-)
+ create mode 100644 test/fixtures/append.duplicates.css
+ create mode 100644 test/fixtures/append.duplicates.expected.css
+
+diff --git a/index.js b/index.js
+index 645f981..0faac2e 100755
+--- a/index.js
++++ b/index.js
+@@ -276,25 +276,27 @@ export default postcss.plugin("postcss-custom-properties", (options = {}) => {
+       }
+     })
+ 
+-    if (preserve && appendVariables) {
++    if (preserve && variables && appendVariables) {
+       const names = Object.keys(map)
+       if (names.length) {
+         const container = postcss.rule({
+           selector: ":root",
+           raws: {semicolon: true},
+         })
+-        names.forEach((name) => {
+-          const variable = map[name]
+-          let val = variable.value
+-          if (variable.resolved) {
+-            val = val[val.length - 1]
+-          }
+-          const decl = postcss.decl({
+-            prop: name,
+-            value: val,
++        names
++          .filter((name) => variables.hasOwnProperty(name))
++          .forEach((name) => {
++            const variable = map[name]
++            let val = variable.value
++            if (variable.resolved) {
++              val = val[val.length - 1]
++            }
++            const decl = postcss.decl({
++              prop: name,
++              value: val,
++            })
++            container.append(decl)
+           })
+-          container.append(decl)
+-        })
+         style.append(container)
+       }
+     }
+diff --git a/test/fixtures/append.duplicates.css b/test/fixtures/append.duplicates.css
+new file mode 100644
+index 0000000..7dab61f
+--- /dev/null
++++ b/test/fixtures/append.duplicates.css
+@@ -0,0 +1,8 @@
++:root {
++	--test-one: css-one;
++}
++
++div {
++	p: var(--test-one);
++	a: var(--test-two);
++}
+diff --git a/test/fixtures/append.duplicates.expected.css b/test/fixtures/append.duplicates.expected.css
+new file mode 100644
+index 0000000..f9b7947
+--- /dev/null
++++ b/test/fixtures/append.duplicates.expected.css
+@@ -0,0 +1,14 @@
++:root {
++	--test-one: css-one;
++}
++
++div {
++	p: css-one;
++	a: js-one;
++}
++
++:root {
++	--test-two: js-one;
++	--test-three: js-two;
++	--test-four: css-one js-one js-two;
++}
+\ No newline at end of file
+diff --git a/test/index.js b/test/index.js
+index 68c26a1..52c3ccf 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -23,7 +23,7 @@ function compareFixtures(t, name, options) {
+   const actual = postcssResult.css.trim()
+ 
+   // handy thing: checkout actual in the *.actual.css file
+-  fs.writeFile(fixturePath(name + ".actual"), actual)
++  fs.writeFile(fixturePath(name + ".actual"), actual, () => {})
+ 
+   const expected = fixture(name + ".expected")
+   t.equal(
+@@ -247,6 +247,20 @@ test("append variables", function(t) {
+   t.end()
+ })
+ 
++test("append variables without duplicates", function(t) {
++  compareFixtures(t, "append.duplicates", {
++    variables: {
++      "--test-two": "js-one",
++      "test-three": "js-two",
++      "test-four": "var(--test-one, one) var(--test-two, two) " +
++          "var(--test-three, three)",
++    },
++    preserve: "computed",
++    appendVariables: true,
++  })
++  t.end()
++})
++
+ test("strict option", function(t) {
+   compareFixtures(t, "substitution-strict", {
+     strict: false,
+-- 
+2.33.1
+

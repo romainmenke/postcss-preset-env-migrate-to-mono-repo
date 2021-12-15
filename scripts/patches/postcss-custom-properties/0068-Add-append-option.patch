@@ -1,0 +1,125 @@
+From 22794f1a30325ba092ae69a1983388dde4fd138d Mon Sep 17 00:00:00 2001
+From: Glen Huang <hey.hgl@gmail.com>
+Date: Mon, 6 Apr 2015 23:01:02 +0800
+Subject: [PATCH 068/186] Add append option
+
+---
+ index.js                          | 35 ++++++++++++++++++++++++++++++-
+ test/fixtures/append.css          |  3 +++
+ test/fixtures/append.expected.css |  8 +++++++
+ test/index.js                     | 11 ++++++++++
+ 4 files changed, 56 insertions(+), 1 deletion(-)
+ create mode 100644 test/fixtures/append.css
+ create mode 100644 test/fixtures/append.expected.css
+
+diff --git a/index.js b/index.js
+index 8a0e899..d86225a 100755
+--- a/index.js
++++ b/index.js
+@@ -2,6 +2,7 @@
+  * Module dependencies.
+  */
+ 
++var postcss = require("postcss")
+ var balanced = require("balanced-match")
+ var helpers = require("postcss-message-helpers")
+ 
+@@ -126,7 +127,8 @@ module.exports = function(options) {
+         delete variables[name]
+       }
+     })
+-    var preserve = (options.preserve === true ? true : false)
++    var append = options.append
++    var preserve = append || options.preserve
+     var map = {}
+     var importantMap = {}
+ 
+@@ -191,6 +193,16 @@ module.exports = function(options) {
+       }
+     })
+ 
++    if (append) {
++      Object.keys(map).forEach(function(name) {
++        var variable = map[name]
++        if (!variable.resolved) {
++          variable.value = resolveValue(variable.value, map)
++          variable.resolved = true
++        }
++      })
++    }
++
+     // resolve variables
+     style.eachDecl(function(decl) {
+       var value = decl.value
+@@ -211,5 +223,26 @@ module.exports = function(options) {
+         decl.removeSelf()
+       }
+     })
++
++    if (append) {
++      var names = Object.keys(map)
++      if (names.length) {
++        var container = postcss.rule({
++          selector: ":root",
++          semicolon: true,
++        })
++        names.forEach(function(name) {
++          var variable = map[name]
++          var val = variable.value
++          if (variable.resolved) { val = val[val.length - 1] }
++          var decl = postcss.decl({
++            prop: name,
++            value: val,
++          })
++          container.append(decl)
++        })
++        style.append(container)
++      }
++    }
+   }
+ }
+diff --git a/test/fixtures/append.css b/test/fixtures/append.css
+new file mode 100644
+index 0000000..6da553d
+--- /dev/null
++++ b/test/fixtures/append.css
+@@ -0,0 +1,3 @@
++div {
++	p: var(--test-one);
++}
+diff --git a/test/fixtures/append.expected.css b/test/fixtures/append.expected.css
+new file mode 100644
+index 0000000..f84a78a
+--- /dev/null
++++ b/test/fixtures/append.expected.css
+@@ -0,0 +1,8 @@
++div {
++	p: js-one;
++	p: var(--test-one);
++}
++:root {
++	--test-one: js-one;
++	--test-two: js-two;
++}
+diff --git a/test/index.js b/test/index.js
+index 06c4c51..774956c 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -118,3 +118,14 @@ test("circular variable references with fallback", function(t) {
+   compareFixtures(t, "self-reference-double-fallback")
+   t.end()
+ })
++
++test("append variables", function(t) {
++  compareFixtures(t, "append", {
++    variables: {
++      "--test-one": "js-one",
++      "test-two": "js-two",
++    },
++    append: true,
++  })
++  t.end()
++})
+-- 
+2.33.1
+

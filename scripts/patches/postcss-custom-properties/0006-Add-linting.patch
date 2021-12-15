@@ -1,0 +1,412 @@
+From ba9e41641362af4f8c4a062af6b01f1b382892d1 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Mon, 4 Aug 2014 11:31:12 +0200
+Subject: [PATCH 006/186] Add linting
+
+---
+ .editorconfig |  16 +++++++
+ .jscsrc       | 130 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ .jshintrc     |   9 ++++
+ index.js      |  61 ++++++++++++++---------
+ package.json  |   7 ++-
+ test/index.js |  26 +++++-----
+ 6 files changed, 212 insertions(+), 37 deletions(-)
+ create mode 100644 .editorconfig
+ create mode 100644 .jscsrc
+ create mode 100644 .jshintrc
+
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..8978b44
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,16 @@
++# editorconfig.org
++root = true
++
++[*]
++end_of_line = lf
++charset = utf-8
++trim_trailing_whitespace = true
++insert_final_newline = true
++indent_style = space
++indent_size = 2
++
++[*.md]
++trim_trailing_whitespace = false
++
++[Makefile]
++indent_style = tab
+diff --git a/.jscsrc b/.jscsrc
+new file mode 100644
+index 0000000..29720b3
+--- /dev/null
++++ b/.jscsrc
+@@ -0,0 +1,130 @@
++{
++  "excludeFiles": [
++    "node_modules/**"
++  ],
++  "fileExtensions": [
++    ".js"
++  ],
++  "requireCurlyBraces": [
++    "if",
++    "else",
++    "for",
++    "while",
++    "do",
++    "try",
++    "catch"
++  ],
++  "requireSpaceAfterKeywords": [
++    "if",
++    "else",
++    "for",
++    "while",
++    "do",
++    "switch",
++    "return",
++    "try",
++    "catch"
++  ],
++  "requireSpaceBeforeBlockStatements": true,
++  "requireParenthesesAroundIIFE": true,
++  "requireSpacesInConditionalExpression": {
++    "afterTest": true,
++    "beforeConsequent": true,
++    "afterConsequent": true,
++    "beforeAlternate": true
++  },
++  "requireSpacesInFunctionExpression": {
++    "beforeOpeningCurlyBrace": true
++  },
++  "disallowSpacesInFunctionExpression": {
++    "beforeOpeningRoundBrace": true
++  },
++  "disallowMultipleVarDecl": true,
++  "requireBlocksOnNewline": 1,
++  "disallowPaddingNewlinesInBlocks": true,
++  "disallowEmptyBlocks": true,
++  "disallowSpacesInsideObjectBrackets": true,
++  "disallowSpacesInsideArrayBrackets": true,
++  "disallowSpacesInsideParentheses": true,
++  "disallowQuotedKeysInObjects": "allButReserved",
++  "disallowSpaceAfterObjectKeys": true,
++  "requireCommaBeforeLineBreak": true,
++  "requireOperatorBeforeLineBreak": [
++    "?",
++    "+",
++    "-",
++    "/",
++    "*",
++    "=",
++    "==",
++    "===",
++    "!=",
++    "!==",
++    ">",
++    ">=",
++    "<",
++    "<="
++  ],
++  "disallowSpaceAfterPrefixUnaryOperators": [
++    "++",
++    "--",
++    "+",
++    "-",
++    "~",
++    "!"
++  ],
++  "disallowSpaceBeforePostfixUnaryOperators": [
++    "++",
++    "--"
++  ],
++  "requireSpaceBeforeBinaryOperators": [
++    "+",
++    "-",
++    "/",
++    "*",
++    "=",
++    "==",
++    "===",
++    "!=",
++    "!=="
++  ],
++  "requireSpaceAfterBinaryOperators": [
++    "+",
++    "-",
++    "/",
++    "*",
++    "=",
++    "==",
++    "===",
++    "!=",
++    "!=="
++  ],
++  "disallowImplicitTypeConversion": [
++    "numeric",
++    "boolean",
++    "binary",
++    "string"
++  ],
++  "requireCamelCaseOrUpperCaseIdentifiers": "ignoreProperties",
++  "disallowKeywords": [
++    "with"
++  ],
++  "disallowMultipleLineStrings": true,
++  "validateQuoteMarks": "\"",
++  "validateIndentation": 2,
++  "disallowMixedSpacesAndTabs": true,
++  "disallowTrailingWhitespace": true,
++  "requireKeywordsOnNewLine": [
++    "else"
++  ],
++  "requireLineFeedAtFileEnd": true,
++  "requireCapitalizedConstructors": true,
++  "safeContextKeyword": "that",
++  "requireDotNotation": true,
++  "validateJSDoc": {
++    "checkParamNames": true,
++    "checkRedundantParams": true,
++    "requireParamTypes": true
++  },
++  "requireSpaceAfterLineComment": true
++}
+diff --git a/.jshintrc b/.jshintrc
+new file mode 100644
+index 0000000..9f268f7
+--- /dev/null
++++ b/.jshintrc
+@@ -0,0 +1,9 @@
++{
++  "newcap": false,
++  "undef": true,
++  "unused": true,
++  "asi": true,
++  "esnext": true,
++  "node": true,
++  "browser": true
++}
+diff --git a/index.js b/index.js
+index 7b1455f..ee64463 100755
+--- a/index.js
++++ b/index.js
+@@ -2,35 +2,38 @@
+  * Module dependencies.
+  */
+ 
+-var balanced = require('balanced-match')
++var balanced = require("balanced-match")
+ 
+ /**
+  * Constants.
+  */
+ 
+-var VAR_PROP_IDENTIFIER = '--'
+-var VAR_FUNC_IDENTIFIER = 'var'
++var VAR_PROP_IDENTIFIER = "--"
++var VAR_FUNC_IDENTIFIER = "var"
+ 
+ /**
+  * Module export.
+  */
+ 
+-module.exports = function (options) {
+-
++module.exports = function(options) {
+   return function(style) {
+     options = options || {}
+     var map = {}
+     var preserve = (options.preserve === true ? true : false)
+ 
+     // define variables
+-    style.eachRule(function (rule) {
++    style.eachRule(function(rule) {
+       var varNameIndices = []
+-      if (rule.type !== 'rule') return
++      if (rule.type !== "rule") {
++        return
++      }
+ 
+       // only variables declared for `:root` are supported for now
+-      if (rule.selectors.length !== 1 || rule.selectors[0] !== ":root" || rule.parent.type !== "root") return
++      if (rule.selectors.length !== 1 || rule.selectors[0] !== ":root" || rule.parent.type !== "root") {
++        return
++      }
+ 
+-      rule.each(function (decl, i) {
++      rule.each(function(decl, i) {
+         var prop = decl.prop
+         var value = decl.value
+ 
+@@ -47,17 +50,21 @@ module.exports = function (options) {
+         }
+ 
+         // remove empty :root {}
+-        if (rule.decls.length === 0) rule.removeSelf()
++        if (rule.decls.length === 0) {
++          rule.removeSelf()
++        }
+       }
+     })
+ 
+     // resolve variables
+-    style.eachDecl(function (decl, i) {
++    style.eachDecl(function(decl) {
+       var resolvedValue
+       var value = decl.value
+ 
+-      // skip values that don't contain variable functions
+-      if (!value || value.indexOf(VAR_FUNC_IDENTIFIER + '(') === -1) return
++      // skip values that don’t contain variable functions
++      if (!value || value.indexOf(VAR_FUNC_IDENTIFIER + "(") === -1) {
++        return
++      }
+ 
+       resolvedValue = resolveValue(value, map)
+ 
+@@ -89,21 +96,29 @@ module.exports = function (options) {
+  */
+ 
+ function resolveValue(value, map) {
+-  // matches `name[, fallback]`, captures 'name' and 'fallback'
++  // matches `name[, fallback]`, captures "name" and "fallback"
+   var RE_VAR = /([\w-]+)(?:\s*,\s*)?(.*)?/
+-  var balancedParens = balanced('(', ')', value)
+-  var varStartIndex = value.indexOf('var(')
+-  var varRef = balanced('(', ')', value.substring(varStartIndex)).body
++  var balancedParens = balanced("(", ")", value)
++  var varStartIndex = value.indexOf("var(")
++  var varRef = balanced("(", ")", value.substring(varStartIndex)).body
+ 
+-  if (!balancedParens) throw new SyntaxError('postcss-custom-properties: missing closing ")" in the value "' + value + '"')
+-  if (varRef === '') throw new Error('postcss-custom-properties: var() must contain a non-whitespace string')
++  if (!balancedParens) {
++    throw new SyntaxError("postcss-custom-properties: missing closing ')' in the value '" + value + "'")
++  }
++  if (varRef === "") {
++    throw new Error("postcss-custom-properties: var() must contain a non-whitespace string")
++  }
+ 
+-  var varFunc = VAR_FUNC_IDENTIFIER + '(' + varRef + ')'
++  var varFunc = VAR_FUNC_IDENTIFIER + "(" + varRef + ")"
+ 
+-  var varResult = varRef.replace(RE_VAR, function (_, name, fallback) {
++  var varResult = varRef.replace(RE_VAR, function(_, name, fallback) {
+     var replacement = map[name]
+-    if (!replacement && !fallback) throw new Error('postcss-custom-properties: variable "' + name + '" is undefined')
+-    if (!replacement && fallback) return fallback
++    if (!replacement && !fallback) {
++      throw new Error("postcss-custom-properties: variable '" + name + "' is undefined")
++    }
++    if (!replacement && fallback) {
++      return fallback
++    }
+     return replacement
+   })
+ 
+diff --git a/package.json b/package.json
+index 58ca558..7df3f3b 100755
+--- a/package.json
++++ b/package.json
+@@ -26,11 +26,16 @@
+     "balanced-match": "~0.1.0"
+   },
+   "devDependencies": {
++    "jscs": "^1.5.9",
++    "jshint": "^2.5.2",
++    "jshint-stylish": "^0.4.0",
+     "postcss": "^2.1.0",
+     "tap-colorize": "^1.2.0",
+     "tape": "^2.13.4"
+   },
+   "scripts": {
+-    "test": "node test | tap-colorize"
++    "jscs": "jscs *.js **/*.js",
++    "jshint": "jshint . --exclude node_modules --reporter node_modules/jshint-stylish/stylish.js",
++    "test": "npm run jscs && npm run jshint && tape test | tap-colorize"
+   }
+ }
+diff --git a/test/index.js b/test/index.js
+index 1d8d223..434924a 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -19,61 +19,61 @@ function compareFixtures(t, name, options) {
+   return t.equal(actual, expected, "processed fixture '" + name + "' should be equal to expected output")
+ }
+ 
+-test("throws an error when a variable function is empty", function (t) {
+-  var output = function (t) {
++test("throws an error when a variable function is empty", function(t) {
++  var output = function() {
+     return postcss(customProperties()).process(fixture("substitution-empty")).css
+   }
+   t.throws(output, Error, "postcss-custom-properties: var() must contain a non-whitespace string")
+   t.end()
+ })
+ 
+-test("throws an error when a variable function is malformed", function (t) {
+-  var output = function (t) {
++test("throws an error when a variable function is malformed", function(t) {
++  var output = function() {
+     return postcss(customProperties()).process(fixture("substitution-malformed")).css
+   }
+   t.throws(output, SyntaxError, "postcss-custom-properties: missing closing \")\" in the value \"var(--t, rgba(0,0,0,0.5)\"")
+   t.end()
+ })
+ 
+-test("throws an error when a variable function references an undefined variable", function (t) {
+-  var output = function (t) {
++test("throws an error when a variable function references an undefined variable", function(t) {
++  var output = function() {
+     return postcss(customProperties()).process(fixture("substitution-undefined")).css
+   }
+   t.throws(output, Error, "postcss-custom-properties: variable \"--t\" is undefined")
+   t.end()
+ })
+ 
+-test("substitutes defined variables in `:root` only", function (t) {
++test("substitutes defined variables in `:root` only", function(t) {
+   compareFixtures(t, "substitution-defined")
+   t.end()
+ })
+ 
+-test("removes variable properties from the output", function (t) {
++test("removes variable properties from the output", function(t) {
+   compareFixtures(t, "remove-properties")
+   t.end()
+ })
+ 
+-test("ignores variables defined in a media query", function (t) {
++test("ignores variables defined in a media query", function(t) {
+   compareFixtures(t, "media-query")
+   t.end()
+ })
+ 
+-test("overwrites variables correctly", function (t) {
++test("overwrites variables correctly", function(t) {
+   compareFixtures(t, "substitution-overwrite")
+   t.end()
+ })
+ 
+-test("substitutes undefined variables if there is a fallback", function (t) {
++test("substitutes undefined variables if there is a fallback", function(t) {
+   compareFixtures(t, "substitution-fallback")
+   t.end()
+ })
+ 
+-test("supports case-sensitive variables", function (t) {
++test("supports case-sensitive variables", function(t) {
+   compareFixtures(t, "case-sensitive")
+   t.end()
+ })
+ 
+-test("preserves variables when `preserve` is `true`", function (t) {
++test("preserves variables when `preserve` is `true`", function(t) {
+   compareFixtures(t, "preserve-variables", {preserve: true})
+   t.end()
+ })
+-- 
+2.33.1
+

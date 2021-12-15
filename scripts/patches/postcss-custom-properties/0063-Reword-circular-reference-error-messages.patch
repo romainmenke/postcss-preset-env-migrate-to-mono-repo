@@ -1,0 +1,25 @@
+From e6f1f8281b7f61452989244d6c67c09a8774b5d1 Mon Sep 17 00:00:00 2001
+From: Glen Huang <hey.hgl@gmail.com>
+Date: Sat, 4 Apr 2015 09:54:38 +0800
+Subject: [PATCH 063/186] Reword circular reference error messages
+
+---
+ index.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index 7f37695..66e34c5 100755
+--- a/index.js
++++ b/index.js
+@@ -53,7 +53,7 @@ function resolveValue(value, variables, deps, source) {
+ 
+   matches.body.replace(RE_VAR, function(_, name, fallback) {
+     if (deps.indexOf(name) !== -1) {
+-      throw new Error("self-referential variable: " + name)
++      throw new Error("circular variable reference: " + name)
+     }
+     var replacement = variables[name]
+     if (!replacement && !fallback) {
+-- 
+2.33.1
+

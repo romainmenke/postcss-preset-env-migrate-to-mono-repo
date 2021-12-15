@@ -1,0 +1,311 @@
+From ac6f3a617065ae9cd192092d59105fe5361c00e0 Mon Sep 17 00:00:00 2001
+From: Dmitry Semigradsky <semigradskyd@gmail.com>
+Date: Mon, 15 May 2017 12:38:42 +0300
+Subject: [PATCH 14/31] Update dependencies
+
+---
+ .eslintrc.yml |  36 +++++++++++++++
+ .jscsrc       | 125 --------------------------------------------------
+ .jshintrc     |   9 ----
+ .travis.yml   |   4 ++
+ index.js      |  12 +++--
+ package.json  |  16 +++----
+ test/index.js |  15 ++++--
+ 7 files changed, 68 insertions(+), 149 deletions(-)
+ create mode 100644 .eslintrc.yml
+ delete mode 100644 .jscsrc
+ delete mode 100644 .jshintrc
+
+diff --git a/.eslintrc.yml b/.eslintrc.yml
+new file mode 100644
+index 0000000..40483cc
+--- /dev/null
++++ b/.eslintrc.yml
+@@ -0,0 +1,36 @@
++root: true
++extends: eslint:recommended
++
++parserOptions:
++  ecmaVersion: 5
++
++env:
++  commonjs: true
++
++rules:
++  indent: [2, 2] # 2 spaces indentation
++  max-len: [2, 80, 4]
++  quotes: [2, "double"]
++  semi: [2, "never"]
++  no-multiple-empty-lines: [2, {"max": 1}]
++
++  brace-style: [2, "stroustrup"]
++  comma-dangle: [2, "always-multiline"]
++  comma-style: [2, "last"]
++  dot-location: [2, "property"]
++
++  one-var: [2, "never"]
++#  no-var: [2]
++  prefer-const: [2]
++  no-bitwise: [2]
++
++  object-curly-spacing: [2, "never"]
++  array-bracket-spacing: [2, "never"]
++  computed-property-spacing: [2, "never"]
++
++  space-unary-ops: [2, {"words": true, "nonwords": false}]
++  keyword-spacing: [2, {"before": true, "after": true}]
++  space-before-blocks: [2, "always"]
++  space-before-function-paren: [2, "never"]
++  space-in-parens: [2, "never"]
++  spaced-comment: [2, "always"]
+diff --git a/.jscsrc b/.jscsrc
+deleted file mode 100644
+index 9afb9dd..0000000
+--- a/.jscsrc
++++ /dev/null
+@@ -1,125 +0,0 @@
+-{
+-  "excludeFiles": [
+-    "node_modules/**"
+-  ],
+-  "fileExtensions": [
+-    ".js"
+-  ],
+-  "requireCurlyBraces": [
+-    "if",
+-    "else",
+-    "for",
+-    "while",
+-    "do",
+-    "try",
+-    "catch"
+-  ],
+-  "requireSpaceAfterKeywords": [
+-    "if",
+-    "else",
+-    "for",
+-    "while",
+-    "do",
+-    "switch",
+-    "return",
+-    "try",
+-    "catch"
+-  ],
+-  "requireSpaceBeforeBlockStatements": true,
+-  "requireParenthesesAroundIIFE": true,
+-  "requireSpacesInConditionalExpression": {
+-    "afterTest": true,
+-    "beforeConsequent": true,
+-    "afterConsequent": true,
+-    "beforeAlternate": true
+-  },
+-  "requireSpacesInFunctionExpression": {
+-    "beforeOpeningCurlyBrace": true
+-  },
+-  "disallowSpacesInFunctionExpression": {
+-    "beforeOpeningRoundBrace": true
+-  },
+-  "disallowMultipleVarDecl": true,
+-  "requireBlocksOnNewline": 1,
+-  "disallowPaddingNewlinesInBlocks": true,
+-  "disallowEmptyBlocks": true,
+-  "disallowSpacesInsideObjectBrackets": true,
+-  "disallowSpacesInsideArrayBrackets": true,
+-  "disallowSpacesInsideParentheses": true,
+-  "disallowQuotedKeysInObjects": "allButReserved",
+-  "disallowSpaceAfterObjectKeys": true,
+-  "requireCommaBeforeLineBreak": true,
+-  "requireOperatorBeforeLineBreak": [
+-    "?",
+-    "+",
+-    "-",
+-    "/",
+-    "*",
+-    "=",
+-    "==",
+-    "===",
+-    "!=",
+-    "!==",
+-    ">",
+-    ">=",
+-    "<",
+-    "<="
+-  ],
+-  "disallowSpaceAfterPrefixUnaryOperators": [
+-    "++",
+-    "--",
+-    "+",
+-    "-",
+-    "~",
+-    "!"
+-  ],
+-  "disallowSpaceBeforePostfixUnaryOperators": [
+-    "++",
+-    "--"
+-  ],
+-  "requireSpaceBeforeBinaryOperators": [
+-    "+",
+-    "-",
+-    "/",
+-    "*",
+-    "=",
+-    "==",
+-    "===",
+-    "!=",
+-    "!=="
+-  ],
+-  "requireSpaceAfterBinaryOperators": [
+-    "+",
+-    "-",
+-    "/",
+-    "*",
+-    "=",
+-    "==",
+-    "===",
+-    "!=",
+-    "!=="
+-  ],
+-  "disallowImplicitTypeConversion": [
+-    "numeric",
+-    "boolean",
+-    "binary",
+-    "string"
+-  ],
+-  "requireCamelCaseOrUpperCaseIdentifiers": "ignoreProperties",
+-  "disallowKeywords": [
+-    "with"
+-  ],
+-  "disallowMultipleLineStrings": true,
+-  "validateQuoteMarks": "\"",
+-  "validateIndentation": 2,
+-  "disallowMixedSpacesAndTabs": true,
+-  "disallowTrailingWhitespace": true,
+-  "requireKeywordsOnNewLine": [
+-    "else"
+-  ],
+-  "requireLineFeedAtFileEnd": true,
+-  "requireCapitalizedConstructors": true,
+-  "safeContextKeyword": "that",
+-  "requireDotNotation": true,
+-  "requireSpaceAfterLineComment": true
+-}
+diff --git a/.jshintrc b/.jshintrc
+deleted file mode 100644
+index 9f268f7..0000000
+--- a/.jshintrc
++++ /dev/null
+@@ -1,9 +0,0 @@
+-{
+-  "newcap": false,
+-  "undef": true,
+-  "unused": true,
+-  "asi": true,
+-  "esnext": true,
+-  "node": true,
+-  "browser": true
+-}
+diff --git a/.travis.yml b/.travis.yml
+index 587bd3e..10e9429 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -1 +1,5 @@
++sudo: false
+ language: node_js
++node_js:
++  - "6"
++  - "4"
+diff --git a/index.js b/index.js
+index cbb5aca..dee51a4 100755
+--- a/index.js
++++ b/index.js
+@@ -42,7 +42,11 @@ function transformHexAlpha(string) {
+ 
+   var hex = m[1]
+ 
+-  return string.slice(0, m.index) + hexaToRgba(hex) + transformHexAlpha(string.slice(m.index + 1 + hex.length))
++  return string.slice(0, m.index) +
++         hexaToRgba(hex) +
++         transformHexAlpha(
++           string.slice(m.index + 1 + hex.length)
++         )
+ }
+ 
+ /**
+@@ -67,8 +71,10 @@ function hexaToRgba(hex) {
+   // }
+   var rgb = []
+   for (var i = 0, l = hex.length; i < l; i += 2) {
+-    rgb.push(Math.round(parseInt(hex.substr(i, 2), 16) / (i === 6 ? 255 : 1) * DECIMAL_PRECISION) / DECIMAL_PRECISION)
++    var isAlpha = i === 6
++    var value = parseInt(hex.substr(i, 2), 16) / (isAlpha ? 255 : 1)
++    rgb.push(Math.round(value * DECIMAL_PRECISION) / DECIMAL_PRECISION)
+   }
+ 
+-  return color({r: rgb[0], g: rgb[1], b: rgb[2], a: rgb[3]}).rgbaString()
++  return color.rgb(rgb).string()
+ }
+diff --git a/package.json b/package.json
+index 8b25823..bc5b0a8 100644
+--- a/package.json
++++ b/package.json
+@@ -21,19 +21,17 @@
+     "index.js"
+   ],
+   "dependencies": {
+-    "color": "^0.10.1",
+-    "postcss": "^5.0.4",
++    "color": "^1.0.3",
++    "postcss": "^6.0.1",
+     "postcss-message-helpers": "^2.0.0"
+   },
+   "devDependencies": {
+-    "jscs": "^2.1.0",
+-    "jshint": "^2.8.0",
+-    "tape": "^4.0.3"
++    "eslint": "^3.19.0",
++    "tape": "^4.6.3"
+   },
+   "scripts": {
+-    "lint": "npm run jscs && npm run jshint",
+-    "jscs": "jscs index.js test/index.js",
+-    "jshint": "jshint . --exclude-path .gitignore",
+-    "test": "npm run lint && tape test"
++    "lint": "eslint *.js index.js ./test/",
++    "test": "npm run lint && tape test",
++    "release": "npmpub"
+   }
+ }
+diff --git a/test/index.js b/test/index.js
+index e60ddbd..b16a67d 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -5,14 +5,23 @@ var test = require("tape")
+ var postcss = require("postcss")
+ var plugin = require("..")
+ 
+-function filename(name) { return "test/" + name + ".css" }
+-function read(name) { return fs.readFileSync(name, "utf8") }
++function filename(name) {
++  return "test/" + name + ".css"
++}
++
++function read(name) {
++  return fs.readFileSync(name, "utf8")
++}
++
++function transform(css, options) {
++  return postcss(plugin(options)).process(css).css
++}
+ 
+ function compareFixtures(t, name, msg, opts, postcssOpts) {
+   postcssOpts = postcssOpts || {}
+   postcssOpts.from = filename("fixtures/" + name)
+   opts = opts || {}
+-  var actual = postcss().use(plugin(opts)).process(read(postcssOpts.from), postcssOpts).css
++  var actual = transform(read(postcssOpts.from), postcssOpts)
+   var expected = read(filename("fixtures/" + name + ".expected"))
+   fs.writeFile(filename("fixtures/" + name + ".actual"), actual)
+   t.equal(actual, expected, msg)
+-- 
+2.33.1
+

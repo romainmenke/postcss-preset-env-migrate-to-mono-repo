@@ -1,0 +1,139 @@
+From 0e5a66df910b65247133e13a685ca5c8cab4e60f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?R=C3=A9mi=20THOMAS?= <remi.thomas@yahoo.fr>
+Date: Tue, 16 Apr 2019 11:01:32 -0400
+Subject: [PATCH 150/186] upgrade to postcss-values-parser@3
+
+* upgrade to postcss-values-parser@3
+
+* Remove guard
+---
+ package.json                                  |  2 +-
+ src/lib/get-custom-properties-from-imports.js |  4 ++--
+ src/lib/get-custom-properties-from-root.js    | 10 +++++-----
+ src/lib/transform-properties.js               |  4 ++--
+ src/lib/transform-value-ast.js                |  4 ++--
+ 5 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/package.json b/package.json
+index 4bd1277..2fce5ad 100644
+--- a/package.json
++++ b/package.json
+@@ -30,7 +30,7 @@
+   },
+   "dependencies": {
+     "postcss": "^7.0.14",
+-    "postcss-values-parser": "^2.0.1"
++    "postcss-values-parser": "^3.0.3"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.4.0",
+diff --git a/src/lib/get-custom-properties-from-imports.js b/src/lib/get-custom-properties-from-imports.js
+index 9577129..8f0d84f 100644
+--- a/src/lib/get-custom-properties-from-imports.js
++++ b/src/lib/get-custom-properties-from-imports.js
+@@ -1,7 +1,7 @@
+ import fs from 'fs';
+ import path from 'path';
+ import postcss from 'postcss';
+-import valueParser from 'postcss-values-parser';
++import { parse } from 'postcss-values-parser';
+ import getCustomPropertiesFromRoot from './get-custom-properties-from-root';
+ 
+ /* Get Custom Properties from CSS File
+@@ -25,7 +25,7 @@ function getCustomPropertiesFromObject(object) {
+ 	);
+ 
+ 	for (const key in customProperties) {
+-		customProperties[key] = valueParser(String(customProperties[key])).parse().nodes;
++		customProperties[key] = parse(String(customProperties[key])).nodes;
+ 	}
+ 
+ 	return customProperties;
+diff --git a/src/lib/get-custom-properties-from-root.js b/src/lib/get-custom-properties-from-root.js
+index 1deea3e..0a7399c 100644
+--- a/src/lib/get-custom-properties-from-root.js
++++ b/src/lib/get-custom-properties-from-root.js
+@@ -1,18 +1,18 @@
+-import valueParser from 'postcss-values-parser';
++import { parse } from 'postcss-values-parser';
+ import { isBlockIgnored } from './is-ignored';
+ 
+ // return custom selectors from the css root, conditionally removing them
+ export default function getCustomPropertiesFromRoot(root, opts) {
+ 	// initialize custom selectors
+ 	const customPropertiesFromHtmlElement = {};
+-	const customPropertiesFromRootPsuedo = {};
++	const customPropertiesFromRootPseudo = {};
+ 
+ 	// for each html or :root rule
+ 	root.nodes.slice().forEach(rule => {
+ 		const customPropertiesObject = isHtmlRule(rule)
+ 			? customPropertiesFromHtmlElement
+ 		: isRootRule(rule)
+-			? customPropertiesFromRootPsuedo
++			? customPropertiesFromRootPseudo
+ 		: null;
+ 
+ 		// for each custom property
+@@ -22,7 +22,7 @@ export default function getCustomPropertiesFromRoot(root, opts) {
+ 					const { prop } = decl;
+ 
+ 					// write the parsed value to the custom property
+-					customPropertiesObject[prop] = valueParser(decl.value).parse().nodes;
++					customPropertiesObject[prop] = parse(decl.value).nodes;
+ 
+ 					// conditionally remove the custom property declaration
+ 					if (!opts.preserve) {
+@@ -39,7 +39,7 @@ export default function getCustomPropertiesFromRoot(root, opts) {
+ 	});
+ 
+ 	// return all custom properties, preferring :root properties over html properties
+-	return { ...customPropertiesFromHtmlElement, ...customPropertiesFromRootPsuedo };
++	return { ...customPropertiesFromHtmlElement, ...customPropertiesFromRootPseudo };
+ }
+ 
+ // match html and :root rules
+diff --git a/src/lib/transform-properties.js b/src/lib/transform-properties.js
+index 3911a3c..483383c 100644
+--- a/src/lib/transform-properties.js
++++ b/src/lib/transform-properties.js
+@@ -1,4 +1,4 @@
+-import valueParser from 'postcss-values-parser';
++import { parse } from 'postcss-values-parser';
+ import transformValueAST from './transform-value-ast';
+ import { isRuleIgnored } from './is-ignored';
+ 
+@@ -8,7 +8,7 @@ export default (root, customProperties, opts) => {
+ 	root.walkDecls(decl => {
+ 		if (isTransformableDecl(decl) && !isRuleIgnored(decl)) {
+ 			const originalValue = decl.value;
+-			const valueAST = valueParser(originalValue).parse();
++			const valueAST = parse(originalValue);
+ 			const value = String(transformValueAST(valueAST, customProperties));
+ 
+ 			// conditionally transform values that have changed
+diff --git a/src/lib/transform-value-ast.js b/src/lib/transform-value-ast.js
+index 209af61..a748144 100644
+--- a/src/lib/transform-value-ast.js
++++ b/src/lib/transform-value-ast.js
+@@ -3,7 +3,7 @@ export default function transformValueAST(root, customProperties) {
+ 		root.nodes.slice().forEach(child => {
+ 			if (isVarFunction(child)) {
+ 				// eslint-disable-next-line no-unused-vars
+-				const [propertyNode, comma, ...fallbacks] = child.nodes.slice(1, -1);
++				const [propertyNode, comma, ...fallbacks] = child.nodes;
+ 				const { value: name } = propertyNode;
+ 
+ 				if (name in customProperties) {
+@@ -45,7 +45,7 @@ function retransformValueAST(root, customProperties, withoutProperty) {
+ const varRegExp = /^var$/i;
+ 
+ // whether the node is a var() function
+-const isVarFunction = node => node.type === 'func' && varRegExp.test(node.value) && Object(node.nodes).length > 0;
++const isVarFunction = node => node.type === 'func' && varRegExp.test(node.name) && Object(node.nodes).length > 0;
+ 
+ // return an array with its nodes cloned, preserving the raw
+ const asClonedArrayWithBeforeSpacing = (array, beforeSpacing) => {
+-- 
+2.33.1
+

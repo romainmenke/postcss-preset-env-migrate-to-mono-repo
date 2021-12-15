@@ -1,0 +1,41 @@
+From 7f02aee850dc3d225a9e8600ceaaa87bb7ea2fd5 Mon Sep 17 00:00:00 2001
+From: Ole Ersoy <ole.mk10@gmail.com>
+Date: Mon, 20 Feb 2017 04:52:25 -0600
+Subject: [PATCH 100/186] Updated resolveValue comment (#65)
+
+---
+ index.js | 15 ++++++---------
+ 1 file changed, 6 insertions(+), 9 deletions(-)
+
+diff --git a/index.js b/index.js
+index 7dd8afa..7d8e3d2 100755
+--- a/index.js
++++ b/index.js
+@@ -15,18 +15,15 @@ var VAR_FUNC_IDENTIFIER = "var"
+ var RE_VAR = /([\w-]+)(?:\s*,\s*)?\s*(.*)?/
+ 
+ /**
+- * Resolve CSS variables in a value
++ * Resolve CSS variables.
+  *
+- * The second argument to a CSS variable function, if provided, is a fallback
+- * value, which is used as the substitution value when the referenced variable
+- * is invalid.
++ * The second argument to the CSS variable function, var(name[, fallback]), 
++ * is used in the event that first argument cannot be resolved.
+  *
+- * var(name[, fallback])
+- *
+- * @param {String} value A property value known to contain CSS variable
+- *                       functions
++ * @param {String} value May contain the CSS variable function
+  * @param {Object} variables A map of variable names and values
+- * @param {Object} source source object of the declaration containing the rule
++ * @param {Object} result The PostCSS result object
++ * @param {Object} decl The declaration containing the rule
+  * @return {String} A property value with all CSS variables substituted.
+  */
+ 
+-- 
+2.33.1
+

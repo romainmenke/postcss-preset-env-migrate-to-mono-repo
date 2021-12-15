@@ -1,0 +1,25 @@
+From fd915ff7436ccbc1ffc0180e18c4cf87c1216170 Mon Sep 17 00:00:00 2001
+From: Glen Huang <hey.hgl@gmail.com>
+Date: Thu, 2 Apr 2015 17:35:11 +0800
+Subject: [PATCH 060/186] Not resolve values while copying
+
+---
+ index.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index adbd987..cf6896c 100755
+--- a/index.js
++++ b/index.js
+@@ -155,7 +155,7 @@ module.exports = function(options) {
+ 
+     // apply js-defined custom properties
+     Object.keys(variables).forEach(function(variable) {
+-      map[variable] = resolveValue(variables[variable], map)
++      map[variable] = variables[variable]
+     })
+ 
+     // resolve variables
+-- 
+2.33.1
+

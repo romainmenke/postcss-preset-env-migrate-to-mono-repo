@@ -1,0 +1,24 @@
+From 2125844b295db5f3fcbaabf766801e8173f15c4b Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 8 Apr 2015 06:52:42 +0200
+Subject: [PATCH 074/186] Remove duplicated dep
+
+---
+ package.json | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 4670d57..d743b6d 100644
+--- a/package.json
++++ b/package.json
+@@ -29,7 +29,6 @@
+   },
+   "devDependencies": {
+     "eslint": "^0.18.0",
+-    "postcss": "^4.0.0",
+     "tape": "^3.0.0"
+   },
+   "scripts": {
+-- 
+2.33.1
+

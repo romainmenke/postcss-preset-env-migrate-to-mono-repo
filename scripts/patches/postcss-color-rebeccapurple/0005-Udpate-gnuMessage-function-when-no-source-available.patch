@@ -1,0 +1,23 @@
+From 2369ab2ae79a8b9eb1d594464f19a5532d2ed1b9 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 12 Nov 2014 15:53:02 +0100
+Subject: [PATCH 05/34] Udpate gnuMessage function when no source available
+
+---
+ index.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index 984bbc6..3cef3b2 100755
+--- a/index.js
++++ b/index.js
+@@ -64,5 +64,5 @@ function transformRebeccapurple(string) {
+  * @param {Object} source
+  */
+ function gnuMessage(message, source) {
+-  return (source ? (source.file ? source.file : "<css input>") + ":" + source.start.line + ":" + source.start.column : "") + " " + message
++  return (source ? (source.file ? source.file : "<css input>") + ":" + source.start.line + ":" + source.start.column + " " : "") + message
+ }
+-- 
+2.33.1
+

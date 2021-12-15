@@ -1,0 +1,80 @@
+From 0691784ed2218d7e6b16da8c4df03e2ca0c4798c Mon Sep 17 00:00:00 2001
+From: Matthias Le Brun <mlbli@me.com>
+Date: Mon, 16 Mar 2015 13:43:28 +0100
+Subject: [PATCH 056/186] added automatic variabled prefixing
+
+---
+ index.js                                             | 11 ++++++++++-
+ test/fixtures/automatic-variable-prefix.css          |  4 ++++
+ test/fixtures/automatic-variable-prefix.expected.css |  4 ++++
+ test/index.js                                        | 10 ++++++++++
+ 4 files changed, 28 insertions(+), 1 deletion(-)
+ create mode 100644 test/fixtures/automatic-variable-prefix.css
+ create mode 100644 test/fixtures/automatic-variable-prefix.expected.css
+
+diff --git a/index.js b/index.js
+index 8e9f681..78f1d14 100755
+--- a/index.js
++++ b/index.js
+@@ -20,7 +20,16 @@ var RE_VAR = /([\w-]+)(?:\s*,\s*)?(.*)?/ // matches `name[, fallback]`, captures
+ module.exports = function(options) {
+   return function(style) {
+     options = options || {}
+-    var variables = options.variables || {}
++    var userVariables = options.variables || {}
++    var variables =
++      Object.keys(userVariables)
++        .reduce(function(acc, key) {
++          if (key.indexOf("--") !== 0) {
++            acc["--" + key] = userVariables[key]
++          }
++          acc[key] = userVariables[key]
++          return acc
++        }, {})
+     var preserve = (options.preserve === true ? true : false)
+     var map = {}
+     var importantMap = {}
+diff --git a/test/fixtures/automatic-variable-prefix.css b/test/fixtures/automatic-variable-prefix.css
+new file mode 100644
+index 0000000..bf61e60
+--- /dev/null
++++ b/test/fixtures/automatic-variable-prefix.css
+@@ -0,0 +1,4 @@
++div {
++  color: var(--unprefixed);
++  background: var(--prefixed);
++}
+diff --git a/test/fixtures/automatic-variable-prefix.expected.css b/test/fixtures/automatic-variable-prefix.expected.css
+new file mode 100644
+index 0000000..b9f2fdb
+--- /dev/null
++++ b/test/fixtures/automatic-variable-prefix.expected.css
+@@ -0,0 +1,4 @@
++div {
++  color: blue;
++  background: white;
++}
+diff --git a/test/index.js b/test/index.js
+index b6953b1..d2ba9be 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -56,6 +56,16 @@ test("accepts variables defined from JavaScript, and overrides local definitions
+   t.end()
+ })
+ 
++test("prefixes js defined variabled with a double dash automatically", function(t) {
++  compareFixtures(t, "automatic-variable-prefix", {
++    variables: {
++      unprefixed: "blue",
++      "--prefixed":  "white"
++    }
++  })
++  t.end()
++})
++
+ test("removes variable properties from the output", function(t) {
+   compareFixtures(t, "remove-properties")
+   t.end()
+-- 
+2.33.1
+

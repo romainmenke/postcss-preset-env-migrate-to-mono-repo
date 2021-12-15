@@ -1,0 +1,64 @@
+From 12ad2bf75c40338f629f8b3d47c921ba30a5f98a Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Fri, 22 Apr 2016 21:57:23 +0200
+Subject: [PATCH 096/186] 5.0.1
+
+---
+ CHANGELOG.md |  6 ++++++
+ package.json | 11 +++++------
+ 2 files changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 57165c4..86c460a 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,9 @@
++# 5.0.1 - 2016-04-22
++
++- Fixed: trailing space after custom property name causes duplicate empty
++  property
++  ([#43](https://github.com/postcss/postcss-custom-properties/pull/43))
++
+ # 5.0.0 - 2015-08-25
+ 
+ - Removed: compatibility with postcss v4.x
+diff --git a/package.json b/package.json
+index 4ccdf2f..6db90bc 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "5.0.0",
++  "version": "5.0.1",
+   "description": "PostCSS plugin to polyfill W3C CSS Custom Properties for cascading variables",
+   "keywords": [
+     "css",
+@@ -12,10 +12,7 @@
+   ],
+   "author": "Maxime Thirouin",
+   "license": "MIT",
+-  "repository": {
+-    "type": "git",
+-    "url": "https://github.com/postcss/postcss-custom-properties.git"
+-  },
++  "repository": "https://github.com/postcss/postcss-custom-properties.git",
+   "files": [
+     "index.js"
+   ],
+@@ -25,9 +22,11 @@
+   },
+   "devDependencies": {
+     "eslint": "^1.0.0",
++    "npmpub": "^3.1.0",
+     "tape": "^4.0.0"
+   },
+   "scripts": {
+-    "test": "eslint . && tape test"
++    "test": "eslint . && tape test",
++    "release": "npmpub"
+   }
+ }
+-- 
+2.33.1
+

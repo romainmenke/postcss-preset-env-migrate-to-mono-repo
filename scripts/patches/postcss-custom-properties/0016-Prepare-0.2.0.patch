@@ -1,0 +1,25 @@
+From 57762b08f6cde2433b80b0ca142251a23280d622 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Fri, 22 Aug 2014 06:14:49 +0200
+Subject: [PATCH 016/186] Prepare 0.2.0
+
+---
+ CHANGELOG.md | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 52c77c2..a99811d 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,6 +1,7 @@
+-# unreleased
++# 0.2.0 - 2014-08-212
+ 
+ * Add map option
++* GNU style error message
+ 
+ # 0.1.0 - 2014-08-01
+ 
+-- 
+2.33.1
+

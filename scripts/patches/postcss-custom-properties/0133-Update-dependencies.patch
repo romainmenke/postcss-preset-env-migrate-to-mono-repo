@@ -1,0 +1,38 @@
+From a115c35e39acd888e1980bd84bef48f86cc45e30 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 27 Jun 2018 21:54:07 -0400
+Subject: [PATCH 133/186] Update dependencies
+
+---
+ package.json | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/package.json b/package.json
+index aa97e95..f92e671 100644
+--- a/package.json
++++ b/package.json
+@@ -19,16 +19,16 @@
+   ],
+   "dependencies": {
+     "balanced-match": "^1.0.0",
+-    "postcss": "^6.0.18"
++    "postcss": "^6.0.23"
+   },
+   "devDependencies": {
+     "babel-cli": "^6.26.0",
+     "babel-plugin-add-module-exports": "^0.2.1",
+-    "babel-preset-env": "^1.6.1",
++    "babel-preset-env": "^1.7.0",
+     "babel-register": "^6.26.0",
+-    "eslint": "^4.17.0",
+-    "npmpub": "^3.1.0",
+-    "tape": "^4.8.0"
++    "eslint": "^5.0.1",
++    "npmpub": "^4.0.1",
++    "tape": "^4.9.1"
+   },
+   "scripts": {
+     "lint": "eslint *.js index.js ./test/",
+-- 
+2.33.1
+

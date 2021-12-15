@@ -1,0 +1,25 @@
+From 78ca1e36445265d14abf9f56d070dbe12721f12b Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Thu, 9 Apr 2015 08:12:06 +0200
+Subject: [PATCH 082/186] Update README.md
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 1f023b0..9999e1f 100755
+--- a/README.md
++++ b/README.md
+@@ -81,7 +81,7 @@ Allows you to pass an object of variables for `:root`. These definitions will ov
+ The keys are automatically prefixed with the CSS `--` to make it easier to share
+ variables in your codebase.
+ 
+-### `appendVariables` (default: `false`)
++#### `appendVariables` (default: `false`)
+ 
+ If `preserve` is set to `true` (or `"computed"`), allows you to append your variables at the end of your CSS.
+ 
+-- 
+2.33.1
+

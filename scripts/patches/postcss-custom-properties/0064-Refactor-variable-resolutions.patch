@@ -1,0 +1,56 @@
+From 0f78590ea213c57ba0ec9b0e263a19c2d231cf91 Mon Sep 17 00:00:00 2001
+From: Glen Huang <hey.hgl@gmail.com>
+Date: Sat, 4 Apr 2015 09:59:26 +0800
+Subject: [PATCH 064/186] Refactor variable resolutions
+
+---
+ index.js | 15 +++++++++------
+ 1 file changed, 9 insertions(+), 6 deletions(-)
+
+diff --git a/index.js b/index.js
+index 66e34c5..dfc2356 100755
+--- a/index.js
++++ b/index.js
+@@ -59,13 +59,15 @@ function resolveValue(value, variables, deps, source) {
+     if (!replacement && !fallback) {
+       console.warn(helpers.message("variable '" + name + "' is undefined and used without a fallback", source))
+     }
+-
++    var resolved, post
+     // prepend with fallbacks
+     if (fallback) {
++      // resolve fallback values
++      resolved = resolveValue(fallback, variables, [], source)
+       // resolve the end of the expression before the rest
+-      (matches.post ? resolveValue(matches.post, variables, [], source) : [""]).forEach(function(afterValue) {
+-        // resolve fallback values
+-        resolveValue(fallback, variables, [], source).forEach(function(fbValue) {
++      post = matches.post ? resolveValue(matches.post, variables, [], source) : [""]
++      resolved.forEach(function(fbValue) {
++        post.forEach(function(afterValue) {
+           results.push(value.slice(0, start) + fbValue + afterValue)
+         })
+       })
+@@ -80,7 +82,7 @@ function resolveValue(value, variables, deps, source) {
+         variables[name] = replacement
+       }
+       // resolve the end of the expression
+-      var post = matches.post ? resolveValue(matches.post, variables, [], source) : [""]
++      post = matches.post ? resolveValue(matches.post, variables, [], source) : [""]
+       replacement.forEach(function(replacementValue) {
+         post.forEach(function(afterValue) {
+           results.push(value.slice(0, start) + replacementValue + afterValue)
+@@ -90,8 +92,9 @@ function resolveValue(value, variables, deps, source) {
+ 
+     // nothing, just keep original value
+     if (!replacement && !fallback) {
++      resolved = matches.post ? resolveValue(matches.post, variables, [], source) : [""]
+       // resolve the end of the expression
+-      (matches.post ? resolveValue(matches.post, variables, [], source) : [""]).forEach(function(afterValue) {
++      resolved.forEach(function(afterValue) {
+         results.push(value.slice(0, start) + VAR_FUNC_IDENTIFIER + "(" + name + ")" + afterValue)
+       })
+     }
+-- 
+2.33.1
+

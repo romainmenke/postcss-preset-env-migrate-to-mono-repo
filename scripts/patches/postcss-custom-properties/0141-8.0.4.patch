@@ -1,0 +1,123 @@
+From ceb2ac4beb1c54dc17d21f49cbd314ef3b0e5aa1 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 20 Sep 2018 16:18:15 -0400
+Subject: [PATCH 141/186] 8.0.4
+
+---
+ .tape.js                              |  6 +++++
+ CHANGELOG.md                          |  4 +++
+ lib/import-from.js                    |  2 +-
+ package.json                          |  4 +--
+ test/basic.import-is-empty.expect.css | 35 +++++++++++++++++++++++++++
+ 5 files changed, 48 insertions(+), 3 deletions(-)
+ create mode 100644 test/basic.import-is-empty.expect.css
+
+diff --git a/.tape.js b/.tape.js
+index 7dd62f6..d97e010 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -233,6 +233,12 @@ module.exports = {
+ 					throw new Error('The original file did not match the freshly exported copy');
+ 				}
+ 			}
++		},
++		'basic:import-is-empty': {
++			message: 'supports { importFrom: {} } usage',
++			options: {
++				importFrom: {}
++			}
+ 		}
+ 	}
+ };
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 8c26088..066f19d 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Custom Properties
+ 
++### 8.0.4 (September 18, 2018)
++
++- Fixed: Do not break on an empty `importFrom` object
++
+ ### 8.0.3 (September 18, 2018)
+ 
+ - Updated: PostCSS Values Parser 2
+diff --git a/lib/import-from.js b/lib/import-from.js
+index a5c918a..7e89914 100644
+--- a/lib/import-from.js
++++ b/lib/import-from.js
+@@ -78,7 +78,7 @@ export default function importCustomPropertiesFromSources(sources) {
+ 		const from = String(opts.from || '');
+ 
+ 		// type of file being read from
+-		const type = (opts.type || path.extname(opts.from).slice(1)).toLowerCase();
++		const type = (opts.type || path.extname(from).slice(1)).toLowerCase();
+ 
+ 		return { type, from };
+ 	}).reduce(async (customProperties, source) => {
+diff --git a/package.json b/package.json
+index 7a4720b..882d3aa 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "8.0.3",
++  "version": "8.0.4",
+   "description": "Use Custom Properties Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -41,7 +41,7 @@
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.0",
++    "rollup": "^0.66.1",
+     "rollup-plugin-babel": "^4.0.3"
+   },
+   "eslintConfig": {
+diff --git a/test/basic.import-is-empty.expect.css b/test/basic.import-is-empty.expect.css
+new file mode 100644
+index 0000000..90691d5
+--- /dev/null
++++ b/test/basic.import-is-empty.expect.css
+@@ -0,0 +1,35 @@
++html {
++	--ref-color: skip;
++}
++
++:root {
++	--color: rgb(255, 0, 0);
++	--ref-color: var(--color);
++	--circular: var(--circular-2);
++	--circular-2: var(--circular);
++}
++
++.test {
++	--skip: gray;
++	color: rgb(255, 0, 0);
++	color: var(--color);
++}
++
++.test--fallback {
++	color: blue;
++	color: var(--color-2, blue);
++}
++
++.test--color_w_var {
++	color: rgb(255, 0, 0);
++	color: var(--ref-color);
++}
++
++.test--circular_var {
++	color: var(--circular);
++}
++
++.test--color_spacing {
++	box-shadow: inset 0 -3px 0        rgb(255, 0, 0);
++	box-shadow: inset 0 -3px 0        var(--color);
++}
+-- 
+2.33.1
+

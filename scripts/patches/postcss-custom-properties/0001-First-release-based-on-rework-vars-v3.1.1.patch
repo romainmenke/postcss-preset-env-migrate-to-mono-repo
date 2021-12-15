@@ -1,0 +1,705 @@
+From 35fd8f43453f7c48b818f3e852720f7f902c6e6f Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Fri, 1 Aug 2014 10:03:31 +0200
+Subject: [PATCH 001/186] First release based on rework-vars v3.1.1
+
+---
+ .gitignore                                   |   2 +
+ .travis.yml                                  |   1 +
+ CHANGELOG.md                                 |   3 +
+ LICENSE                                      |  20 ++++
+ README.md                                    |  43 +++++++
+ index.js                                     | 119 +++++++++++++++++++
+ package.json                                 |  29 +++++
+ test/fixtures/case-sensitive.css             |   9 ++
+ test/fixtures/case-sensitive.out.css         |   4 +
+ test/fixtures/media-query.css                |   5 +
+ test/fixtures/media-query.out.css            |   5 +
+ test/fixtures/preserve-variables.css         |  20 ++++
+ test/fixtures/preserve-variables.out.css     |  23 ++++
+ test/fixtures/remove-properties.css          |  13 ++
+ test/fixtures/remove-properties.out.css      |   3 +
+ test/fixtures/substitution-defined.css       |  28 +++++
+ test/fixtures/substitution-defined.out.css   |  22 ++++
+ test/fixtures/substitution-empty.css         |   3 +
+ test/fixtures/substitution-fallback.css      |  22 ++++
+ test/fixtures/substitution-fallback.out.css  |  18 +++
+ test/fixtures/substitution-malformed.css     |   4 +
+ test/fixtures/substitution-overwrite.css     |  12 ++
+ test/fixtures/substitution-overwrite.out.css |   4 +
+ test/fixtures/substitution-undefined.css     |   3 +
+ test/index.js                                |  79 ++++++++++++
+ 25 files changed, 494 insertions(+)
+ create mode 100644 .gitignore
+ create mode 100644 .travis.yml
+ create mode 100755 CHANGELOG.md
+ create mode 100644 LICENSE
+ create mode 100755 README.md
+ create mode 100755 index.js
+ create mode 100755 package.json
+ create mode 100755 test/fixtures/case-sensitive.css
+ create mode 100755 test/fixtures/case-sensitive.out.css
+ create mode 100755 test/fixtures/media-query.css
+ create mode 100755 test/fixtures/media-query.out.css
+ create mode 100755 test/fixtures/preserve-variables.css
+ create mode 100755 test/fixtures/preserve-variables.out.css
+ create mode 100755 test/fixtures/remove-properties.css
+ create mode 100755 test/fixtures/remove-properties.out.css
+ create mode 100755 test/fixtures/substitution-defined.css
+ create mode 100755 test/fixtures/substitution-defined.out.css
+ create mode 100755 test/fixtures/substitution-empty.css
+ create mode 100755 test/fixtures/substitution-fallback.css
+ create mode 100755 test/fixtures/substitution-fallback.out.css
+ create mode 100755 test/fixtures/substitution-malformed.css
+ create mode 100755 test/fixtures/substitution-overwrite.css
+ create mode 100755 test/fixtures/substitution-overwrite.out.css
+ create mode 100755 test/fixtures/substitution-undefined.css
+ create mode 100755 test/index.js
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..7ab649f
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,2 @@
++node_modules
++test/fixtures/*.actual.css
+diff --git a/.travis.yml b/.travis.yml
+new file mode 100644
+index 0000000..587bd3e
+--- /dev/null
++++ b/.travis.yml
+@@ -0,0 +1 @@
++language: node_js
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100755
+index 0000000..66c1203
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,3 @@
++# 0.1.0 - 2014-08-01
++
++First release based on [rework-vars](https://github.com/reworkcss/rework-vars) v3.1.1
+diff --git a/LICENSE b/LICENSE
+new file mode 100644
+index 0000000..9abe4f5
+--- /dev/null
++++ b/LICENSE
+@@ -0,0 +1,20 @@
++The MIT License (MIT)
++
++Copyright (c) 2014 "MoOx" Maxime Thirouin
++
++Permission is hereby granted, free of charge, to any person obtaining a copy of
++this software and associated documentation files (the "Software"), to deal in
++the Software without restriction, including without limitation the rights to
++use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
++the Software, and to permit persons to whom the Software is furnished to do so,
++subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
++FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
++COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
++IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
++CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+diff --git a/README.md b/README.md
+new file mode 100755
+index 0000000..d90dc32
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,43 @@
++# postcss-custom-properties [![Build Status](https://travis-ci.org/postcss/postcss-custom-properties.png)](https://travis-ci.org/postcss/postcss-custom-properties)
++
++A [PostCSS](https://github.com/postcss/postcss) plugin to polyfill the
++[W3C-style CSS Custom Properties for cascading variables](http://www.w3.org/TR/css-variables/).
++
++**N.B.** For now the polyfill _is not complete_. It currently just aims to provide a future-proof way of using a _limited subset_ of the features provided by native CSS variables.  
++
++_[Checkout opened issue to know the state of this plugin](issues)._
++
++## Installation
++
++```
++npm install postcss-custom-properties
++```
++
++## Usage
++
++```js
++// dependencies
++var fs = require('fs')
++var postcss = require('postcss')
++var customProperties = require('postcss-custom-properties')
++
++// css to be processed
++var css = fs.readFileSync('build/build.css', 'utf8')
++
++// process css using postcss-custom-properties
++var out = postcss(customProperties()).process(css).css
++```
++
++### Options
++
++#### `preserve` (default: `false`)
++
++Allow you to preserve custom properties & var() usage in output.
++
++```js
++var out = postcss(customProperties({preserve: true})).process(css).css
++```
++
++## [Changelog](CHANGELOG.md)
++
++## [License](LICENSE-MIT)
+diff --git a/index.js b/index.js
+new file mode 100755
+index 0000000..7b1455f
+--- /dev/null
++++ b/index.js
+@@ -0,0 +1,119 @@
++/**
++ * Module dependencies.
++ */
++
++var balanced = require('balanced-match')
++
++/**
++ * Constants.
++ */
++
++var VAR_PROP_IDENTIFIER = '--'
++var VAR_FUNC_IDENTIFIER = 'var'
++
++/**
++ * Module export.
++ */
++
++module.exports = function (options) {
++
++  return function(style) {
++    options = options || {}
++    var map = {}
++    var preserve = (options.preserve === true ? true : false)
++
++    // define variables
++    style.eachRule(function (rule) {
++      var varNameIndices = []
++      if (rule.type !== 'rule') return
++
++      // only variables declared for `:root` are supported for now
++      if (rule.selectors.length !== 1 || rule.selectors[0] !== ":root" || rule.parent.type !== "root") return
++
++      rule.each(function (decl, i) {
++        var prop = decl.prop
++        var value = decl.value
++
++        if (prop && prop.indexOf(VAR_PROP_IDENTIFIER) === 0) {
++          map[prop] = value
++          varNameIndices.push(i)
++        }
++      })
++
++      // optionally remove `--*` properties from the rule
++      if (!preserve) {
++        for (var i = varNameIndices.length - 1; i >= 0; i--) {
++          rule.decls.splice(varNameIndices[i], 1)
++        }
++
++        // remove empty :root {}
++        if (rule.decls.length === 0) rule.removeSelf()
++      }
++    })
++
++    // resolve variables
++    style.eachDecl(function (decl, i) {
++      var resolvedValue
++      var value = decl.value
++
++      // skip values that don't contain variable functions
++      if (!value || value.indexOf(VAR_FUNC_IDENTIFIER + '(') === -1) return
++
++      resolvedValue = resolveValue(value, map)
++
++      if (!preserve) {
++        decl.value = resolvedValue
++      }
++      else {
++        decl.parent.insertBefore(decl, {
++          prop: decl.prop,
++          value: resolvedValue
++        })
++      }
++    })
++  }
++}
++
++/**
++ * Resolve CSS variables in a value
++ *
++ * The second argument to a CSS variable function, if provided, is a fallback
++ * value, which is used as the substitution value when the referenced variable
++ * is invalid.
++ *
++ * var(name[, fallback])
++ *
++ * @param {String} value A property value known to contain CSS variable functions
++ * @param {Object} map A map of variable names and values
++ * @return {String} A property value with all CSS variables substituted.
++ */
++
++function resolveValue(value, map) {
++  // matches `name[, fallback]`, captures 'name' and 'fallback'
++  var RE_VAR = /([\w-]+)(?:\s*,\s*)?(.*)?/
++  var balancedParens = balanced('(', ')', value)
++  var varStartIndex = value.indexOf('var(')
++  var varRef = balanced('(', ')', value.substring(varStartIndex)).body
++
++  if (!balancedParens) throw new SyntaxError('postcss-custom-properties: missing closing ")" in the value "' + value + '"')
++  if (varRef === '') throw new Error('postcss-custom-properties: var() must contain a non-whitespace string')
++
++  var varFunc = VAR_FUNC_IDENTIFIER + '(' + varRef + ')'
++
++  var varResult = varRef.replace(RE_VAR, function (_, name, fallback) {
++    var replacement = map[name]
++    if (!replacement && !fallback) throw new Error('postcss-custom-properties: variable "' + name + '" is undefined')
++    if (!replacement && fallback) return fallback
++    return replacement
++  })
++
++  // resolve the variable
++  value = value.split(varFunc).join(varResult)
++
++  // recursively resolve any remaining variables in the value
++  if (value.indexOf(VAR_FUNC_IDENTIFIER) !== -1) {
++    value = resolveValue(value, map)
++  }
++
++  return value
++}
+diff --git a/package.json b/package.json
+new file mode 100755
+index 0000000..ec4a4ef
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,29 @@
++{
++  "name": "postcss-custom-properties",
++  "version": "0.0.0",
++  "description": "PostCSS that polyfill CSS custom properties for cascading variable module",
++  "keywords": ["css", "postcss", "postcss-plugin", "custom-properties", "variables", "vars"],
++  "author": "MoOx",
++  "license": "MIT",
++  "repository": {
++    "type": "git",
++    "url": "https://github.com/postcss/postcss-custom-properties.git"
++  },
++  "files": [
++    "CHANGELOG.md",
++    "LICENSE",
++    "README.md",
++    "index.js"
++  ],
++  "dependencies": {
++    "balanced-match": "~0.1.0"
++  },
++  "devDependencies": {
++    "postcss": "^2.1.0",
++    "tap-colorize": "^1.2.0",
++    "tape": "^2.13.4"
++  },
++  "scripts": {
++    "test": "node test | tap-colorize"
++  }
++}
+diff --git a/test/fixtures/case-sensitive.css b/test/fixtures/case-sensitive.css
+new file mode 100755
+index 0000000..f54b954
+--- /dev/null
++++ b/test/fixtures/case-sensitive.css
+@@ -0,0 +1,9 @@
++:root {
++  --TEST-color: red;
++  --tESt-COLOR: green;
++}
++
++div {
++  color: var(--TEST-color);
++  color: var(--tESt-COLOR);
++}
+diff --git a/test/fixtures/case-sensitive.out.css b/test/fixtures/case-sensitive.out.css
+new file mode 100755
+index 0000000..365540a
+--- /dev/null
++++ b/test/fixtures/case-sensitive.out.css
+@@ -0,0 +1,4 @@
++div {
++  color: red;
++  color: green;
++}
+diff --git a/test/fixtures/media-query.css b/test/fixtures/media-query.css
+new file mode 100755
+index 0000000..2ff566f
+--- /dev/null
++++ b/test/fixtures/media-query.css
+@@ -0,0 +1,5 @@
++@media screen and (min-width: 320px) {
++  :root {
++    --error: red;
++  }
++}
+diff --git a/test/fixtures/media-query.out.css b/test/fixtures/media-query.out.css
+new file mode 100755
+index 0000000..2ff566f
+--- /dev/null
++++ b/test/fixtures/media-query.out.css
+@@ -0,0 +1,5 @@
++@media screen and (min-width: 320px) {
++  :root {
++    --error: red;
++  }
++}
+diff --git a/test/fixtures/preserve-variables.css b/test/fixtures/preserve-variables.css
+new file mode 100755
+index 0000000..35849be
+--- /dev/null
++++ b/test/fixtures/preserve-variables.css
+@@ -0,0 +1,20 @@
++:root {
++  --color-one: red;
++  --color-two: blue;
++}
++
++.atthebeginning {
++  color: var(--color-one);
++  prop: after;
++}
++
++.attheend {
++  prop: before;
++  color: var(--color-two);
++}
++
++.surrounded {
++  prop: before;
++  color: var(--undefined-color, green);
++  otherprop: after;
++}
+diff --git a/test/fixtures/preserve-variables.out.css b/test/fixtures/preserve-variables.out.css
+new file mode 100755
+index 0000000..9e76776
+--- /dev/null
++++ b/test/fixtures/preserve-variables.out.css
+@@ -0,0 +1,23 @@
++:root {
++  --color-one: red;
++  --color-two: blue;
++}
++
++.atthebeginning {
++  color: red;
++  color: var(--color-one);
++  prop: after;
++}
++
++.attheend {
++  prop: before;
++  color: blue;
++  color: var(--color-two);
++}
++
++.surrounded {
++  prop: before;
++  color: green;
++  color: var(--undefined-color, green);
++  otherprop: after;
++}
+diff --git a/test/fixtures/remove-properties.css b/test/fixtures/remove-properties.css
+new file mode 100755
+index 0000000..649e963
+--- /dev/null
++++ b/test/fixtures/remove-properties.css
+@@ -0,0 +1,13 @@
++:root {
++  --test-one: test;
++  --test-two: test;
++}
++
++div {
++  color: red;
++}
++
++:root {
++  --test-three: test;
++  --test-four: test;
++}
+diff --git a/test/fixtures/remove-properties.out.css b/test/fixtures/remove-properties.out.css
+new file mode 100755
+index 0000000..538fa56
+--- /dev/null
++++ b/test/fixtures/remove-properties.out.css
+@@ -0,0 +1,3 @@
++div {
++  color: red;
++}
+diff --git a/test/fixtures/substitution-defined.css b/test/fixtures/substitution-defined.css
+new file mode 100755
+index 0000000..204b3e4
+--- /dev/null
++++ b/test/fixtures/substitution-defined.css
+@@ -0,0 +1,28 @@
++/**
++ * Test comment
++ */
++
++:root {
++  --test-one: green;
++  --test-two: blue;
++  --test-three: yellow;
++}
++
++:root,
++span {
++  --untouched: red;
++}
++
++div {
++  --untouched: red;
++  /* single variable */
++  color: var(--test-one);
++  /* single variable with tail */
++  color: var(--test-one) !important;
++  /* multiple variables */
++  color: var(--test-one), var(--test-two);
++  /* variable with function in fallback */
++  border: var(--test-one, 1px solid rgba(0, 0, 0, 0.1));
++  /* multiple variables within a function */
++  background: linear-gradient(to top, var(--test-one), var(--test-two));
++}
+diff --git a/test/fixtures/substitution-defined.out.css b/test/fixtures/substitution-defined.out.css
+new file mode 100755
+index 0000000..5d50ed3
+--- /dev/null
++++ b/test/fixtures/substitution-defined.out.css
+@@ -0,0 +1,22 @@
++/**
++ * Test comment
++ */
++
++:root,
++span {
++  --untouched: red;
++}
++
++div {
++  --untouched: red;
++  /* single variable */
++  color: green;
++  /* single variable with tail */
++  color: green !important;
++  /* multiple variables */
++  color: green, blue;
++  /* variable with function in fallback */
++  border: green;
++  /* multiple variables within a function */
++  background: linear-gradient(to top, green, blue);
++}
+diff --git a/test/fixtures/substitution-empty.css b/test/fixtures/substitution-empty.css
+new file mode 100755
+index 0000000..12ed84d
+--- /dev/null
++++ b/test/fixtures/substitution-empty.css
+@@ -0,0 +1,3 @@
++div {
++  color: var();
++}
+diff --git a/test/fixtures/substitution-fallback.css b/test/fixtures/substitution-fallback.css
+new file mode 100755
+index 0000000..3eba4c4
+--- /dev/null
++++ b/test/fixtures/substitution-fallback.css
+@@ -0,0 +1,22 @@
++:root {
++  --nested: green;
++}
++
++div {
++  /* simple fallback */
++  color: var(--missing, green);
++  /* comma-separated fallback */
++  color: var(--missing, green, blue);
++  /* fallback is a function */
++  background: var(--missing, linear-gradient(to top, #000, #111));
++  /* fallback contains a function */
++  background: var(--missing, 1px solid rgba(0, 0, 0, 0.1));
++  /* fallback is a function containing a function */
++  background: var(--missing, linear-gradient(to top, #000, rgba(0, 0, 0, 0.5)));
++  /* fallback contains a defined variable */
++  background: var(--missing, var(--nested));
++  /* fallback contains a defined variable within a function */
++  background: var(--missing, linear-gradient(to top, #000, var(--nested)));
++  /* fallback contains an undefined variable with a fallack */
++  background: var(--missing, var(--also-missing, green));
++}
+diff --git a/test/fixtures/substitution-fallback.out.css b/test/fixtures/substitution-fallback.out.css
+new file mode 100755
+index 0000000..f42ba55
+--- /dev/null
++++ b/test/fixtures/substitution-fallback.out.css
+@@ -0,0 +1,18 @@
++div {
++  /* simple fallback */
++  color: green;
++  /* comma-separated fallback */
++  color: green, blue;
++  /* fallback is a function */
++  background: linear-gradient(to top, #000, #111);
++  /* fallback contains a function */
++  background: 1px solid rgba(0, 0, 0, 0.1);
++  /* fallback is a function containing a function */
++  background: linear-gradient(to top, #000, rgba(0, 0, 0, 0.5));
++  /* fallback contains a defined variable */
++  background: green;
++  /* fallback contains a defined variable within a function */
++  background: linear-gradient(to top, #000, green);
++  /* fallback contains an undefined variable with a fallack */
++  background: green;
++}
+diff --git a/test/fixtures/substitution-malformed.css b/test/fixtures/substitution-malformed.css
+new file mode 100755
+index 0000000..2c13bed
+--- /dev/null
++++ b/test/fixtures/substitution-malformed.css
+@@ -0,0 +1,4 @@
++div {
++  /* missing closing ')' */
++  color: var(--test, rgba(0,0,0,0.5);
++}
+diff --git a/test/fixtures/substitution-overwrite.css b/test/fixtures/substitution-overwrite.css
+new file mode 100755
+index 0000000..cbb937c
+--- /dev/null
++++ b/test/fixtures/substitution-overwrite.css
+@@ -0,0 +1,12 @@
++:root {
++  --test-override: red;
++}
++
++div {
++  background: var(--test-override);
++  color: var(--test-override);
++}
++
++:root {
++  --test-override: green;
++}
+diff --git a/test/fixtures/substitution-overwrite.out.css b/test/fixtures/substitution-overwrite.out.css
+new file mode 100755
+index 0000000..8585a8c
+--- /dev/null
++++ b/test/fixtures/substitution-overwrite.out.css
+@@ -0,0 +1,4 @@
++div {
++  background: green;
++  color: green;
++}
+diff --git a/test/fixtures/substitution-undefined.css b/test/fixtures/substitution-undefined.css
+new file mode 100755
+index 0000000..09859fd
+--- /dev/null
++++ b/test/fixtures/substitution-undefined.css
+@@ -0,0 +1,3 @@
++div {
++  color: var(--test);
++}
+diff --git a/test/index.js b/test/index.js
+new file mode 100755
+index 0000000..1d8d223
+--- /dev/null
++++ b/test/index.js
+@@ -0,0 +1,79 @@
++var fs = require("fs")
++
++var test = require("tape")
++
++var postcss = require("postcss")
++var customProperties = require("..")
++
++function fixture(name) {
++  return fs.readFileSync("test/fixtures/" + name + ".css", "utf8").trim()
++}
++
++function compareFixtures(t, name, options) {
++  var actual = postcss(customProperties(options)).process(fixture(name)).css.trim()
++
++  // handy thing: checkout actual in the *.actual.css file
++  fs.writeFile("test/fixtures/" + name + ".actual.css", actual)
++
++  var expected = fixture(name + ".out")
++  return t.equal(actual, expected, "processed fixture '" + name + "' should be equal to expected output")
++}
++
++test("throws an error when a variable function is empty", function (t) {
++  var output = function (t) {
++    return postcss(customProperties()).process(fixture("substitution-empty")).css
++  }
++  t.throws(output, Error, "postcss-custom-properties: var() must contain a non-whitespace string")
++  t.end()
++})
++
++test("throws an error when a variable function is malformed", function (t) {
++  var output = function (t) {
++    return postcss(customProperties()).process(fixture("substitution-malformed")).css
++  }
++  t.throws(output, SyntaxError, "postcss-custom-properties: missing closing \")\" in the value \"var(--t, rgba(0,0,0,0.5)\"")
++  t.end()
++})
++
++test("throws an error when a variable function references an undefined variable", function (t) {
++  var output = function (t) {
++    return postcss(customProperties()).process(fixture("substitution-undefined")).css
++  }
++  t.throws(output, Error, "postcss-custom-properties: variable \"--t\" is undefined")
++  t.end()
++})
++
++test("substitutes defined variables in `:root` only", function (t) {
++  compareFixtures(t, "substitution-defined")
++  t.end()
++})
++
++test("removes variable properties from the output", function (t) {
++  compareFixtures(t, "remove-properties")
++  t.end()
++})
++
++test("ignores variables defined in a media query", function (t) {
++  compareFixtures(t, "media-query")
++  t.end()
++})
++
++test("overwrites variables correctly", function (t) {
++  compareFixtures(t, "substitution-overwrite")
++  t.end()
++})
++
++test("substitutes undefined variables if there is a fallback", function (t) {
++  compareFixtures(t, "substitution-fallback")
++  t.end()
++})
++
++test("supports case-sensitive variables", function (t) {
++  compareFixtures(t, "case-sensitive")
++  t.end()
++})
++
++test("preserves variables when `preserve` is `true`", function (t) {
++  compareFixtures(t, "preserve-variables", {preserve: true})
++  t.end()
++})
+-- 
+2.33.1
+

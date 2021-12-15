@@ -1,0 +1,22 @@
+From fce1706e736c3dae696f74bbd79fde93e98a0928 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Fri, 22 Aug 2014 06:09:18 +0200
+Subject: [PATCH 013/186] Fix license link in README
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index e295e26..05915fd 100755
+--- a/README.md
++++ b/README.md
+@@ -83,4 +83,4 @@ Work on a branch, install dev-dependencies, respect coding style & run tests bef
+ 
+ ## [Changelog](CHANGELOG.md)
+ 
+-## [License](LICENSE-MIT)
++## [License](LICENSE)
+-- 
+2.33.1
+

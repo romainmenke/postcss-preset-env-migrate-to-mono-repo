@@ -1,0 +1,104 @@
+From 03bbae7d6d914e475b6a8141343507ecf277c91e Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 8 Apr 2015 07:13:32 +0200
+Subject: [PATCH 076/186] Added: strict option
+
+Close #14
+---
+ README.md                                      |  6 ++++++
+ index.js                                       |  7 ++++++-
+ test/fixtures/substitution-strict.css          | 10 ++++++++++
+ test/fixtures/substitution-strict.expected.css |  5 +++++
+ test/index.js                                  |  8 ++++++++
+ 5 files changed, 35 insertions(+), 1 deletion(-)
+ create mode 100755 test/fixtures/substitution-strict.css
+ create mode 100755 test/fixtures/substitution-strict.expected.css
+
+diff --git a/README.md b/README.md
+index 93235c7..e382c1f 100755
+--- a/README.md
++++ b/README.md
+@@ -55,6 +55,12 @@ Checkout [tests](test) for more.
+ 
+ ### Options
+ 
++#### `strict` (default: `true`)
++
++Per specifications, all fallbacks should be added since we can't verify if a
++computed value is valid or not.
++This option allows you to avoid adding too many fallback values in your CSS.
++
+ #### `preserve` (default: `false`)
+ 
+ Allows you to preserve custom properties & var() usage in output.
+diff --git a/index.js b/index.js
+index 438533a..fbfbbe4 100755
+--- a/index.js
++++ b/index.js
+@@ -128,6 +128,7 @@ module.exports = function(options) {
+         delete variables[name]
+       }
+     })
++    var strict = options.strict === undefined ? true : options.strict
+     var appendVariables = options.appendVariables
+     var preserve = options.preserve
+     var map = {}
+@@ -214,7 +215,11 @@ module.exports = function(options) {
+       }
+ 
+       helpers.try(function resolve() {
+-        resolveValue(value, map, decl.source).forEach(function(resolvedValue) {
++        var resolved = resolveValue(value, map, decl.source)
++        if (!strict) {
++          resolved = [resolved.pop()]
++        }
++        resolved.forEach(function(resolvedValue) {
+           var clone = decl.cloneBefore()
+           clone.value = resolvedValue
+         })
+diff --git a/test/fixtures/substitution-strict.css b/test/fixtures/substitution-strict.css
+new file mode 100755
+index 0000000..f13b196
+--- /dev/null
++++ b/test/fixtures/substitution-strict.css
+@@ -0,0 +1,10 @@
++:root {
++  --a: "a";
++  --b: var(--bUndef, bFallback);
++}
++
++div {
++  aProp: var(--a, aPropFallback);
++  bProp: var(--b, bPropFallback);
++  bProp: var(--cUndef, cPropFallback);
++}
+diff --git a/test/fixtures/substitution-strict.expected.css b/test/fixtures/substitution-strict.expected.css
+new file mode 100755
+index 0000000..ed8e05e
+--- /dev/null
++++ b/test/fixtures/substitution-strict.expected.css
+@@ -0,0 +1,5 @@
++div {
++  aProp: "a";
++  bProp: bFallback;
++  bProp: cPropFallback;
++}
+diff --git a/test/index.js b/test/index.js
+index 61d534f..7564f99 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -136,3 +136,11 @@ test("append variables", function(t) {
+   })
+   t.end()
+ })
++
++test("strict option", function(t) {
++  compareFixtures(t, "substitution-strict", {
++    strict: false,
++  })
++
++  t.end()
++})
+-- 
+2.33.1
+

@@ -1,0 +1,34 @@
+From 32189bf7ac6735fffbc91765ee28da2c791d968b Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Fri, 1 Aug 2014 10:05:07 +0200
+Subject: [PATCH 002/186] v0.1.0
+
+---
+ package.json | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/package.json b/package.json
+index ec4a4ef..e4bef3d 100755
+--- a/package.json
++++ b/package.json
+@@ -1,8 +1,15 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "0.0.0",
++  "version": "0.1.0",
+   "description": "PostCSS that polyfill CSS custom properties for cascading variable module",
+-  "keywords": ["css", "postcss", "postcss-plugin", "custom-properties", "variables", "vars"],
++  "keywords": [
++    "css",
++    "postcss",
++    "postcss-plugin",
++    "custom-properties",
++    "variables",
++    "vars"
++  ],
+   "author": "MoOx",
+   "license": "MIT",
+   "repository": {
+-- 
+2.33.1
+

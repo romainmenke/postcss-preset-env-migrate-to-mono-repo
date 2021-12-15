@@ -1,0 +1,24 @@
+From 49f0e87207d3c69042a21c88c3f6db3e5ae20c2a Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 25 Nov 2014 08:59:47 +0100
+Subject: [PATCH 08/34] v1.1.0
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 458d23b..03dff19 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-rebeccapurple",
+-  "version": "1.0.0",
++  "version": "1.1.0",
+   "description": "PostCSS plugin to transform W3C CSS rebeccapurple color to more compatible CSS (rgb())",
+   "keywords": [
+     "css",
+-- 
+2.33.1
+

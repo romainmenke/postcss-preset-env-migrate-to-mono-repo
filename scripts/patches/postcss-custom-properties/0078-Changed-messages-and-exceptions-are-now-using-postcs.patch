@@ -1,0 +1,262 @@
+From 387df9a651e948b99c5304461775ce8b529d5436 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 8 Apr 2015 08:47:47 +0200
+Subject: [PATCH 078/186] Changed: messages and exceptions are now using
+ postcss API. Messages are not outputted by default to console anymore.
+
+---
+ CHANGELOG.md  |  5 +++++
+ index.js      | 60 ++++++++++++++++++++++++---------------------------
+ package.json  |  5 ++---
+ test/index.js | 18 ++++++++++------
+ 4 files changed, 47 insertions(+), 41 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 2d69071..76e991b 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,8 @@
++# 4.0.0 - Unreleased
++
++- Changed: upgade to postcss ^4.1.x
++- Changed: messages and exceptions are now using postcss API.
++Messages are not outputted by default to console anymore.
+ # 3.3.0 - 2015-04-0
+ 
+ - Added: `preserve` now support `"computed"` so only preserve resolved custom properties (see new option below)
+diff --git a/index.js b/index.js
+index fbfbbe4..576b6e5 100755
+--- a/index.js
++++ b/index.js
+@@ -5,7 +5,6 @@
+ var assign = require("object-assign")
+ var postcss = require("postcss")
+ var balanced = require("balanced-match")
+-var helpers = require("postcss-message-helpers")
+ 
+ /**
+  * Constants.
+@@ -30,7 +29,7 @@ var RE_VAR = /([\w-]+)(?:\s*,\s*)?(.*)?/ // matches `name[, fallback]`, captures
+  * @return {String} A property value with all CSS variables substituted.
+  */
+ 
+-function resolveValue(value, variables, source) {
++function resolveValue(value, variables, result, decl) {
+   var results = []
+ 
+   var start = value.indexOf(VAR_FUNC_IDENTIFIER + "(")
+@@ -41,11 +40,11 @@ function resolveValue(value, variables, source) {
+   var matches = balanced("(", ")", value.substring(start))
+ 
+   if (!matches) {
+-    throw new SyntaxError("missing closing ')' in the value '" + value + "'")
++    throw decl.error("missing closing ')' in the value '" + value + "'")
+   }
+ 
+   if (matches.body === "") {
+-    throw new Error("var() must contain a non-whitespace string")
++    throw decl.error("var() must contain a non-whitespace string")
+   }
+ 
+   matches.body.replace(RE_VAR, function(_, name, fallback) {
+@@ -53,8 +52,8 @@ function resolveValue(value, variables, source) {
+     var post
+     // undefined and without fallback, just keep original value
+     if (!variable && !fallback) {
+-      console.warn(helpers.message("variable '" + name + "' is undefined and used without a fallback", source))
+-      post = matches.post ? resolveValue(matches.post, variables, source) : [""]
++      result.warn("variable '" + name + "' is undefined and used without a fallback", {node: decl})
++      post = matches.post ? resolveValue(matches.post, variables, result, decl) : [""]
+       // resolve the end of the expression
+       post.forEach(function(afterValue) {
+         results.push(value.slice(0, start) + VAR_FUNC_IDENTIFIER + "(" + name + ")" + afterValue)
+@@ -65,9 +64,9 @@ function resolveValue(value, variables, source) {
+     // prepend with fallbacks
+     if (fallback) {
+       // resolve fallback values
+-      fallback = resolveValue(fallback, variables, source)
++      fallback = resolveValue(fallback, variables, result, decl)
+       // resolve the end of the expression before the rest
+-      post = matches.post ? resolveValue(matches.post, variables, source) : [""]
++      post = matches.post ? resolveValue(matches.post, variables, result, decl) : [""]
+       fallback.forEach(function(fbValue) {
+         post.forEach(function(afterValue) {
+           results.push(value.slice(0, start) + fbValue + afterValue)
+@@ -84,7 +83,7 @@ function resolveValue(value, variables, source) {
+       // circular reference encountered
+       if (variable.deps.indexOf(name) !== -1) {
+         if (!fallback) {
+-          console.warn(helpers.message("circular variable reference: " + name, source))
++          result.warn("Circular variable reference: " + name, {node: decl})
+           variable.value = [variable.value]
+           variable.circular = true
+         }
+@@ -95,7 +94,7 @@ function resolveValue(value, variables, source) {
+       }
+       else {
+         variable.deps.push(name)
+-        variable.value = resolveValue(variable.value, variables, source)
++        variable.value = resolveValue(variable.value, variables, result, decl)
+       }
+       variable.resolved = true
+     }
+@@ -103,7 +102,7 @@ function resolveValue(value, variables, source) {
+       return
+     }
+     // resolve the end of the expression
+-    post = matches.post ? resolveValue(matches.post, variables, source) : [""]
++    post = matches.post ? resolveValue(matches.post, variables, result, decl) : [""]
+     variable.value.forEach(function(replacementValue) {
+       post.forEach(function(afterValue) {
+         results.push(value.slice(0, start) + replacementValue + afterValue)
+@@ -118,8 +117,8 @@ function resolveValue(value, variables, source) {
+  * Module export.
+  */
+ 
+-module.exports = function(options) {
+-  return function(style) {
++module.exports = postcss.plugin("postcss-custom-properties", function(options) {
++  return function(style, result) {
+     options = options || {}
+     var variables = assign({}, options.variables || {})
+     Object.keys(variables).forEach(function(name) {
+@@ -143,13 +142,12 @@ module.exports = function(options) {
+         rule.each(function(decl) {
+           var prop = decl.prop
+           if (prop && prop.indexOf(VAR_PROP_IDENTIFIER) === 0) {
+-            console.warn(
+-              helpers.message(
+-                "Custom property ignored: not scoped to the top-level :root element (" +
+-                rule.selectors +
+-                " { ... " + prop + ": ... })" +
+-                (rule.parent.type !== "root" ? ", in " + rule.parent.type : ""),
+-              decl.source)
++            result.warn(
++              "Custom property ignored: not scoped to the top-level :root element (" +
++              rule.selectors +
++              " { ... " + prop + ": ... })" +
++              (rule.parent.type !== "root" ? ", in " + rule.parent.type : ""),
++              {node: decl}
+             )
+           }
+         })
+@@ -199,7 +197,7 @@ module.exports = function(options) {
+       Object.keys(map).forEach(function(name) {
+         var variable = map[name]
+         if (!variable.resolved) {
+-          variable.value = resolveValue(variable.value, map)
++          variable.value = resolveValue(variable.value, map, result)
+           variable.resolved = true
+         }
+       })
+@@ -214,16 +212,14 @@ module.exports = function(options) {
+         return
+       }
+ 
+-      helpers.try(function resolve() {
+-        var resolved = resolveValue(value, map, decl.source)
+-        if (!strict) {
+-          resolved = [resolved.pop()]
+-        }
+-        resolved.forEach(function(resolvedValue) {
+-          var clone = decl.cloneBefore()
+-          clone.value = resolvedValue
+-        })
+-      }, decl.source)
++      var resolved = resolveValue(value, map, result, decl)
++      if (!strict) {
++        resolved = [resolved.pop()]
++      }
++      resolved.forEach(function(resolvedValue) {
++        var clone = decl.cloneBefore()
++        clone.value = resolvedValue
++      })
+ 
+       if (!preserve || preserve === "computed") {
+         decl.removeSelf()
+@@ -251,4 +247,4 @@ module.exports = function(options) {
+       }
+     }
+   }
+-}
++})
+diff --git a/package.json b/package.json
+index 752cc1e..c81045f 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "3.3.0",
++  "version": "4.0.0",
+   "description": "PostCSS plugin to polyfill W3C CSS Custom Properties for cascading variables",
+   "keywords": [
+     "css",
+@@ -24,8 +24,7 @@
+   "dependencies": {
+     "balanced-match": "~0.1.0",
+     "object-assign": "^2.0.0",
+-    "postcss": "^4.1.4",
+-    "postcss-message-helpers": "^2.0.0"
++    "postcss": "^4.1.4"
+   },
+   "devDependencies": {
+     "eslint": "^0.18.0",
+diff --git a/test/index.js b/test/index.js
+index 7564f99..46d5841 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -14,17 +14,20 @@ function fixture(name) {
+ }
+ 
+ function resolveFixture(name, options) {
+-  return postcss(customProperties(options)).process(fixture(name), {from: fixturePath(name)}).css.trim()
++  return postcss(customProperties(options)).process(fixture(name), {from: fixturePath(name)})
+ }
+ 
+ function compareFixtures(t, name, options) {
+-  var actual = resolveFixture(name, options)
++  var postcssResult = resolveFixture(name, options)
++  var actual = postcssResult.css.trim()
+ 
+   // handy thing: checkout actual in the *.actual.css file
+   fs.writeFile(fixturePath(name + ".actual"), actual)
+ 
+   var expected = fixture(name + ".expected")
+-  return t.equal(actual, expected, "processed fixture '" + name + "' should be equal to expected output")
++  t.equal(actual, expected, "processed fixture '" + name + "' should be equal to expected output")
++
++  return postcssResult
+ }
+ 
+ test("throw errors", function(t) {
+@@ -40,12 +43,14 @@ test("throw errors", function(t) {
+ })
+ 
+ test("substitutes nothing when a variable function references an undefined variable", function(t) {
+-  compareFixtures(t, "substitution-undefined")
++  var result = compareFixtures(t, "substitution-undefined")
++  t.equal(result.warnings()[0].text, "variable '--test' is undefined and used without a fallback", "should add a warning for undefined variable")
+   t.end()
+ })
+ 
+ test("substitutes defined variables in `:root` only", function(t) {
+-  compareFixtures(t, "substitution-defined")
++  var result = compareFixtures(t, "substitution-defined")
++  t.ok(result.warnings()[0].text.match(/^Custom property ignored/), "should add a warning for non root custom properties")
+   t.end()
+ })
+ 
+@@ -114,7 +119,8 @@ test("preserves computed value when `preserve` is `\"computed\"`", function(t) {
+ 
+ test("circular variable references", function(t) {
+   compareFixtures(t, "self-reference")
+-  compareFixtures(t, "circular-reference")
++  var result = compareFixtures(t, "circular-reference")
++  t.equal(result.warnings()[0].text, "Circular variable reference: --color", "should add a warning for circular reference")
+   t.end()
+ })
+ 
+-- 
+2.33.1
+

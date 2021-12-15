@@ -1,0 +1,38 @@
+From d169f613545ecda88a8d76cc56e985948f6327c7 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Thu, 9 Oct 2014 09:47:03 +0200
+Subject: [PATCH 033/186] update license format
+
+---
+ LICENSE      | 2 +-
+ package.json | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/LICENSE b/LICENSE
+index c17ea50..5a95722 100644
+--- a/LICENSE
++++ b/LICENSE
+@@ -1,6 +1,6 @@
+ The MIT License (MIT)
+ 
+-Copyright (c) 2014, Maxime Thirouin, Nicolas Gallagher & TJ Holowaychuk
++Copyright (c) 2014 Maxime Thirouin, Nicolas Gallagher & TJ Holowaychuk
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy of
+ this software and associated documentation files (the "Software"), to deal in
+diff --git a/package.json b/package.json
+index 7ecdc49..1aee428 100755
+--- a/package.json
++++ b/package.json
+@@ -10,7 +10,7 @@
+     "variables",
+     "vars"
+   ],
+-  "author": "MoOx",
++  "author": "Maxime Thirouin",
+   "license": "MIT",
+   "repository": {
+     "type": "git",
+-- 
+2.33.1
+

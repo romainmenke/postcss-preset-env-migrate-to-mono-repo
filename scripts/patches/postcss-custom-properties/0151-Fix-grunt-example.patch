@@ -1,0 +1,25 @@
+From ffad7a979b727fffa4c67cc3bd039666a2ff0dd9 Mon Sep 17 00:00:00 2001
+From: Titouan CREACH <titouancreach@users.noreply.github.com>
+Date: Tue, 16 Apr 2019 17:05:23 +0200
+Subject: [PATCH 151/186] Fix grunt example
+
+---
+ INSTALL.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/INSTALL.md b/INSTALL.md
+index 0e0a7e1..62348a9 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -149,7 +149,7 @@ grunt.loadNpmTasks('grunt-postcss');
+ grunt.initConfig({
+   postcss: {
+     options: {
+-      use: [
++      processors: [
+        postcssCustomProperties(/* pluginOptions */)
+       ]
+     },
+-- 
+2.33.1
+

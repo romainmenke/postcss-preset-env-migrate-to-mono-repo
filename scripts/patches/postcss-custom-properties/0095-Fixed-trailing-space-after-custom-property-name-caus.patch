@@ -1,0 +1,71 @@
+From 5366045b7ac9d7a16c2b83489b4fbf2d58c522b7 Mon Sep 17 00:00:00 2001
+From: Ryan Fitzer <ryanfitzer@users.noreply.github.com>
+Date: Fri, 22 Apr 2016 12:49:13 -0700
+Subject: [PATCH 095/186] Fixed: trailing space after custom property name
+ causes duplicate empty property (#43)
+
+* Fix issue where trailing space causes duplicate empty property when using `var()`.
+
+* Adding test for trailing space.
+---
+ index.js                                               | 2 +-
+ test/fixtures/substitution-trailing-space.css          | 7 +++++++
+ test/fixtures/substitution-trailing-space.expected.css | 3 +++
+ test/index.js                                          | 5 +++++
+ 4 files changed, 16 insertions(+), 1 deletion(-)
+ create mode 100755 test/fixtures/substitution-trailing-space.css
+ create mode 100755 test/fixtures/substitution-trailing-space.expected.css
+
+diff --git a/index.js b/index.js
+index 598fdfc..7dd8afa 100755
+--- a/index.js
++++ b/index.js
+@@ -12,7 +12,7 @@ var balanced = require("balanced-match")
+ var VAR_PROP_IDENTIFIER = "--"
+ var VAR_FUNC_IDENTIFIER = "var"
+ // matches `name[, fallback]`, captures "name" and "fallback"
+-var RE_VAR = /([\w-]+)(?:\s*,\s*)?(.*)?/
++var RE_VAR = /([\w-]+)(?:\s*,\s*)?\s*(.*)?/
+ 
+ /**
+  * Resolve CSS variables in a value
+diff --git a/test/fixtures/substitution-trailing-space.css b/test/fixtures/substitution-trailing-space.css
+new file mode 100755
+index 0000000..62a577f
+--- /dev/null
++++ b/test/fixtures/substitution-trailing-space.css
+@@ -0,0 +1,7 @@
++:root {
++  --test-trailing-space: red;
++}
++
++div {
++  color: var( --test-trailing-space );
++}
+diff --git a/test/fixtures/substitution-trailing-space.expected.css b/test/fixtures/substitution-trailing-space.expected.css
+new file mode 100755
+index 0000000..c4f8827
+--- /dev/null
++++ b/test/fixtures/substitution-trailing-space.expected.css
+@@ -0,0 +1,3 @@
++div {
++  color: red;
++}
+\ No newline at end of file
+diff --git a/test/index.js b/test/index.js
+index 104ea43..003919a 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -228,3 +228,8 @@ test("strict option", function(t) {
+ 
+   t.end()
+ })
++
++test("ignores trailing space after variable", function(t) {
++  compareFixtures(t, "substitution-trailing-space")
++  t.end()
++})
+\ No newline at end of file
+-- 
+2.33.1
+

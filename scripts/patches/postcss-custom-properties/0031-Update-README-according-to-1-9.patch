@@ -1,0 +1,27 @@
+From 6d4fad56272b01b0e98b73163d040c9753068721 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 1 Oct 2014 05:52:35 +0200
+Subject: [PATCH 031/186] Update README according to #1 & #9
+
+---
+ README.md | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/README.md b/README.md
+index 4a2b380..8a23693 100755
+--- a/README.md
++++ b/README.md
+@@ -2,9 +2,7 @@
+ 
+ > [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Properties for cascading variables](http://www.w3.org/TR/css-variables/) syntax to more compatible CSS.
+ 
+-**N.B.** For now the transformation _is not complete_. It currently just aims to provide a future-proof way of using a _limited subset (to `:root` selector)_ of the features provided by native CSS custom properties.  
+-
+-_[Checkout opened issue to know the state of this plugin](https://github.com/postcss/postcss-custom-properties/issues)._
++**N.B.** The transformation _is not complete_. It currently just aims to provide a future-proof way of using a **limited subset (to `:root` selector)** of the features provided by native CSS custom properties. Read [#1](https://github.com/postcss/postcss-custom-properties/issues/1) & [#9](https://github.com/postcss/postcss-custom-properties/issues/9) to know why this limitation exists.
+ 
+ Works great with [postcss-calc](https://github.com/postcss/postcss-calc).
+ 
+-- 
+2.33.1
+

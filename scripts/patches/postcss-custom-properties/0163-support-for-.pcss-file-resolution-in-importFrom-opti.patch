@@ -1,0 +1,61 @@
+From 6c7addcaf1844508343b570f0d6a7d336037e6b1 Mon Sep 17 00:00:00 2001
+From: jekatigr <jekatigr@users.noreply.github.com>
+Date: Fri, 18 Sep 2020 11:04:37 +0300
+Subject: [PATCH 163/186] support for ".pcss" file resolution in importFrom
+ option (#211)
+
+---
+ .tape.js                                      | 11 +++++++++++
+ src/lib/get-custom-properties-from-imports.js |  2 +-
+ test/import-properties.pcss                   |  4 ++++
+ 3 files changed, 16 insertions(+), 1 deletion(-)
+ create mode 100644 test/import-properties.pcss
+
+diff --git a/.tape.js b/.tape.js
+index 9c39e47..c25b101 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -100,6 +100,17 @@ module.exports = {
+ 		expect: 'basic.import.expect.css',
+ 		result: 'basic.import.result.css'
+ 	},
++	'basic:import-css-pcss': {
++		message: 'supports { importFrom: "test/import-properties.{p}?css" } usage',
++		options: {
++			importFrom: [
++				'test/import-properties.pcss',
++				'test/import-properties-2.css'
++			]
++		},
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
+ 	'basic:import-css-from': {
+ 		message: 'supports { importFrom: { from: "test/import-properties.css" } } usage',
+ 		options: {
+diff --git a/src/lib/get-custom-properties-from-imports.js b/src/lib/get-custom-properties-from-imports.js
+index 8f0d84f..2ab0652 100644
+--- a/src/lib/get-custom-properties-from-imports.js
++++ b/src/lib/get-custom-properties-from-imports.js
+@@ -78,7 +78,7 @@ export default function getCustomPropertiesFromImports(sources) {
+ 	}).reduce(async (customProperties, source) => {
+ 		const { type, from } = await source;
+ 
+-		if (type === 'css') {
++		if (type === 'css' || type === 'pcss') {
+ 			return Object.assign(await customProperties, await getCustomPropertiesFromCSSFile(from));
+ 		}
+ 
+diff --git a/test/import-properties.pcss b/test/import-properties.pcss
+new file mode 100644
+index 0000000..a01ea3e
+--- /dev/null
++++ b/test/import-properties.pcss
+@@ -0,0 +1,4 @@
++:root {
++	--ref-color: var(--color);
++	--z-index: 10;
++}
+-- 
+2.33.1
+

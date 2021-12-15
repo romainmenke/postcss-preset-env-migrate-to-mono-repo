@@ -1,0 +1,89 @@
+From 833687a4bc656e38ac09d04938ac2d34a02b71dc Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 27 Aug 2014 08:46:20 +0200
+Subject: [PATCH 022/186] undefined var doesn't throw error anymore...
+
+(just a console warning) & are kept as is in the output
+
+Close #5
+---
+ CHANGELOG.md                                 | 1 +
+ index.js                                     | 2 +-
+ test/fixtures/substitution-undefined.css     | 4 ++++
+ test/fixtures/substitution-undefined.out.css | 7 +++++++
+ test/index.js                                | 7 ++++---
+ 5 files changed, 17 insertions(+), 4 deletions(-)
+ create mode 100644 test/fixtures/substitution-undefined.out.css
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 484a71e..58af5fd 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,6 +1,7 @@
+ # 0.3.1 - 2014-08-26
+ 
+ * nested custom properties usages are now correctly resolved
++* undefined var doesn't throw error anymore (just a console warning) & are kept as is in the output
+ 
+ # 0.3.0 - 2014-08-25
+ 
+diff --git a/index.js b/index.js
+index 48ca71b..dc2b524 100755
+--- a/index.js
++++ b/index.js
+@@ -115,7 +115,7 @@ function resolveValue(value, variables, source) {
+   matches.body.replace(RE_VAR, function(_, name, fallback) {
+     var replacement = variables[name]
+     if (!replacement && !fallback) {
+-      throw new Error(gnuMessage("variable '" + name + "' is undefined & don't have any fallback", source))
++      console.warn(gnuMessage("variable '" + name + "' is undefined & don't have any fallback", source))
+     }
+ 
+     // prepend with fallbacks
+diff --git a/test/fixtures/substitution-undefined.css b/test/fixtures/substitution-undefined.css
+index 09859fd..d6af72a 100755
+--- a/test/fixtures/substitution-undefined.css
++++ b/test/fixtures/substitution-undefined.css
+@@ -1,3 +1,7 @@
+ div {
+   color: var(--test);
+ }
++
++div {
++  color: var(--test, fallback);
++}
+diff --git a/test/fixtures/substitution-undefined.out.css b/test/fixtures/substitution-undefined.out.css
+new file mode 100644
+index 0000000..c845cd2
+--- /dev/null
++++ b/test/fixtures/substitution-undefined.out.css
+@@ -0,0 +1,7 @@
++div {
++  color: var(--test);
++}
++
++div {
++  color: fallback;
++}
+diff --git a/test/index.js b/test/index.js
+index f1ce076..65f0e2f 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -32,10 +32,11 @@ test("throw errors", function(t) {
+     return postcss(customProperties()).process(fixture("substitution-malformed")).css
+   }, /missing closing/, "throws an error when a variable function is malformed")
+ 
+-  t.throws(function() {
+-    return postcss(customProperties()).process(fixture("substitution-undefined")).css
+-  }, /is undefined/, "throws an error when a variable function references an undefined variable")
++  t.end()
++})
+ 
++test("substitutes nothing when a variable function references an undefined variable", function(t) {
++  compareFixtures(t, "substitution-undefined")
+   t.end()
+ })
+ 
+-- 
+2.33.1
+

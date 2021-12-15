@@ -1,0 +1,144 @@
+From 3e72084ea6c1fd00200d78ea2bee758b92463a10 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 15 Jul 2019 08:33:28 -0400
+Subject: [PATCH 155/186] 9.0.2
+
+---
+ CHANGELOG.md                          |  4 ++++
+ package.json                          | 14 +++++++-------
+ test/basic.css                        |  7 +++++++
+ test/basic.expect.css                 |  8 ++++++++
+ test/basic.import-is-empty.expect.css |  8 ++++++++
+ test/basic.import.expect.css          |  8 ++++++++
+ test/basic.preserve.expect.css        |  4 ++++
+ 7 files changed, 46 insertions(+), 7 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 2ca15c4..9e67e2c 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Custom Properties
+ 
++### 9.0.2 (July 15, 2019)
++
++- Updated: `postcss-values-parser` to 3.0.5 (patch)
++
+ ### 9.0.1 (June 20, 2019)
+ 
+ - Updated: `postcss-values-parser` to 3.0.4 (major)
+diff --git a/package.json b/package.json
+index 476eb07..5bb974d 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "9.0.1",
++  "version": "9.0.2",
+   "description": "Use Custom Properties Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -30,18 +30,18 @@
+   },
+   "dependencies": {
+     "postcss": "^7.0.17",
+-    "postcss-values-parser": "^3.0.4"
++    "postcss-values-parser": "^3.0.5"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.4.5",
++    "@babel/core": "^7.5.4",
+     "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+-    "@babel/preset-env": "^7.4.5",
++    "@babel/preset-env": "^7.5.4",
+     "babel-eslint": "^10.0.2",
+-    "eslint": "^5.16.0",
++    "eslint": "^6.0.1",
+     "postcss-tape": "^5.0.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^1.15.6",
+-    "rollup-plugin-babel": "^4.3.2"
++    "rollup": "^1.17.0",
++    "rollup-plugin-babel": "^4.3.3"
+   },
+   "eslintConfig": {
+     "env": {
+diff --git a/test/basic.css b/test/basic.css
+index ef11a86..3f0d29b 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -59,3 +59,10 @@ html {
+ .test--linear-gradient {
+ 	background-image: linear-gradient(to right, var(--color, transparent) 0%, var(--color, transparent) 100%);
+ }
++
++.test--loose-formatting {
++	color: var(
++		--color,
++		blue
++	);
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index eab9e31..5a4e9c2 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -68,3 +68,11 @@ html {
+ 	background-image: linear-gradient(to right, rgb(255, 0, 0) 0%, rgb(255, 0, 0) 100%);
+ 	background-image: linear-gradient(to right, var(--color, transparent) 0%, var(--color, transparent) 100%);
+ }
++
++.test--loose-formatting {
++	color: rgb(255, 0, 0);
++	color: var(
++		--color,
++		blue
++	);
++}
+diff --git a/test/basic.import-is-empty.expect.css b/test/basic.import-is-empty.expect.css
+index eab9e31..5a4e9c2 100644
+--- a/test/basic.import-is-empty.expect.css
++++ b/test/basic.import-is-empty.expect.css
+@@ -68,3 +68,11 @@ html {
+ 	background-image: linear-gradient(to right, rgb(255, 0, 0) 0%, rgb(255, 0, 0) 100%);
+ 	background-image: linear-gradient(to right, var(--color, transparent) 0%, var(--color, transparent) 100%);
+ }
++
++.test--loose-formatting {
++	color: rgb(255, 0, 0);
++	color: var(
++		--color,
++		blue
++	);
++}
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+index 9f98caa..23a0ffc 100644
+--- a/test/basic.import.expect.css
++++ b/test/basic.import.expect.css
+@@ -69,3 +69,11 @@ html {
+ 	background-image: linear-gradient(to right, rgb(255, 0, 0) 0%, rgb(255, 0, 0) 100%);
+ 	background-image: linear-gradient(to right, var(--color, transparent) 0%, var(--color, transparent) 100%);
+ }
++
++.test--loose-formatting {
++	color: rgb(255, 0, 0);
++	color: var(
++		--color,
++		blue
++	);
++}
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index bf17c1d..32a5301 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -51,3 +51,7 @@
+ .test--linear-gradient {
+ 	background-image: linear-gradient(to right, rgb(255, 0, 0) 0%, rgb(255, 0, 0) 100%);
+ }
++
++.test--loose-formatting {
++	color: rgb(255, 0, 0);
++}
+-- 
+2.33.1
+

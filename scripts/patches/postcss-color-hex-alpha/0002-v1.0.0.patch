@@ -1,0 +1,24 @@
+From 2e0cfc39d59b92d44e0e5b55189642049900f4d1 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Sat, 4 Oct 2014 08:05:52 +0200
+Subject: [PATCH 02/31] v1.0.0
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 07ea153..41fcc5d 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-hex-alpha",
+-  "version": "0.0.0",
++  "version": "1.0.0",
+   "description": "PostCSS plugin to transform W3C RGBA hexadecimal notations (#RRGGBBAA or #RGBA) to more compatible CSS (rgba())",
+   "keywords": [
+     "css",
+-- 
+2.33.1
+

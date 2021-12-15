@@ -1,0 +1,150 @@
+From 8378dfc15878da8572c70e5406da727f4ef5c330 Mon Sep 17 00:00:00 2001
+From: Glen Huang <hey.hgl@gmail.com>
+Date: Wed, 8 Apr 2015 10:14:49 +0800
+Subject: [PATCH 069/186] Add `preserve: "computed"` option
+
+---
+ index.js                                     |  8 ++++----
+ test/fixtures/append.expected.css            |  2 +-
+ test/fixtures/preserve-computed.css          | 21 ++++++++++++++++++++
+ test/fixtures/preserve-computed.expected.css | 21 ++++++++++++++++++++
+ test/index.js                                |  7 +++++++
+ 5 files changed, 54 insertions(+), 5 deletions(-)
+ create mode 100755 test/fixtures/preserve-computed.css
+ create mode 100755 test/fixtures/preserve-computed.expected.css
+
+diff --git a/index.js b/index.js
+index d86225a..9eabc0e 100755
+--- a/index.js
++++ b/index.js
+@@ -128,7 +128,7 @@ module.exports = function(options) {
+       }
+     })
+     var append = options.append
+-    var preserve = append || options.preserve
++    var preserve = options.preserve
+     var map = {}
+     var importantMap = {}
+ 
+@@ -193,7 +193,7 @@ module.exports = function(options) {
+       }
+     })
+ 
+-    if (append) {
++    if (preserve) {
+       Object.keys(map).forEach(function(name) {
+         var variable = map[name]
+         if (!variable.resolved) {
+@@ -219,12 +219,12 @@ module.exports = function(options) {
+         })
+       }, decl.source)
+ 
+-      if (!preserve) {
++      if (!preserve || preserve === "computed") {
+         decl.removeSelf()
+       }
+     })
+ 
+-    if (append) {
++    if (preserve && append) {
+       var names = Object.keys(map)
+       if (names.length) {
+         var container = postcss.rule({
+diff --git a/test/fixtures/append.expected.css b/test/fixtures/append.expected.css
+index f84a78a..8b22df0 100644
+--- a/test/fixtures/append.expected.css
++++ b/test/fixtures/append.expected.css
+@@ -1,8 +1,8 @@
+ div {
+ 	p: js-one;
+-	p: var(--test-one);
+ }
+ :root {
+ 	--test-one: js-one;
+ 	--test-two: js-two;
++	--test-three: js-one js-two;
+ }
+diff --git a/test/fixtures/preserve-computed.css b/test/fixtures/preserve-computed.css
+new file mode 100755
+index 0000000..58a256a
+--- /dev/null
++++ b/test/fixtures/preserve-computed.css
+@@ -0,0 +1,21 @@
++:root {
++  --color-one: red;
++  --color-two: blue;
++  --color-three: var(--color-two);
++}
++
++.atthebeginning {
++  color: var(--color-one);
++  prop: after;
++}
++
++.attheend {
++  prop: before;
++  color: var(--color-two);
++}
++
++.surrounded {
++  prop: before;
++  color: var(--undefined-color, green);
++  otherprop: after;
++}
+diff --git a/test/fixtures/preserve-computed.expected.css b/test/fixtures/preserve-computed.expected.css
+new file mode 100755
+index 0000000..7fe1e4f
+--- /dev/null
++++ b/test/fixtures/preserve-computed.expected.css
+@@ -0,0 +1,21 @@
++:root {
++  --color-one: red;
++  --color-two: blue;
++  --color-three: blue;
++}
++
++.atthebeginning {
++  color: red;
++  prop: after;
++}
++
++.attheend {
++  prop: before;
++  color: blue;
++}
++
++.surrounded {
++  prop: before;
++  color: green;
++  otherprop: after;
++}
+diff --git a/test/index.js b/test/index.js
+index 774956c..26b78a5 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -107,6 +107,11 @@ test("preserves variables when `preserve` is `true`", function(t) {
+   t.end()
+ })
+ 
++test("preserves computed value when `preserve` is `\"computed\"`", function(t) {
++  compareFixtures(t, "preserve-computed", {preserve: "computed"})
++  t.end()
++})
++
+ test("circular variable references", function(t) {
+   compareFixtures(t, "self-reference")
+   compareFixtures(t, "circular-reference")
+@@ -124,8 +129,10 @@ test("append variables", function(t) {
+     variables: {
+       "--test-one": "js-one",
+       "test-two": "js-two",
++      "test-three": "var(--test-one, one) var(--test-two, two)",
+     },
+     append: true,
++    preserve: "computed",
+   })
+   t.end()
+ })
+-- 
+2.33.1
+

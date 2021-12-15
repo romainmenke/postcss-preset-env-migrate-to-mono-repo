@@ -1,0 +1,26 @@
+From e5fea8cfb4b7519e630eb51502fd604d0513f852 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Fri, 1 Aug 2014 10:18:25 +0200
+Subject: [PATCH 003/186] typo
+
+poke @_kud
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index e4bef3d..58ca558 100755
+--- a/package.json
++++ b/package.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "postcss-custom-properties",
+   "version": "0.1.0",
+-  "description": "PostCSS that polyfill CSS custom properties for cascading variable module",
++  "description": "PostCSS that polyfills CSS custom properties for cascading variable module",
+   "keywords": [
+     "css",
+     "postcss",
+-- 
+2.33.1
+

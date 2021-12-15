@@ -1,0 +1,163 @@
+From 2d309a8dc8d79732f4d1617c7ffa8561f59adc30 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 20 Jun 2019 08:40:24 -0400
+Subject: [PATCH 153/186] 9.0.0
+
+---
+ .rollup.js                                    | 2 +-
+ .travis.yml                                   | 2 +-
+ CHANGELOG.md                                  | 5 +++++
+ package.json                                  | 8 ++++----
+ src/lib/get-custom-properties-from-imports.js | 2 +-
+ src/lib/get-custom-properties-from-root.js    | 2 +-
+ src/lib/postcss-values-parser.js              | 5 -----
+ src/lib/transform-properties.js               | 2 +-
+ src/lib/transform-value-ast.js                | 4 ++--
+ 9 files changed, 16 insertions(+), 16 deletions(-)
+ delete mode 100644 src/lib/postcss-values-parser.js
+
+diff --git a/.rollup.js b/.rollup.js
+index 829ad87..693b915 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -16,7 +16,7 @@ export default {
+ 					corejs: 3,
+ 					loose: true,
+ 					modules: false,
+-					targets: { node: 6 },
++					targets: { node: 8 },
+ 					useBuiltIns: 'entry'
+ 				}]
+ 			]
+diff --git a/.travis.yml b/.travis.yml
+index e1f11a5..6ebed1d 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 6
++  - 8
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 2f900d3..6deee66 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Custom Properties
+ 
++### 9.0.0 (June 20, 2019)
++
++- Updated: `postcss-values-parser` to 3.0.4 (major)
++- Updated: Node 8+ compatibility (major)
++
+ ### 8.0.11 (June 20, 2019)
+ 
+ - Added: Synchronous transforms when async is unnecessary (thank @eteeselink)
+diff --git a/package.json b/package.json
+index 3964aa9..6b0ee5e 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "8.0.11",
++  "version": "9.0.0",
+   "description": "Use Custom Properties Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -26,11 +26,11 @@
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+-    "node": ">=6.0.0"
++    "node": ">=8.0.0"
+   },
+   "dependencies": {
+     "postcss": "^7.0.17",
+-    "postcss-values-parser": "^2.0.1"
++    "postcss-values-parser": "^3.0.4"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.4.5",
+@@ -38,7 +38,7 @@
+     "@babel/preset-env": "^7.4.5",
+     "babel-eslint": "^10.0.2",
+     "eslint": "^5.16.0",
+-    "postcss-tape": "^4.0.0",
++    "postcss-tape": "^5.0.0",
+     "pre-commit": "^1.2.2",
+     "rollup": "^1.15.6",
+     "rollup-plugin-babel": "^4.3.2"
+diff --git a/src/lib/get-custom-properties-from-imports.js b/src/lib/get-custom-properties-from-imports.js
+index cb79222..8f0d84f 100644
+--- a/src/lib/get-custom-properties-from-imports.js
++++ b/src/lib/get-custom-properties-from-imports.js
+@@ -1,7 +1,7 @@
+ import fs from 'fs';
+ import path from 'path';
+ import postcss from 'postcss';
+-import { parse } from './postcss-values-parser';
++import { parse } from 'postcss-values-parser';
+ import getCustomPropertiesFromRoot from './get-custom-properties-from-root';
+ 
+ /* Get Custom Properties from CSS File
+diff --git a/src/lib/get-custom-properties-from-root.js b/src/lib/get-custom-properties-from-root.js
+index ceb1287..0a7399c 100644
+--- a/src/lib/get-custom-properties-from-root.js
++++ b/src/lib/get-custom-properties-from-root.js
+@@ -1,4 +1,4 @@
+-import { parse } from './postcss-values-parser';
++import { parse } from 'postcss-values-parser';
+ import { isBlockIgnored } from './is-ignored';
+ 
+ // return custom selectors from the css root, conditionally removing them
+diff --git a/src/lib/postcss-values-parser.js b/src/lib/postcss-values-parser.js
+deleted file mode 100644
+index dceacd8..0000000
+--- a/src/lib/postcss-values-parser.js
++++ /dev/null
+@@ -1,5 +0,0 @@
+-import valueParser from 'postcss-values-parser';
+-
+-export function parse (string) {
+-	return valueParser(string).parse();
+-}
+diff --git a/src/lib/transform-properties.js b/src/lib/transform-properties.js
+index d138176..483383c 100644
+--- a/src/lib/transform-properties.js
++++ b/src/lib/transform-properties.js
+@@ -1,4 +1,4 @@
+-import { parse } from './postcss-values-parser';
++import { parse } from 'postcss-values-parser';
+ import transformValueAST from './transform-value-ast';
+ import { isRuleIgnored } from './is-ignored';
+ 
+diff --git a/src/lib/transform-value-ast.js b/src/lib/transform-value-ast.js
+index 8e67064..c5e5cdc 100644
+--- a/src/lib/transform-value-ast.js
++++ b/src/lib/transform-value-ast.js
+@@ -3,7 +3,7 @@ export default function transformValueAST(root, customProperties) {
+ 		root.nodes.slice().forEach(child => {
+ 			if (isVarFunction(child)) {
+ 				// eslint-disable-next-line no-unused-vars
+-				const [propertyNode, comma, ...fallbacks] = child.nodes.slice(1, -1);
++				const [propertyNode, comma, ...fallbacks] = child.nodes;
+ 				const { value: name } = propertyNode;
+ 
+ 				if (name in Object(customProperties)) {
+@@ -45,7 +45,7 @@ function retransformValueAST(root, customProperties, withoutProperty) {
+ const varRegExp = /^var$/i;
+ 
+ // whether the node is a var() function
+-const isVarFunction = node => node.type === 'func' && varRegExp.test(node.value) && Object(node.nodes).length > 0;
++const isVarFunction = node => node.type === 'func' && varRegExp.test(node.name) && Object(node.nodes).length > 0;
+ 
+ // return an array with its nodes cloned, preserving the raw
+ const asClonedArrayWithBeforeSpacing = (array, beforeSpacing) => {
+-- 
+2.33.1
+

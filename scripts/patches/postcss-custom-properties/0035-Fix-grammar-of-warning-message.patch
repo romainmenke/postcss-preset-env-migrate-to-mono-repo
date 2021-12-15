@@ -1,0 +1,25 @@
+From a2fbc7a13bfd4043fd80d114892ca97e343faf65 Mon Sep 17 00:00:00 2001
+From: Nicolas Gallagher <nicolasgallagher@gmail.com>
+Date: Fri, 24 Oct 2014 16:01:51 -0700
+Subject: [PATCH 035/186] Fix grammar of warning message
+
+---
+ index.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index c3737ac..1972d43 100755
+--- a/index.js
++++ b/index.js
+@@ -121,7 +121,7 @@ function resolveValue(value, variables, source) {
+   matches.body.replace(RE_VAR, function(_, name, fallback) {
+     var replacement = variables[name]
+     if (!replacement && !fallback) {
+-      console.warn(gnuMessage("variable '" + name + "' is undefined & don't have any fallback", source))
++      console.warn(gnuMessage("variable '" + name + "' is undefined and used without a fallback", source))
+     }
+ 
+     // prepend with fallbacks
+-- 
+2.33.1
+

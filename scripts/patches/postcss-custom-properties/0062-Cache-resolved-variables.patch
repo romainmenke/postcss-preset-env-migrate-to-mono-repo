@@ -1,0 +1,37 @@
+From ec028ab59c8e650ebf46f57590c0cbd02a01e3e5 Mon Sep 17 00:00:00 2001
+From: Glen Huang <hey.hgl@gmail.com>
+Date: Fri, 3 Apr 2015 23:33:07 +0800
+Subject: [PATCH 062/186] Cache resolved variables
+
+---
+ index.js | 13 +++++++++----
+ 1 file changed, 9 insertions(+), 4 deletions(-)
+
+diff --git a/index.js b/index.js
+index 5b4a63a..7f37695 100755
+--- a/index.js
++++ b/index.js
+@@ -73,11 +73,16 @@ function resolveValue(value, variables, deps, source) {
+ 
+     // replace with computed custom properties
+     if (replacement) {
+-      deps.push(name);
++      deps.push(name)
++      // resolve replacement if it use a custom property
++      if (!Array.isArray(replacement)) {
++        replacement = resolveValue(replacement, variables, deps, source)
++        variables[name] = replacement
++      }
+       // resolve the end of the expression
+-      (matches.post ? resolveValue(matches.post, variables, [], source) : [""]).forEach(function(afterValue) {
+-        // resolve replacement if it use a custom property
+-        resolveValue(replacement, variables, deps, source).forEach(function(replacementValue) {
++      var post = matches.post ? resolveValue(matches.post, variables, [], source) : [""]
++      replacement.forEach(function(replacementValue) {
++        post.forEach(function(afterValue) {
+           results.push(value.slice(0, start) + replacementValue + afterValue)
+         })
+       })
+-- 
+2.33.1
+

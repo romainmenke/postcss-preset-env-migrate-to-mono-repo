@@ -1,0 +1,128 @@
+From f1621c4c07265f3e80397e1f2dc8c338404793de Mon Sep 17 00:00:00 2001
+From: Oleg Lykasov <oleglykasov@gmail.com>
+Date: Wed, 19 Jul 2017 00:29:30 +0300
+Subject: [PATCH 108/186] Added: noValueNotifications option (#71)
+
+---
+ README.md     |  9 +++++++++
+ index.js      | 26 +++++++++++++++++---------
+ test/index.js | 18 ++++++++++++++++++
+ 3 files changed, 44 insertions(+), 9 deletions(-)
+
+diff --git a/README.md b/README.md
+index 154ebeb..2648f13 100755
+--- a/README.md
++++ b/README.md
+@@ -129,6 +129,15 @@ Allows you to enable/disable warnings. If true, will enable all warnings.
+ For now, it only allow to disable messages about custom properties definition
+ not scoped in a `:root` selector.
+ 
++
++### `noValueNotifications`
++
++Default: `'warning'`
++Values: `'warning'|'error'`
++
++If it is set to `'error'`, using of undefined variable will throw an error.
++
++
+ ---
+ 
+ ## Contributing
+diff --git a/index.js b/index.js
+index e791104..89183c6 100755
+--- a/index.js
++++ b/index.js
+@@ -10,7 +10,7 @@ const RE_VAR = /([\w-]+)(?:\s*,\s*)?\s*(.*)?/
+  * Module variables
+  */
+ 
+-let globalWarnings
++let globalOpts
+ 
+ /**
+  * Resolve CSS variables.
+@@ -47,11 +47,16 @@ function resolveValue(value, variables, result, decl) {
+     let post
+     // undefined and without fallback, just keep original value
+     if (!variable && !fallback) {
+-      if (globalWarnings) {
+-        result.warn(
+-          "variable '" + name + "' is undefined and used without a fallback",
+-          {node: decl}
+-        )
++      if (globalOpts.warnings) {
++        const errorStr =
++          `variable '${name}' is undefined and used without a fallback`
++
++        if (globalOpts.noValueNotifications === "error") {
++          throw decl.error(errorStr, {word: name})
++        }
++        else {
++          result.warn(errorStr, {node: decl})
++        }
+       }
+       post = matches.post
+         ? resolveValue(matches.post, variables, result, decl)
+@@ -90,7 +95,7 @@ function resolveValue(value, variables, result, decl) {
+       // circular reference encountered
+       if (variable.deps.indexOf(name) !== -1) {
+         if (!fallback) {
+-          if (globalWarnings) {
++          if (globalOpts.warnings) {
+             result.warn("Circular variable reference: " + name, {node: decl})
+           }
+           variable.value = [variable.value]
+@@ -159,7 +164,10 @@ export default postcss.plugin("postcss-custom-properties", (options = {}) => {
+     const map = {}
+     const importantMap = {}
+ 
+-    globalWarnings = options.warnings === undefined ? true : options.warnings
++    globalOpts = {
++      warnings: options.warnings === undefined ? true : options.warnings,
++      noValueNotifications: options.noValueNotifications || "warning",
++    }
+ 
+     // define variables
+     style.walkRules((rule) => {
+@@ -174,7 +182,7 @@ export default postcss.plugin("postcss-custom-properties", (options = {}) => {
+         rule.each((decl) => {
+           const prop = decl.prop
+           if (
+-            globalWarnings &&
++            globalOpts.warnings &&
+             prop &&
+             prop.indexOf(VAR_PROP_IDENTIFIER) === 0
+           ) {
+diff --git a/test/index.js b/test/index.js
+index 1978b84..fc2441c 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -71,6 +71,24 @@ test(
+   }
+ )
+ 
++test(
++  "generate error for undefined var when flag is set",
++  function(t) {
++    t.throws(
++      function() {
++        return postcss(customProperties({
++          noValueNotifications: "error",
++        }))
++          .process(fixture("substitution-undefined"))
++          .css
++      },
++      "variable '--test' is undefined and used without a fallback",
++      "should add a warning for undefined variable"
++    )
++    t.end()
++  }
++)
++
+ test("substitutes defined variables in `:root` only", function(t) {
+   const result = compareFixtures(t, "substitution-defined")
+   t.ok(
+-- 
+2.33.1
+

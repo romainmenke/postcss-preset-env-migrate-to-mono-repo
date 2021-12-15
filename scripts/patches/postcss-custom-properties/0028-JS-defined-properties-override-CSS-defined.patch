@@ -1,0 +1,124 @@
+From 2304d37b59b9ee430f1abf3c2ce5254e23e9b069 Mon Sep 17 00:00:00 2001
+From: Nicolas Gallagher <nicolasgallagher@twitter.com>
+Date: Sun, 28 Sep 2014 11:13:58 -0700
+Subject: [PATCH 028/186] JS-defined properties override CSS-defined
+
+---
+ index.js                         | 18 ++++++++++++------
+ test/fixtures/js-defined.css     | 10 ++++++++++
+ test/fixtures/js-defined.out.css |  5 +++++
+ test/index.js                    | 11 +++++++++++
+ 4 files changed, 38 insertions(+), 6 deletions(-)
+ create mode 100755 test/fixtures/js-defined.css
+ create mode 100755 test/fixtures/js-defined.out.css
+
+diff --git a/index.js b/index.js
+index dc2b524..c3737ac 100755
+--- a/index.js
++++ b/index.js
+@@ -21,10 +21,11 @@ module.exports = function(options) {
+     options = options || {}
+     var variables = options.variables || {}
+     var preserve = (options.preserve === true ? true : false)
++    var map = {}
+ 
+     // define variables
+     style.eachRule(function(rule) {
+-      var varNameIndices = []
++      var toRemove = []
+       if (rule.type !== "rule") {
+         return
+       }
+@@ -39,15 +40,15 @@ module.exports = function(options) {
+         var value = decl.value
+ 
+         if (prop && prop.indexOf(VAR_PROP_IDENTIFIER) === 0) {
+-          variables[prop] = value
+-          varNameIndices.push(i)
++          map[prop] = value
++          toRemove.push(i)
+         }
+       })
+ 
+       // optionally remove `--*` properties from the rule
+       if (!preserve) {
+-        for (var i = varNameIndices.length - 1; i >= 0; i--) {
+-          rule.decls.splice(varNameIndices[i], 1)
++        for (var i = toRemove.length - 1; i >= 0; i--) {
++          rule.decls.splice(toRemove[i], 1)
+         }
+ 
+         // remove empty :root {}
+@@ -57,6 +58,11 @@ module.exports = function(options) {
+       }
+     })
+ 
++    // apply js-defined custom properties
++    Object.keys(variables).forEach(function(variable) {
++      map[variable] = variables[variable]
++    })
++
+     // resolve variables
+     style.eachDecl(function(decl) {
+       var value = decl.value
+@@ -66,7 +72,7 @@ module.exports = function(options) {
+         return
+       }
+ 
+-      resolveValue(value, variables, decl.source).forEach(function(resolvedValue) {
++      resolveValue(value, map, decl.source).forEach(function(resolvedValue) {
+         var clone = decl.clone()
+         clone.value = resolvedValue
+         decl.parent.insertBefore(decl, clone)
+diff --git a/test/fixtures/js-defined.css b/test/fixtures/js-defined.css
+new file mode 100755
+index 0000000..68c6ec6
+--- /dev/null
++++ b/test/fixtures/js-defined.css
+@@ -0,0 +1,10 @@
++:root {
++  --test-one: local;
++  --test-two: local;
++}
++
++div {
++  color: var(--test-one);
++  color: var(--test-two);
++  color: var(--test-three);
++}
+diff --git a/test/fixtures/js-defined.out.css b/test/fixtures/js-defined.out.css
+new file mode 100755
+index 0000000..c4fcd97
+--- /dev/null
++++ b/test/fixtures/js-defined.out.css
+@@ -0,0 +1,5 @@
++div {
++  color: js-one;
++  color: js-two;
++  color: js-three;
++}
+diff --git a/test/index.js b/test/index.js
+index 65f0e2f..2b84975 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -45,6 +45,17 @@ test("substitutes defined variables in `:root` only", function(t) {
+   t.end()
+ })
+ 
++test("accepts variables defined from JavaScript, and overrides local definitions", function(t) {
++  compareFixtures(t, "js-defined", {
++    variables: {
++      "--test-one": "js-one",
++      "--test-two": "js-two",
++      "--test-three": "js-three"
++    }
++  })
++  t.end()
++})
++
+ test("removes variable properties from the output", function(t) {
+   compareFixtures(t, "remove-properties")
+   t.end()
+-- 
+2.33.1
+

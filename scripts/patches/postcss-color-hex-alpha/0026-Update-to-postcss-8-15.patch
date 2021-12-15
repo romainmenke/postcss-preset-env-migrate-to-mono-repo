@@ -1,0 +1,84 @@
+From d8c2c810f9e8de29768940ba869bda5f43def702 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Ren=C3=A9e=20Kooi?= <renee@kooi.me>
+Date: Tue, 12 Jan 2021 16:42:03 +0100
+Subject: [PATCH 26/31] Update to postcss 8 (#15)
+
+---
+ README.md    |  8 --------
+ package.json |  9 ++++++---
+ src/index.js | 12 ++++++------
+ 3 files changed, 12 insertions(+), 17 deletions(-)
+
+diff --git a/README.md b/README.md
+index 32ab35d..c2ab40b 100755
+--- a/README.md
++++ b/README.md
+@@ -32,14 +32,6 @@ npm install postcss-color-hex-alpha --save-dev
+ 
+ Use [PostCSS Color Hex Alpha] to process your CSS:
+ 
+-```js
+-const postcssColorHexAlpha = require('postcss-color-hex-alpha');
+-
+-postcssColorHexAlpha.process(YOUR_CSS /*, processOptions, pluginOptions */);
+-```
+-
+-Or use it as a [PostCSS] plugin:
+-
+ ```js
+ const postcss = require('postcss');
+ const postcssColorHexAlpha = require('postcss-color-hex-alpha');
+diff --git a/package.json b/package.json
+index d12b076..a0103ca 100644
+--- a/package.json
++++ b/package.json
+@@ -29,15 +29,18 @@
+     "node": ">=10.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.27",
+-    "postcss-values-parser": "^3.2.0"
++    "postcss-values-parser": "^4.0.0"
++  },
++  "peerDependencies": {
++    "postcss": "^8.0.0"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.9.0",
+     "@babel/preset-env": "^7.9.5",
+     "babel-eslint": "^10.1.0",
+     "eslint": "^6.8.0",
+-    "postcss-tape": "^5.0.2",
++    "postcss": "^8.0.5",
++    "postcss-tape": "^6.0.0",
+     "pre-commit": "^1.2.2",
+     "rollup": "^2.7.2",
+     "rollup-plugin-babel": "^4.4.0"
+diff --git a/src/index.js b/src/index.js
+index 70a4f2d..9f78cd5 100755
+--- a/src/index.js
++++ b/src/index.js
+@@ -1,14 +1,14 @@
+-import postcss from 'postcss'
+ import onCSSDeclaration from './onCSSDeclaration'
+ import options from './options'
+ 
+ /** Transform 4 & 8 character hex color notation in CSS. */
+-const postcssPlugin = postcss.plugin('postcss-color-hex-alpha', /** @type {PostCSSPluginInitializer} */ opts => {
++export default function postcssColorHexAlpha(/** @type {PostCSSPluginInitializer} */ opts) {
+ 	options.preserve = 'preserve' in Object(opts) ? Boolean(opts.preserve) : false
+ 
+-	return root => {
+-		root.walkDecls(onCSSDeclaration)
++	return {
++		postcssPlugin: 'postcss-color-hex-alpha',
++		Declaration: onCSSDeclaration
+ 	}
+-})
++}
+ 
+-export default postcssPlugin
++postcssColorHexAlpha.postcss = true
+-- 
+2.33.1
+

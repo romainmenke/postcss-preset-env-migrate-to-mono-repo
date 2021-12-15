@@ -1,0 +1,410 @@
+From 5d4620c658c480f5a99a1cc65f684cc2dee5088c Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 15 Feb 2018 18:16:07 -0500
+Subject: [PATCH 120/186] Preserve by default
+
+---
+ index.js                                         |  2 +-
+ .../automatic-variable-prefix.expected.css       |  2 ++
+ test/fixtures/case-sensitive.expected.css        |  7 +++++++
+ test/fixtures/circular-reference.expected.css    |  9 ++++++++-
+ test/fixtures/important.expected.css             | 14 ++++++++++++++
+ test/fixtures/js-defined.expected.css            | 11 +++++++++++
+ test/fixtures/js-override.expected.css           | 11 +++++++++++
+ test/fixtures/remove-properties.expected.css     | 10 ++++++++++
+ .../self-reference-double-fallback.expected.css  |  8 ++++++++
+ .../self-reference-fallback.expected.css         |  5 +++++
+ test/fixtures/self-reference.expected.css        |  5 +++++
+ test/fixtures/substitution-defined.expected.css  | 16 ++++++++++++++++
+ test/fixtures/substitution-fallback.expected.css | 14 ++++++++++++++
+ .../fixtures/substitution-overwrite.expected.css | 10 ++++++++++
+ test/fixtures/substitution-strict.expected.css   |  9 +++++++++
+ .../substitution-trailing-space.expected.css     |  7 ++++++-
+ .../fixtures/substitution-undefined.expected.css | 10 ++++++++++
+ test/index.js                                    |  2 +-
+ 18 files changed, 148 insertions(+), 4 deletions(-)
+
+diff --git a/index.js b/index.js
+index cb3c85d..36f1fd1 100755
+--- a/index.js
++++ b/index.js
+@@ -166,7 +166,7 @@ export default postcss.plugin("postcss-custom-properties", (options = {}) => {
+     const strict = "strict" in options ? Boolean(options.strict) : true
+     const appendVariables = "appendVariables" in options
+       ? Boolean(options.appendVariables) : false
+-    const preserve = "preserve" in options ? options.preserve : null
++    const preserve = "preserve" in options ? options.preserve : true
+     const map = {}
+     const importantMap = {}
+ 
+diff --git a/test/fixtures/automatic-variable-prefix.expected.css b/test/fixtures/automatic-variable-prefix.expected.css
+index b9f2fdb..bf547b1 100644
+--- a/test/fixtures/automatic-variable-prefix.expected.css
++++ b/test/fixtures/automatic-variable-prefix.expected.css
+@@ -1,4 +1,6 @@
+ div {
+   color: blue;
++  color: var(--unprefixed);
+   background: white;
++  background: var(--prefixed);
+ }
+diff --git a/test/fixtures/case-sensitive.expected.css b/test/fixtures/case-sensitive.expected.css
+index 365540a..8543ba9 100755
+--- a/test/fixtures/case-sensitive.expected.css
++++ b/test/fixtures/case-sensitive.expected.css
+@@ -1,4 +1,11 @@
++:root {
++  --TEST-color: red;
++  --tESt-COLOR: green;
++}
++
+ div {
+   color: red;
++  color: var(--TEST-color);
+   color: green;
++  color: var(--tESt-COLOR);
+ }
+diff --git a/test/fixtures/circular-reference.expected.css b/test/fixtures/circular-reference.expected.css
+index c04ff5b..cc73e70 100644
+--- a/test/fixtures/circular-reference.expected.css
++++ b/test/fixtures/circular-reference.expected.css
+@@ -1,3 +1,10 @@
++:root {
++    --color: var(--color);
++    --color: var(--bg-color);
++    --bg-color: var(--color);
++    --bg-color: var(--color);
++}
+ body {
+-	color: var(--bg-color);
++	color: var(--color);
++	color: var(--color);
+ }
+diff --git a/test/fixtures/important.expected.css b/test/fixtures/important.expected.css
+index 0439cf8..ec9f087 100644
+--- a/test/fixtures/important.expected.css
++++ b/test/fixtures/important.expected.css
+@@ -1,5 +1,19 @@
++:root {
++ --one: not important;
++ --one: important !important;
++
++ --two: important !important;
++ --two: not important;
++
++ --three: important !important;
++ --three: more important !important;
++}
++
+ selector {
+  one: important;
++ one: var(--one);
+  two: important;
++ two: var(--two);
+  three: more important;
++ three: var(--three);
+ }
+diff --git a/test/fixtures/js-defined.expected.css b/test/fixtures/js-defined.expected.css
+index d043e0b..d7ce1b2 100755
+--- a/test/fixtures/js-defined.expected.css
++++ b/test/fixtures/js-defined.expected.css
+@@ -1,8 +1,19 @@
++:root {
++  --test-one: local;
++  --test-two: local;
++}
++
+ div {
+   p: js-one;
++  p: var(--test-one);
+   p: js-two;
++  p: var(--test-two);
+   p: js-three;
++  p: var(--test-three);
+   p: js-one;
++  p: var(--test-varception);
+   p: js-one;
++  p: var(--test-jsception);
+   p: 1;
++  p: var(--test-num);
+ }
+diff --git a/test/fixtures/js-override.expected.css b/test/fixtures/js-override.expected.css
+index d043e0b..d7ce1b2 100755
+--- a/test/fixtures/js-override.expected.css
++++ b/test/fixtures/js-override.expected.css
+@@ -1,8 +1,19 @@
++:root {
++  --test-one: local;
++  --test-two: local;
++}
++
+ div {
+   p: js-one;
++  p: var(--test-one);
+   p: js-two;
++  p: var(--test-two);
+   p: js-three;
++  p: var(--test-three);
+   p: js-one;
++  p: var(--test-varception);
+   p: js-one;
++  p: var(--test-jsception);
+   p: 1;
++  p: var(--test-num);
+ }
+diff --git a/test/fixtures/remove-properties.expected.css b/test/fixtures/remove-properties.expected.css
+index 538fa56..649e963 100755
+--- a/test/fixtures/remove-properties.expected.css
++++ b/test/fixtures/remove-properties.expected.css
+@@ -1,3 +1,13 @@
++:root {
++  --test-one: test;
++  --test-two: test;
++}
++
+ div {
+   color: red;
+ }
++
++:root {
++  --test-three: test;
++  --test-four: test;
++}
+diff --git a/test/fixtures/self-reference-double-fallback.expected.css b/test/fixtures/self-reference-double-fallback.expected.css
+index 67a9b3b..9ff57e4 100644
+--- a/test/fixtures/self-reference-double-fallback.expected.css
++++ b/test/fixtures/self-reference-double-fallback.expected.css
+@@ -1,4 +1,12 @@
++:root {
++	--color: #aaa;
++	--color: #aaa;
++	--color: #aaa;
++	--color: var(--color, #aaa);
++}
+ body {
+ 	color: #bbb;
+ 	color: #aaa;
++	color: #aaa;
++	color: var(--color, #bbb);
+ }
+diff --git a/test/fixtures/self-reference-fallback.expected.css b/test/fixtures/self-reference-fallback.expected.css
+index 8c9a1c8..47a67ef 100644
+--- a/test/fixtures/self-reference-fallback.expected.css
++++ b/test/fixtures/self-reference-fallback.expected.css
+@@ -1,3 +1,8 @@
++:root {
++	--color: var(--color);
++	--color: var(--color);
++}
+ body {
+ 	color: #aaa;
++	color: var(--color, #aaa);
+ }
+diff --git a/test/fixtures/self-reference.expected.css b/test/fixtures/self-reference.expected.css
+index 6f6d04f..d5045a6 100644
+--- a/test/fixtures/self-reference.expected.css
++++ b/test/fixtures/self-reference.expected.css
+@@ -1,3 +1,8 @@
++:root {
++	--color: var(--color);
++	--color: var(--color);
++}
+ body {
+ 	color: var(--color);
++	color: var(--color);
+ }
+diff --git a/test/fixtures/substitution-defined.expected.css b/test/fixtures/substitution-defined.expected.css
+index 531b6ee..5f6bc40 100755
+--- a/test/fixtures/substitution-defined.expected.css
++++ b/test/fixtures/substitution-defined.expected.css
+@@ -2,6 +2,15 @@
+  * Test comment
+  */
+ 
++:root {
++  --test: green;
++  --test-one: green;
++  --test-one: var(--test);
++
++  --test-two: blue;
++  --test-three: yellow;
++}
++
+ :root,
+ span {
+   --untouched: red;
+@@ -12,23 +21,30 @@ div {
+ 
+   /* single variable */
+   color: green;
++  color: var(--test-one);
+ 
+   /* single variable with comments */
+   color: /*comment before*/green/*comment after*/;
++  color: /*comment before*/var(--test-one)/*comment after*/;
+ 
+   /* single variable with tail */
+   color: green !important;
++  color: var(--test-one) !important;
+ 
+   /* multiple variables */
+   color: green, blue;
++  color: var(--test-one), var(--test-two);
+ 
+   /* variable with function in fallback */
+   border: 1px solid rgba(0, 0, 0, 0.1);
+   border: green;
++  border: var(--test-one, 1px solid rgba(0, 0, 0, 0.1));
+ 
+   /* multiple variables within a function */
+   background: linear-gradient(to top, green, blue);
++  background: linear-gradient(to top, var(--test-one), var(--test-two));
+ 
+   /* untouched custom function */
+   color: myvar(--test-one);
++  color: myvar(--test-one);
+ }
+diff --git a/test/fixtures/substitution-fallback.expected.css b/test/fixtures/substitution-fallback.expected.css
+index 8f79a3a..8ae69dc 100755
+--- a/test/fixtures/substitution-fallback.expected.css
++++ b/test/fixtures/substitution-fallback.expected.css
+@@ -1,33 +1,47 @@
++:root {
++  --nested: green;
++}
++
+ div {
+   /* simple fallback */
+   color: green;
++  color: var(--missing, green);
+ 
+   /* comma-separated fallback */
+   color: green, blue;
++  color: var(--missing, green, blue);
+ 
+   /* fallback is a function */
+   background: linear-gradient(to top, #000, #111);
++  background: var(--missing, linear-gradient(to top, #000, #111));
+ 
+   /* fallback contains a function */
+   background: 1px solid rgba(0, 0, 0, 0.1);
++  background: var(--missing, 1px solid rgba(0, 0, 0, 0.1));
+ 
+   /* fallback is a function containing a function */
+   background: linear-gradient(to top, #000, rgba(0, 0, 0, 0.5));
++  background: var(--missing, linear-gradient(to top, #000, rgba(0, 0, 0, 0.5)));
+ 
+   /* fallback contains a defined variable */
+   background: green;
++  background: var(--missing, var(--nested));
+ 
+   /* fallback contains a defined variable within a function */
+   background: linear-gradient(to top, #000, green);
++  background: var(--missing, linear-gradient(to top, #000, var(--nested)));
+ 
+   /* fallback contains an undefined variable with a fallack */
+   background: green;
++  background: var(--missing, var(--also-missing, green));
+ 
+   /* fallback for invalid variables http://www.w3.org/TR/css-variables/#invalid-variables */
+   font-size: 1rem;
+   font-size: green;
++  font-size: var(--nested, 1rem);
+ 
+   /* fallback contains an defined variable with a fallack */
+   font-size: 1rem;
+   font-size: green;
++  font-size: var(--missing, var(--nested, 1rem));
+ }
+diff --git a/test/fixtures/substitution-overwrite.expected.css b/test/fixtures/substitution-overwrite.expected.css
+index 8585a8c..5fdc7f3 100755
+--- a/test/fixtures/substitution-overwrite.expected.css
++++ b/test/fixtures/substitution-overwrite.expected.css
+@@ -1,4 +1,14 @@
++:root {
++  --test-override: red;
++}
++
+ div {
+   background: green;
++  background: var(--test-override);
+   color: green;
++  color: var(--test-override);
++}
++
++:root {
++  --test-override: green;
+ }
+diff --git a/test/fixtures/substitution-strict.expected.css b/test/fixtures/substitution-strict.expected.css
+index ed8e05e..be554a6 100755
+--- a/test/fixtures/substitution-strict.expected.css
++++ b/test/fixtures/substitution-strict.expected.css
+@@ -1,5 +1,14 @@
++:root {
++  --a: "a";
++  --b: bFallback;
++  --b: var(--bUndef, bFallback);
++}
++
+ div {
+   aProp: "a";
++  aProp: var(--a, aPropFallback);
+   bProp: bFallback;
++  bProp: var(--b, bPropFallback);
+   bProp: cPropFallback;
++  bProp: var(--cUndef, cPropFallback);
+ }
+diff --git a/test/fixtures/substitution-trailing-space.expected.css b/test/fixtures/substitution-trailing-space.expected.css
+index c4f8827..d5c3289 100755
+--- a/test/fixtures/substitution-trailing-space.expected.css
++++ b/test/fixtures/substitution-trailing-space.expected.css
+@@ -1,3 +1,8 @@
++:root {
++  --test-trailing-space: red;
++}
++
+ div {
+   color: red;
+-}
+\ No newline at end of file
++  color: var( --test-trailing-space );
++}
+diff --git a/test/fixtures/substitution-undefined.expected.css b/test/fixtures/substitution-undefined.expected.css
+index a7f4a9b..029404a 100644
+--- a/test/fixtures/substitution-undefined.expected.css
++++ b/test/fixtures/substitution-undefined.expected.css
+@@ -1,8 +1,18 @@
++:root {
++  --defined: true
++}
++
+ div {
++  color: var(--test);
+   color: var(--test);
+   color: fallback;
++  color: var(--test, fallback);
++  background: linear-gradient(var(--a), var(--b));
+   background: linear-gradient(var(--a), var(--b));
+   background: linear-gradient(var(--a), var(--b), true);
++  background: linear-gradient(var(--a), var(--b), var(--defined));
+   background: linear-gradient(var(--a), true , var(--b));
++  background: linear-gradient(var(--a), var(--defined) , var(--b));
+   background: linear-gradient(var(--a), true , var(--b), true);
++  background: linear-gradient(var(--a), var(--defined) , var(--b), var(--defined));
+ }
+diff --git a/test/index.js b/test/index.js
+index fc2441c..18cb2a7 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -215,7 +215,7 @@ test("circular variable references", function(t) {
+   const result = compareFixtures(t, "circular-reference")
+   t.equal(
+     result.messages[0].text,
+-    "Circular variable reference: --color",
++    "Circular variable reference: --bg-color",
+     "should add a warning for circular reference"
+   )
+   t.end()
+-- 
+2.33.1
+

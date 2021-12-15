@@ -1,0 +1,26 @@
+From f9b6265820d351b1c8c9e888ba621ce1e29eae1f Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Fri, 1 Aug 2014 10:22:14 +0200
+Subject: [PATCH 004/186] Add note about `postcss-vars`
+
+---
+ README.md | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/README.md b/README.md
+index d90dc32..7621b81 100755
+--- a/README.md
++++ b/README.md
+@@ -7,6 +7,9 @@ A [PostCSS](https://github.com/postcss/postcss) plugin to polyfill the
+ 
+ _[Checkout opened issue to know the state of this plugin](issues)._
+ 
++Why not `postcss-vars` ? Because [there is already a plugin with this name](http://github.com/iamvdo/postcss-vars) that have severals bugs & untested code.
++But I look forward to merge those 2 plugins & deprecate this one [ref](https://github.com/iamvdo/postcss-vars/issues/4).
++
+ ## Installation
+ 
+ ```
+-- 
+2.33.1
+

@@ -1,0 +1,244 @@
+From 837da4954fe6683e98c866dfefd64a54bd6b4607 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 20 Jun 2019 08:13:57 -0400
+Subject: [PATCH 152/186] 8.0.11
+
+* Added: Synchronous transforms when async is unnecessary
+  https://github.com/postcss/postcss-custom-properties/pull/181
+
+* Fixed: Unexpected mutations to imported Custom Properties (thank @EECOLOR)
+  https://github.com/postcss/postcss-custom-properties/pull/182
+
+* Fixed: Transforms throwing over unknown Custom Properties
+---
+ .rollup.js                                    |  4 +-
+ CHANGELOG.md                                  |  6 +++
+ package.json                                  | 44 ++++++++++++-------
+ src/index.js                                  | 16 ++++++-
+ src/lib/get-custom-properties-from-imports.js |  2 +-
+ src/lib/get-custom-properties-from-root.js    |  2 +-
+ src/lib/postcss-values-parser.js              |  5 +++
+ src/lib/transform-properties.js               |  2 +-
+ src/lib/transform-value-ast.js                |  6 +--
+ 9 files changed, 61 insertions(+), 26 deletions(-)
+ create mode 100644 src/lib/postcss-values-parser.js
+
+diff --git a/.rollup.js b/.rollup.js
+index 56d7981..829ad87 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -3,8 +3,8 @@ import babel from 'rollup-plugin-babel';
+ export default {
+ 	input: 'src/index.js',
+ 	output: [
+-		{ file: 'index.js', format: 'cjs', sourcemap: true },
+-		{ file: 'index.mjs', format: 'esm', sourcemap: true }
++		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
++		{ file: 'index.esm.mjs', format: 'esm', sourcemap: true }
+ 	],
+ 	plugins: [
+ 		babel({
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 6021c8c..2f900d3 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,11 @@
+ # Changes to PostCSS Custom Properties
+ 
++### 8.0.11 (June 20, 2019)
++
++- Added: Synchronous transforms when async is unnecessary (thank @eteeselink)
++- Fixed: Unexpected mutations to imported Custom Properties (thank @EECOLOR)
++- Fixed: Transforms throwing over unknown Custom Properties
++
+ ### 8.0.10 (April 1, 2019)
+ 
+ - Added: Support for ignoring lines and or blocks using
+diff --git a/package.json b/package.json
+index 2fce5ad..3964aa9 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "8.0.10",
++  "version": "8.0.11",
+   "description": "Use Custom Properties Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -10,43 +10,53 @@
+   "repository": "postcss/postcss-custom-properties",
+   "homepage": "https://github.com/postcss/postcss-custom-properties#readme",
+   "bugs": "https://github.com/postcss/postcss-custom-properties/issues",
+-  "main": "index.js",
+-  "module": "index.mjs",
++  "main": "index.cjs.js",
++  "module": "index.esm.mjs",
+   "files": [
+-    "index.js",
+-    "index.js.map",
+-    "index.mjs",
+-    "index.mjs.map"
++    "index.cjs.js",
++    "index.cjs.js.map",
++    "index.esm.mjs",
++    "index.esm.mjs.map"
+   ],
+   "scripts": {
+     "prepublishOnly": "npm test",
+     "pretest:tape": "rollup -c .rollup.js --silent",
+     "test": "npm run test:js && npm run test:tape",
+-    "test:js": "eslint src/**/*.js --cache --ignore-path .gitignore --quiet",
++    "test:js": "eslint src/{*,**/*}.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+     "node": ">=6.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.14",
+-    "postcss-values-parser": "^3.0.3"
++    "postcss": "^7.0.17",
++    "postcss-values-parser": "^2.0.1"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.4.0",
++    "@babel/core": "^7.4.5",
+     "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+-    "@babel/preset-env": "^7.4.2",
+-    "babel-eslint": "^10.0.1",
++    "@babel/preset-env": "^7.4.5",
++    "babel-eslint": "^10.0.2",
+     "eslint": "^5.16.0",
+-    "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^4.0.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^1.7.4",
++    "rollup": "^1.15.6",
+     "rollup-plugin-babel": "^4.3.2"
+   },
+   "eslintConfig": {
+-    "extends": "dev",
+-    "parser": "babel-eslint"
++    "env": {
++      "browser": true,
++      "es6": true,
++      "node": true
++    },
++    "extends": "eslint:recommended",
++    "parser": "babel-eslint",
++    "parserOptions": {
++      "ecmaVersion": 2018,
++      "impliedStrict": true,
++      "sourceType": "module"
++    },
++    "root": true
+   },
+   "keywords": [
+     "postcss",
+diff --git a/src/index.js b/src/index.js
+index b39e9ae..6b24394 100755
+--- a/src/index.js
++++ b/src/index.js
+@@ -17,8 +17,17 @@ export default postcss.plugin('postcss-custom-properties', opts => {
+ 	// promise any custom selectors are imported
+ 	const customPropertiesPromise = getCustomPropertiesFromImports(importFrom);
+ 
+-	return async root => {
++	// synchronous transform
++	const syncTransform = root => {
++		const customProperties = getCustomPropertiesFromRoot(root, { preserve });
++
++		transformProperties(root, customProperties, { preserve });
++	};
++
++	// asynchronous transform
++	const asyncTransform = async root => {
+ 		const customProperties = Object.assign(
++			{},
+ 			await customPropertiesPromise,
+ 			getCustomPropertiesFromRoot(root, { preserve })
+ 		);
+@@ -27,4 +36,9 @@ export default postcss.plugin('postcss-custom-properties', opts => {
+ 
+ 		transformProperties(root, customProperties, { preserve });
+ 	};
++
++	// whether to return synchronous function if no asynchronous operations are requested
++	const canReturnSyncFunction = importFrom.length === 0 && exportTo.length === 0;
++
++	return canReturnSyncFunction ? syncTransform : asyncTransform;
+ });
+diff --git a/src/lib/get-custom-properties-from-imports.js b/src/lib/get-custom-properties-from-imports.js
+index 8f0d84f..cb79222 100644
+--- a/src/lib/get-custom-properties-from-imports.js
++++ b/src/lib/get-custom-properties-from-imports.js
+@@ -1,7 +1,7 @@
+ import fs from 'fs';
+ import path from 'path';
+ import postcss from 'postcss';
+-import { parse } from 'postcss-values-parser';
++import { parse } from './postcss-values-parser';
+ import getCustomPropertiesFromRoot from './get-custom-properties-from-root';
+ 
+ /* Get Custom Properties from CSS File
+diff --git a/src/lib/get-custom-properties-from-root.js b/src/lib/get-custom-properties-from-root.js
+index 0a7399c..ceb1287 100644
+--- a/src/lib/get-custom-properties-from-root.js
++++ b/src/lib/get-custom-properties-from-root.js
+@@ -1,4 +1,4 @@
+-import { parse } from 'postcss-values-parser';
++import { parse } from './postcss-values-parser';
+ import { isBlockIgnored } from './is-ignored';
+ 
+ // return custom selectors from the css root, conditionally removing them
+diff --git a/src/lib/postcss-values-parser.js b/src/lib/postcss-values-parser.js
+new file mode 100644
+index 0000000..dceacd8
+--- /dev/null
++++ b/src/lib/postcss-values-parser.js
+@@ -0,0 +1,5 @@
++import valueParser from 'postcss-values-parser';
++
++export function parse (string) {
++	return valueParser(string).parse();
++}
+diff --git a/src/lib/transform-properties.js b/src/lib/transform-properties.js
+index 483383c..d138176 100644
+--- a/src/lib/transform-properties.js
++++ b/src/lib/transform-properties.js
+@@ -1,4 +1,4 @@
+-import { parse } from 'postcss-values-parser';
++import { parse } from './postcss-values-parser';
+ import transformValueAST from './transform-value-ast';
+ import { isRuleIgnored } from './is-ignored';
+ 
+diff --git a/src/lib/transform-value-ast.js b/src/lib/transform-value-ast.js
+index a748144..8e67064 100644
+--- a/src/lib/transform-value-ast.js
++++ b/src/lib/transform-value-ast.js
+@@ -3,10 +3,10 @@ export default function transformValueAST(root, customProperties) {
+ 		root.nodes.slice().forEach(child => {
+ 			if (isVarFunction(child)) {
+ 				// eslint-disable-next-line no-unused-vars
+-				const [propertyNode, comma, ...fallbacks] = child.nodes;
++				const [propertyNode, comma, ...fallbacks] = child.nodes.slice(1, -1);
+ 				const { value: name } = propertyNode;
+ 
+-				if (name in customProperties) {
++				if (name in Object(customProperties)) {
+ 					// conditionally replace a known custom property
+ 					const nodes = asClonedArrayWithBeforeSpacing(customProperties[name], child.raws.before);
+ 
+@@ -45,7 +45,7 @@ function retransformValueAST(root, customProperties, withoutProperty) {
+ const varRegExp = /^var$/i;
+ 
+ // whether the node is a var() function
+-const isVarFunction = node => node.type === 'func' && varRegExp.test(node.name) && Object(node.nodes).length > 0;
++const isVarFunction = node => node.type === 'func' && varRegExp.test(node.value) && Object(node.nodes).length > 0;
+ 
+ // return an array with its nodes cloned, preserving the raw
+ const asClonedArrayWithBeforeSpacing = (array, beforeSpacing) => {
+-- 
+2.33.1
+

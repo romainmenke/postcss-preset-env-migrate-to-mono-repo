@@ -1,0 +1,39 @@
+From f9b15338ef9367906b61ed39dc69cc50210647dd Mon Sep 17 00:00:00 2001
+From: Jed Mao <jedmao@outlook.com>
+Date: Mon, 7 Sep 2015 01:48:20 -0500
+Subject: [PATCH 12/31] Upgrade to Postcss 5.x
+
+---
+ index.js     | 2 +-
+ package.json | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/index.js b/index.js
+index 13507fd..cbb5aca 100755
+--- a/index.js
++++ b/index.js
+@@ -16,7 +16,7 @@ var DECIMAL_PRECISION = 100000 // 5 decimals
+  */
+ module.exports = postcss.plugin("postcss-color-hex-alpha", function() {
+   return function(style) {
+-    style.eachDecl(function transformDecl(decl) {
++    style.walkDecls(function transformDecl(decl) {
+       if (!decl.value || decl.value.indexOf("#") === -1) {
+         return
+       }
+diff --git a/package.json b/package.json
+index f659e66..9972cd0 100644
+--- a/package.json
++++ b/package.json
+@@ -24,7 +24,7 @@
+   ],
+   "dependencies": {
+     "color": "^0.10.1",
+-    "postcss": "^4.1.16",
++    "postcss": "^5.0.4",
+     "postcss-message-helpers": "^2.0.0"
+   },
+   "devDependencies": {
+-- 
+2.33.1
+

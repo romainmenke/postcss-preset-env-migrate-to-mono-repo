@@ -1,0 +1,272 @@
+From 78e550eb0e60c00f7430c70f5285872c2c8d1a40 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 31 Mar 2015 10:00:18 +0200
+Subject: [PATCH 058/186] Replace jscs+jshint by eslint
+
+---
+ .eslintrc     |  26 +++++++++
+ index.js      | 150 +++++++++++++++++++++++++-------------------------
+ package.json  |   6 +-
+ test/index.js |   8 +--
+ 4 files changed, 107 insertions(+), 83 deletions(-)
+ create mode 100644 .eslintrc
+
+diff --git a/.eslintrc b/.eslintrc
+new file mode 100644
+index 0000000..db38935
+--- /dev/null
++++ b/.eslintrc
+@@ -0,0 +1,26 @@
++---
++ecmaFeatures:
++  modules: true
++
++env:
++  es6: true
++  browser: true
++  node: true
++
++# 0: off, 1: warning, 2: error
++rules:
++  # semicolons are useless
++  semi: [2, "never"]
++
++  quotes: [2, "double"]
++
++  # 2 spaces indentation
++  indent: [2, 2]
++
++  # trailing coma are cool for diff
++  comma-dangle: [2, "always-multiline"]
++
++  # enforce comma at eol (never before)
++  comma-style: [2, "last"]
++
++  valid-jsdoc: 2
+diff --git a/index.js b/index.js
+index 78f1d14..cf6896c 100755
+--- a/index.js
++++ b/index.js
+@@ -13,6 +13,79 @@ var VAR_PROP_IDENTIFIER = "--"
+ var VAR_FUNC_IDENTIFIER = "var"
+ var RE_VAR = /([\w-]+)(?:\s*,\s*)?(.*)?/ // matches `name[, fallback]`, captures "name" and "fallback"
+ 
++/**
++ * Resolve CSS variables in a value
++ *
++ * The second argument to a CSS variable function, if provided, is a fallback
++ * value, which is used as the substitution value when the referenced variable
++ * is invalid.
++ *
++ * var(name[, fallback])
++ *
++ * @param {String} value A property value known to contain CSS variable functions
++ * @param {Object} variables A map of variable names and values
++ * @param {Object} source source object of the declaration containing the rule
++ * @return {String} A property value with all CSS variables substituted.
++ */
++
++function resolveValue(value, variables, source) {
++  var results = []
++
++  var start = value.indexOf(VAR_FUNC_IDENTIFIER + "(")
++  if (start === -1) {
++    return [value]
++  }
++
++  var matches = balanced("(", ")", value.substring(start))
++
++  if (!matches) {
++    throw new SyntaxError("missing closing ')' in the value '" + value + "'")
++  }
++
++  if (matches.body === "") {
++    throw new Error("var() must contain a non-whitespace string")
++  }
++
++  matches.body.replace(RE_VAR, function(_, name, fallback) {
++    var replacement = variables[name]
++    if (!replacement && !fallback) {
++      console.warn(helpers.message("variable '" + name + "' is undefined and used without a fallback", source))
++    }
++
++    // prepend with fallbacks
++    if (fallback) {
++      // resolve the end of the expression before the rest
++      (matches.post ? resolveValue(matches.post, variables, source) : [""]).forEach(function(afterValue) {
++        // resolve fallback values
++        resolveValue(fallback, variables, source).forEach(function(fbValue) {
++          results.push(value.slice(0, start) + fbValue + afterValue)
++        })
++      })
++    }
++
++    // replace with computed custom properties
++    if (replacement) {
++      // resolve the end of the expression
++      (matches.post ? resolveValue(matches.post, variables, source) : [""]).forEach(function(afterValue) {
++        // resolve replacement if it use a custom property
++        resolveValue(replacement, variables, source).forEach(function(replacementValue) {
++          results.push(value.slice(0, start) + replacementValue + afterValue)
++        })
++      })
++    }
++
++    // nothing, just keep original value
++    if (!replacement && !fallback) {
++      // resolve the end of the expression
++      (matches.post ? resolveValue(matches.post, variables, source) : [""]).forEach(function(afterValue) {
++        results.push(value.slice(0, start) + VAR_FUNC_IDENTIFIER + "(" + name + ")" + afterValue)
++      })
++    }
++  })
++
++  return results
++}
++
+ /**
+  * Module export.
+  */
+@@ -56,14 +129,14 @@ module.exports = function(options) {
+         return
+       }
+ 
+-      rule.each(function(decl, i) {
++      rule.each(function(decl, index) {
+         var prop = decl.prop
+         if (prop && prop.indexOf(VAR_PROP_IDENTIFIER) === 0) {
+           if (!map[prop] || !importantMap[prop] || decl.important) {
+             map[prop] = decl.value
+             importantMap[prop] = decl.important
+           }
+-          toRemove.push(i)
++          toRemove.push(index)
+         }
+       })
+ 
+@@ -107,76 +180,3 @@ module.exports = function(options) {
+     })
+   }
+ }
+-
+-/**
+- * Resolve CSS variables in a value
+- *
+- * The second argument to a CSS variable function, if provided, is a fallback
+- * value, which is used as the substitution value when the referenced variable
+- * is invalid.
+- *
+- * var(name[, fallback])
+- *
+- * @param {String} value A property value known to contain CSS variable functions
+- * @param {Object} variables A map of variable names and values
+- * @param {Object} source source object of the declaration containing the rule
+- * @return {String} A property value with all CSS variables substituted.
+- */
+-
+-function resolveValue(value, variables, source) {
+-  var results = []
+-
+-  var start = value.indexOf(VAR_FUNC_IDENTIFIER + "(")
+-  if (start === -1) {
+-    return [value]
+-  }
+-
+-  var matches = balanced("(", ")", value.substring(start))
+-
+-  if (!matches) {
+-    throw new SyntaxError("missing closing ')' in the value '" + value + "'")
+-  }
+-
+-  if (matches.body === "") {
+-    throw new Error("var() must contain a non-whitespace string")
+-  }
+-
+-  matches.body.replace(RE_VAR, function(_, name, fallback) {
+-    var replacement = variables[name]
+-    if (!replacement && !fallback) {
+-      console.warn(helpers.message("variable '" + name + "' is undefined and used without a fallback", source))
+-    }
+-
+-    // prepend with fallbacks
+-    if (fallback) {
+-      // resolve the end of the expression before the rest
+-      (matches.post ? resolveValue(matches.post, variables, source) : [""]).forEach(function(afterValue) {
+-        // resolve fallback values
+-        resolveValue(fallback, variables, source).forEach(function(fbValue) {
+-          results.push(value.slice(0, start) + fbValue + afterValue)
+-        })
+-      })
+-    }
+-
+-    // replace with computed custom properties
+-    if (replacement) {
+-      // resolve the end of the expression
+-      (matches.post ? resolveValue(matches.post, variables, source) : [""]).forEach(function(afterValue) {
+-        // resolve replacement if it use a custom property
+-        resolveValue(replacement, variables, source).forEach(function(replacementValue) {
+-          results.push(value.slice(0, start) + replacementValue + afterValue)
+-        })
+-      })
+-    }
+-
+-    // nothing, just keep original value
+-    if (!replacement && !fallback) {
+-      // resolve the end of the expression
+-      (matches.post ? resolveValue(matches.post, variables, source) : [""]).forEach(function(afterValue) {
+-        results.push(value.slice(0, start) + VAR_FUNC_IDENTIFIER + "(" + name + ")" + afterValue)
+-      })
+-    }
+-  })
+-
+-  return results
+-}
+diff --git a/package.json b/package.json
+index 0c290f4..5c30b80 100644
+--- a/package.json
++++ b/package.json
+@@ -26,13 +26,11 @@
+     "postcss-message-helpers": "^2.0.0"
+   },
+   "devDependencies": {
+-    "jscs": "^1.6.2",
+-    "jshint": "^2.5.6",
++    "eslint": "^0.18.0",
+     "postcss": "^4.0.0",
+     "tape": "^3.0.0"
+   },
+   "scripts": {
+-    "lint": "jscs *.js **/*.js && jshint . --exclude-path .gitignore",
+-    "test": "npm run lint && tape test"
++    "test": "eslint . && tape test"
+   }
+ }
+diff --git a/test/index.js b/test/index.js
+index d2ba9be..0820bf9 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -50,8 +50,8 @@ test("accepts variables defined from JavaScript, and overrides local definitions
+     variables: {
+       "--test-one": "js-one",
+       "--test-two": "js-two",
+-      "--test-three": "js-three"
+-    }
++      "--test-three": "js-three",
++    },
+   })
+   t.end()
+ })
+@@ -60,8 +60,8 @@ test("prefixes js defined variabled with a double dash automatically", function(
+   compareFixtures(t, "automatic-variable-prefix", {
+     variables: {
+       unprefixed: "blue",
+-      "--prefixed":  "white"
+-    }
++      "--prefixed": "white",
++    },
+   })
+   t.end()
+ })
+-- 
+2.33.1
+

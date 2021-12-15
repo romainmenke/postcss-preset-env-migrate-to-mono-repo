@@ -1,0 +1,437 @@
+From 25d68db4e24c26316e8642e99fb3bddcec33d92c Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 26 Sep 2018 00:22:25 -0400
+Subject: [PATCH 143/186] 8.0.6
+
+---
+ CHANGELOG.md                                  |  5 ++
+ index.js                                      | 12 ++--
+ ... => get-custom-properties-from-imports.js} | 60 ++++++++-----------
+ ....js => get-custom-properties-from-root.js} |  2 +-
+ lib/transform-properties.js                   |  9 +--
+ ... => write-custom-properties-to-exports.js} | 28 ++++-----
+ package.json                                  |  8 +--
+ test/basic.css                                |  1 +
+ test/basic.expect.css                         |  2 +
+ test/basic.import-is-empty.expect.css         |  2 +
+ test/basic.import.expect.css                  |  2 +
+ test/basic.preserve.expect.css                |  4 ++
+ 12 files changed, 69 insertions(+), 66 deletions(-)
+ rename lib/{import-from.js => get-custom-properties-from-imports.js} (50%)
+ rename lib/{get-custom-properties.js => get-custom-properties-from-root.js} (96%)
+ rename lib/{export-to.js => write-custom-properties-to-exports.js} (79%)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 65182c0..8dc4cff 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Custom Properties
+ 
++### 8.0.6 (September 21, 2018)
++
++- Fixed: Issue with regular `:root` and `html` properties not getting polyfilled
++- Updated: `postcss` to 7.0.3 (patch)
++
+ ### 8.0.5 (September 21, 2018)
+ 
+ - Fixed: Issue with multiple `importFrom` not getting combined
+diff --git a/index.js b/index.js
+index 35a4a54..b39e9ae 100755
+--- a/index.js
++++ b/index.js
+@@ -1,8 +1,8 @@
+ import postcss from 'postcss';
+-import getCustomProperties from './lib/get-custom-properties';
++import getCustomPropertiesFromRoot from './lib/get-custom-properties-from-root';
++import getCustomPropertiesFromImports from './lib/get-custom-properties-from-imports';
+ import transformProperties from './lib/transform-properties';
+-import importCustomPropertiesFromSources from './lib/import-from';
+-import exportCustomPropertiesToDestinations from './lib/export-to';
++import writeCustomPropertiesToExports from './lib/write-custom-properties-to-exports';
+ 
+ export default postcss.plugin('postcss-custom-properties', opts => {
+ 	// whether to preserve custom selectors and rules using them
+@@ -15,15 +15,15 @@ export default postcss.plugin('postcss-custom-properties', opts => {
+ 	const exportTo = [].concat(Object(opts).exportTo || []);
+ 
+ 	// promise any custom selectors are imported
+-	const customPropertiesPromise = importCustomPropertiesFromSources(importFrom);
++	const customPropertiesPromise = getCustomPropertiesFromImports(importFrom);
+ 
+ 	return async root => {
+ 		const customProperties = Object.assign(
+ 			await customPropertiesPromise,
+-			getCustomProperties(root, { preserve })
++			getCustomPropertiesFromRoot(root, { preserve })
+ 		);
+ 
+-		await exportCustomPropertiesToDestinations(customProperties, exportTo);
++		await writeCustomPropertiesToExports(customProperties, exportTo);
+ 
+ 		transformProperties(root, customProperties, { preserve });
+ 	};
+diff --git a/lib/import-from.js b/lib/get-custom-properties-from-imports.js
+similarity index 50%
+rename from lib/import-from.js
+rename to lib/get-custom-properties-from-imports.js
+index e6ad80c..d703778 100644
+--- a/lib/import-from.js
++++ b/lib/get-custom-properties-from-imports.js
+@@ -2,32 +2,26 @@ import fs from 'fs';
+ import path from 'path';
+ import postcss from 'postcss';
+ import valueParser from 'postcss-values-parser';
+-import getCustomProperties from './get-custom-properties';
++import getCustomPropertiesFromRoot from './get-custom-properties-from-root';
+ 
+-/* Import Custom Properties from CSS AST
++/* Get Custom Properties from CSS File
+ /* ========================================================================== */
+ 
+-function importCustomPropertiesFromCSSAST(root) {
+-	return getCustomProperties(root, { preserve: true });
+-}
+-
+-/* Import Custom Properties from CSS File
+-/* ========================================================================== */
++async function getCustomPropertiesFromCSSFile(from) {
++	const css = await readFile(from);
++	const root = postcss.parse(css, { from });
+ 
+-async function importCustomPropertiesFromCSSFile(from) {
+-	const css = await readFile(path.resolve(from));
+-	const root = postcss.parse(css, { from: path.resolve(from) });
+-
+-	return importCustomPropertiesFromCSSAST(root);
++	return getCustomPropertiesFromRoot(root, { preserve: true });
+ }
+ 
+-/* Import Custom Properties from Object
++/* Get Custom Properties from Object
+ /* ========================================================================== */
+ 
+-function importCustomPropertiesFromObject(object) {
++function getCustomPropertiesFromObject(object) {
+ 	const customProperties = Object.assign(
+ 		{},
+-		Object(object).customProperties || Object(object)['custom-properties']
++		Object(object).customProperties,
++		Object(object)['custom-properties']
+ 	);
+ 
+ 	for (const key in customProperties) {
+@@ -37,28 +31,28 @@ function importCustomPropertiesFromObject(object) {
+ 	return customProperties;
+ }
+ 
+-/* Import Custom Properties from JSON file
++/* Get Custom Properties from JSON file
+ /* ========================================================================== */
+ 
+-async function importCustomPropertiesFromJSONFile(from) {
+-	const object = await readJSON(path.resolve(from));
++async function getCustomPropertiesFromJSONFile(from) {
++	const object = await readJSON(from);
+ 
+-	return importCustomPropertiesFromObject(object);
++	return getCustomPropertiesFromObject(object);
+ }
+ 
+-/* Import Custom Properties from JS file
++/* Get Custom Properties from JS file
+ /* ========================================================================== */
+ 
+-async function importCustomPropertiesFromJSFile(from) {
+-	const object = await import(path.resolve(from));
++async function getCustomPropertiesFromJSFile(from) {
++	const object = await import(from);
+ 
+-	return importCustomPropertiesFromObject(object);
++	return getCustomPropertiesFromObject(object);
+ }
+ 
+-/* Import Custom Properties from Sources
++/* Get Custom Properties from Imports
+ /* ========================================================================== */
+ 
+-export default function importCustomPropertiesFromSources(sources) {
++export default function getCustomPropertiesFromImports(sources) {
+ 	return sources.map(source => {
+ 		if (source instanceof Promise) {
+ 			return source;
+@@ -75,7 +69,7 @@ export default function importCustomPropertiesFromSources(sources) {
+ 		}
+ 
+ 		// source pathname
+-		const from = String(opts.from || '');
++		const from = path.resolve(String(opts.from || ''));
+ 
+ 		// type of file being read from
+ 		const type = (opts.type || path.extname(from).slice(1)).toLowerCase();
+@@ -84,23 +78,19 @@ export default function importCustomPropertiesFromSources(sources) {
+ 	}).reduce(async (customProperties, source) => {
+ 		const { type, from } = await source;
+ 
+-		if (type === 'ast') {
+-			return Object.assign(await customProperties, importCustomPropertiesFromCSSAST(from));
+-		}
+-
+ 		if (type === 'css') {
+-			return Object.assign(await customProperties, await importCustomPropertiesFromCSSFile(from));
++			return Object.assign(await customProperties, await getCustomPropertiesFromCSSFile(from));
+ 		}
+ 
+ 		if (type === 'js') {
+-			return Object.assign(await customProperties, await importCustomPropertiesFromJSFile(from));
++			return Object.assign(await customProperties, await getCustomPropertiesFromJSFile(from));
+ 		}
+ 
+ 		if (type === 'json') {
+-			return Object.assign(await customProperties, await importCustomPropertiesFromJSONFile(from));
++			return Object.assign(await customProperties, await getCustomPropertiesFromJSONFile(from));
+ 		}
+ 
+-		return Object.assign(await customProperties, await importCustomPropertiesFromObject(await source));
++		return Object.assign(await customProperties, await getCustomPropertiesFromObject(await source));
+ 	}, {});
+ }
+ 
+diff --git a/lib/get-custom-properties.js b/lib/get-custom-properties-from-root.js
+similarity index 96%
+rename from lib/get-custom-properties.js
+rename to lib/get-custom-properties-from-root.js
+index c60fbd5..3646b26 100644
+--- a/lib/get-custom-properties.js
++++ b/lib/get-custom-properties-from-root.js
+@@ -1,7 +1,7 @@
+ import valueParser from 'postcss-values-parser';
+ 
+ // return custom selectors from the css root, conditionally removing them
+-export default function getCustomProperties(root, opts) {
++export default function getCustomPropertiesFromRoot(root, opts) {
+ 	// initialize custom selectors
+ 	const customPropertiesFromHtmlElement = {};
+ 	const customPropertiesFromRootPsuedo = {};
+diff --git a/lib/transform-properties.js b/lib/transform-properties.js
+index 283fd10..9fceaf1 100644
+--- a/lib/transform-properties.js
++++ b/lib/transform-properties.js
+@@ -22,14 +22,11 @@ export default (root, customProperties, opts) => {
+ 	});
+ };
+ 
+-// match html and :root rules
+-const htmlOrRootSelectorRegExp = /^(html|:root)$/i;
++// match custom properties
++const customPropertyRegExp = /^--[A-z][\w-]*$/;
+ 
+ // match custom property inclusions
+ const customPropertiesRegExp = /(^|[^\w-])var\([\W\w]+\)/;
+ 
+-// whether the declaration has a parent rule that is either html or :root
+-const isDeclChildOfHtmlOrRootRule = decl => Object(decl.parent).type === 'rule' && htmlOrRootSelectorRegExp.test(decl.parent.selector);
+-
+ // whether the declaration should be potentially transformed
+-const isTransformableDecl = decl => customPropertiesRegExp.test(decl.value) && !isDeclChildOfHtmlOrRootRule(decl);
++const isTransformableDecl = decl => !customPropertyRegExp.test(decl.prop) && customPropertiesRegExp.test(decl.value);
+diff --git a/lib/export-to.js b/lib/write-custom-properties-to-exports.js
+similarity index 79%
+rename from lib/export-to.js
+rename to lib/write-custom-properties-to-exports.js
+index ac9d7f1..a1e8456 100644
+--- a/lib/export-to.js
++++ b/lib/write-custom-properties-to-exports.js
+@@ -1,10 +1,10 @@
+ import fs from 'fs';
+ import path from 'path';
+ 
+-/* Export Custom Properties to CSS File
++/* Write Custom Properties to CSS File
+ /* ========================================================================== */
+ 
+-async function exportCustomPropertiesToCssFile(to, customProperties) {
++async function writeCustomPropertiesToCssFile(to, customProperties) {
+ 	const cssContent = Object.keys(customProperties).reduce((cssLines, name) => {
+ 		cssLines.push(`\t${name}: ${customProperties[name]};`);
+ 
+@@ -15,10 +15,10 @@ async function exportCustomPropertiesToCssFile(to, customProperties) {
+ 	await writeFile(to, css);
+ }
+ 
+-/* Export Custom Properties to JSON file
++/* Write Custom Properties to JSON file
+ /* ========================================================================== */
+ 
+-async function exportCustomPropertiesToJsonFile(to, customProperties) {
++async function writeCustomPropertiesToJsonFile(to, customProperties) {
+ 	const jsonContent = JSON.stringify({
+ 		'custom-properties': customProperties
+ 	}, null, '  ');
+@@ -27,10 +27,10 @@ async function exportCustomPropertiesToJsonFile(to, customProperties) {
+ 	await writeFile(to, json);
+ }
+ 
+-/* Export Custom Properties to Common JS file
++/* Write Custom Properties to Common JS file
+ /* ========================================================================== */
+ 
+-async function exportCustomPropertiesToCjsFile(to, customProperties) {
++async function writeCustomPropertiesToCjsFile(to, customProperties) {
+ 	const jsContents = Object.keys(customProperties).reduce((jsLines, name) => {
+ 		jsLines.push(`\t\t'${escapeForJS(name)}': '${escapeForJS(customProperties[name])}'`);
+ 
+@@ -41,10 +41,10 @@ async function exportCustomPropertiesToCjsFile(to, customProperties) {
+ 	await writeFile(to, js);
+ }
+ 
+-/* Export Custom Properties to Module JS file
++/* Write Custom Properties to Module JS file
+ /* ========================================================================== */
+ 
+-async function exportCustomPropertiesToMjsFile(to, customProperties) {
++async function writeCustomPropertiesToMjsFile(to, customProperties) {
+ 	const mjsContents = Object.keys(customProperties).reduce((mjsLines, name) => {
+ 		mjsLines.push(`\t'${escapeForJS(name)}': '${escapeForJS(customProperties[name])}'`);
+ 
+@@ -55,10 +55,10 @@ async function exportCustomPropertiesToMjsFile(to, customProperties) {
+ 	await writeFile(to, mjs);
+ }
+ 
+-/* Export Custom Properties to Destinations
++/* Write Custom Properties to Exports
+ /* ========================================================================== */
+ 
+-export default function exportCustomPropertiesToDestinations(customProperties, destinations) {
++export default function writeCustomPropertiesToExports(customProperties, destinations) {
+ 	return Promise.all(destinations.map(async destination => {
+ 		if (destination instanceof Function) {
+ 			await destination(defaultCustomPropertiesToJSON(customProperties));
+@@ -86,19 +86,19 @@ export default function exportCustomPropertiesToDestinations(customProperties, d
+ 				const customPropertiesJSON = toJSON(customProperties);
+ 
+ 				if (type === 'css') {
+-					await exportCustomPropertiesToCssFile(to, customPropertiesJSON);
++					await writeCustomPropertiesToCssFile(to, customPropertiesJSON);
+ 				}
+ 
+ 				if (type === 'js') {
+-					await exportCustomPropertiesToCjsFile(to, customPropertiesJSON);
++					await writeCustomPropertiesToCjsFile(to, customPropertiesJSON);
+ 				}
+ 
+ 				if (type === 'json') {
+-					await exportCustomPropertiesToJsonFile(to, customPropertiesJSON);
++					await writeCustomPropertiesToJsonFile(to, customPropertiesJSON);
+ 				}
+ 
+ 				if (type === 'mjs') {
+-					await exportCustomPropertiesToMjsFile(to, customPropertiesJSON);
++					await writeCustomPropertiesToMjsFile(to, customPropertiesJSON);
+ 				}
+ 			}
+ 		}
+diff --git a/package.json b/package.json
+index 2853879..6078fd1 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "8.0.5",
++  "version": "8.0.6",
+   "description": "Use Custom Properties Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -21,7 +21,7 @@
+   "scripts": {
+     "prepublishOnly": "npm test",
+     "pretest": "rollup -c .rollup.js --silent",
+-    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
++    "test": "npm run test:js && npm run test:tape",
+     "test:js": "eslint *.js lib/*.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+@@ -29,14 +29,14 @@
+     "node": ">=6.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.2",
++    "postcss": "^7.0.3",
+     "postcss-values-parser": "^2.0.0"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.1.0",
+     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+     "@babel/preset-env": "^7.1.0",
+-    "babel-eslint": "^9.0.0",
++    "babel-eslint": "^10.0.0",
+     "eslint": "^5.6.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+diff --git a/test/basic.css b/test/basic.css
+index f42d93e..5f59534 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -7,6 +7,7 @@ html {
+ 	--ref-color: var(--color);
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
++	color: var(--color);
+ }
+ 
+ .test {
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 90691d5..0d36404 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -7,6 +7,8 @@ html {
+ 	--ref-color: var(--color);
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
++	color: rgb(255, 0, 0);
++	color: var(--color);
+ }
+ 
+ .test {
+diff --git a/test/basic.import-is-empty.expect.css b/test/basic.import-is-empty.expect.css
+index 90691d5..0d36404 100644
+--- a/test/basic.import-is-empty.expect.css
++++ b/test/basic.import-is-empty.expect.css
+@@ -7,6 +7,8 @@ html {
+ 	--ref-color: var(--color);
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
++	color: rgb(255, 0, 0);
++	color: var(--color);
+ }
+ 
+ .test {
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+index 597054f..c2cea45 100644
+--- a/test/basic.import.expect.css
++++ b/test/basic.import.expect.css
+@@ -7,6 +7,8 @@ html {
+ 	--ref-color: var(--color);
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
++	color: rgb(255, 0, 0);
++	color: var(--color);
+ }
+ 
+ .test {
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index c6b575b..216f5e8 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -1,3 +1,7 @@
++:root {
++	color: rgb(255, 0, 0);
++}
++
+ .test {
+ 	--skip: gray;
+ 	color: rgb(255, 0, 0);
+-- 
+2.33.1
+

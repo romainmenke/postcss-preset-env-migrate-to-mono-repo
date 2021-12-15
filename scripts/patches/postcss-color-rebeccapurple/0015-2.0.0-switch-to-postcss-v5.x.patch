@@ -1,0 +1,49 @@
+From c4bc1c89bff406154167963244695bccb3d61f98 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 8 Sep 2015 06:35:27 +0200
+Subject: [PATCH 15/34] 2.0.0 (switch to postcss v5.x)
+
+---
+ CHANGELOG.md | 7 ++++++-
+ package.json | 4 +---
+ 2 files changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 4478899..9dffdb1 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,4 +1,9 @@
+-# 1.2.0 - 2015-07-01
++# 2.0.0 - 2015-09-08
++
++- Added: compatibility with postcss v5.x
++- Removed: compatiblity with postcss v4.x
++
++# 1.2.0 - 2015-08-13
+ 
+ - Added: compatibility with postcss v4.1.x
+ ([#4](https://github.com/postcss/postcss-color-rebeccapurple/pull/4))
+diff --git a/package.json b/package.json
+index 7aef2c2..c3a9bb8 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-rebeccapurple",
+-  "version": "1.2.0",
++  "version": "2.0.0",
+   "description": "PostCSS plugin to transform W3C CSS rebeccapurple color to more compatible CSS (rgb())",
+   "keywords": [
+     "css",
+@@ -18,8 +18,6 @@
+     "url": "https://github.com/postcss/postcss-color-rebeccapurple.git"
+   },
+   "files": [
+-    "CHANGELOG.md",
+-    "LICENSE",
+     "index.js"
+   ],
+   "dependencies": {
+-- 
+2.33.1
+

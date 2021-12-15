@@ -1,0 +1,28 @@
+From 6a0b3851d4e2abaef96126b813746f27c1cf1b73 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 27 Aug 2014 08:58:07 +0200
+Subject: [PATCH 025/186] Adjust changelog dates
+
+---
+ CHANGELOG.md | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 58af5fd..64a7837 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,9 +1,9 @@
+-# 0.3.1 - 2014-08-26
++# 0.3.1 - 2014-08-27
+ 
+ * nested custom properties usages are now correctly resolved
+ * undefined var doesn't throw error anymore (just a console warning) & are kept as is in the output
+ 
+-# 0.3.0 - 2014-08-25
++# 0.3.0 - 2014-08-26
+ 
+ * fallback now are always added by default ([see why](http://www.w3.org/TR/css-variables/#invalid-variables))
+ * `map` option renamed to `variables`
+-- 
+2.33.1
+

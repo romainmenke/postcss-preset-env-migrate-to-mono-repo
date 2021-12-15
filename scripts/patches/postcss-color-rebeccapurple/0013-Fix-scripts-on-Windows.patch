@@ -1,0 +1,27 @@
+From afb814675673542eacd9df9454e365ef8a5f8e3b Mon Sep 17 00:00:00 2001
+From: Jed Mao <jedmao@outlook.com>
+Date: Mon, 7 Sep 2015 02:00:40 -0500
+Subject: [PATCH 13/34] Fix scripts on Windows
+
+---
+ package.json | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index d8e58f2..c568c11 100644
+--- a/package.json
++++ b/package.json
+@@ -32,7 +32,9 @@
+     "tape": "^4.0.0"
+   },
+   "scripts": {
+-    "lint": "jscs *.js **/*.js && jshint . --exclude-path .gitignore",
++    "lint": "npm run jscs && npm run jshint",
++    "jscs": "jscs index.js test/index.js",
++    "jshint": "jshint . --exclude-path .gitignore",
+     "test": "npm run lint && tape test"
+   }
+ }
+-- 
+2.33.1
+

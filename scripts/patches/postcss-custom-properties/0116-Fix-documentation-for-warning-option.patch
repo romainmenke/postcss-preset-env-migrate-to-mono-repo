@@ -1,0 +1,25 @@
+From 3f4e7fa930c0de37c930ec50904d88edffbcba1d Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 10 Feb 2018 17:11:05 -0500
+Subject: [PATCH 116/186] Fix documentation for warning option
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 33e5e1c..0b64e6c 100755
+--- a/README.md
++++ b/README.md
+@@ -141,7 +141,7 @@ variables at the end of your CSS.
+ #### `warnings`
+ 
+ Default: `true`
+-Type: `Boolean|Object`
++Type: `Boolean`
+ 
+ Allows you to enable/disable warnings. If true, will enable all warnings.
+ For now, it only allow to disable messages about custom properties definition
+-- 
+2.33.1
+

@@ -1,0 +1,27 @@
+From 1d622ea40de3f078e6ca89dba4a4b0ff8f8519fb Mon Sep 17 00:00:00 2001
+From: Noah Allen <noahtallen@gmail.com>
+Date: Tue, 28 Sep 2021 03:21:01 -0700
+Subject: [PATCH 185/186] Fix type definitions (#257)
+
+The type definitions have slightly invalid syntax.
+{ root: any } should be { root }: { root: any }
+---
+ src/index.d.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/index.d.ts b/src/index.d.ts
+index 59a286d..af24373 100644
+--- a/src/index.d.ts
++++ b/src/index.d.ts
+@@ -20,7 +20,7 @@ export interface PluginOptions {
+ export interface Plugin {
+ 	(options?: PluginOptions): {
+ 		postcssPlugin: 'postcss-custom-properties',
+-		prepare({ root: any }): (
++		prepare({ root }: { root: any }): (
+ 			| {
+ 				Declaration: (decl: any) => void;
+ 				Once?: undefined;
+-- 
+2.33.1
+

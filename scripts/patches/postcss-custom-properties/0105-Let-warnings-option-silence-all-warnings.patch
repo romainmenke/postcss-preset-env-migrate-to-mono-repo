@@ -1,0 +1,83 @@
+From c371abefcb81008b581d0c453fca7354d60a6c86 Mon Sep 17 00:00:00 2001
+From: Bundyo <bundyo@gmail.com>
+Date: Tue, 4 Apr 2017 17:27:52 +0300
+Subject: [PATCH 105/186] Let "warnings" option silence all warnings.
+
+---
+ index.js | 25 ++++++++++++++++++-------
+ 1 file changed, 18 insertions(+), 7 deletions(-)
+
+diff --git a/index.js b/index.js
+index 5e98545..e791104 100755
+--- a/index.js
++++ b/index.js
+@@ -6,6 +6,12 @@ const VAR_FUNC_IDENTIFIER = "var"
+ // matches `name[, fallback]`, captures "name" and "fallback"
+ const RE_VAR = /([\w-]+)(?:\s*,\s*)?\s*(.*)?/
+ 
++/**
++ * Module variables
++ */
++
++let globalWarnings
++
+ /**
+  * Resolve CSS variables.
+  *
+@@ -41,10 +47,12 @@ function resolveValue(value, variables, result, decl) {
+     let post
+     // undefined and without fallback, just keep original value
+     if (!variable && !fallback) {
+-      result.warn(
+-        "variable '" + name + "' is undefined and used without a fallback",
+-        {node: decl}
+-      )
++      if (globalWarnings) {
++        result.warn(
++          "variable '" + name + "' is undefined and used without a fallback",
++          {node: decl}
++        )
++      }
+       post = matches.post
+         ? resolveValue(matches.post, variables, result, decl)
+         : [""]
+@@ -82,7 +90,9 @@ function resolveValue(value, variables, result, decl) {
+       // circular reference encountered
+       if (variable.deps.indexOf(name) !== -1) {
+         if (!fallback) {
+-          result.warn("Circular variable reference: " + name, {node: decl})
++          if (globalWarnings) {
++            result.warn("Circular variable reference: " + name, {node: decl})
++          }
+           variable.value = [variable.value]
+           variable.circular = true
+         }
+@@ -142,7 +152,6 @@ export default postcss.plugin("postcss-custom-properties", (options = {}) => {
+   }
+ 
+   function plugin(style, result) {
+-    const warnings = options.warnings === undefined ? true : options.warnings
+     const variables = prefixVariables(options.variables)
+     const strict = options.strict === undefined ? true : options.strict
+     const appendVariables = options.appendVariables
+@@ -150,6 +159,8 @@ export default postcss.plugin("postcss-custom-properties", (options = {}) => {
+     const map = {}
+     const importantMap = {}
+ 
++    globalWarnings = options.warnings === undefined ? true : options.warnings
++
+     // define variables
+     style.walkRules((rule) => {
+       const toRemove = []
+@@ -163,7 +174,7 @@ export default postcss.plugin("postcss-custom-properties", (options = {}) => {
+         rule.each((decl) => {
+           const prop = decl.prop
+           if (
+-            warnings &&
++            globalWarnings &&
+             prop &&
+             prop.indexOf(VAR_PROP_IDENTIFIER) === 0
+           ) {
+-- 
+2.33.1
+

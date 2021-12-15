@@ -1,0 +1,195 @@
+From 24c108bb4df935c8942bd81509ac3ed5cc8a931a Mon Sep 17 00:00:00 2001
+From: Yvain Liechti <ryuran@gmail.com>
+Date: Sat, 7 Mar 2020 18:44:41 +0100
+Subject: [PATCH 159/186] Allow combined selectors (#199)
+
+---
+ src/lib/get-custom-properties-from-root.js |  4 ++--
+ test/basic.css                             |  9 +++++++++
+ test/basic.expect.css                      | 10 ++++++++++
+ test/basic.import-is-empty.expect.css      | 10 ++++++++++
+ test/basic.import.expect.css               | 10 ++++++++++
+ test/basic.preserve.expect.css             |  4 ++++
+ test/export-properties.css                 |  1 +
+ test/export-properties.js                  |  3 ++-
+ test/export-properties.json                |  3 ++-
+ test/export-properties.mjs                 |  3 ++-
+ 10 files changed, 52 insertions(+), 5 deletions(-)
+
+diff --git a/src/lib/get-custom-properties-from-root.js b/src/lib/get-custom-properties-from-root.js
+index 0a7399c..b00ddeb 100644
+--- a/src/lib/get-custom-properties-from-root.js
++++ b/src/lib/get-custom-properties-from-root.js
+@@ -48,8 +48,8 @@ const rootSelectorRegExp = /^:root$/i;
+ const customPropertyRegExp = /^--[A-z][\w-]*$/;
+ 
+ // whether the node is an html or :root rule
+-const isHtmlRule = node => node.type === 'rule' && htmlSelectorRegExp.test(node.selector) && Object(node.nodes).length;
+-const isRootRule = node => node.type === 'rule' && rootSelectorRegExp.test(node.selector) && Object(node.nodes).length;
++const isHtmlRule = node => node.type === 'rule' && node.selector.split(',').some(item => htmlSelectorRegExp.test(item)) && Object(node.nodes).length;
++const isRootRule = node => node.type === 'rule' && node.selector.split(',').some(item => rootSelectorRegExp.test(item)) && Object(node.nodes).length;
+ 
+ // whether the node is an custom property
+ const isCustomDecl = node => node.type === 'decl' && customPropertyRegExp.test(node.prop);
+diff --git a/test/basic.css b/test/basic.css
+index 1905a66..de125b9 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -11,6 +11,11 @@ html {
+ 	color: var(--color);
+ }
+ 
++:root,
++[data-theme=light] {
++	--theme-color: #053;
++}
++
+ .ignore-line {
+ 	/* postcss-custom-properties: ignore next */
+ 	color: var(--color);
+@@ -67,3 +72,7 @@ html {
+ 		blue
+ 	)/*rtl:red*/;
+ }
++
++.test--combined-selector {
++	color: var(--theme-color);
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index cb41f21..79a0a8a 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -12,6 +12,11 @@ html {
+ 	color: var(--color);
+ }
+ 
++:root,
++[data-theme=light] {
++	--theme-color: #053;
++}
++
+ .ignore-line {
+ 	/* postcss-custom-properties: ignore next */
+ 	color: var(--color);
+@@ -77,3 +82,8 @@ html {
+ 		blue
+ 	)/*rtl:red*/;
+ }
++
++.test--combined-selector {
++	color: #053;
++	color: var(--theme-color);
++}
+diff --git a/test/basic.import-is-empty.expect.css b/test/basic.import-is-empty.expect.css
+index cb41f21..79a0a8a 100644
+--- a/test/basic.import-is-empty.expect.css
++++ b/test/basic.import-is-empty.expect.css
+@@ -12,6 +12,11 @@ html {
+ 	color: var(--color);
+ }
+ 
++:root,
++[data-theme=light] {
++	--theme-color: #053;
++}
++
+ .ignore-line {
+ 	/* postcss-custom-properties: ignore next */
+ 	color: var(--color);
+@@ -77,3 +82,8 @@ html {
+ 		blue
+ 	)/*rtl:red*/;
+ }
++
++.test--combined-selector {
++	color: #053;
++	color: var(--theme-color);
++}
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+index b46818d..5e796f9 100644
+--- a/test/basic.import.expect.css
++++ b/test/basic.import.expect.css
+@@ -12,6 +12,11 @@ html {
+ 	color: var(--color);
+ }
+ 
++:root,
++[data-theme=light] {
++	--theme-color: #053;
++}
++
+ .ignore-line {
+ 	/* postcss-custom-properties: ignore next */
+ 	color: var(--color);
+@@ -78,3 +83,8 @@ html {
+ 		blue
+ 	)/*rtl:red*/;
+ }
++
++.test--combined-selector {
++	color: #053;
++	color: var(--theme-color);
++}
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index 38bb6ab..c43cb4e 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -55,3 +55,7 @@
+ .test--loose-formatting {
+ 	color: rgb(255, 0, 0)/*rtl:red*/;
+ }
++
++.test--combined-selector {
++	color: #053;
++}
+diff --git a/test/export-properties.css b/test/export-properties.css
+index deca81f..649487f 100644
+--- a/test/export-properties.css
++++ b/test/export-properties.css
+@@ -4,4 +4,5 @@
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
+ 	--margin: 0 10px 20px 30px;
++	--theme-color: #053;
+ }
+diff --git a/test/export-properties.js b/test/export-properties.js
+index b2251e1..333bcda 100644
+--- a/test/export-properties.js
++++ b/test/export-properties.js
+@@ -4,6 +4,7 @@ module.exports = {
+ 		'--color': 'rgb(255, 0, 0)',
+ 		'--circular': 'var(--circular-2)',
+ 		'--circular-2': 'var(--circular)',
+-		'--margin': '0 10px 20px 30px'
++		'--margin': '0 10px 20px 30px',
++		'--theme-color': '#053'
+ 	}
+ };
+diff --git a/test/export-properties.json b/test/export-properties.json
+index 82b7f81..d35faf9 100644
+--- a/test/export-properties.json
++++ b/test/export-properties.json
+@@ -4,6 +4,7 @@
+     "--color": "rgb(255, 0, 0)",
+     "--circular": "var(--circular-2)",
+     "--circular-2": "var(--circular)",
+-    "--margin": "0 10px 20px 30px"
++    "--margin": "0 10px 20px 30px",
++    "--theme-color": "#053"
+   }
+ }
+diff --git a/test/export-properties.mjs b/test/export-properties.mjs
+index 06939bc..31af59c 100644
+--- a/test/export-properties.mjs
++++ b/test/export-properties.mjs
+@@ -3,5 +3,6 @@ export const customProperties = {
+ 	'--color': 'rgb(255, 0, 0)',
+ 	'--circular': 'var(--circular-2)',
+ 	'--circular-2': 'var(--circular)',
+-	'--margin': '0 10px 20px 30px'
++	'--margin': '0 10px 20px 30px',
++	'--theme-color': '#053'
+ };
+-- 
+2.33.1
+

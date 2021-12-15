@@ -1,0 +1,32 @@
+From b5e0821b25e2d6fefa42965fb70a94da3803184b Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 2 Dec 2014 16:26:06 +0100
+Subject: [PATCH 048/186] More readable console.warn
+
+---
+ index.js | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index 0e99c1a..09422d6 100755
+--- a/index.js
++++ b/index.js
+@@ -37,7 +37,14 @@ module.exports = function(options) {
+         rule.each(function(decl) {
+           var prop = decl.prop
+           if (prop && prop.indexOf(VAR_PROP_IDENTIFIER) === 0) {
+-            console.warn(helpers.message("Custom property ignored: not scoped to the top-level :root element (" +  rule.selectors + " { ... " + prop + ": ... })" + (rule.parent.type !== "root" ? ", in " + rule.parent.type : ""), decl.source))
++            console.warn(
++              helpers.message(
++                "Custom property ignored: not scoped to the top-level :root element (" +
++                rule.selectors +
++                " { ... " + prop + ": ... })" +
++                (rule.parent.type !== "root" ? ", in " + rule.parent.type : ""),
++              decl.source)
++            )
+           }
+         })
+         return
+-- 
+2.33.1
+

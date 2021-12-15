@@ -1,0 +1,46 @@
+From 8c8f8135f7344702035729f998e9c66a57be7521 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 10 May 2017 15:55:52 -0400
+Subject: [PATCH 20/34] Update JSCS and drop invalid JSCS options
+
+---
+ .jscsrc      | 5 -----
+ package.json | 6 +++---
+ 2 files changed, 3 insertions(+), 8 deletions(-)
+
+diff --git a/.jscsrc b/.jscsrc
+index 29720b3..9afb9dd 100644
+--- a/.jscsrc
++++ b/.jscsrc
+@@ -121,10 +121,5 @@
+   "requireCapitalizedConstructors": true,
+   "safeContextKeyword": "that",
+   "requireDotNotation": true,
+-  "validateJSDoc": {
+-    "checkParamNames": true,
+-    "checkRedundantParams": true,
+-    "requireParamTypes": true
+-  },
+   "requireSpaceAfterLineComment": true
+ }
+diff --git a/package.json b/package.json
+index 9777677..697ee8a 100644
+--- a/package.json
++++ b/package.json
+@@ -24,10 +24,10 @@
+     "postcss": "^6.0.1"
+   },
+   "devDependencies": {
+-    "jscs": "^1.6.2",
+-    "jshint": "^2.5.6",
++    "jscs": "^3.0.7",
++    "jshint": "^2.9.4",
+     "npmpub": "^3.1.0",
+-    "tape": "^4.0.0"
++    "tape": "^4.6.3"
+   },
+   "scripts": {
+     "lint": "npm run jscs && npm run jshint",
+-- 
+2.33.1
+

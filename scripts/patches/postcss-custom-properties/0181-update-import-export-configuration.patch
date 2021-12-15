@@ -1,0 +1,135 @@
+From afd6312a5524b73923d6e74e360fc1f73f6850f6 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 17 Sep 2021 09:01:33 -0400
+Subject: [PATCH 181/186] update import/export configuration
+
+---
+ .rollup.js     | 13 +++++++++----
+ package.json   | 20 ++++++++++++++------
+ src/index.d.ts | 39 +++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 62 insertions(+), 10 deletions(-)
+ create mode 100644 src/index.d.ts
+
+diff --git a/.rollup.js b/.rollup.js
+index 3f9a10c..9041ab2 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -1,10 +1,11 @@
+ import babel from '@rollup/plugin-babel';
++import { copy } from '@web/rollup-plugin-copy'
+ 
+ export default {
+ 	input: 'src/index.js',
+ 	output: [
+-		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true, exports: 'default' },
+-		{ file: 'index.esm.mjs', format: 'esm', sourcemap: true, exports: 'default' }
++		{ file: 'index.cjs', format: 'cjs', exports: 'default' },
++		{ file: 'index.mjs', format: 'esm' }
+ 	],
+ 	plugins: [
+ 		babel({
+@@ -17,10 +18,14 @@ export default {
+ 					corejs: 3,
+ 					loose: true,
+ 					modules: false,
+-					targets: { node: 10 },
++					targets: { node: 12 },
+ 					useBuiltIns: 'entry'
+ 				}]
+ 			]
+-		})
++		}),
++		copy({
++			rootDir: './src',
++			patterns: 'index.d.ts'
++		}),
+ 	]
+ };
+diff --git a/package.json b/package.json
+index 1a9cac1..58607a0 100644
+--- a/package.json
++++ b/package.json
+@@ -10,14 +10,21 @@
+   "repository": "postcss/postcss-custom-properties",
+   "homepage": "https://github.com/postcss/postcss-custom-properties#readme",
+   "bugs": "https://github.com/postcss/postcss-custom-properties/issues",
+-  "main": "index.cjs.js",
+-  "module": "index.esm.mjs",
++  "main": "index.cjs",
++  "module": "index.mjs",
++  "types": "./index.d.ts",
+   "files": [
+-    "index.cjs.js",
+-    "index.cjs.js.map",
+-    "index.esm.mjs",
+-    "index.esm.mjs.map"
++    "index.d.ts",
++    "index.cjs",
++    "index.mjs"
+   ],
++  "exports": {
++    ".": {
++      "import": "./index.mjs",
++      "require": "./index.cjs",
++      "types": "./index.d.ts"
++    }
++  },
+   "scripts": {
+     "prepublishOnly": "npm test",
+     "pretest:tape": "rollup -c .rollup.js --silent",
+@@ -39,6 +46,7 @@
+     "@babel/plugin-syntax-dynamic-import": "7.8.3",
+     "@babel/preset-env": "7.15.6",
+     "@rollup/plugin-babel": "5.3.0",
++    "@web/rollup-plugin-copy": "^0.3.0",
+     "eslint": "7.32.0",
+     "postcss": "8.3.6",
+     "postcss-tape": "6.0.1",
+diff --git a/src/index.d.ts b/src/index.d.ts
+new file mode 100644
+index 0000000..59a286d
+--- /dev/null
++++ b/src/index.d.ts
+@@ -0,0 +1,39 @@
++import type * as PostCSS from 'postcss'
++
++type ImportExportObject = { customProperties: {} }
++type ImportExportFunction = (customProperties?: {}) => ImportExportObject
++type ImportExportFilepath = string
++
++type ImportExport = ImportExportFilepath | ImportExportObject | ImportExportFunction | (ImportExportFilepath | ImportExportObject | ImportExportFunction)[]
++
++export interface PluginOptions {
++	/** Determines whether Custom Properties and properties using custom properties should be preserved in their original form. */
++	preserve?: boolean
++
++	/** Specifies sources where Custom Properties can be imported from, which might be CSS, JS, and JSON files, functions, and directly passed objects. */
++	importFrom?: ImportExport
++
++	/** Specifies destinations where Custom Properties can be exported to, which might be CSS, JS, and JSON files, functions, and directly passed objects. */
++	exportTo?: ImportExport
++}
++
++export interface Plugin {
++	(options?: PluginOptions): {
++		postcssPlugin: 'postcss-custom-properties',
++		prepare({ root: any }): (
++			| {
++				Declaration: (decl: any) => void;
++				Once?: undefined;
++			}
++			| {
++				Once: (root: any) => Promise<void>;
++				Declaration: (decl: any) => void;
++			}
++		)
++	},
++	postcss: true
++}
++
++declare const plugin: Plugin
++
++export default plugin
+-- 
+2.33.1
+

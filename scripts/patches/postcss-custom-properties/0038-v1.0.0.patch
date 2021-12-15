@@ -1,0 +1,24 @@
+From f35b3efd9147b24c651df270964f4f5c0b9087ba Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Sun, 2 Nov 2014 07:47:42 +0100
+Subject: [PATCH 038/186] v1.0.0
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 93dc23d..656ccd2 100755
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "0.4.0",
++  "version": "1.0.0",
+   "description": "PostCSS plugin to polyfill W3C CSS Custom Properties for cascading variables",
+   "keywords": [
+     "css",
+-- 
+2.33.1
+

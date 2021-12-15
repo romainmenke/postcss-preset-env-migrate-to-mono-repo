@@ -1,0 +1,95 @@
+From fd3cb5244c28f4f4adebfb4b35c1a19929a6b5e5 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Mon, 11 Aug 2014 13:28:51 +0200
+Subject: [PATCH 010/186] Add map + refactor tests a bit
+
+---
+ CHANGELOG.md  |  4 ++++
+ README.md     |  4 ++++
+ index.js      |  2 +-
+ test/index.js | 24 ++++++++----------------
+ 4 files changed, 17 insertions(+), 17 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 66c1203..52c77c2 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# unreleased
++
++* Add map option
++
+ # 0.1.0 - 2014-08-01
+ 
+ First release based on [rework-vars](https://github.com/reworkcss/rework-vars) v3.1.1
+diff --git a/README.md b/README.md
+index 18b5734..ab7bf31 100755
+--- a/README.md
++++ b/README.md
+@@ -46,6 +46,10 @@ var out = postcss()
+   .css
+ ```
+ 
++#### `map` (default: `{}`)
++
++Allow you to pass an object of variables
++
+ ---
+ 
+ ## Contributing
+diff --git a/index.js b/index.js
+index ee64463..0ca7710 100755
+--- a/index.js
++++ b/index.js
+@@ -18,7 +18,7 @@ var VAR_FUNC_IDENTIFIER = "var"
+ module.exports = function(options) {
+   return function(style) {
+     options = options || {}
+-    var map = {}
++    var map = options.map || {}
+     var preserve = (options.preserve === true ? true : false)
+ 
+     // define variables
+diff --git a/test/index.js b/test/index.js
+index 434924a..9196718 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -19,27 +19,19 @@ function compareFixtures(t, name, options) {
+   return t.equal(actual, expected, "processed fixture '" + name + "' should be equal to expected output")
+ }
+ 
+-test("throws an error when a variable function is empty", function(t) {
+-  var output = function() {
++test("throw errors", function(t) {
++  t.throws(function() {
+     return postcss(customProperties()).process(fixture("substitution-empty")).css
+-  }
+-  t.throws(output, Error, "postcss-custom-properties: var() must contain a non-whitespace string")
+-  t.end()
+-})
++  }, Error, "postcss-custom-properties: var() must contain a non-whitespace string", "throws an error when a variable function is empty")
+ 
+-test("throws an error when a variable function is malformed", function(t) {
+-  var output = function() {
++  t.throws(function() {
+     return postcss(customProperties()).process(fixture("substitution-malformed")).css
+-  }
+-  t.throws(output, SyntaxError, "postcss-custom-properties: missing closing \")\" in the value \"var(--t, rgba(0,0,0,0.5)\"")
+-  t.end()
+-})
++  }, SyntaxError, "postcss-custom-properties: missing closing \")\" in the value \"var(--t, rgba(0,0,0,0.5)\"", "throws an error when a variable function is malformed")
+ 
+-test("throws an error when a variable function references an undefined variable", function(t) {
+-  var output = function() {
++  t.throws(function() {
+     return postcss(customProperties()).process(fixture("substitution-undefined")).css
+-  }
+-  t.throws(output, Error, "postcss-custom-properties: variable \"--t\" is undefined")
++  }, Error, "postcss-custom-properties: variable \"--t\" is undefined", "throws an error when a variable function references an undefined variable")
++
+   t.end()
+ })
+ 
+-- 
+2.33.1
+

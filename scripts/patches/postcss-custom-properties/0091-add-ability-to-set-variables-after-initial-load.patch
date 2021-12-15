@@ -1,0 +1,154 @@
+From e209388a2705cd83e439f5ac75dfa670ac6f99a5 Mon Sep 17 00:00:00 2001
+From: Joey Baker <joey@byjoeybaker.com>
+Date: Mon, 13 Jul 2015 09:44:06 -0700
+Subject: [PATCH 091/186] add: ability to set variables after initial load
+
+When using this module as part of a live-reload system, devs might
+change the variable list after the module has been loaded. This adds a
+`setVariables` method on the plugin to enable that functionality.
+---
+ index.js                               | 42 ++++++++++++++++++--------
+ test/fixtures/js-override.css          | 13 ++++++++
+ test/fixtures/js-override.expected.css |  8 +++++
+ test/index.js                          | 27 +++++++++++++++++
+ 4 files changed, 78 insertions(+), 12 deletions(-)
+ create mode 100755 test/fixtures/js-override.css
+ create mode 100755 test/fixtures/js-override.expected.css
+
+diff --git a/index.js b/index.js
+index 8205c0b..6c702a2 100755
+--- a/index.js
++++ b/index.js
+@@ -126,23 +126,37 @@ function resolveValue(value, variables, result, decl) {
+   return results
+ }
+ 
++function prefixVariables(variables) {
++  var prefixedVariables = {}
++
++  if (!variables) {
++    return prefixVariables
++  }
++
++  Object.keys(variables).forEach(function(name) {
++    var val = variables[name]
++    if (name.slice(0, 2) !== "--") {
++      name = "--" + name
++    }
++    prefixedVariables[name] = String(val)
++  })
++
++  return prefixedVariables
++}
++
+ /**
+  * Module export.
+  */
+ 
+ module.exports = postcss.plugin("postcss-custom-properties", function(options) {
+-  return function(style, result) {
+-    options = options || {}
+-    var variables = {}
+-    if (options.variables) {
+-      Object.keys(options.variables).forEach(function(name) {
+-        var val = options.variables[name]
+-        if (name.slice(0, 2) !== "--") {
+-          name = "--" + name
+-        }
+-        variables[name] = String(val)
+-      })
+-    }
++  options = options || {}
++
++  function setVariables(variables) {
++    options.variables = prefixVariables(variables)
++  }
++
++  function plugin(style, result) {
++    var variables = prefixVariables(options.variables)
+     var strict = options.strict === undefined ? true : options.strict
+     var appendVariables = options.appendVariables
+     var preserve = options.preserve
+@@ -268,4 +282,8 @@ module.exports = postcss.plugin("postcss-custom-properties", function(options) {
+       }
+     }
+   }
++
++  plugin.setVariables = setVariables
++
++  return plugin
+ })
+diff --git a/test/fixtures/js-override.css b/test/fixtures/js-override.css
+new file mode 100755
+index 0000000..8c4fedc
+--- /dev/null
++++ b/test/fixtures/js-override.css
+@@ -0,0 +1,13 @@
++:root {
++  --test-one: local;
++  --test-two: local;
++}
++
++div {
++  p: var(--test-one);
++  p: var(--test-two);
++  p: var(--test-three);
++  p: var(--test-varception);
++  p: var(--test-jsception);
++  p: var(--test-num);
++}
+diff --git a/test/fixtures/js-override.expected.css b/test/fixtures/js-override.expected.css
+new file mode 100755
+index 0000000..d043e0b
+--- /dev/null
++++ b/test/fixtures/js-override.expected.css
+@@ -0,0 +1,8 @@
++div {
++  p: js-one;
++  p: js-two;
++  p: js-three;
++  p: js-one;
++  p: js-one;
++  p: 1;
++}
+diff --git a/test/index.js b/test/index.js
+index bcba360..ca05477 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -110,6 +110,33 @@ test(
+   }
+ )
+ 
++test("allows users to programatically change the variables", function(t) {
++  var variables = {
++    "--test-one": "js-one",
++    "--test-two": "js-two",
++    "--test-three": "js-three",
++    "--test-varception": "var(--test-one)",
++    "--test-jsception": "var(--test-varception)",
++    "--test-num": 1,
++  }
++  var plugin = customProperties()
++  var name = "js-override"
++  var expected = fs.readFileSync(fixturePath(name + ".expected"), "utf8").trim()
++  var actual
++
++  plugin.setVariables(variables)
++
++  actual = postcss(plugin)
++    .process(fixture(name), {from: fixturePath(name)}).css.trim()
++
++  t.equal(
++    actual, expected,
++    "processed fixture '" + name + "' should be equal to expected output"
++  )
++
++  t.end()
++})
++
+ test("removes variable properties from the output", function(t) {
+   compareFixtures(t, "remove-properties")
+   t.end()
+-- 
+2.33.1
+

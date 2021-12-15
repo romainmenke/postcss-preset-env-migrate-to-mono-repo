@@ -1,0 +1,38 @@
+From 4c3a10ccb2639725ed47ee02a9c9296958b4396b Mon Sep 17 00:00:00 2001
+From: Dmitry Semigradsky <semigradskyd@gmail.com>
+Date: Mon, 15 May 2017 09:50:38 +0300
+Subject: [PATCH 103/186] Fix incorrect export (#69)
+
+---
+ .babelrc     | 3 +++
+ package.json | 1 +
+ 2 files changed, 4 insertions(+)
+
+diff --git a/.babelrc b/.babelrc
+index 6e6df8f..f369203 100644
+--- a/.babelrc
++++ b/.babelrc
+@@ -5,5 +5,8 @@
+         "node": 4
+       }
+     }]
++  ],
++  "plugins": [
++    "add-module-exports"
+   ]
+ }
+diff --git a/package.json b/package.json
+index 34de0cd..0921147 100644
+--- a/package.json
++++ b/package.json
+@@ -23,6 +23,7 @@
+   },
+   "devDependencies": {
+     "babel-cli": "^6.24.1",
++    "babel-plugin-add-module-exports": "^0.2.1",
+     "babel-preset-env": "^1.4.0",
+     "babel-register": "^6.24.1",
+     "eslint": "^3.19.0",
+-- 
+2.33.1
+

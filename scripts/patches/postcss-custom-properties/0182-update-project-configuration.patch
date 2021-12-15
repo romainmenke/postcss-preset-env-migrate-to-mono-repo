@@ -1,0 +1,85 @@
+From 7fe60cb2ef3cf8dd14b6184f16cf72cd5f236589 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 17 Sep 2021 13:20:44 -0400
+Subject: [PATCH 182/186] update project configuration
+
+---
+ .github/workflows/test.yml | 18 ++++++++++++++++++
+ .gitignore                 |  1 +
+ .travis.yml                | 11 -----------
+ README.md                  |  4 ++--
+ 4 files changed, 21 insertions(+), 13 deletions(-)
+ create mode 100644 .github/workflows/test.yml
+ delete mode 100644 .travis.yml
+
+diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
+new file mode 100644
+index 0000000..4a287db
+--- /dev/null
++++ b/.github/workflows/test.yml
+@@ -0,0 +1,18 @@
++name: test
++on:
++  push:
++
++jobs:
++  test:
++    runs-on: ubuntu-latest
++    strategy:
++      matrix:
++        node: [12, 16]
++    steps:
++      - uses: actions/checkout@v2
++      - uses: actions/setup-node@v2
++        with:
++          node-version: ${{ matrix.node }}
++
++      - run: yarn install --ignore-scripts
++      - run: yarn run test
+diff --git a/.gitignore b/.gitignore
+index 630cbd4..2878110 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -5,6 +5,7 @@ yarn.lock
+ *.result.css
+ .*
+ !.editorconfig
++!.github
+ !.gitignore
+ !.rollup.js
+ !.tape.js
+diff --git a/.travis.yml b/.travis.yml
+deleted file mode 100644
+index 4f388c3..0000000
+--- a/.travis.yml
++++ /dev/null
+@@ -1,11 +0,0 @@
+-# https://docs.travis-ci.com/user/travis-lint
+-
+-language: node_js
+-
+-node_js:
+-  - 16
+-  - 14
+-  - 12
+-
+-install:
+-  - npm install --ignore-scripts
+diff --git a/README.md b/README.md
+index a327642..143bc66 100755
+--- a/README.md
++++ b/README.md
+@@ -186,8 +186,8 @@ See example exports written to [CSS](test/export-properties.css),
+ 
+ [cli-img]: https://img.shields.io/travis/postcss/postcss-custom-properties/master.svg
+ [cli-url]: https://travis-ci.org/postcss/postcss-custom-properties
+-[css-img]: https://cssdb.org/badge/custom-properties.svg
+-[css-url]: https://cssdb.org/#custom-properties
++[css-img]: https://github.com/postcss/postcss-custom-properties/workflows/test/badge.svg
++[css-url]: https://github.com/postcss/postcss-custom-properties/actions/workflows/test.yml?query=workflow/test
+ [git-img]: https://img.shields.io/badge/support-chat-blue.svg
+ [git-url]: https://gitter.im/postcss/postcss
+ [npm-img]: https://img.shields.io/npm/v/postcss-custom-properties.svg
+-- 
+2.33.1
+

@@ -1,0 +1,79 @@
+From 9279bca2d356f0a6596dedbcab1d967b440e535e Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 1 Oct 2014 06:01:28 +0200
+Subject: [PATCH 032/186] .expected is more clear than .out
+
+---
+ .../{case-sensitive.out.css => case-sensitive.expected.css}     | 0
+ test/fixtures/{js-defined.out.css => js-defined.expected.css}   | 0
+ test/fixtures/{media-query.out.css => media-query.expected.css} | 0
+ ...eserve-variables.out.css => preserve-variables.expected.css} | 0
+ ...remove-properties.out.css => remove-properties.expected.css} | 0
+ ...tution-defined.out.css => substitution-defined.expected.css} | 0
+ ...tion-fallback.out.css => substitution-fallback.expected.css} | 0
+ ...on-overwrite.out.css => substitution-overwrite.expected.css} | 0
+ ...on-undefined.out.css => substitution-undefined.expected.css} | 0
+ test/index.js                                                   | 2 +-
+ 10 files changed, 1 insertion(+), 1 deletion(-)
+ rename test/fixtures/{case-sensitive.out.css => case-sensitive.expected.css} (100%)
+ rename test/fixtures/{js-defined.out.css => js-defined.expected.css} (100%)
+ rename test/fixtures/{media-query.out.css => media-query.expected.css} (100%)
+ rename test/fixtures/{preserve-variables.out.css => preserve-variables.expected.css} (100%)
+ rename test/fixtures/{remove-properties.out.css => remove-properties.expected.css} (100%)
+ rename test/fixtures/{substitution-defined.out.css => substitution-defined.expected.css} (100%)
+ rename test/fixtures/{substitution-fallback.out.css => substitution-fallback.expected.css} (100%)
+ rename test/fixtures/{substitution-overwrite.out.css => substitution-overwrite.expected.css} (100%)
+ rename test/fixtures/{substitution-undefined.out.css => substitution-undefined.expected.css} (100%)
+
+diff --git a/test/fixtures/case-sensitive.out.css b/test/fixtures/case-sensitive.expected.css
+similarity index 100%
+rename from test/fixtures/case-sensitive.out.css
+rename to test/fixtures/case-sensitive.expected.css
+diff --git a/test/fixtures/js-defined.out.css b/test/fixtures/js-defined.expected.css
+similarity index 100%
+rename from test/fixtures/js-defined.out.css
+rename to test/fixtures/js-defined.expected.css
+diff --git a/test/fixtures/media-query.out.css b/test/fixtures/media-query.expected.css
+similarity index 100%
+rename from test/fixtures/media-query.out.css
+rename to test/fixtures/media-query.expected.css
+diff --git a/test/fixtures/preserve-variables.out.css b/test/fixtures/preserve-variables.expected.css
+similarity index 100%
+rename from test/fixtures/preserve-variables.out.css
+rename to test/fixtures/preserve-variables.expected.css
+diff --git a/test/fixtures/remove-properties.out.css b/test/fixtures/remove-properties.expected.css
+similarity index 100%
+rename from test/fixtures/remove-properties.out.css
+rename to test/fixtures/remove-properties.expected.css
+diff --git a/test/fixtures/substitution-defined.out.css b/test/fixtures/substitution-defined.expected.css
+similarity index 100%
+rename from test/fixtures/substitution-defined.out.css
+rename to test/fixtures/substitution-defined.expected.css
+diff --git a/test/fixtures/substitution-fallback.out.css b/test/fixtures/substitution-fallback.expected.css
+similarity index 100%
+rename from test/fixtures/substitution-fallback.out.css
+rename to test/fixtures/substitution-fallback.expected.css
+diff --git a/test/fixtures/substitution-overwrite.out.css b/test/fixtures/substitution-overwrite.expected.css
+similarity index 100%
+rename from test/fixtures/substitution-overwrite.out.css
+rename to test/fixtures/substitution-overwrite.expected.css
+diff --git a/test/fixtures/substitution-undefined.out.css b/test/fixtures/substitution-undefined.expected.css
+similarity index 100%
+rename from test/fixtures/substitution-undefined.out.css
+rename to test/fixtures/substitution-undefined.expected.css
+diff --git a/test/index.js b/test/index.js
+index 2b84975..9f5d949 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -19,7 +19,7 @@ function compareFixtures(t, name, options) {
+   // handy thing: checkout actual in the *.actual.css file
+   fs.writeFile(fixturePath(name + ".actual"), actual)
+ 
+-  var expected = fixture(name + ".out")
++  var expected = fixture(name + ".expected")
+   return t.equal(actual, expected, "processed fixture '" + name + "' should be equal to expected output")
+ }
+ 
+-- 
+2.33.1
+

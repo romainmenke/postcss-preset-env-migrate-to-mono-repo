@@ -1,0 +1,25 @@
+From 6757cb768947e63a1321511b20ea5903be3871ff Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Thu, 13 Aug 2015 09:32:57 +0200
+Subject: [PATCH 12/34] update changelog for 1.2.0
+
+---
+ CHANGELOG.md | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 5f634b7..4478899 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,6 +1,7 @@
+ # 1.2.0 - 2015-07-01
+ 
+-- Upgrade to PostCSS 4.1.x
++- Added: compatibility with postcss v4.1.x
++([#4](https://github.com/postcss/postcss-color-rebeccapurple/pull/4))
+ 
+ # 1.1.0 - 2014-11-25
+ 
+-- 
+2.33.1
+

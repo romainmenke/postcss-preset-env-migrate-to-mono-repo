@@ -1,0 +1,71 @@
+From c6f914053368f0810d0538604d3f5f400405aa0c Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 15 Feb 2018 18:19:41 -0500
+Subject: [PATCH 121/186] No warnings by default
+
+---
+ index.js      |  2 +-
+ test/index.js | 13 ++++++++++---
+ 2 files changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/index.js b/index.js
+index 36f1fd1..645f981 100755
+--- a/index.js
++++ b/index.js
+@@ -171,7 +171,7 @@ export default postcss.plugin("postcss-custom-properties", (options = {}) => {
+     const importantMap = {}
+ 
+     globalOpts = {
+-      warnings: "warnings" in options ? Boolean(options.warnings) : true,
++      warnings: "warnings" in options ? Boolean(options.warnings) : false,
+       noValueNotifications: "noValueNotifications" in options
+         ? String(options.noValueNotifications) : "warning",
+     }
+diff --git a/test/index.js b/test/index.js
+index 18cb2a7..68c26a1 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -61,7 +61,9 @@ test("throw errors", function(t) {
+ test(
+   "substitutes nothing when a variable function references an undefined var",
+   function(t) {
+-    const result = compareFixtures(t, "substitution-undefined")
++    const result = compareFixtures(t, "substitution-undefined", {
++      warnings: true,
++    })
+     t.equal(
+       result.messages[0].text,
+       "variable '--test' is undefined and used without a fallback",
+@@ -78,6 +80,7 @@ test(
+       function() {
+         return postcss(customProperties({
+           noValueNotifications: "error",
++          warnings: true,
+         }))
+           .process(fixture("substitution-undefined"))
+           .css
+@@ -90,7 +93,9 @@ test(
+ )
+ 
+ test("substitutes defined variables in `:root` only", function(t) {
+-  const result = compareFixtures(t, "substitution-defined")
++  const result = compareFixtures(t, "substitution-defined", {
++    warnings: true,
++  })
+   t.ok(
+     result.messages[0].text.match(/^Custom property ignored/),
+     "should add a warning for non root custom properties"
+@@ -212,7 +217,9 @@ test("preserves computed value when `preserve` is `\"computed\"`", function(t) {
+ 
+ test("circular variable references", function(t) {
+   compareFixtures(t, "self-reference")
+-  const result = compareFixtures(t, "circular-reference")
++  const result = compareFixtures(t, "circular-reference", {
++    warnings: true,
++  })
+   t.equal(
+     result.messages[0].text,
+     "Circular variable reference: --bg-color",
+-- 
+2.33.1
+

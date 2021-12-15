@@ -1,0 +1,27 @@
+From d880a832c5b4ca31b7aac03eb8f440488d2f2541 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 12 Aug 2014 08:02:06 +0200
+Subject: [PATCH 011/186] This is not a polyfill
+
+---
+ README.md | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/README.md b/README.md
+index ab7bf31..9c63040 100755
+--- a/README.md
++++ b/README.md
+@@ -1,8 +1,8 @@
+ # postcss-custom-properties [![Build Status](https://travis-ci.org/postcss/postcss-custom-properties.png)](https://travis-ci.org/postcss/postcss-custom-properties)
+ 
+-> [PostCSS](https://github.com/postcss/postcss) plugin to polyfill [W3C CSS Custom Properties for cascading variables](http://www.w3.org/TR/css-variables/).
++> [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Properties for cascading variables](http://www.w3.org/TR/css-variables/) to more compatible CSS.
+ 
+-**N.B.** For now the polyfill _is not complete_. It currently just aims to provide a future-proof way of using a _limited subset_ of the features provided by native CSS variables.  
++**N.B.** For now the transformation _is not complete_. It currently just aims to provide a future-proof way of using a _limited subset_ of the features provided by native CSS variables.  
+ 
+ _[Checkout opened issue to know the state of this plugin](issues)._
+ 
+-- 
+2.33.1
+

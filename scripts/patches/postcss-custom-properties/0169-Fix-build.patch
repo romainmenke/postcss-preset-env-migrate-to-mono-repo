@@ -1,0 +1,41 @@
+From 32a21b87c37e56ffee9bf55b04ee1594ee8fc8db Mon Sep 17 00:00:00 2001
+From: Dmitry Semigradsky <semigradskyd@gmail.com>
+Date: Fri, 18 Sep 2020 12:27:56 +0300
+Subject: [PATCH 169/186] Fix build
+
+---
+ .travis.yml  | 2 +-
+ package.json | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/.travis.yml b/.travis.yml
+index d70d8ec..f6bef04 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,9 +3,9 @@
+ language: node_js
+ 
+ node_js:
++  - 14
+   - 12
+   - 10
+-  - 8
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/package.json b/package.json
+index e3a78b2..8052233 100644
+--- a/package.json
++++ b/package.json
+@@ -26,7 +26,7 @@
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+-    "node": ">=8.0.0"
++    "node": ">=10.0.0"
+   },
+   "dependencies": {
+     "postcss": "^7.0.17",
+-- 
+2.33.1
+

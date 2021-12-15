@@ -1,0 +1,27 @@
+From 604168e4e28379c3a42c8a8255957a65ec6b2c27 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 20 Jan 2015 08:32:48 +0100
+Subject: [PATCH 052/186] Use a new postcss 4 method `cloneBefore`
+
+---
+ index.js | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/index.js b/index.js
+index babcce6..8e9f681 100755
+--- a/index.js
++++ b/index.js
+@@ -87,9 +87,8 @@ module.exports = function(options) {
+ 
+       helpers.try(function resolve() {
+         resolveValue(value, map, decl.source).forEach(function(resolvedValue) {
+-          var clone = decl.clone()
++          var clone = decl.cloneBefore()
+           clone.value = resolvedValue
+-          decl.parent.insertBefore(decl, clone)
+         })
+       }, decl.source)
+ 
+-- 
+2.33.1
+

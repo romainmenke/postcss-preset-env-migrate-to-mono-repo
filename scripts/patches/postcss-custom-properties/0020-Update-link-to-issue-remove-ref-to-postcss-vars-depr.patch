@@ -1,0 +1,30 @@
+From 48eebf0dfd5a8d27276c1dae8c38edee536cd73b Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 26 Aug 2014 08:31:42 +0200
+Subject: [PATCH 020/186] Update link to issue & remove ref to postcss-vars
+ (deprecated)
+
+https://github.com/iamvdo/postcss-vars/issues/4#issuecomment-52500451
+---
+ README.md | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/README.md b/README.md
+index 2976670..f186c39 100755
+--- a/README.md
++++ b/README.md
+@@ -4,10 +4,7 @@
+ 
+ **N.B.** For now the transformation _is not complete_. It currently just aims to provide a future-proof way of using a _limited subset_ of the features provided by native CSS variables.  
+ 
+-_[Checkout opened issue to know the state of this plugin](issues)._
+-
+-Why not `postcss-vars` ? Because [there is already a plugin with this name](http://github.com/iamvdo/postcss-vars) that have severals bugs & untested code.
+-But I look forward to merge those 2 plugins & deprecate this one ([see opened issue](https://github.com/iamvdo/postcss-vars/issues/4)).
++_[Checkout opened issue to know the state of this plugin](https://github.com/postcss/postcss-custom-properties/issues)._
+ 
+ ## Installation
+ 
+-- 
+2.33.1
+

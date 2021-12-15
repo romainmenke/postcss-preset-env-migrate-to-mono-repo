@@ -1,0 +1,23 @@
+From 685ad389801b474da83233b1f9eaa8740d7ed671 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 12 Nov 2014 15:45:37 +0100
+Subject: [PATCH 03/31] Udpate gnuMessage function when no source available
+
+---
+ index.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index 661f647..cf161c7 100755
+--- a/index.js
++++ b/index.js
+@@ -97,5 +97,5 @@ function hexaToRgba(hex) {
+  * @param {Object} source
+  */
+ function gnuMessage(message, source) {
+-  return (source ? (source.file ? source.file : "<css input>") + ":" + source.start.line + ":" + source.start.column : "") + " " + message
++  return (source ? (source.file ? source.file : "<css input>") + ":" + source.start.line + ":" + source.start.column + " " : "") + message
+ }
+-- 
+2.33.1
+

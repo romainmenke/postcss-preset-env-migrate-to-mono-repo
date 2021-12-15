@@ -1,0 +1,29 @@
+From b686923915fcc738fbcb74b8676c008339bbe775 Mon Sep 17 00:00:00 2001
+From: Davi Lima <davilima6@gmail.com>
+Date: Fri, 18 Sep 2020 06:24:02 -0300
+Subject: [PATCH 168/186] feat: upgrade postcss-values-parser to version
+ without high risk vulnererability (#228)
+
+see:
+- https://www.npmjs.com/advisories/1550
+- https://github.com/shellscape/postcss-values-parser/issues/120
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 05613df..e3a78b2 100644
+--- a/package.json
++++ b/package.json
+@@ -30,7 +30,7 @@
+   },
+   "dependencies": {
+     "postcss": "^7.0.17",
+-    "postcss-values-parser": "^3.0.5"
++    "postcss-values-parser": "^4.0.0"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.5.4",
+-- 
+2.33.1
+

@@ -1,0 +1,103 @@
+From 9eaf9b2fefaae91357c38d225973ee280a429c9c Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 18 Sep 2018 12:12:32 -0400
+Subject: [PATCH 26/34] 4.0.1
+
+---
+ CHANGELOG.md      |  4 ++++
+ index.js          |  6 +++---
+ package-lock.json | 10 +++++-----
+ package.json      |  4 ++--
+ 4 files changed, 14 insertions(+), 10 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 4b020de..63c2773 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 4.0.1 - 2018-09-18
++
++- Updated: PostCSS Values Parser v2+
++
+ # 4.0.0 - 2018-09-17
+ 
+ - Updated: Support for PostCSS v7+
+diff --git a/index.js b/index.js
+index 18ffab7..7ba4ceb 100755
+--- a/index.js
++++ b/index.js
+@@ -14,15 +14,15 @@ module.exports = postcss.plugin("postcss-color-rebeccapurple", () => (style) =>
+     const value = decl.value;
+ 
+     if (value && regexp.test(value)) {
+-      const ast = valueParser(value).parse()
++      const valueAST = valueParser(value).parse()
+ 
+-      ast.walk(node => {
++      valueAST.walk(node => {
+         if (node.type === "word" && node.value === "rebeccapurple") {
+           node.value = color
+         }
+       })
+ 
+-      decl.value = ast.toString()
++      decl.value = valueAST.toString()
+     }
+   })
+ })
+diff --git a/package-lock.json b/package-lock.json
+index eebe1b2..3eab13a 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "postcss-color-rebeccapurple",
+-  "version": "4.0.0",
++  "version": "4.0.1",
+   "lockfileVersion": 1,
+   "requires": true,
+   "dependencies": {
+     "@octokit/rest": {
+       "version": "14.0.9",
+-      "resolved": "http://registry.npmjs.org/@octokit/rest/-/rest-14.0.9.tgz",
++      "resolved": "https://registry.npmjs.org/@octokit/rest/-/rest-14.0.9.tgz",
+       "integrity": "sha512-irP9phKfTXEZIcW2R+VNCtGHZJrXMWmSYp6RRfFn4BtAqtDRXF5z9JxCEQlAhNBf6X1koNi5k49tIAAAEJNlVQ==",
+       "dev": true,
+       "requires": {
+@@ -1653,9 +1653,9 @@
+       }
+     },
+     "postcss-values-parser": {
+-      "version": "1.5.0",
+-      "resolved": "https://registry.npmjs.org/postcss-values-parser/-/postcss-values-parser-1.5.0.tgz",
+-      "integrity": "sha512-3M3p+2gMp0AH3da530TlX8kiO1nxdTnc3C6vr8dMxRLIlh8UYkz0/wcwptSXjhtx2Fr0TySI7a+BHDQ8NL7LaQ==",
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/postcss-values-parser/-/postcss-values-parser-2.0.0.tgz",
++      "integrity": "sha512-cyRdkgbRRefu91ByAlJow4y9w/hnBmmWgLpWmlFQ2bpIy2eKrqowt3VeYcaHQ08otVXmC9V2JtYW1Z/RpvYR8A==",
+       "requires": {
+         "flatten": "^1.0.2",
+         "indexes-of": "^1.0.1",
+diff --git a/package.json b/package.json
+index e846116..2af26f3 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-rebeccapurple",
+-  "version": "4.0.0",
++  "version": "4.0.1",
+   "description": "PostCSS plugin to transform W3C CSS rebeccapurple color to more compatible CSS (rgb())",
+   "keywords": [
+     "css",
+@@ -25,7 +25,7 @@
+   },
+   "dependencies": {
+     "postcss": "^7.0.2",
+-    "postcss-values-parser": "^1.5.0"
++    "postcss-values-parser": "^2.0.0"
+   },
+   "devDependencies": {
+     "jscs": "^3.0.7",
+-- 
+2.33.1
+

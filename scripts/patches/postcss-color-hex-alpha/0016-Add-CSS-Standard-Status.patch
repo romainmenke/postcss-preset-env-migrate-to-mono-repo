@@ -1,0 +1,22 @@
+From e299d4d040084e464dffe4a57b3b094159c58392 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 9 Sep 2017 22:04:10 -0400
+Subject: [PATCH 16/31] Add CSS Standard Status
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 4bf62d7..d77a855 100755
+--- a/README.md
++++ b/README.md
+@@ -1,4 +1,4 @@
+-# postcss-color-hex-alpha [![Build Status](https://travis-ci.org/postcss/postcss-color-hex-alpha.png)](https://travis-ci.org/postcss/postcss-color-hex-alpha)
++# postcss-color-hex-alpha [![CSS Standard Status](https://jonathantneal.github.io/css-db/badge/css-color-hex-notation.svg)](https://jonathantneal.github.io/css-db/#css-color-hex-notation) [![Build Status](https://travis-ci.org/postcss/postcss-color-hex-alpha.png)](https://travis-ci.org/postcss/postcss-color-hex-alpha)
+ 
+ > [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C RGBA hexadecimal notations (#RRGGBBAA or #RGBA)](http://dev.w3.org/csswg/css-color/#hex-notation) to more compatible CSS (rgba()).
+ 
+-- 
+2.33.1
+

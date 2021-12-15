@@ -1,0 +1,215 @@
+From 2f616d0896d4ff435dc00d0be457625a78213c89 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Sat, 30 Mar 2019 06:01:31 +0100
+Subject: [PATCH 148/186] Adding support for ignoring lines and or blocks
+
+---
+ lib/get-custom-properties-from-root.js |  5 +++--
+ lib/is-ignored.js                      | 20 ++++++++++++++++++++
+ lib/transform-properties.js            |  3 ++-
+ test/basic.css                         | 13 +++++++++++++
+ test/basic.expect.css                  | 14 ++++++++++++++
+ test/basic.import-is-empty.expect.css  | 14 ++++++++++++++
+ test/basic.import.expect.css           | 14 ++++++++++++++
+ test/basic.preserve.expect.css         | 13 +++++++++++++
+ 8 files changed, 93 insertions(+), 3 deletions(-)
+ create mode 100644 lib/is-ignored.js
+
+diff --git a/lib/get-custom-properties-from-root.js b/lib/get-custom-properties-from-root.js
+index 3646b26..1deea3e 100644
+--- a/lib/get-custom-properties-from-root.js
++++ b/lib/get-custom-properties-from-root.js
+@@ -1,4 +1,5 @@
+ import valueParser from 'postcss-values-parser';
++import { isBlockIgnored } from './is-ignored';
+ 
+ // return custom selectors from the css root, conditionally removing them
+ export default function getCustomPropertiesFromRoot(root, opts) {
+@@ -17,7 +18,7 @@ export default function getCustomPropertiesFromRoot(root, opts) {
+ 		// for each custom property
+ 		if (customPropertiesObject) {
+ 			rule.nodes.slice().forEach(decl => {
+-				if (isCustomDecl(decl)) {
++				if (isCustomDecl(decl) && !isBlockIgnored(decl)) {
+ 					const { prop } = decl;
+ 
+ 					// write the parsed value to the custom property
+@@ -31,7 +32,7 @@ export default function getCustomPropertiesFromRoot(root, opts) {
+ 			});
+ 
+ 			// conditionally remove the empty html or :root rule
+-			if (!opts.preserve && isEmptyParent(rule)) {
++			if (!opts.preserve && isEmptyParent(rule) && !isBlockIgnored(rule)) {
+ 				rule.remove();
+ 			}
+ 		}
+diff --git a/lib/is-ignored.js b/lib/is-ignored.js
+new file mode 100644
+index 0000000..72f8ac6
+--- /dev/null
++++ b/lib/is-ignored.js
+@@ -0,0 +1,20 @@
++function isBlockIgnored(ruleOrDeclaration) {
++	var rule = ruleOrDeclaration.selector ?
++		ruleOrDeclaration : ruleOrDeclaration.parent;
++
++	return /(!\s*)?postcss-custom-properties:\s*off\b/i.test(rule.toString())
++}
++
++function isRuleIgnored(rule) {
++	var previous = rule.prev();
++
++	return Boolean(isBlockIgnored(rule) ||
++		previous &&
++		previous.type === 'comment' &&
++		/(!\s*)?postcss-custom-properties:\s*ignore\s+next\b/i.test(previous.text));
++}
++
++export {
++	isBlockIgnored,
++	isRuleIgnored
++}
+diff --git a/lib/transform-properties.js b/lib/transform-properties.js
+index 9fceaf1..3911a3c 100644
+--- a/lib/transform-properties.js
++++ b/lib/transform-properties.js
+@@ -1,11 +1,12 @@
+ import valueParser from 'postcss-values-parser';
+ import transformValueAST from './transform-value-ast';
++import { isRuleIgnored } from './is-ignored';
+ 
+ // transform custom pseudo selectors with custom selectors
+ export default (root, customProperties, opts) => {
+ 	// walk decls that can be transformed
+ 	root.walkDecls(decl => {
+-		if (isTransformableDecl(decl)) {
++		if (isTransformableDecl(decl) && !isRuleIgnored(decl)) {
+ 			const originalValue = decl.value;
+ 			const valueAST = valueParser(originalValue).parse();
+ 			const value = String(transformValueAST(valueAST, customProperties));
+diff --git a/test/basic.css b/test/basic.css
+index c781c82..ef11a86 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -10,6 +10,19 @@ html {
+ 	color: var(--color);
+ }
+ 
++.ignore-line {
++	/* postcss-custom-properties: ignore next */
++	color: var(--color);
++	background-color: var(--color-2, blue);
++}
++
++.ignore-block {
++	/* postcss-custom-properties: off */
++	color: var(--color-2, blue);
++	box-shadow: inset 0 -3px 0        var(--color);
++	background-image: linear-gradient(to right, var(--color, transparent) 0%, var(--color, transparent) 100%);
++}
++
+ .test {
+ 	--skip: gray;
+ 	color: var(--color);
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 03b565e..eab9e31 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -11,6 +11,20 @@ html {
+ 	color: var(--color);
+ }
+ 
++.ignore-line {
++	/* postcss-custom-properties: ignore next */
++	color: var(--color);
++	background-color: blue;
++	background-color: var(--color-2, blue);
++}
++
++.ignore-block {
++	/* postcss-custom-properties: off */
++	color: var(--color-2, blue);
++	box-shadow: inset 0 -3px 0        var(--color);
++	background-image: linear-gradient(to right, var(--color, transparent) 0%, var(--color, transparent) 100%);
++}
++
+ .test {
+ 	--skip: gray;
+ 	color: rgb(255, 0, 0);
+diff --git a/test/basic.import-is-empty.expect.css b/test/basic.import-is-empty.expect.css
+index 03b565e..eab9e31 100644
+--- a/test/basic.import-is-empty.expect.css
++++ b/test/basic.import-is-empty.expect.css
+@@ -11,6 +11,20 @@ html {
+ 	color: var(--color);
+ }
+ 
++.ignore-line {
++	/* postcss-custom-properties: ignore next */
++	color: var(--color);
++	background-color: blue;
++	background-color: var(--color-2, blue);
++}
++
++.ignore-block {
++	/* postcss-custom-properties: off */
++	color: var(--color-2, blue);
++	box-shadow: inset 0 -3px 0        var(--color);
++	background-image: linear-gradient(to right, var(--color, transparent) 0%, var(--color, transparent) 100%);
++}
++
+ .test {
+ 	--skip: gray;
+ 	color: rgb(255, 0, 0);
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+index 2bb29c0..9f98caa 100644
+--- a/test/basic.import.expect.css
++++ b/test/basic.import.expect.css
+@@ -11,6 +11,20 @@ html {
+ 	color: var(--color);
+ }
+ 
++.ignore-line {
++	/* postcss-custom-properties: ignore next */
++	color: var(--color);
++	background-color: yellow;
++	background-color: var(--color-2, blue);
++}
++
++.ignore-block {
++	/* postcss-custom-properties: off */
++	color: var(--color-2, blue);
++	box-shadow: inset 0 -3px 0        var(--color);
++	background-image: linear-gradient(to right, var(--color, transparent) 0%, var(--color, transparent) 100%);
++}
++
+ .test {
+ 	--skip: gray;
+ 	color: rgb(255, 0, 0);
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index 47174d8..bf17c1d 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -2,6 +2,19 @@
+ 	color: rgb(255, 0, 0);
+ }
+ 
++.ignore-line {
++	/* postcss-custom-properties: ignore next */
++	color: var(--color);
++	background-color: blue;
++}
++
++.ignore-block {
++	/* postcss-custom-properties: off */
++	color: var(--color-2, blue);
++	box-shadow: inset 0 -3px 0        var(--color);
++	background-image: linear-gradient(to right, var(--color, transparent) 0%, var(--color, transparent) 100%);
++}
++
+ .test {
+ 	--skip: gray;
+ 	color: rgb(255, 0, 0);
+-- 
+2.33.1
+

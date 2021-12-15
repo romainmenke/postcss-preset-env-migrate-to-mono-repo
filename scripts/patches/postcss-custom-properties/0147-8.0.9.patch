@@ -1,0 +1,202 @@
+From 67e984287cdd6fb81f77f0a661c5050be3bb7d82 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Mon, 5 Nov 2018 16:39:25 -0500
+Subject: [PATCH 147/186] 8.0.9
+
+---
+ .rollup.js                            |  4 ++--
+ CHANGELOG.md                          |  4 ++++
+ README.md                             |  2 +-
+ lib/transform-value-ast.js            |  8 +++++---
+ package.json                          | 12 ++++++------
+ test/basic.css                        |  4 ++++
+ test/basic.expect.css                 |  5 +++++
+ test/basic.import-is-empty.expect.css |  5 +++++
+ test/basic.import.expect.css          |  5 +++++
+ test/basic.preserve.expect.css        |  4 ++++
+ 10 files changed, 41 insertions(+), 12 deletions(-)
+
+diff --git a/.rollup.js b/.rollup.js
+index 3f28a55..b962202 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -4,7 +4,7 @@ export default {
+ 	input: 'index.js',
+ 	output: [
+ 		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
+-		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
++		{ file: 'index.esm.mjs', format: 'esm', sourcemap: true }
+ 	],
+ 	plugins: [
+ 		babel({
+@@ -12,7 +12,7 @@ export default {
+ 				'@babel/plugin-syntax-dynamic-import'
+ 			],
+ 			presets: [
+-				['@babel/env', { modules: false, targets: { node: 6 } }]
++				['@babel/env', { targets: { node: 6 } }]
+ 			]
+ 		})
+ 	]
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 930be92..24f7183 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Custom Properties
+ 
++### 8.0.9 (November 5, 2018)
++
++- Fixed: Issue with duplicate custom property usage within a declaration
++
+ ### 8.0.8 (October 2, 2018)
+ 
+ - Fixed: Issue with nested fallbacks
+diff --git a/README.md b/README.md
+index 1a0f7b2..def07cb 100755
+--- a/README.md
++++ b/README.md
+@@ -179,7 +179,7 @@ See example exports written to [CSS](test/export-properties.css),
+ [JS](test/export-properties.js), [MJS](test/export-properties.mjs), and
+ [JSON](test/export-properties.json).
+ 
+-[cli-img]: https://img.shields.io/travis/postcss/postcss-custom-properties.svg
++[cli-img]: https://img.shields.io/travis/postcss/postcss-custom-properties/master.svg
+ [cli-url]: https://travis-ci.org/postcss/postcss-custom-properties
+ [css-img]: https://cssdb.org/badge/custom-properties.svg
+ [css-url]: https://cssdb.org/#custom-properties
+diff --git a/lib/transform-value-ast.js b/lib/transform-value-ast.js
+index 3d9d299..209af61 100644
+--- a/lib/transform-value-ast.js
++++ b/lib/transform-value-ast.js
+@@ -8,9 +8,11 @@ export default function transformValueAST(root, customProperties) {
+ 
+ 				if (name in customProperties) {
+ 					// conditionally replace a known custom property
+-					child.replaceWith(...asClonedArrayWithBeforeSpacing(customProperties[name], child.raws.before));
++					const nodes = asClonedArrayWithBeforeSpacing(customProperties[name], child.raws.before);
+ 
+-					retransformValueAST(root, customProperties, name);
++					child.replaceWith(...nodes);
++
++					retransformValueAST({ nodes }, customProperties, name);
+ 				} else if (fallbacks.length) {
+ 					// conditionally replace a custom property with a fallback
+ 					const index = root.nodes.indexOf(child);
+@@ -24,7 +26,7 @@ export default function transformValueAST(root, customProperties) {
+ 			} else {
+ 				transformValueAST(child, customProperties);
+ 			}
+-		})
++		});
+ 	}
+ 
+ 	return root;
+diff --git a/package.json b/package.json
+index 96a7a27..60b59a5 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "8.0.8",
++  "version": "8.0.9",
+   "description": "Use Custom Properties Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -11,12 +11,12 @@
+   "homepage": "https://github.com/postcss/postcss-custom-properties#readme",
+   "bugs": "https://github.com/postcss/postcss-custom-properties/issues",
+   "main": "index.cjs.js",
+-  "module": "index.es.mjs",
++  "module": "index.esm.mjs",
+   "files": [
+     "index.cjs.js",
+     "index.cjs.js.map",
+-    "index.es.mjs",
+-    "index.es.mjs.map"
++    "index.esm.mjs",
++    "index.esm.mjs.map"
+   ],
+   "scripts": {
+     "prepublishOnly": "npm test",
+@@ -37,11 +37,11 @@
+     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+     "@babel/preset-env": "^7.1.0",
+     "babel-eslint": "^10.0.1",
+-    "eslint": "^5.6.1",
++    "eslint": "^5.8.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.2",
++    "rollup": "^0.67.0",
+     "rollup-plugin-babel": "^4.0.3"
+   },
+   "eslintConfig": {
+diff --git a/test/basic.css b/test/basic.css
+index e095be9..c781c82 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -42,3 +42,7 @@ html {
+ .text--calc {
+ 	width: calc((100% - var(--xxx, 1px)) + var(--yyy, 10px));
+ }
++
++.test--linear-gradient {
++	background-image: linear-gradient(to right, var(--color, transparent) 0%, var(--color, transparent) 100%);
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 9bb775a..03b565e 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -49,3 +49,8 @@ html {
+ 	width: calc((100% - 1px) + 10px);
+ 	width: calc((100% - var(--xxx, 1px)) + var(--yyy, 10px));
+ }
++
++.test--linear-gradient {
++	background-image: linear-gradient(to right, rgb(255, 0, 0) 0%, rgb(255, 0, 0) 100%);
++	background-image: linear-gradient(to right, var(--color, transparent) 0%, var(--color, transparent) 100%);
++}
+diff --git a/test/basic.import-is-empty.expect.css b/test/basic.import-is-empty.expect.css
+index 9bb775a..03b565e 100644
+--- a/test/basic.import-is-empty.expect.css
++++ b/test/basic.import-is-empty.expect.css
+@@ -49,3 +49,8 @@ html {
+ 	width: calc((100% - 1px) + 10px);
+ 	width: calc((100% - var(--xxx, 1px)) + var(--yyy, 10px));
+ }
++
++.test--linear-gradient {
++	background-image: linear-gradient(to right, rgb(255, 0, 0) 0%, rgb(255, 0, 0) 100%);
++	background-image: linear-gradient(to right, var(--color, transparent) 0%, var(--color, transparent) 100%);
++}
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+index 685f245..2bb29c0 100644
+--- a/test/basic.import.expect.css
++++ b/test/basic.import.expect.css
+@@ -50,3 +50,8 @@ html {
+ 	width: calc((100% - 1px) + 10px);
+ 	width: calc((100% - var(--xxx, 1px)) + var(--yyy, 10px));
+ }
++
++.test--linear-gradient {
++	background-image: linear-gradient(to right, rgb(255, 0, 0) 0%, rgb(255, 0, 0) 100%);
++	background-image: linear-gradient(to right, var(--color, transparent) 0%, var(--color, transparent) 100%);
++}
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index 9340268..47174d8 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -34,3 +34,7 @@
+ .text--calc {
+ 	width: calc((100% - 1px) + 10px);
+ }
++
++.test--linear-gradient {
++	background-image: linear-gradient(to right, rgb(255, 0, 0) 0%, rgb(255, 0, 0) 100%);
++}
+-- 
+2.33.1
+

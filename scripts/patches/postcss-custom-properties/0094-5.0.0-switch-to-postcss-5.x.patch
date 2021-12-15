@@ -1,0 +1,153 @@
+From 136250ad63ea395d8cc3201bd5a2e7797d2f689a Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 25 Aug 2015 06:47:08 +0200
+Subject: [PATCH 094/186] 5.0.0 (switch to postcss 5.x)
+
+---
+ .eslintrc    | 21 ++++++++++++++-------
+ CHANGELOG.md |  5 +++++
+ index.js     | 10 +++++-----
+ package.json |  8 +++-----
+ 4 files changed, 27 insertions(+), 17 deletions(-)
+
+diff --git a/.eslintrc b/.eslintrc
+index da2592a..18d7c97 100644
+--- a/.eslintrc
++++ b/.eslintrc
+@@ -1,9 +1,12 @@
+ ---
+-ecmaFeatures:
+-  modules: true
++root: true
++extends: eslint:recommended
++
++#ecmaFeatures:
++#  modules: true
+ 
+ env:
+-  es6: true
++#  es6: true
+   browser: true
+   node: true
+ 
+@@ -17,16 +20,20 @@ rules:
+   brace-style: [2, "stroustrup"]
+   comma-dangle: [2, "always-multiline"]
+   comma-style: [2, "last"]
+-  computed-property-spacing: [2, "never"]
+   dot-location: [2, "property"]
+ 
+   one-var: [2, "never"]
++#  no-var: [2]
++#  prefer-const: [2]
+   no-bitwise: [2]
+ 
+-  object-shorthand: [2, "methods"]
++  object-curly-spacing: [2, "never"]
++  array-bracket-spacing: [2, "never"]
++  computed-property-spacing: [2, "never"]
++
++  space-unary-ops: [2, {"words": true, "nonwords": false}]
+   space-after-keywords: [2, "always"]
+   space-before-blocks: [2, "always"]
+   space-before-function-paren: [2, "never"]
+-  space-in-brackets: [2, "never"]
+   space-in-parens: [2, "never"]
+-  spaced-line-comment: [2, "always"]
++  spaced-comment: [2, "always"]
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 83f42f7..57165c4 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,8 @@
++# 5.0.0 - 2015-08-25
++
++- Removed: compatibility with postcss v4.x
++- Added: compatibility with postcss v5.x
++
+ # 4.2.0 - 2015-07-21
+ 
+ - Added: `warnings` option allows you to disable warnings.
+diff --git a/index.js b/index.js
+index bed6859..598fdfc 100755
+--- a/index.js
++++ b/index.js
+@@ -165,7 +165,7 @@ module.exports = postcss.plugin("postcss-custom-properties", function(options) {
+     var importantMap = {}
+ 
+     // define variables
+-    style.eachRule(function(rule) {
++    style.walkRules(function(rule) {
+       var toRemove = []
+ 
+       // only variables declared for `:root` are supported for now
+@@ -216,7 +216,7 @@ module.exports = postcss.plugin("postcss-custom-properties", function(options) {
+ 
+         // remove empty :root {}
+         if (rule.nodes.length === 0) {
+-          rule.removeSelf()
++          rule.remove()
+         }
+       }
+     })
+@@ -242,7 +242,7 @@ module.exports = postcss.plugin("postcss-custom-properties", function(options) {
+     }
+ 
+     // resolve variables
+-    style.eachDecl(function(decl) {
++    style.walkDecls(function(decl) {
+       var value = decl.value
+ 
+       // skip values that don’t contain variable functions
+@@ -260,7 +260,7 @@ module.exports = postcss.plugin("postcss-custom-properties", function(options) {
+       })
+ 
+       if (!preserve || preserve === "computed") {
+-        decl.removeSelf()
++        decl.remove()
+       }
+     })
+ 
+@@ -269,7 +269,7 @@ module.exports = postcss.plugin("postcss-custom-properties", function(options) {
+       if (names.length) {
+         var container = postcss.rule({
+           selector: ":root",
+-          semicolon: true,
++          raws: {semicolon: true},
+         })
+         names.forEach(function(name) {
+           var variable = map[name]
+diff --git a/package.json b/package.json
+index ac5a963..4ccdf2f 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "4.2.0",
++  "version": "5.0.0",
+   "description": "PostCSS plugin to polyfill W3C CSS Custom Properties for cascading variables",
+   "keywords": [
+     "css",
+@@ -17,16 +17,14 @@
+     "url": "https://github.com/postcss/postcss-custom-properties.git"
+   },
+   "files": [
+-    "CHANGELOG.md",
+-    "LICENSE",
+     "index.js"
+   ],
+   "dependencies": {
+     "balanced-match": "~0.1.0",
+-    "postcss": "^4.1.4"
++    "postcss": "^5.0.0"
+   },
+   "devDependencies": {
+-    "eslint": "^0.23.0",
++    "eslint": "^1.0.0",
+     "tape": "^4.0.0"
+   },
+   "scripts": {
+-- 
+2.33.1
+

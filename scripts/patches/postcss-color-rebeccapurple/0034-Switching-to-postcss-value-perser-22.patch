@@ -1,0 +1,52 @@
+From 5bcc57d2109f561b5733e7c150e6b675c461d043 Mon Sep 17 00:00:00 2001
+From: Antonio Laguna <sombragriselros@gmail.com>
+Date: Wed, 15 Dec 2021 14:01:01 +0100
+Subject: [PATCH 34/34] Switching to postcss-value-perser (#22)
+
+---
+ package.json            |  2 +-
+ src/onCSSDeclaration.js | 10 +++++++---
+ 2 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/package.json b/package.json
+index e4b8960..49dda48 100644
+--- a/package.json
++++ b/package.json
+@@ -29,7 +29,7 @@
+     "node": ">=12"
+   },
+   "dependencies": {
+-    "postcss-values-parser": "^6"
++    "postcss-value-parser": "^4.2.0"
+   },
+   "peerDependencies": {
+     "postcss": "^8.3"
+diff --git a/src/onCSSDeclaration.js b/src/onCSSDeclaration.js
+index 25d165d..ad0904c 100644
+--- a/src/onCSSDeclaration.js
++++ b/src/onCSSDeclaration.js
+@@ -1,4 +1,4 @@
+-import { parse } from 'postcss-values-parser'
++import valuesParser from 'postcss-value-parser'
+ import onCSSIdentifier from './onCSSIdentifier'
+ import options from './options'
+ 
+@@ -7,9 +7,13 @@ const onCSSDeclaration = decl => {
+ 	const { value: originalValue } = decl
+ 
+ 	if (hasAnyRebeccapurple(originalValue)) {
+-		const valueAST = parse(originalValue)
++		const valueAST = valuesParser(originalValue)
+ 
+-		valueAST.walkType('word', onCSSIdentifier)
++		valueAST.walk(node => {
++			if (node.type === 'word') {
++				onCSSIdentifier(node);
++			}
++		});
+ 
+ 		const modifiedValue = String(valueAST)
+ 
+-- 
+2.33.1
+

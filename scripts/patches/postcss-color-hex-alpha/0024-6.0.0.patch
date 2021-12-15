@@ -1,0 +1,442 @@
+From 3c9ca65bcb0240bc1289251a7267c7ac95b406ae Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 25 Apr 2020 03:53:31 -0400
+Subject: [PATCH 24/31] 6.0.0
+
+---
+ .gitattributes          |   1 +
+ .gitignore              |   3 +-
+ .rollup.js              |  21 +++------
+ .travis.yml             |   2 +-
+ CHANGELOG.md            |   8 ++++
+ index.js                |  91 ------------------------------------
+ package.json            |  68 +++++++++++++++++----------
+ src/index.js            |  14 ++++++
+ src/onCSSDeclaration.js | 101 ++++++++++++++++++++++++++++++++++++++++
+ src/options.js          |   4 ++
+ 10 files changed, 181 insertions(+), 132 deletions(-)
+ create mode 100644 .gitattributes
+ delete mode 100755 index.js
+ create mode 100755 src/index.js
+ create mode 100644 src/onCSSDeclaration.js
+ create mode 100644 src/options.js
+
+diff --git a/.gitattributes b/.gitattributes
+new file mode 100644
+index 0000000..6313b56
+--- /dev/null
++++ b/.gitattributes
+@@ -0,0 +1 @@
++* text=auto eol=lf
+diff --git a/.gitignore b/.gitignore
+index d920b78..5bd3ef6 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,10 +1,11 @@
++dist
+ node_modules
+-index.*.*
+ package-lock.json
+ *.log*
+ *.result.css
+ .*
+ !.editorconfig
++!.gitattributes
+ !.gitignore
+ !.rollup.js
+ !.tape.js
+diff --git a/.rollup.js b/.rollup.js
+index ebe39f9..1fb0d87 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -1,16 +1,9 @@
+-import babel from 'rollup-plugin-babel';
++import pkg from './package.json'
+ 
+ export default {
+-	input: 'index.js',
+-	output: [
+-		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
+-		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
+-	],
+-	plugins: [
+-		babel({
+-			presets: [
+-				['@babel/env', { modules: false, targets: { node: 6 } }]
+-			]
+-		})
+-	]
+-};
++	...pkg.rollup,
++	plugins: pkg.rollup.plugins.map(plugin => require(plugin)()),
++	onwarn(warning, warn) {
++		if (warning.code !== 'UNRESOLVED_IMPORT') warn(warning)
++	}
++}
+diff --git a/.travis.yml b/.travis.yml
+index e1f11a5..a9e32cd 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 6
++  - 10
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 5fa94ec..978f81d 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,13 @@
+ # Changes to PostCSS Color Hex Alpha
+ 
++### 6.0.0 (April 25, 2020)
++
++- Updated: `postcss` to 7.0.27 (patch).
++- Updated: `postcss-values-parser` to 3.2.0 (major).
++- Updated: Node support to 10.0.0 (major).
++- Updated: Feature to use new percentage syntax.
++- Removed: Support for the removed `gray()` function.
++
+ ### 5.0.3 (March 30, 2019)
+ 
+ - Fixed: Issue with SVG hashes being interpretted as hex colors
+diff --git a/index.js b/index.js
+deleted file mode 100755
+index 9d7b55a..0000000
+--- a/index.js
++++ /dev/null
+@@ -1,91 +0,0 @@
+-import postcss from 'postcss';
+-import valueParser from 'postcss-values-parser';
+-
+-export default postcss.plugin('postcss-color-hex-alpha', opts => {
+-	// whether to preserve the original hexa
+-	const preserve = 'preserve' in Object(opts) ? Boolean(opts.preserve) : false;
+-
+-	return root => {
+-		// for each declaration with a hexa
+-		root.walkDecls(decl => {
+-			if (hasAlphaHex(decl)) {
+-				// replace instances of hexa with rgba()
+-				const ast = valueParser(decl.value).parse();
+-
+-				walk(ast, node => {
+-					if (isAlphaHex(node)) {
+-						node.replaceWith(hexa2rgba(node));
+-					}
+-				});
+-
+-				// conditionally update the declaration
+-				const modifiedValue = String(ast);
+-
+-				if (decl.value !== modifiedValue) {
+-					if (preserve) {
+-						decl.cloneBefore({ value: modifiedValue });
+-					} else {
+-						decl.value = modifiedValue;
+-					}
+-				}
+-			}
+-		});
+-	};
+-});
+-
+-// match any hexa
+-const alphaHexRegExp = /#([0-9A-Fa-f]{4}(?:[0-9A-Fa-f]{4})?)\b/;
+-
+-// whether a node has a hexa
+-const hasAlphaHex = node => alphaHexRegExp.test(node.value);
+-
+-// match an exact hexa
+-const alphaHexValueRegExp = /^#([0-9A-Fa-f]{4}(?:[0-9A-Fa-f]{4})?)$/;
+-
+-// walk all nodes in a value
+-const walk = (node, fn) => {
+-	if (Object(node.nodes).length) {
+-		node.nodes.slice().forEach(child => {
+-			fn(child);
+-
+-			walk(child, fn);
+-		});
+-	}
+-};
+-
+-// decimal precision
+-const alphaDecimalPrecision = 100000;
+-
+-// match a hexa node
+-const isAlphaHex = node => node.type === 'word' && alphaHexValueRegExp.test(node.value);
+-
+-const hexa2rgba = node => {
+-	// hex is the node value
+-	const hex = node.value;
+-
+-	// conditionally expand a hex
+-	const hex8 = `0x${hex.length === 5 ? hex.slice(1).replace(/[0-9A-f]/g, '$&$&') : hex.slice(1)}`;
+-
+-	// extract the red, blue, green, and alpha values from the hex
+-	const [r, g, b, a] = [
+-		parseInt(hex8.slice(2, 4), 16),
+-		parseInt(hex8.slice(4, 6), 16),
+-		parseInt(hex8.slice(6, 8), 16),
+-		Math.round(parseInt(hex8.slice(8, 10), 16) / 255 * alphaDecimalPrecision) / alphaDecimalPrecision
+-	];
+-
+-	// return a new rgba function, preserving the whitespace of the original node
+-	const rgbaFunc = valueParser.func({ value: 'rgba', raws: Object.assign({}, node.raws) });
+-
+-	rgbaFunc.append(valueParser.paren({ value: '(' }));
+-	rgbaFunc.append(valueParser.number({ value: r }));
+-	rgbaFunc.append(valueParser.comma({ value: ',' }));
+-	rgbaFunc.append(valueParser.number({ value: g }));
+-	rgbaFunc.append(valueParser.comma({ value: ',' }));
+-	rgbaFunc.append(valueParser.number({ value: b }));
+-	rgbaFunc.append(valueParser.comma({ value: ',' }));
+-	rgbaFunc.append(valueParser.number({ value: a }));
+-	rgbaFunc.append(valueParser.paren({ value: ')' }));
+-
+-	return rgbaFunc;
+-};
+diff --git a/package.json b/package.json
+index 111804f..d12b076 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-hex-alpha",
+-  "version": "5.0.3",
++  "version": "6.0.0",
+   "description": "Use 4 & 8 character hex color notation in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -10,44 +10,62 @@
+   "repository": "postcss/postcss-color-hex-alpha",
+   "homepage": "https://github.com/postcss/postcss-color-hex-alpha#readme",
+   "bugs": "https://github.com/postcss/postcss-color-hex-alpha/issues",
+-  "main": "index.cjs.js",
+-  "module": "index.es.mjs",
++  "main": "dist/index.cjs.js",
++  "module": "dist/index.esm.mjs",
+   "files": [
+-    "index.cjs.js",
+-    "index.cjs.js.map",
+-    "index.es.mjs",
+-    "index.es.mjs.map"
++    "dist"
+   ],
+   "scripts": {
+-    "prepublishOnly": "npm test",
+-    "pretest": "rollup -c .rollup.js --silent",
+-    "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+-    "test:js": "eslint *.js --cache --ignore-path .gitignore --quiet",
+-    "test:tape": "postcss-tape"
++    "build": "npx rollup -c .rollup.js",
++    "build:watch": "npx rollup -c .rollup.js --watch",
++    "lint": "npx eslint --cache src",
++    "lint:fix": "npx eslint --cache --fix",
++    "pretest": "npm install && npm run build",
++    "test": "npm run lint && npm run tape",
++    "tape": "npx postcss-tape",
++    "prepublishOnly": "npm test"
+   },
+   "engines": {
+-    "node": ">=6.0.0"
++    "node": ">=10.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.14",
+-    "postcss-values-parser": "^2.0.1"
++    "postcss": "^7.0.27",
++    "postcss-values-parser": "^3.2.0"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.4.0",
+-    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+-    "@babel/preset-env": "^7.4.2",
+-    "babel-eslint": "^10.0.1",
+-    "eslint": "^5.16.0",
+-    "eslint-config-dev": "^2.0.0",
+-    "postcss-tape": "^4.0.0",
++    "@babel/core": "^7.9.0",
++    "@babel/preset-env": "^7.9.5",
++    "babel-eslint": "^10.1.0",
++    "eslint": "^6.8.0",
++    "postcss-tape": "^5.0.2",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^1.7.4",
+-    "rollup-plugin-babel": "^4.3.2"
++    "rollup": "^2.7.2",
++    "rollup-plugin-babel": "^4.4.0"
+   },
+   "eslintConfig": {
+-    "extends": "dev",
++    "env": {
++      "es6": true,
++      "node": true
++    },
++    "extends": "eslint:recommended",
+     "parser": "babel-eslint"
+   },
++  "rollup": {
++    "input": "src/index.js",
++    "plugins": [
++      "rollup-plugin-babel"
++    ],
++    "output": [
++      {
++        "file": "dist/index.cjs.js",
++        "format": "cjs"
++      },
++      {
++        "file": "dist/index.esm.js",
++        "format": "esm"
++      }
++    ]
++  },
+   "keywords": [
+     "postcss",
+     "css",
+diff --git a/src/index.js b/src/index.js
+new file mode 100755
+index 0000000..70a4f2d
+--- /dev/null
++++ b/src/index.js
+@@ -0,0 +1,14 @@
++import postcss from 'postcss'
++import onCSSDeclaration from './onCSSDeclaration'
++import options from './options'
++
++/** Transform 4 & 8 character hex color notation in CSS. */
++const postcssPlugin = postcss.plugin('postcss-color-hex-alpha', /** @type {PostCSSPluginInitializer} */ opts => {
++	options.preserve = 'preserve' in Object(opts) ? Boolean(opts.preserve) : false
++
++	return root => {
++		root.walkDecls(onCSSDeclaration)
++	}
++})
++
++export default postcssPlugin
+diff --git a/src/onCSSDeclaration.js b/src/onCSSDeclaration.js
+new file mode 100644
+index 0000000..f87f0c2
+--- /dev/null
++++ b/src/onCSSDeclaration.js
+@@ -0,0 +1,101 @@
++import { parse } from 'postcss-values-parser';
++import Func from 'postcss-values-parser/lib/nodes/Func';
++import Punctuation from 'postcss-values-parser/lib/nodes/Punctuation';
++import options from './options';
++
++/** @type {(decl: CSSDeclaration) => void} Transform 4 & 8 character hex color notation in CSS Declarations. */
++const onCSSDeclaration = (decl) => {
++	if (hasAlphaHex(decl)) {
++		const { value: originalValue } = decl;
++
++		// replace instances of hexa with rgba()
++		const valueAST = parse(originalValue);
++
++		walk(valueAST, (node) => {
++			if (isAlphaHex(node)) {
++				node.replaceWith(hexa2rgba(node));
++			}
++		});
++
++		const modifiedValue = String(valueAST);
++
++		if (modifiedValue !== originalValue) {
++			if (options.preserve) decl.cloneBefore({ value: modifiedValue });
++			else decl.value = modifiedValue;
++		}
++	}
++};
++
++/** Expresssion to match an exact hexa */
++const alphaHexValueRegExp = /^#([0-9A-Fa-f]{4}(?:[0-9A-Fa-f]{4})?)$/;
++
++/** Expresssion to match any hexa */
++const alphaHexRegExp = /#([0-9A-Fa-f]{4}(?:[0-9A-Fa-f]{4})?)\b/;
++
++/** Returns whether a node has a hexa. */
++const hasAlphaHex = (node) => alphaHexRegExp.test(node.value);
++
++/** Returns whether a node matches a hexa node. */
++const isAlphaHex = (node) =>
++	node.type === 'word' && alphaHexValueRegExp.test(node.value);
++
++/** Walks all nodes in a value. */
++const walk = (node, fn) => {
++	if (Object(node.nodes).length) {
++		node.nodes.slice().forEach((child) => {
++			fn(child);
++
++			walk(child, fn);
++		});
++	}
++};
++
++/** Decimal precision. */
++const alphaDecimalPrecision = 100000;
++
++const hexa2rgba = (node) => {
++	// hex is the node value
++	const hex = node.value;
++
++	// conditionally expand a hex
++	const hex8 = `0x${
++		hex.length === 5 ? hex.slice(1).replace(/[0-9A-f]/g, '$&$&') : hex.slice(1)
++	}`;
++
++	// extract the red, blue, green, and alpha values from the hex
++	const [r, g, b, a] = [
++		parseInt(hex8.slice(2, 4), 16),
++		parseInt(hex8.slice(4, 6), 16),
++		parseInt(hex8.slice(6, 8), 16),
++		Math.round(
++			(parseInt(hex8.slice(8, 10), 16) / 255) * alphaDecimalPrecision
++		) / alphaDecimalPrecision,
++	];
++
++	// return a new rgba function, preserving the whitespace of the original node
++	const rgbaFunc = Object.assign(
++		new Func({
++			name: 'rgba',
++			raws: {},
++		}),
++		{
++			raws: node.raws,
++		}
++	);
++
++	rgbaFunc.append(createNumberNode(r));
++	rgbaFunc.append(new Punctuation({ value: ',' }));
++	rgbaFunc.append(createNumberNode(g));
++	rgbaFunc.append(new Punctuation({ value: ',' }));
++	rgbaFunc.append(createNumberNode(b));
++	rgbaFunc.append(new Punctuation({ value: ',' }));
++	rgbaFunc.append(createNumberNode(a));
++
++	return rgbaFunc;
++};
++
++const createNumberNode = (number) => parse(number).first;
++
++export default onCSSDeclaration;
++
++/** @typedef {import('postcss').Declaration} CSSDeclaration */
+diff --git a/src/options.js b/src/options.js
+new file mode 100644
+index 0000000..0227109
+--- /dev/null
++++ b/src/options.js
+@@ -0,0 +1,4 @@
++export default {
++	/** Whether to preserve the original functional color declaration. */
++	preserve: false
++}
+-- 
+2.33.1
+

@@ -1,0 +1,154 @@
+From 44dfb3334863609dc3e4a2ed10e352867c2c4168 Mon Sep 17 00:00:00 2001
+From: Dave DeSandro <david.desandro@compass.com>
+Date: Mon, 16 Dec 2019 09:53:16 -0500
+Subject: [PATCH 157/186] Preserve spaces in multi-part values.
+
+This commit fixes the bug with space separated values. Previously, `0 10px 20px 30px` would be exported with commas: `0,10px,20px,30px`. This commit preverses spaces, to export `0 10px 20px 30px` as expected.
+---
+ .tape.js                                      | 2 ++
+ src/lib/write-custom-properties-to-exports.js | 5 ++++-
+ test/basic.css                                | 1 +
+ test/basic.expect.css                         | 1 +
+ test/basic.import-is-empty.expect.css         | 1 +
+ test/basic.import.expect.css                  | 1 +
+ test/export-properties.css                    | 1 +
+ test/export-properties.js                     | 3 ++-
+ test/export-properties.json                   | 3 ++-
+ test/export-properties.mjs                    | 3 ++-
+ 10 files changed, 17 insertions(+), 4 deletions(-)
+
+diff --git a/.tape.js b/.tape.js
+index 1df0f80..9c39e47 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -16,6 +16,7 @@ module.exports = {
+ 					'--color': 'rgb(255, 0, 0)',
+ 					'--color-2': 'yellow',
+ 					'--ref-color': 'var(--color)',
++					'--margin': '0 10px 20px 30px',
+ 					'--z-index': 10
+ 				}
+ 			}
+@@ -30,6 +31,7 @@ module.exports = {
+ 						'--color': 'rgb(255, 0, 0)',
+ 						'--color-2': 'yellow',
+ 						'--ref-color': 'var(--color)',
++						'--margin': '0 10px 20px 30px',
+ 						'--z-index': 10
+ 					}
+ 				};
+diff --git a/src/lib/write-custom-properties-to-exports.js b/src/lib/write-custom-properties-to-exports.js
+index a1e8456..b67c5ee 100644
+--- a/src/lib/write-custom-properties-to-exports.js
++++ b/src/lib/write-custom-properties-to-exports.js
+@@ -110,7 +110,10 @@ export default function writeCustomPropertiesToExports(customProperties, destina
+ 
+ const defaultCustomPropertiesToJSON = customProperties => {
+ 	return Object.keys(customProperties).reduce((customPropertiesJSON, key) => {
+-		customPropertiesJSON[key] = String(customProperties[key]);
++		const valueNodes = customProperties[key];
++		customPropertiesJSON[key] = valueNodes.map((propertyObject) => {
++			return propertyObject.toString();
++		}).join(' ');
+ 
+ 		return customPropertiesJSON;
+ 	}, {});
+diff --git a/test/basic.css b/test/basic.css
+index cfbca81..1905a66 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -7,6 +7,7 @@ html {
+ 	--ref-color: var(--color);
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
++	--margin: 0 10px 20px 30px;
+ 	color: var(--color);
+ }
+ 
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 699ffaa..cb41f21 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -7,6 +7,7 @@ html {
+ 	--ref-color: var(--color);
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
++	--margin: 0 10px 20px 30px;
+ 	color: rgb(255, 0, 0);
+ 	color: var(--color);
+ }
+diff --git a/test/basic.import-is-empty.expect.css b/test/basic.import-is-empty.expect.css
+index 699ffaa..cb41f21 100644
+--- a/test/basic.import-is-empty.expect.css
++++ b/test/basic.import-is-empty.expect.css
+@@ -7,6 +7,7 @@ html {
+ 	--ref-color: var(--color);
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
++	--margin: 0 10px 20px 30px;
+ 	color: rgb(255, 0, 0);
+ 	color: var(--color);
+ }
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+index cb54190..b46818d 100644
+--- a/test/basic.import.expect.css
++++ b/test/basic.import.expect.css
+@@ -7,6 +7,7 @@ html {
+ 	--ref-color: var(--color);
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
++	--margin: 0 10px 20px 30px;
+ 	color: rgb(255, 0, 0);
+ 	color: var(--color);
+ }
+diff --git a/test/export-properties.css b/test/export-properties.css
+index 40a1bf6..deca81f 100644
+--- a/test/export-properties.css
++++ b/test/export-properties.css
+@@ -3,4 +3,5 @@
+ 	--color: rgb(255, 0, 0);
+ 	--circular: var(--circular-2);
+ 	--circular-2: var(--circular);
++	--margin: 0 10px 20px 30px;
+ }
+diff --git a/test/export-properties.js b/test/export-properties.js
+index 63b9360..b2251e1 100644
+--- a/test/export-properties.js
++++ b/test/export-properties.js
+@@ -3,6 +3,7 @@ module.exports = {
+ 		'--ref-color': 'var(--color)',
+ 		'--color': 'rgb(255, 0, 0)',
+ 		'--circular': 'var(--circular-2)',
+-		'--circular-2': 'var(--circular)'
++		'--circular-2': 'var(--circular)',
++		'--margin': '0 10px 20px 30px'
+ 	}
+ };
+diff --git a/test/export-properties.json b/test/export-properties.json
+index bf2dcd9..82b7f81 100644
+--- a/test/export-properties.json
++++ b/test/export-properties.json
+@@ -3,6 +3,7 @@
+     "--ref-color": "var(--color)",
+     "--color": "rgb(255, 0, 0)",
+     "--circular": "var(--circular-2)",
+-    "--circular-2": "var(--circular)"
++    "--circular-2": "var(--circular)",
++    "--margin": "0 10px 20px 30px"
+   }
+ }
+diff --git a/test/export-properties.mjs b/test/export-properties.mjs
+index 553762e..06939bc 100644
+--- a/test/export-properties.mjs
++++ b/test/export-properties.mjs
+@@ -2,5 +2,6 @@ export const customProperties = {
+ 	'--ref-color': 'var(--color)',
+ 	'--color': 'rgb(255, 0, 0)',
+ 	'--circular': 'var(--circular-2)',
+-	'--circular-2': 'var(--circular)'
++	'--circular-2': 'var(--circular)',
++	'--margin': '0 10px 20px 30px'
+ };
+-- 
+2.33.1
+

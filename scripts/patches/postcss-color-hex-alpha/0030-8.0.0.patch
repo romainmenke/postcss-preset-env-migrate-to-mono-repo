@@ -1,0 +1,43 @@
+From 9d12aaa24849abc8e2e4e006585a5c5b5d5f916d Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Wed, 22 Sep 2021 10:25:32 -0400
+Subject: [PATCH 30/31] 8.0.0
+
+---
+ CHANGELOG.md | 8 ++++++++
+ package.json | 2 +-
+ 2 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index d552d85..b9f57be 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,13 @@
+ # Changes to PostCSS Color Hex Alpha
+ 
++### 8.0.0 (September 22, 2021)
++
++- Updated: PostCSS Values Parser to v8 (major).
++- Added missing `dist` to bundle.
++- Added missing `exports` to `package.json`
++- Added missing `types` to `package.json`
++- Added bundling & testing as prepublish step.
++
+ ### 7.0.0 (January 12, 2021)
+ 
+ - Updated: Support for PostCSS v8+
+diff --git a/package.json b/package.json
+index 092b3b8..57002ba 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-hex-alpha",
+-  "version": "7.0.0",
++  "version": "8.0.0",
+   "description": "Use 4 & 8 character hex color notation in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+-- 
+2.33.1
+

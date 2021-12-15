@@ -1,0 +1,24 @@
+From ef364672ccfd567250ce9768d2421a18fee5fa0b Mon Sep 17 00:00:00 2001
+From: Dmitry Semigradsky <semigradskyd@gmail.com>
+Date: Fri, 18 Sep 2020 11:27:33 +0300
+Subject: [PATCH 166/186] Fix 'basic:export-scss' test
+
+---
+ test/export-properties.scss | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/test/export-properties.scss b/test/export-properties.scss
+index ec34e80..69303c3 100644
+--- a/test/export-properties.scss
++++ b/test/export-properties.scss
+@@ -7,4 +7,7 @@ $color-hsl: hsl(var(--color-h), var(--color-s), var(--color-l));
+ $circular: var(--circular-2);
+ $circular-2: var(--circular);
+ $margin: 0 10px 20px 30px;
++$shadow-color: rgb(255,0,0);
++$shadow: 0 6px 14px 0 color(var(--shadow-color) a(.15));
++$font-family: "Open Sans" , sans-serif;
+ $theme-color: #053;
+-- 
+2.33.1
+

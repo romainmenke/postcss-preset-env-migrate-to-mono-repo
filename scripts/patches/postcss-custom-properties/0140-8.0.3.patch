@@ -1,0 +1,55 @@
+From 74d738cf300ffb120e4e8df9d267617aae150212 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 18 Sep 2018 12:30:18 -0400
+Subject: [PATCH 140/186] 8.0.3
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 8 ++++----
+ 2 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 4106ce5..8c26088 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Custom Properties
+ 
++### 8.0.3 (September 18, 2018)
++
++- Updated: PostCSS Values Parser 2
++
+ ### 8.0.2 (September 17, 2018)
+ 
+ - Fixed: Spacing is preserved before replaced variables.
+diff --git a/package.json b/package.json
+index ff831f5..7a4720b 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "8.0.2",
++  "version": "8.0.3",
+   "description": "Use Custom Properties Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -30,12 +30,12 @@
+   },
+   "dependencies": {
+     "postcss": "^7.0.2",
+-    "postcss-values-parser": "^1.5.0"
++    "postcss-values-parser": "^2.0.0"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.0.1",
++    "@babel/core": "^7.1.0",
+     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+-    "@babel/preset-env": "^7.0.0",
++    "@babel/preset-env": "^7.1.0",
+     "babel-eslint": "^9.0.0",
+     "eslint": "^5.6.0",
+     "eslint-config-dev": "^2.0.0",
+-- 
+2.33.1
+

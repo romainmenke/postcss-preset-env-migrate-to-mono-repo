@@ -1,0 +1,40 @@
+From 1ff31a2c7daeaa90e022a6fda5524caa5a150934 Mon Sep 17 00:00:00 2001
+From: Glen Huang <hey.hgl@gmail.com>
+Date: Mon, 6 Apr 2015 22:56:02 +0800
+Subject: [PATCH 067/186] Not leave unprefixed variables in map
+
+---
+ index.js | 17 +++++++----------
+ 1 file changed, 7 insertions(+), 10 deletions(-)
+
+diff --git a/index.js b/index.js
+index 3a92397..8a0e899 100755
+--- a/index.js
++++ b/index.js
+@@ -119,16 +119,13 @@ function resolveValue(value, variables, source) {
+ module.exports = function(options) {
+   return function(style) {
+     options = options || {}
+-    var userVariables = options.variables || {}
+-    var variables =
+-      Object.keys(userVariables)
+-        .reduce(function(acc, key) {
+-          if (key.indexOf("--") !== 0) {
+-            acc["--" + key] = userVariables[key]
+-          }
+-          acc[key] = userVariables[key]
+-          return acc
+-        }, {})
++    var variables = options.variables || {}
++    Object.keys(variables).forEach(function(name) {
++      if (name.slice(0, 2) !== "--") {
++        variables["--" + name] = variables[name]
++        delete variables[name]
++      }
++    })
+     var preserve = (options.preserve === true ? true : false)
+     var map = {}
+     var importantMap = {}
+-- 
+2.33.1
+

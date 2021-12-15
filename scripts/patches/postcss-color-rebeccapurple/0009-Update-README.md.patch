@@ -1,0 +1,24 @@
+From b7575df8d7f18408c58b88cbf5680e261d7c769a Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Mon, 15 Dec 2014 19:34:30 +0100
+Subject: [PATCH 09/34] Update README.md
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 0309c1e..c73bb40 100755
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # postcss-color-rebeccapurple [![Build Status](https://travis-ci.org/postcss/postcss-color-rebeccapurple.png)](https://travis-ci.org/postcss/postcss-color-rebeccapurple)
+ 
+-> [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS `rebeccapurple` color](http://dev.w3.org/csswg/css-color/#valuedef-color-rebeccapurple) to more compatible CSS (rgb()).
++> [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS `rebeccapurple` color](http://dev.w3.org/csswg/css-color/#valdef-color-rebeccapurple) to more compatible CSS (rgb()).
+ 
+ ## Why this plugin ?
+ 
+-- 
+2.33.1
+

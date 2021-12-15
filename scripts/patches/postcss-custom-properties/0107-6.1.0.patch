@@ -1,0 +1,39 @@
+From bbf92943e9aa8578429e29adc369179665275616 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 27 Jun 2017 14:33:27 -0400
+Subject: [PATCH 107/186] 6.1.0
+
+---
+ CHANGELOG.md | 6 ++++++
+ package.json | 2 +-
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index c987daa..dcc5820 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,9 @@
++# 6.1.0 - 2017-06-28
++
++- Added: Let "warnings" option silence all warnings
++([#67](https://github.com/postcss/postcss-custom-properties/pull/67))
++- Dependencies update (postcss, balanced-match)
++
+ # 6.0.1 - 2017-05-15
+ 
+ - Fixed: incorrect export ([#69](https://github.com/postcss/postcss-custom-properties/issues/69))
+diff --git a/package.json b/package.json
+index 3479c7b..d38f38b 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "6.0.1",
++  "version": "6.1.0",
+   "description": "PostCSS plugin to polyfill W3C CSS Custom Properties for cascading variables",
+   "keywords": [
+     "css",
+-- 
+2.33.1
+

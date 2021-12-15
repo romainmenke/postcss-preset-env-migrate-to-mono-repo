@@ -1,0 +1,29 @@
+From b0a38ae50ba89f013c370d9752acec178041fbeb Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Fri, 26 Sep 2014 10:07:13 +0200
+Subject: [PATCH 026/186] MIT license update
+
+Ref
+https://github.com/postcss/postcss-custom-media/commit/9e0cf68110afa7870
+0f6d29a486a076047122664
+
+poke @necolas
+---
+ LICENSE | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/LICENSE b/LICENSE
+index 9abe4f5..23eb1d3 100644
+--- a/LICENSE
++++ b/LICENSE
+@@ -1,6 +1,6 @@
+ The MIT License (MIT)
+ 
+-Copyright (c) 2014 "MoOx" Maxime Thirouin
++Copyright (c) 2014, Maxime Thirouin & Nicolas Gallagher
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy of
+ this software and associated documentation files (the "Software"), to deal in
+-- 
+2.33.1
+

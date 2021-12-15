@@ -1,0 +1,25 @@
+From 9bfcb517fddac3ad39f40208f1d4dd460a5c9fe0 Mon Sep 17 00:00:00 2001
+From: Hiroki Osame <hiroki.osame@gmail.com>
+Date: Fri, 6 Oct 2017 10:26:50 -0700
+Subject: [PATCH 111/186] Typo in variable name (#77)
+
+---
+ index.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index 89183c6..1ae92c9 100755
+--- a/index.js
++++ b/index.js
+@@ -133,7 +133,7 @@ function prefixVariables(variables) {
+   const prefixedVariables = {}
+ 
+   if (!variables) {
+-    return prefixVariables
++    return prefixedVariables
+   }
+ 
+   Object.keys(variables).forEach((name) => {
+-- 
+2.33.1
+

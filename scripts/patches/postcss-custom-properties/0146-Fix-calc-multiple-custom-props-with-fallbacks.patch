@@ -1,0 +1,95 @@
+From e0081bfb5880d7fed812c2c7e2620c75ed7bff8d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Carl=20T=C3=B6rnqvist?= <carl@tornqv.ist>
+Date: Fri, 5 Oct 2018 15:31:34 +0200
+Subject: [PATCH 146/186] Fix calc multiple custom props with fallbacks
+
+---
+ lib/transform-value-ast.js            | 4 +++-
+ test/basic.css                        | 4 ++++
+ test/basic.expect.css                 | 5 +++++
+ test/basic.import-is-empty.expect.css | 5 +++++
+ test/basic.import.expect.css          | 5 +++++
+ test/basic.preserve.expect.css        | 4 ++++
+ 6 files changed, 26 insertions(+), 1 deletion(-)
+
+diff --git a/lib/transform-value-ast.js b/lib/transform-value-ast.js
+index a38995b..3d9d299 100644
+--- a/lib/transform-value-ast.js
++++ b/lib/transform-value-ast.js
+@@ -15,7 +15,9 @@ export default function transformValueAST(root, customProperties) {
+ 					// conditionally replace a custom property with a fallback
+ 					const index = root.nodes.indexOf(child);
+ 
+-					root.nodes.splice(index, 1, ...asClonedArrayWithBeforeSpacing(fallbacks, child.raws.before));
++					if (index !== -1) {
++						root.nodes.splice(index, 1, ...asClonedArrayWithBeforeSpacing(fallbacks, child.raws.before));
++					}
+ 
+ 					transformValueAST(root, customProperties);
+ 				}
+diff --git a/test/basic.css b/test/basic.css
+index 2ef95ad..e095be9 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -38,3 +38,7 @@ html {
+ .test--nested-fallback {
+ 	z-index: var(--xxx, var(--yyy, 1));
+ }
++
++.text--calc {
++	width: calc((100% - var(--xxx, 1px)) + var(--yyy, 10px));
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 2cb7713..9bb775a 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -44,3 +44,8 @@ html {
+ 	z-index: 1;
+ 	z-index: var(--xxx, var(--yyy, 1));
+ }
++
++.text--calc {
++	width: calc((100% - 1px) + 10px);
++	width: calc((100% - var(--xxx, 1px)) + var(--yyy, 10px));
++}
+diff --git a/test/basic.import-is-empty.expect.css b/test/basic.import-is-empty.expect.css
+index 2cb7713..9bb775a 100644
+--- a/test/basic.import-is-empty.expect.css
++++ b/test/basic.import-is-empty.expect.css
+@@ -44,3 +44,8 @@ html {
+ 	z-index: 1;
+ 	z-index: var(--xxx, var(--yyy, 1));
+ }
++
++.text--calc {
++	width: calc((100% - 1px) + 10px);
++	width: calc((100% - var(--xxx, 1px)) + var(--yyy, 10px));
++}
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+index 97d87b1..685f245 100644
+--- a/test/basic.import.expect.css
++++ b/test/basic.import.expect.css
+@@ -45,3 +45,8 @@ html {
+ 	z-index: 1;
+ 	z-index: var(--xxx, var(--yyy, 1));
+ }
++
++.text--calc {
++	width: calc((100% - 1px) + 10px);
++	width: calc((100% - var(--xxx, 1px)) + var(--yyy, 10px));
++}
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index 44e5df5..9340268 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -30,3 +30,7 @@
+ .test--nested-fallback {
+ 	z-index: 1;
+ }
++
++.text--calc {
++	width: calc((100% - 1px) + 10px);
++}
+-- 
+2.33.1
+

@@ -1,0 +1,104 @@
+From b49e1956f120d14c06019d3b01006ad00226995a Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 30 Mar 2019 02:11:23 -0400
+Subject: [PATCH 23/31] 5.0.3
+
+---
+ .tape.js     | 22 ++++++++++------------
+ CHANGELOG.md |  6 ++++++
+ package.json | 22 +++++++++++-----------
+ 3 files changed, 27 insertions(+), 23 deletions(-)
+
+diff --git a/.tape.js b/.tape.js
+index af9f2db..713f648 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,16 +1,14 @@
+ module.exports = {
+-	'postcss-color-hex-alpha': {
+-		'basic': {
+-			message: 'supports basic usage'
+-		},
+-		'basic:preserve': {
+-			message: 'supports { preserve: true } usage',
+-			options: {
+-				preserve: true
+-			}
+-		},
+-		'clip-path': {
+-			message: 'ignores clip-path with hash in url'
++	'basic': {
++		message: 'supports basic usage'
++	},
++	'basic:preserve': {
++		message: 'supports { preserve: true } usage',
++		options: {
++			preserve: true
+ 		}
++	},
++	'clip-path': {
++		message: 'ignores clip-path with hash in url'
+ 	}
+ };
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 42ff03a..5fa94ec 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,11 @@
+ # Changes to PostCSS Color Hex Alpha
+ 
++### 5.0.3 (March 30, 2019)
++
++- Fixed: Issue with SVG hashes being interpretted as hex colors
++- Updated: `postcss` to 7.0.14 (patch)
++- Updated: `postcss-values-parser` to 2.0.1 (patch)
++
+ ### 5.0.2 (September 18, 2018)
+ 
+ - Updated: PostCSS Values Parser 2 (patch for this project)
+diff --git a/package.json b/package.json
+index dbcc466..111804f 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-hex-alpha",
+-  "version": "5.0.2",
++  "version": "5.0.3",
+   "description": "Use 4 & 8 character hex color notation in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -29,20 +29,20 @@
+     "node": ">=6.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.2",
+-    "postcss-values-parser": "^2.0.0"
++    "postcss": "^7.0.14",
++    "postcss-values-parser": "^2.0.1"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.1.0",
+-    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+-    "@babel/preset-env": "^7.1.0",
+-    "babel-eslint": "^9.0.0",
+-    "eslint": "^5.6.0",
++    "@babel/core": "^7.4.0",
++    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
++    "@babel/preset-env": "^7.4.2",
++    "babel-eslint": "^10.0.1",
++    "eslint": "^5.16.0",
+     "eslint-config-dev": "^2.0.0",
+-    "postcss-tape": "^2.2.0",
++    "postcss-tape": "^4.0.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.0",
+-    "rollup-plugin-babel": "^4.0.3"
++    "rollup": "^1.7.4",
++    "rollup-plugin-babel": "^4.3.2"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+-- 
+2.33.1
+

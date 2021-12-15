@@ -1,0 +1,27 @@
+From 16ff3c22fe0563a1283411d7866791966fff4c58 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 20 Jan 2015 08:25:25 +0100
+Subject: [PATCH 051/186] Remove useless test about rule being a rule
+
+rule (eachRule) are obviously rule right?
+---
+ index.js | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/index.js b/index.js
+index c321ec6..babcce6 100755
+--- a/index.js
++++ b/index.js
+@@ -28,9 +28,6 @@ module.exports = function(options) {
+     // define variables
+     style.eachRule(function(rule) {
+       var toRemove = []
+-      if (rule.type !== "rule") {
+-        return
+-      }
+ 
+       // only variables declared for `:root` are supported for now
+       if (rule.selectors.length !== 1 || rule.selectors[0] !== ":root" || rule.parent.type !== "root") {
+-- 
+2.33.1
+

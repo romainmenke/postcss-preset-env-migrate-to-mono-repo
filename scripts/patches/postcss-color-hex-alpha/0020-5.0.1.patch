@@ -1,0 +1,133 @@
+From f980266b4ceecb714fc9a7dbb98b472839eef828 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 18 Sep 2018 03:30:04 -0400
+Subject: [PATCH 20/31] 5.0.1
+
+---
+ CHANGELOG.md                   |  4 ++++
+ index.js                       | 10 +++++++++-
+ package.json                   |  2 +-
+ test/basic.css                 |  5 +++++
+ test/basic.expect.css          |  9 +++++++--
+ test/basic.preserve.expect.css | 11 +++++++++--
+ 6 files changed, 35 insertions(+), 6 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 195a3e3..c1cb627 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Color Hex Alpha
+ 
++### 5.0.1 (September 18, 2018)
++
++- Fixed: Issue correclty calculating each channel
++
+ ### 5.0.0 (September 18, 2018)
+ 
+ - Initial version
+diff --git a/index.js b/index.js
+index acf4e6b..5b40aac 100755
+--- a/index.js
++++ b/index.js
+@@ -53,6 +53,9 @@ const walk = (node, fn) => {
+ 	}
+ };
+ 
++// decimal precision
++const alphaDecimalPrecision = 100000;
++
+ // match a hexa node
+ const isAlphaHex = node => node.type === 'word' && alphaHexValueRegExp.test(node.value);
+ 
+@@ -64,7 +67,12 @@ const hexa2rgba = node => {
+ 	const hex8 = `0x${hex.length === 5 ? hex.slice(1).replace(/[0-9A-f]/g, '$&$&') : hex.slice(1)}`;
+ 
+ 	// extract the red, blue, green, and alpha values from the hex
+-	const [r, g, b, a] = [ hex8 >> 32 & 255, hex8 >> 16 & 255, hex8 >> 8 & 255, hex8 & 255 ];
++	const [r, g, b, a] = [
++		parseInt(hex8.slice(2, 4), 16),
++		parseInt(hex8.slice(4, 6), 16),
++		parseInt(hex8.slice(6, 8), 16),
++		Math.round(parseInt(hex8.slice(8, 10), 16) / 255 * alphaDecimalPrecision) / alphaDecimalPrecision
++	];
+ 
+ 	// return a new rgba function, preserving the whitespace of the original node
+ 	const rgbaFunc = valueParser.func({ value: 'rgba', raws: Object.assign({}, node.raws) });
+diff --git a/package.json b/package.json
+index 45fce41..90ccbfa 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-color-hex-alpha",
+-  "version": "5.0.0",
++  "version": "5.0.1",
+   "description": "Use 4 & 8 character hex color notation in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+diff --git a/test/basic.css b/test/basic.css
+index 9d0f9dd..b94ebab 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -8,3 +8,8 @@ body {
+ 	content: "#f00";
+ 	content: "#0000ff00";
+ }
++
++body {
++	background-color: #f3f3f3f3;
++	color: #0003;
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index c0dd177..b550183 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -1,10 +1,15 @@
+ body {
+-	background: #9d9 linear-gradient(rgba(169,35,248,169),        rgba(52,35,248,52));
++	background: #9d9 linear-gradient(rgba(152,35,248,0.66275),        rgba(152,35,248,0.20392));
+ 	color: red;
+ 	color: #f00;
+-	color: rgba(255,0,0,255);
++	color: rgba(255,0,0,1);
+ 	color: #0000ff;
+ 	color: rgba(0,0,255,0);
+ 	content: "#f00";
+ 	content: "#0000ff00";
+ }
++
++body {
++	background-color: rgba(243,243,243,0.95294);
++	color: rgba(0,0,0,0.2);
++}
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index eb0fc74..057864f 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -1,9 +1,9 @@
+ body {
+-	background: #9d9 linear-gradient(rgba(169,35,248,169),        rgba(52,35,248,52));
++	background: #9d9 linear-gradient(rgba(152,35,248,0.66275),        rgba(152,35,248,0.20392));
+ 	background: #9d9 linear-gradient(#9823f8a9,        #9823f834);
+ 	color: red;
+ 	color: #f00;
+-	color: rgba(255,0,0,255);
++	color: rgba(255,0,0,1);
+ 	color: #f00f;
+ 	color: #0000ff;
+ 	color: rgba(0,0,255,0);
+@@ -11,3 +11,10 @@ body {
+ 	content: "#f00";
+ 	content: "#0000ff00";
+ }
++
++body {
++	background-color: rgba(243,243,243,0.95294);
++	background-color: #f3f3f3f3;
++	color: rgba(0,0,0,0.2);
++	color: #0003;
++}
+-- 
+2.33.1
+

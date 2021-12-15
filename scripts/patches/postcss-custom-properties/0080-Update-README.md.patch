@@ -1,0 +1,26 @@
+From df43c890646e2d878f1a002e8d1d2d4ea7060f4b Mon Sep 17 00:00:00 2001
+From: Glen Huang <hey.hgl@gmail.com>
+Date: Thu, 9 Apr 2015 12:40:03 +0800
+Subject: [PATCH 080/186] Update README.md
+
+Fix typo
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index e382c1f..1f023b0 100755
+--- a/README.md
++++ b/README.md
+@@ -83,7 +83,7 @@ variables in your codebase.
+ 
+ ### `appendVariables` (default: `false`)
+ 
+-If `preserve` is set to `true` (or `"computed"`), allows you to append your variables at then of your CSS.
++If `preserve` is set to `true` (or `"computed"`), allows you to append your variables at the end of your CSS.
+ 
+ ---
+ 
+-- 
+2.33.1
+

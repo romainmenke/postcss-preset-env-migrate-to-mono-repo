@@ -1,0 +1,123 @@
+From db2e2a03e13c2e3aa9ee81ad986fc76977b73d50 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 2 Oct 2018 14:13:59 -0400
+Subject: [PATCH 145/186] 8.0.8
+
+---
+ CHANGELOG.md                          | 4 ++++
+ lib/transform-value-ast.js            | 4 +++-
+ package.json                          | 2 +-
+ test/basic.css                        | 4 ++++
+ test/basic.expect.css                 | 5 +++++
+ test/basic.import-is-empty.expect.css | 5 +++++
+ test/basic.import.expect.css          | 5 +++++
+ test/basic.preserve.expect.css        | 4 ++++
+ 8 files changed, 31 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 8f9eeb7..930be92 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Custom Properties
+ 
++### 8.0.8 (October 2, 2018)
++
++- Fixed: Issue with nested fallbacks
++
+ ### 8.0.7 (October 2, 2018)
+ 
+ - Fixed: Issue with parsing custom properties that are not strings
+diff --git a/lib/transform-value-ast.js b/lib/transform-value-ast.js
+index 2d744a7..a38995b 100644
+--- a/lib/transform-value-ast.js
++++ b/lib/transform-value-ast.js
+@@ -13,7 +13,9 @@ export default function transformValueAST(root, customProperties) {
+ 					retransformValueAST(root, customProperties, name);
+ 				} else if (fallbacks.length) {
+ 					// conditionally replace a custom property with a fallback
+-					child.replaceWith(...asClonedArrayWithBeforeSpacing(fallbacks, child.raws.before));
++					const index = root.nodes.indexOf(child);
++
++					root.nodes.splice(index, 1, ...asClonedArrayWithBeforeSpacing(fallbacks, child.raws.before));
+ 
+ 					transformValueAST(root, customProperties);
+ 				}
+diff --git a/package.json b/package.json
+index 56720ee..96a7a27 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-properties",
+-  "version": "8.0.7",
++  "version": "8.0.8",
+   "description": "Use Custom Properties Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+diff --git a/test/basic.css b/test/basic.css
+index a974108..2ef95ad 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -34,3 +34,7 @@ html {
+ .test--z-index {
+ 	z-index: var(--z-index);
+ }
++
++.test--nested-fallback {
++	z-index: var(--xxx, var(--yyy, 1));
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index b61105b..2cb7713 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -39,3 +39,8 @@ html {
+ .test--z-index {
+ 	z-index: var(--z-index);
+ }
++
++.test--nested-fallback {
++	z-index: 1;
++	z-index: var(--xxx, var(--yyy, 1));
++}
+diff --git a/test/basic.import-is-empty.expect.css b/test/basic.import-is-empty.expect.css
+index b61105b..2cb7713 100644
+--- a/test/basic.import-is-empty.expect.css
++++ b/test/basic.import-is-empty.expect.css
+@@ -39,3 +39,8 @@ html {
+ .test--z-index {
+ 	z-index: var(--z-index);
+ }
++
++.test--nested-fallback {
++	z-index: 1;
++	z-index: var(--xxx, var(--yyy, 1));
++}
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+index bfdd483..97d87b1 100644
+--- a/test/basic.import.expect.css
++++ b/test/basic.import.expect.css
+@@ -40,3 +40,8 @@ html {
+ 	z-index: 10;
+ 	z-index: var(--z-index);
+ }
++
++.test--nested-fallback {
++	z-index: 1;
++	z-index: var(--xxx, var(--yyy, 1));
++}
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index 642ab08..44e5df5 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -26,3 +26,7 @@
+ .test--z-index {
+ 	z-index: var(--z-index);
+ }
++
++.test--nested-fallback {
++	z-index: 1;
++}
+-- 
+2.33.1
+
