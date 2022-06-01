@@ -3,7 +3,7 @@ From: Tyler Buck <tyler.buck@maine.edu>
 Date: Sat, 30 Jan 2016 01:07:57 -0500
 Subject: [PATCH 38/62] Properly detect circular dependencies
 
-Fixes #16
+Fixes csstools/postcss-custom-media#16
 ---
  index.js                                      | 22 ++++++++++---------
  .../fixtures/transform-circular-reference.css |  6 +++++

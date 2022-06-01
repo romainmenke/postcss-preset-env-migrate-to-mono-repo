@@ -3,7 +3,7 @@ From: Maxime Thirouin <m@moox.io>
 Date: Tue, 16 Sep 2014 06:16:56 +0200
 Subject: [PATCH 05/62] Allow whitespace around custom media name
 
-Close #2
+Close csstools/postcss-custom-media#2
 ---
  CHANGELOG.md                         |  7 ++++++-
  README.md                            |  4 ++--

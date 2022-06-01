@@ -3,7 +3,7 @@ From: Maxime Thirouin <m@moox.io>
 Date: Wed, 28 Jan 2015 21:30:09 +0100
 Subject: [PATCH 22/62] compatibility with postcss v4.x
 
-Close #5
+Close csstools/postcss-custom-media#5
 ---
  CHANGELOG.md | 17 +++++++++++------
  package.json |  2 +-

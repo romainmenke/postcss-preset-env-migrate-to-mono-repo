@@ -1,7 +1,7 @@
 From 52d91194510bb6871b48708ad71087d44af44623 Mon Sep 17 00:00:00 2001
 From: Marco Pfeiffer <m4pfeiffer+github@gmail.com>
 Date: Sat, 12 May 2018 21:53:51 +0200
-Subject: [PATCH 17/30] fixed #4
+Subject: [PATCH 17/30] fixed csstools/postcss-selector-not#4
 
 The implementation is correct, the documentation is not.
 ---

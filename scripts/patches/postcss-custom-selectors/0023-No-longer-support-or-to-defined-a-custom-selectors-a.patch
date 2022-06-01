@@ -2,7 +2,7 @@ From e504f08e43ed03bc89ef376b07df59b4e671f23a Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <percyley@qq.com>
 Date: Fri, 29 May 2015 23:19:25 +0800
 Subject: [PATCH 23/69] No longer support `::` or `--` to defined a custom
- selectors and fixed #14
+ selectors and fixed csstools/postcss-custom-selectors#14
 
 ---
  CHANGELOG.md                                  | 12 +++++++---

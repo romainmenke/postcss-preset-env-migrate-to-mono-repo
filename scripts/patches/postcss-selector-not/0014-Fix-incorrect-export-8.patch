@@ -1,7 +1,7 @@
 From 83f3c8e3e781a88ee2306841fee250c58c757e74 Mon Sep 17 00:00:00 2001
 From: Dmitry Semigradsky <semigradskyd@gmail.com>
 Date: Mon, 15 May 2017 10:03:52 +0300
-Subject: [PATCH 14/30] Fix incorrect export (#8)
+Subject: [PATCH 14/30] Fix incorrect export (csstools/postcss-selector-not#8)
 
 ---
  .babelrc     | 15 +++++++++------

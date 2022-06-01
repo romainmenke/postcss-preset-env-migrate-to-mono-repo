@@ -1,7 +1,7 @@
 From acc8c99e5198edf0fe960e85ba006892dd279fdd Mon Sep 17 00:00:00 2001
 From: alexgagnon <alexgagnon@users.noreply.github.com>
 Date: Mon, 24 May 2021 19:25:41 -0400
-Subject: [PATCH 62/62] change from global walk to AtRule (#66)
+Subject: [PATCH 62/62] change from global walk to AtRule (csstools/postcss-custom-media#66)
 
 * change to using atrule
 

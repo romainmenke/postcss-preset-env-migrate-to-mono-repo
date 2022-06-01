@@ -15,7 +15,7 @@ Also in this commit:
 - fixtures files removed in favor of es6 template string
 - should also fix some weird “undefined” warnings
 
-Close #19
+Close csstools/postcss-custom-selectors#19
 ---
  .babelrc                                 |   3 +
  .eslintignore                            |   1 +

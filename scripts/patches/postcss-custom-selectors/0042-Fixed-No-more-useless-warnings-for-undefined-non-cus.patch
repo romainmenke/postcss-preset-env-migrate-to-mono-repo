@@ -12,7 +12,7 @@ Also:
 
 Prepared as 2.2.0
 
-Close #22
+Close csstools/postcss-custom-selectors#22
 ---
  CHANGELOG.md                             | 31 +++++++++----
  index.js                                 | 56 ++++++++++++------------

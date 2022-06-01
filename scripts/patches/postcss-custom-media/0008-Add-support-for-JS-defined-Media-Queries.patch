@@ -3,7 +3,7 @@ From: Nicolas Gallagher <nicolasgallagher@twitter.com>
 Date: Sat, 27 Sep 2014 12:19:14 -0700
 Subject: [PATCH 08/62] Add support for JS-defined Media Queries
 
-Fix #3
+Fix csstools/postcss-custom-media#3
 ---
  README.md                             |  6 ++++++
  index.js                              |  9 ++++++++-

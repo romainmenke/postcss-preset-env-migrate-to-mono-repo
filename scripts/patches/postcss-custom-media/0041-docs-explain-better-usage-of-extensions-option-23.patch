@@ -1,7 +1,7 @@
 From 41c1a5045f328eb064428da6dc30640768c991ee Mon Sep 17 00:00:00 2001
 From: Jiayi Hu <jiayi.ghu@gmail.com>
 Date: Mon, 2 Jan 2017 10:04:17 +0100
-Subject: [PATCH 41/62] docs: explain better usage of extensions option (#23)
+Subject: [PATCH 41/62] docs: explain better usage of extensions option (csstools/postcss-custom-media#23)
 
 ---
  README.md | 9 +++++++++

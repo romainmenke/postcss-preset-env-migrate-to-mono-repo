@@ -1,7 +1,7 @@
 From 2a9c152f87173f33c10d373d1eaadbc00d613b5c Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?=D2=BC=CB=BF?= <jie.lijie@alibaba-inc.com>
 Date: Fri, 5 Dec 2014 17:04:02 +0800
-Subject: [PATCH 04/69] Modify the project name #3, update Gulp / Grunt
+Subject: [PATCH 04/69] Modify the project name csstools/postcss-custom-selectors#3, update Gulp / Grunt
  document
 
 ---

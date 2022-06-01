@@ -4,7 +4,7 @@ Date: Tue, 16 Jun 2015 08:15:40 +0200
 Subject: [PATCH 07/30] Fixed: spec has been previously misinterpreted and now
  transform correctly `:not()` level 4 to collapsed level 3
 
-Close #1
+Close csstools/postcss-selector-not#1
 ---
  CHANGELOG.md  |  7 +++++++
  LICENSE       |  2 +-
