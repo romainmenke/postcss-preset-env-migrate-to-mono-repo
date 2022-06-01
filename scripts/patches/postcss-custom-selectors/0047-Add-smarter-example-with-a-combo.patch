@@ -1,0 +1,89 @@
+From 5c3f7113fe271c2d7b617a7e5411671329de717f Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 15 Jul 2015 19:17:15 +0200
+Subject: [PATCH 47/69] Add smarter example with a combo
+
+---
+ README.md     | 26 ++++++++++++++++++++++++--
+ test/index.js | 14 ++++++++++++++
+ 2 files changed, 38 insertions(+), 2 deletions(-)
+
+diff --git a/README.md b/README.md
+index 3b27d76..4f09621 100644
+--- a/README.md
++++ b/README.md
+@@ -37,7 +37,7 @@ var output = postcss()
+ console.log('\n====>Output CSS:\n', output)  
+ ```
+ 
+-Or just：
++Or just:
+ 
+ ```js
+ var output = postcss(selector())
+@@ -45,7 +45,7 @@ var output = postcss(selector())
+   .css
+ ```
+ 
+-input.css：
++input:
+ 
+ ```css
+ @custom-selector :--heading h1, h2, h3, h4, h5, h6;
+@@ -97,6 +97,28 @@ a:visited {
+ }
+ ```
+ 
++You can even make some smart use like this:
++
++```css
++@custom-selector :--button button, .button;
++@custom-selector :--enter :hover, :focus;
++
++:--button:--enter {
++
++}
++```
++
++output
++
++```css
++button:hover,
++.button:hover,
++button:focus,
++.button:focus {
++
++}
++```
++
+ ## Options
+ 
+ ### `lineBreak`
+diff --git a/test/index.js b/test/index.js
+index 02a2bd8..6f894ae 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -219,6 +219,20 @@ h6:hover .ba--z {
+     "should works with multilines definition"
+   )
+ 
++  t.equal(
++    transform(
++      `@custom-selector :--button button, .button;
++@custom-selector :--enter :hover, :focus;
++
++:--button:--enter {}`
++    ).css,
++    `button:hover,
++.button:hover,
++button:focus,
++.button:focus {}`,
++    "should works with collapsed custom selectors"
++  )
++
+   t.equal(
+     transform(
+       `@custom-selector :--any .foo, .bar;
+-- 
+2.35.1
+

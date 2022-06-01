@@ -1,0 +1,75 @@
+From 00382925f5638196d6ad165c3cb155172b6222ee Mon Sep 17 00:00:00 2001
+From: Nicola Molinari <nicola.molinari@commercetools.de>
+Date: Sat, 27 Jun 2015 16:00:32 +0200
+Subject: [PATCH 35/69] Add test to reproduce warnings
+
+---
+ test/fixtures/similar-matches/input.css  | 20 ++++++++++++++++++++
+ test/fixtures/similar-matches/output.css | 15 +++++++++++++++
+ test/index.js                            |  1 +
+ 3 files changed, 36 insertions(+)
+ create mode 100644 test/fixtures/similar-matches/input.css
+ create mode 100644 test/fixtures/similar-matches/output.css
+
+diff --git a/test/fixtures/similar-matches/input.css b/test/fixtures/similar-matches/input.css
+new file mode 100644
+index 0000000..e41b411
+--- /dev/null
++++ b/test/fixtures/similar-matches/input.css
+@@ -0,0 +1,20 @@
++@custom-selector :--foo .foo;
++@custom-selector :--foo-bar .foo .bar;
++@custom-selector :--foo-baz .foo .baz;
++@custom-selector :--foo-bar-baz .foo .bar .baz;
++
++:--foo {
++    color: red;
++}
++
++:--foo-bar {
++    color: green;
++}
++
++:--foo-baz {
++    color: black;
++}
++
++:--foo-bar-baz {
++    color: blue;
++}
+diff --git a/test/fixtures/similar-matches/output.css b/test/fixtures/similar-matches/output.css
+new file mode 100644
+index 0000000..5536246
+--- /dev/null
++++ b/test/fixtures/similar-matches/output.css
+@@ -0,0 +1,15 @@
++.foo {
++    color: red;
++}
++
++.foo .bar {
++    color: green;
++}
++
++.foo .baz {
++    color: black;
++}
++
++.foo .bar .baz {
++    color: blue;
++}
+diff --git a/test/index.js b/test/index.js
+index 7816c0e..ff8283d 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -30,6 +30,7 @@ test("@custom-selector", function(t) {
+   compareFixtures(t, "multiline", "should transform multiline")
+   compareFixtures(t, "some-hyphen", "should transform some hyphen")
+   compareFixtures(t, "matches", "should transform matches selector")
++  compareFixtures(t, "similar-matches", "should transform matches selector")
+ 
+   compareFixtures(t, "extension", "should transform local extensions", {
+     extensions: {
+-- 
+2.35.1
+

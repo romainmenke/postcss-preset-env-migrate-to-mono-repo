@@ -1,0 +1,25 @@
+From cfb004c879f7d0b3807883dedb3dcbc6d5352e9c Mon Sep 17 00:00:00 2001
+From: Gyuri Ordody <24533582+gordody@users.noreply.github.com>
+Date: Fri, 11 Sep 2020 15:29:14 -0700
+Subject: [PATCH 63/69] Update index.js
+
+Don't overwrite the result of the shared `customSelectorsPromise` when the plugin is used by multiple async postcss calls.
+---
+ index.js | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/index.js b/index.js
+index 9dad15e..df0b912 100644
+--- a/index.js
++++ b/index.js
+@@ -19,6 +19,7 @@ export default postcss.plugin('postcss-custom-selectors', opts => {
+ 
+ 	return async root => {
+ 		const customProperties = Object.assign(
++			{},
+ 			await customSelectorsPromise,
+ 			getCustomSelectors(root, { preserve })
+ 		);
+-- 
+2.35.1
+

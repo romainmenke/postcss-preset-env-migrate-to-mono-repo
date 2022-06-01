@@ -1,0 +1,147 @@
+From c19ff8ffbf8817abeafde72451670b10e30810b0 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <percyley@qq.com>
+Date: Tue, 30 Jun 2015 22:38:05 +0800
+Subject: [PATCH 37/69] Fixed the tip of an undefined selector
+
+---
+ index.js                                 | 14 ++++++++++----
+ test/fixtures/similar-matches/input.css  | 20 +++++++-------------
+ test/fixtures/similar-matches/output.css | 16 ++++++----------
+ test/index.js                            | 12 ++++++------
+ 4 files changed, 29 insertions(+), 33 deletions(-)
+
+diff --git a/index.js b/index.js
+index 5ee8e42..2917e0e 100644
+--- a/index.js
++++ b/index.js
+@@ -26,7 +26,7 @@ module.exports = postcss.plugin("postcss-custom-selectors", function(options) {
+   /**
+    * 读取和替换自定义选择器
+    */
+-  return function(styles) {
++  return function(styles, result) {
+     // 读取自定义选择器
+     styles.eachAtRule(function(rule) {
+       if (rule.name !== "custom-selector") {
+@@ -54,13 +54,15 @@ module.exports = postcss.plugin("postcss-custom-selectors", function(options) {
+     })
+ 
+     // 转换自定义的选择器别名
+-    styles.eachRule(function(rule) {
++    styles.eachRule(function(rule, result) {
++      var flag = 0
+       for (var prop in customSelectors) {
+         if (rule.selector.indexOf(prop) >= 0) {
+           customSelector = customSelectors[prop]
+ 
+           // $2 = <extension-name> （自定义的选择器名称）
+           rule.selector = rule.selector.replace(re_CUSTOM_SELECTOR, function($0, $1, $2, $3) {
++
+             if ($2 === prop) {
+               var newSelector = customSelector.split(",").map(function(selector) {
+                 return $1 + selector.trim() + $3
+@@ -74,14 +76,18 @@ module.exports = postcss.plugin("postcss-custom-selectors", function(options) {
+                 // 选择器换行，同时替换多个换行为一个
+                 newSelector = newSelector.join("," + line_break + rule.before).replace(reBLANK_LINE, line_break)
+               }
++              flag ++
+               return newSelector
+-            } else if ($2 !== prop) {
+-              console.log("Warning: The selector '" + $2 + "' is undefined in CSS!")
++            }
++            else if ($2 !== prop) {
+               return $2
+             }
+           })
+         }
+       }
++      if(flag === 0){
++        console.log("Warning: The selector '" + rule.selector + "' is undefined in CSS!")
++      }
+     })
+ 
+     // 删除 @custom-selector
+diff --git a/test/fixtures/similar-matches/input.css b/test/fixtures/similar-matches/input.css
+index e41b411..9ed5369 100644
+--- a/test/fixtures/similar-matches/input.css
++++ b/test/fixtures/similar-matches/input.css
+@@ -1,20 +1,14 @@
+-@custom-selector :--foo .foo;
+-@custom-selector :--foo-bar .foo .bar;
+-@custom-selector :--foo-baz .foo .baz;
+-@custom-selector :--foo-bar-baz .foo .bar .baz;
++@custom-selector :--foo h1;
++@custom-selector :--foo-bar-baz h4 h5 h6;
+ 
+ :--foo {
+-    color: red;
++  color: red;
+ }
+ 
+-:--foo-bar {
+-    color: green;
+-}
+-
+-:--foo-baz {
+-    color: black;
++:--foo-bar-baz {
++  color: blue;
+ }
+ 
+-:--foo-bar-baz {
+-    color: blue;
++:--test p {
++  display: block;
+ }
+diff --git a/test/fixtures/similar-matches/output.css b/test/fixtures/similar-matches/output.css
+index 5536246..adff0a1 100644
+--- a/test/fixtures/similar-matches/output.css
++++ b/test/fixtures/similar-matches/output.css
+@@ -1,15 +1,11 @@
+-.foo {
+-    color: red;
++h1 {
++  color: red;
+ }
+ 
+-.foo .bar {
+-    color: green;
++h4 h5 h6 {
++  color: blue;
+ }
+ 
+-.foo .baz {
+-    color: black;
+-}
+-
+-.foo .bar .baz {
+-    color: blue;
++:--test p {
++  display: block;
+ }
+diff --git a/test/index.js b/test/index.js
+index 4efdc6c..bba9e1a 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -36,12 +36,12 @@ test("@custom-selector", function(t) {
+       lineBreak: false
+   })
+ 
+-  // compareFixtures(t, "extension", "should transform local extensions", {
+-  //   extensions: {
+-  //     ':--any' : 'section, article, aside, nav',
+-  //     ':--foo': 'input[type="text"] > section, #nav .bar'
+-  //   }
+-  // })
++  compareFixtures(t, "extension", "should transform local extensions", {
++    extensions: {
++      ':--any' : 'section, article, aside, nav',
++      ':--foo': 'input[type="text"] > section, #nav .bar'
++    }
++  })
+ 
+   t.end()
+ })
+-- 
+2.35.1
+

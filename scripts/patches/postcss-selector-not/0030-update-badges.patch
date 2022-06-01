@@ -1,0 +1,28 @@
+From a3d2491e519c41a1fef9e43efdd996d38ea2f563 Mon Sep 17 00:00:00 2001
+From: romainmenke <romainmenke@gmail.com>
+Date: Sun, 29 May 2022 10:43:08 +0200
+Subject: [PATCH 30/30] update badges
+
+---
+ README.md | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index fc03f1d..29d026b 100644
+--- a/README.md
++++ b/README.md
+@@ -1,4 +1,4 @@
+-# postcss-selector-not [![CSS Standard Status](https://cssdb.org/badge/not-pseudo-class.svg)](https://cssdb.org/#not-pseudo-class) [![Build Status](https://travis-ci.org/postcss/postcss-selector-not.svg?branch=master)](https://travis-ci.org/postcss/postcss-selector-not)
++# postcss-selector-not [![CSS Standard Status](https://cssdb.org/images/badges/not-pseudo-class.svg)](https://cssdb.org/#not-pseudo-class) [<img alt="build status" src="https://github.com/postcss/postcss-selector-not/workflows/test/badge.svg" height="20">][cli-url]
+ 
+ > PostCSS plugin to transform `:not()` W3C CSS level 4 pseudo class to :not() CSS level 3 selectors
+ 
+@@ -35,3 +35,5 @@ p:not(:first-child):not(.special) {
+ ## [Changelog](CHANGELOG.md)
+ 
+ ## [License](LICENSE)
++
++[cli-url]: https://github.com/postcss/postcss-selector-not/actions/workflows/test.yml?query=workflow/test
+-- 
+2.35.1
+

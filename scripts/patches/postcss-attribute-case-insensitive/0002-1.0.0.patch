@@ -1,0 +1,24 @@
+From e3d9c2534b1c69f6ba51827306a9d3341788a934 Mon Sep 17 00:00:00 2001
+From: Semigradsky <d.semigradsky@itransition.com>
+Date: Wed, 10 Aug 2016 12:11:47 +0300
+Subject: [PATCH 02/32] 1.0.0
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 52e682e..b4850b4 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-attribute-case-insensitive",
+-  "version": "0.0.0",
++  "version": "1.0.0",
+   "description": "PostCSS plugin to support case insensitive attributes",
+   "main": "dist/index.js",
+   "scripts": {
+-- 
+2.35.1
+

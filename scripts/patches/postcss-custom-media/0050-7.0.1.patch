@@ -1,0 +1,727 @@
+From b59e59a14e2996714ea1223699bd46a824f0549a Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 14 Sep 2018 00:54:00 -0400
+Subject: [PATCH 50/62] 7.0.1
+
+---
+ .tape.js                                 | 228 +++++++++++++++++++++++
+ CHANGELOG.md                             |   6 +-
+ lib/import-from.js                       |   2 +-
+ lib/transform-params-by-custom-params.js |  28 ++-
+ package.json                             |   4 +-
+ test/basic.css                           |  22 ++-
+ test/basic.expect.css                    |  24 ++-
+ test/basic.import.expect.css             |   0
+ test/basic.preserve.expect.css           |  97 ++++++++++
+ test/export-media.css                    |   4 +
+ test/export-media.js                     |   8 +
+ test/export-media.json                   |   8 +
+ test/export-media.mjs                    |   6 +
+ test/import-css.css                      |   0
+ test/import-media.css                    |   2 +
+ test/import-media.js                     |   6 +
+ test/import-media.json                   |   6 +
+ test/import.css                          |  29 +++
+ test/import.expect.css                   |  29 +++
+ 19 files changed, 493 insertions(+), 16 deletions(-)
+ create mode 100644 test/basic.import.expect.css
+ create mode 100644 test/basic.preserve.expect.css
+ create mode 100644 test/export-media.css
+ create mode 100644 test/export-media.js
+ create mode 100644 test/export-media.json
+ create mode 100644 test/export-media.mjs
+ create mode 100644 test/import-css.css
+ create mode 100644 test/import-media.css
+ create mode 100644 test/import-media.js
+ create mode 100644 test/import-media.json
+ create mode 100644 test/import.css
+ create mode 100644 test/import.expect.css
+
+diff --git a/.tape.js b/.tape.js
+index ee6d7a3..72204e3 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -2,6 +2,234 @@ module.exports = {
+ 	'postcss-custom-media': {
+ 		'basic': {
+ 			message: 'supports basic usage'
++		},
++		'basic:preserve': {
++			message: 'supports { preserve: true } usage',
++			options: {
++				preserve: true
++			}
++		},
++		'import': {
++			message: 'supports { importFrom: { customMedia: { ... } } } usage',
++			options: {
++				importFrom: {
++					customMedia: {
++						'--mq-a': '(max-width: 30em), (max-height: 30em)',
++						'--not-mq-a': 'not all and (--mq-a)'
++					}
++				}
++			}
++		},
++		'import:import-fn': {
++			message: 'supports { importFrom() } usage',
++			options: {
++				importFrom() {
++					return {
++						customMedia: {
++							'--mq-a': '(max-width: 30em), (max-height: 30em)',
++							'--not-mq-a': 'not all and (--mq-a)'
++						}
++					};
++				}
++			},
++			expect: 'import.expect.css',
++			result: 'import.result.css'
++		},
++		'import:import-fn-promise': {
++			message: 'supports { async importFrom() } usage',
++			options: {
++				importFrom() {
++					return new Promise(resolve => {
++						resolve({
++							customMedia: {
++								'--mq-a': '(max-width: 30em), (max-height: 30em)',
++								'--not-mq-a': 'not all and (--mq-a)'
++							}
++						})
++					});
++				}
++			},
++			expect: 'import.expect.css',
++			result: 'import.result.css'
++		},
++		'import:json': {
++			message: 'supports { importFrom: "test/import-media.json" } usage',
++			options: {
++				importFrom: 'test/import-media.json'
++			},
++			expect: 'import.expect.css',
++			result: 'import.result.css'
++		},
++		'import:js': {
++			message: 'supports { importFrom: "test/import-media.js" } usage',
++			options: {
++				importFrom: 'test/import-media.js'
++			},
++			expect: 'import.expect.css',
++			result: 'import.result.css'
++		},
++		'import:css': {
++			message: 'supports { importFrom: "test/import-media.css" } usage',
++			options: {
++				importFrom: 'test/import-media.css'
++			},
++			expect: 'import.expect.css',
++			result: 'import.result.css'
++		},
++		'import:css-from': {
++			message: 'supports { importFrom: { from: "test/import-media.css" } } usage',
++			options: {
++				importFrom: { from: 'test/import-media.css' }
++			},
++			expect: 'import.expect.css',
++			result: 'import.result.css'
++		},
++		'import:css-from-type': {
++			message: 'supports { importFrom: [ { from: "test/import-media.css", type: "css" } ] } usage',
++			options: {
++				importFrom: [ { from: 'test/import-media.css', type: 'css' } ]
++			},
++			expect: 'import.expect.css',
++			result: 'import.result.css'
++		},
++		'basic:export': {
++			message: 'supports { exportTo: { customMedia: { ... } } } usage',
++			options: {
++				exportTo: (global.__exportMediaObject = global.__exportMediaObject || {
++					customMedia: null
++				})
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			after() {
++				if (__exportMediaObject.customMedia['--mq-a'] !== '(max-width: 30em), (max-height: 30em)') {
++					throw new Error('The exportTo function failed');
++				}
++			}
++		},
++		'basic:export-fn': {
++			message: 'supports { exportTo() } usage',
++			options: {
++				exportTo(customMedia) {
++					if (customMedia['--mq-a'] !== '(max-width: 30em), (max-height: 30em)') {
++						throw new Error('The exportTo function failed');
++					}
++				}
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css'
++		},
++		'basic:export-fn-promise': {
++			message: 'supports { async exportTo() } usage',
++			options: {
++				exportTo(customMedia) {
++					return new Promise((resolve, reject) => {
++						if (customMedia['--mq-a'] !== '(max-width: 30em), (max-height: 30em)') {
++							reject('The exportTo function failed');
++						} else {
++							resolve();
++						}
++					});
++				}
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css'
++		},
++		'basic:export-json': {
++			message: 'supports { exportTo: "test/export-media.json" } usage',
++			options: {
++				exportTo: 'test/export-media.json'
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			before() {
++				global.__exportMediaString = require('fs').readFileSync('test/export-media.json', 'utf8');
++			},
++			after() {
++				if (global.__exportMediaString !== require('fs').readFileSync('test/export-media.json', 'utf8')) {
++					throw new Error('The original file did not match the freshly exported copy');
++				}
++			}
++		},
++		'basic:export-js': {
++			message: 'supports { exportTo: "test/export-media.js" } usage',
++			options: {
++				exportTo: 'test/export-media.js'
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			before() {
++				global.__exportMediaString = require('fs').readFileSync('test/export-media.js', 'utf8');
++			},
++			after() {
++				if (global.__exportMediaString !== require('fs').readFileSync('test/export-media.js', 'utf8')) {
++					throw new Error('The original file did not match the freshly exported copy');
++				}
++			}
++		},
++		'basic:export-mjs': {
++			message: 'supports { exportTo: "test/export-media.mjs" } usage',
++			options: {
++				exportTo: 'test/export-media.mjs'
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			before() {
++				global.__exportMediaString = require('fs').readFileSync('test/export-media.mjs', 'utf8');
++			},
++			after() {
++				if (global.__exportMediaString !== require('fs').readFileSync('test/export-media.mjs', 'utf8')) {
++					throw new Error('The original file did not match the freshly exported copy');
++				}
++			}
++		},
++		'basic:export-css': {
++			message: 'supports { exportTo: "test/export-media.css" } usage',
++			options: {
++				exportTo: 'test/export-media.css'
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			before() {
++				global.__exportMediaString = require('fs').readFileSync('test/export-media.css', 'utf8');
++			},
++			after() {
++				if (global.__exportMediaString !== require('fs').readFileSync('test/export-media.css', 'utf8')) {
++					throw new Error('The original file did not match the freshly exported copy');
++				}
++			}
++		},
++		'basic:export-css-to': {
++			message: 'supports { exportTo: { to: "test/export-media.css" } } usage',
++			options: {
++				exportTo: { to: 'test/export-media.css' }
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			before() {
++				global.__exportMediaString = require('fs').readFileSync('test/export-media.css', 'utf8');
++			},
++			after() {
++				if (global.__exportMediaString !== require('fs').readFileSync('test/export-media.css', 'utf8')) {
++					throw new Error('The original file did not match the freshly exported copy');
++				}
++			}
++		},
++		'basic:export-css-to-type': {
++			message: 'supports { exportTo: { to: "test/export-media.css", type: "css" } } usage',
++			options: {
++				exportTo: { to: 'test/export-media.css', type: 'css' }
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			before() {
++				global.__exportMediaString = require('fs').readFileSync('test/export-media.css', 'utf8');
++			},
++			after() {
++				if (global.__exportMediaString !== require('fs').readFileSync('test/export-media.css', 'utf8')) {
++					throw new Error('The original file did not match the freshly exported copy');
++				}
++			}
+ 		}
+ 	}
+ };
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 666301d..f7372c2 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,6 +1,10 @@
+ # Changes to PostCSS Custom Media
+ 
+-### 7.0.0 (September 12, 2018)
++### 7.0.1 (September 14, 2018)
++
++- Fixed: An issue with how opposing queries are resolved.
++
++### 7.0.0 (September 14, 2018)
+ 
+ - Added: New `preserve` option to preserve custom media and atrules using them
+ - Added: New `exportTo` function to specify where to export custom media
+diff --git a/lib/import-from.js b/lib/import-from.js
+index 41030d4..79f3bf4 100644
+--- a/lib/import-from.js
++++ b/lib/import-from.js
+@@ -8,7 +8,7 @@ import getCustomMedia from './custom-media-from-root';
+ /* ========================================================================== */
+ 
+ function importCustomMediaFromCSSAST(root) {
+-	return getCustomMedia(root);
++	return getCustomMedia(root, { preserve: true });
+ }
+ 
+ /* Import Custom Media from CSS File
+diff --git a/lib/transform-params-by-custom-params.js b/lib/transform-params-by-custom-params.js
+index b9a6cf5..5a3d598 100644
+--- a/lib/transform-params-by-custom-params.js
++++ b/lib/transform-params-by-custom-params.js
+@@ -25,10 +25,17 @@ function transformMedia(media, customMedias) {
+ 
+ 		if (key in customMedias) {
+ 			for (const replacementMedia of customMedias[key].nodes) {
++				// use the first available modifier unless they cancel each other out
++				const modifier = media.modifier !== replacementMedia.modifier
++					? media.modifier || replacementMedia.modifier
++				: '';
+ 				const mediaClone = media.clone({
+-					modifier: replacementMedia.modifier === media.modifier && modifierRegExp.test(media.modifier)
+-						? ''
+-					: replacementMedia.modifier
++					modifier,
++					// conditionally use the raws from the first available modifier
++					raws: !modifier || media.modifier
++						? { ...media.raws }
++					: { ...replacementMedia.raws },
++					type: media.type || replacementMedia.type
+ 				});
+ 
+ 				mediaClone.nodes.splice(index, 1, ...replacementMedia.clone().nodes.map(node => {
+@@ -38,9 +45,9 @@ function transformMedia(media, customMedias) {
+ 					return node;
+ 				}));
+ 
+-				const retranspiledMedias = String(mediaClone) === String(customMedias[key])
+-					? []
+-				: transformMedia(mediaClone, customMedias);
++				// remove the currently transformed key to prevent recursion
++				const nextCustomMedia = getCustomMediasWithoutKey(customMedias, key);
++				const retranspiledMedias = transformMedia(mediaClone, nextCustomMedia);
+ 
+ 				if (retranspiledMedias.length) {
+ 					transpiledMedias.push(...retranspiledMedias);
+@@ -58,5 +65,12 @@ function transformMedia(media, customMedias) {
+ 	return transpiledMedias;
+ }
+ 
+-const modifierRegExp = /^not$/i;
+ const customPseudoRegExp = /\((--[A-z][\w-]*)\)/;
++
++const getCustomMediasWithoutKey = (customMedias, key) => {
++	const nextCustomMedias = Object.assign({}, customMedias);
++
++	delete nextCustomMedias[key];
++
++	return nextCustomMedias;
++};
+diff --git a/package.json b/package.json
+index 82f3e83..987ebba 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-media",
+-  "version": "7.0.0",
++  "version": "7.0.1",
+   "description": "Use Custom Media Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -30,7 +30,7 @@
+     "postcss": "^7.0.2"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.0.0",
++    "@babel/core": "^7.0.1",
+     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+     "@babel/preset-env": "^7.0.0",
+     "babel-eslint": "^9.0.0",
+diff --git a/test/basic.css b/test/basic.css
+index 287c730..360bb9e 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -1,13 +1,31 @@
+ @custom-media --mq-a (max-width: 30em), (max-height: 30em);
+ @custom-media --not-mq-a not all and (--mq-a);
+ 
+-@media not (--mq-a) {
++@media (--mq-a) {
+ 	body {
+ 		order: 1;
+ 	}
+ }
+ 
+-@media not (--not-mq-a) {
++@media (--mq-a), (--mq-a) {
++	body {
++		order: 1;
++	}
++}
++
++@media not all and (--mq-a) {
++	body {
++		order: 2;
++	}
++}
++
++@media (--not-mq-a) {
++	body {
++		order: 1;
++	}
++}
++
++@media not all and (--not-mq-a) {
+ 	body {
+ 		order: 2;
+ 	}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 6aafdb5..6d15f5e 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -4,19 +4,37 @@
+ 	}
+ }
+ 
+-@media (max-width: 30em),(max-height: 30em) {
++@media (max-width: 30em),(max-height: 30em), (max-width: 30em), (max-height: 30em) {
++	body {
++		order: 1;
++	}
++}
++
++@media not all and (max-width: 30em),not all and (max-height: 30em) {
+ 	body {
+ 		order: 2;
+ 	}
+ }
+ 
+-@media (--circular-mq-b) {
++@media not all and (max-width: 30em),not all and (max-height: 30em) {
+ 	body {
+-		order: 3;
++		order: 1;
++	}
++}
++
++@media all and (max-width: 30em),all and (max-height: 30em) {
++	body {
++		order: 2;
+ 	}
+ }
+ 
+ @media (--circular-mq-a) {
++	body {
++		order: 3;
++	}
++}
++
++@media (--circular-mq-b) {
+ 	body {
+ 		order: 4;
+ 	}
+diff --git a/test/basic.import.expect.css b/test/basic.import.expect.css
+new file mode 100644
+index 0000000..e69de29
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+new file mode 100644
+index 0000000..3fa5361
+--- /dev/null
++++ b/test/basic.preserve.expect.css
+@@ -0,0 +1,97 @@
++@custom-media --mq-a (max-width: 30em), (max-height: 30em);
++@custom-media --not-mq-a not all and (--mq-a);
++
++@media (max-width: 30em),(max-height: 30em) {
++	body {
++		order: 1;
++	}
++}
++
++@media (--mq-a) {
++	body {
++		order: 1;
++	}
++}
++
++@media (max-width: 30em),(max-height: 30em), (max-width: 30em), (max-height: 30em) {
++	body {
++		order: 1;
++	}
++}
++
++@media (--mq-a), (--mq-a) {
++	body {
++		order: 1;
++	}
++}
++
++@media not all and (max-width: 30em),not all and (max-height: 30em) {
++	body {
++		order: 2;
++	}
++}
++
++@media not all and (--mq-a) {
++	body {
++		order: 2;
++	}
++}
++
++@media not all and (max-width: 30em),not all and (max-height: 30em) {
++	body {
++		order: 1;
++	}
++}
++
++@media (--not-mq-a) {
++	body {
++		order: 1;
++	}
++}
++
++@media all and (max-width: 30em),all and (max-height: 30em) {
++	body {
++		order: 2;
++	}
++}
++
++@media not all and (--not-mq-a) {
++	body {
++		order: 2;
++	}
++}
++
++@custom-media --circular-mq-a (--circular-mq-b);
++@custom-media --circular-mq-b (--circular-mq-a);
++
++@media (--circular-mq-a) {
++	body {
++		order: 3;
++	}
++}
++
++@media (--circular-mq-a) {
++	body {
++		order: 3;
++	}
++}
++
++@media (--circular-mq-b) {
++	body {
++		order: 4;
++	}
++}
++
++@media (--circular-mq-b) {
++	body {
++		order: 4;
++	}
++}
++
++@media (--unresolved-mq) {
++	body order: 5;
++}
++
++@media (--unresolved-mq) {
++	body order: 5;
++}
+diff --git a/test/export-media.css b/test/export-media.css
+new file mode 100644
+index 0000000..fc776fc
+--- /dev/null
++++ b/test/export-media.css
+@@ -0,0 +1,4 @@
++@custom-media --mq-a (max-width: 30em), (max-height: 30em);
++@custom-media --not-mq-a not all and (--mq-a);
++@custom-media --circular-mq-a (--circular-mq-b);
++@custom-media --circular-mq-b (--circular-mq-a);
+diff --git a/test/export-media.js b/test/export-media.js
+new file mode 100644
+index 0000000..579c929
+--- /dev/null
++++ b/test/export-media.js
+@@ -0,0 +1,8 @@
++module.exports = {
++	customMedia: {
++		'--mq-a': '(max-width: 30em), (max-height: 30em)',
++		'--not-mq-a': 'not all and (--mq-a)',
++		'--circular-mq-a': '(--circular-mq-b)',
++		'--circular-mq-b': '(--circular-mq-a)'
++	}
++};
+diff --git a/test/export-media.json b/test/export-media.json
+new file mode 100644
+index 0000000..b0a2587
+--- /dev/null
++++ b/test/export-media.json
+@@ -0,0 +1,8 @@
++{
++  "custom-media": {
++    "--mq-a": "(max-width: 30em), (max-height: 30em)",
++    "--not-mq-a": "not all and (--mq-a)",
++    "--circular-mq-a": "(--circular-mq-b)",
++    "--circular-mq-b": "(--circular-mq-a)"
++  }
++}
+diff --git a/test/export-media.mjs b/test/export-media.mjs
+new file mode 100644
+index 0000000..c1a4a72
+--- /dev/null
++++ b/test/export-media.mjs
+@@ -0,0 +1,6 @@
++export const customMedia = {
++	'--mq-a': '(max-width: 30em), (max-height: 30em)',
++	'--not-mq-a': 'not all and (--mq-a)',
++	'--circular-mq-a': '(--circular-mq-b)',
++	'--circular-mq-b': '(--circular-mq-a)'
++};
+diff --git a/test/import-css.css b/test/import-css.css
+new file mode 100644
+index 0000000..e69de29
+diff --git a/test/import-media.css b/test/import-media.css
+new file mode 100644
+index 0000000..e788f32
+--- /dev/null
++++ b/test/import-media.css
+@@ -0,0 +1,2 @@
++@custom-media --mq-a (max-width: 30em), (max-height: 30em);
++@custom-media --not-mq-a not all and (--mq-a);
+diff --git a/test/import-media.js b/test/import-media.js
+new file mode 100644
+index 0000000..3f2e040
+--- /dev/null
++++ b/test/import-media.js
+@@ -0,0 +1,6 @@
++module.exports = {
++	customMedia: {
++		'--mq-a': '(max-width: 30em), (max-height: 30em)',
++		'--not-mq-a': 'not all and (--mq-a)'
++	}
++}
+diff --git a/test/import-media.json b/test/import-media.json
+new file mode 100644
+index 0000000..807d8df
+--- /dev/null
++++ b/test/import-media.json
+@@ -0,0 +1,6 @@
++{
++  "customMedia": {
++    "--mq-a": "(max-width: 30em), (max-height: 30em)",
++    "--not-mq-a": "not all and (--mq-a)"
++  }
++}
+diff --git a/test/import.css b/test/import.css
+new file mode 100644
+index 0000000..f37220e
+--- /dev/null
++++ b/test/import.css
+@@ -0,0 +1,29 @@
++@media (--mq-a) {
++	body {
++		order: 1;
++	}
++}
++
++@media (--mq-a), (--mq-a) {
++	body {
++		order: 1;
++	}
++}
++
++@media not all and (--mq-a) {
++	body {
++		order: 2;
++	}
++}
++
++@media (--not-mq-a) {
++	body {
++		order: 1;
++	}
++}
++
++@media not all and (--not-mq-a) {
++	body {
++		order: 2;
++	}
++}
+diff --git a/test/import.expect.css b/test/import.expect.css
+new file mode 100644
+index 0000000..0bc2bbf
+--- /dev/null
++++ b/test/import.expect.css
+@@ -0,0 +1,29 @@
++@media (max-width: 30em),(max-height: 30em) {
++	body {
++		order: 1;
++	}
++}
++
++@media (max-width: 30em),(max-height: 30em), (max-width: 30em), (max-height: 30em) {
++	body {
++		order: 1;
++	}
++}
++
++@media not all and (max-width: 30em),not all and (max-height: 30em) {
++	body {
++		order: 2;
++	}
++}
++
++@media not all and (max-width: 30em),not all and (max-height: 30em) {
++	body {
++		order: 1;
++	}
++}
++
++@media all and (max-width: 30em),all and (max-height: 30em) {
++	body {
++		order: 2;
++	}
++}
+-- 
+2.35.1
+

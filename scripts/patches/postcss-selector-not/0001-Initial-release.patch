@@ -1,0 +1,358 @@
+From e578324d4ca403b59905f445a521aa2b3756a54a Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Thu, 30 Apr 2015 07:40:49 +0200
+Subject: [PATCH 01/30] Initial release
+
+---
+ .babelrc      |  3 +++
+ .editorconfig | 13 +++++++++++++
+ .eslintignore |  1 +
+ .eslintrc     | 27 ++++++++++++++++++++++++++
+ .gitignore    |  1 +
+ .travis.yml   |  2 ++
+ CHANGELOG.md  |  3 +++
+ LICENSE       | 20 +++++++++++++++++++
+ README.md     | 42 +++++++++++++++++++++++++++++++++++++++
+ package.json  | 44 +++++++++++++++++++++++++++++++++++++++++
+ src/index.js  | 40 ++++++++++++++++++++++++++++++++++++++
+ test/index.js | 54 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ 12 files changed, 250 insertions(+)
+ create mode 100644 .babelrc
+ create mode 100644 .editorconfig
+ create mode 120000 .eslintignore
+ create mode 100644 .eslintrc
+ create mode 100644 .gitignore
+ create mode 100644 .travis.yml
+ create mode 100755 CHANGELOG.md
+ create mode 100755 LICENSE
+ create mode 100644 README.md
+ create mode 100644 package.json
+ create mode 100644 src/index.js
+ create mode 100644 test/index.js
+
+diff --git a/.babelrc b/.babelrc
+new file mode 100644
+index 0000000..b0b9a96
+--- /dev/null
++++ b/.babelrc
+@@ -0,0 +1,3 @@
++{
++  "stage": 0
++}
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..fa5dd91
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,13 @@
++root = true
++
++[*]
++end_of_line = lf
++charset = utf-8
++trim_trailing_whitespace = true
++insert_final_newline = true
++indent_style = space
++indent_size = 2
++
++[*.{md,markdown}]
++# Allow <br/> from Markdown
++trim_trailing_whitespace = false
+diff --git a/.eslintignore b/.eslintignore
+new file mode 120000
+index 0000000..3e4e48b
+--- /dev/null
++++ b/.eslintignore
+@@ -0,0 +1 @@
++.gitignore
+\ No newline at end of file
+diff --git a/.eslintrc b/.eslintrc
+new file mode 100644
+index 0000000..98388d0
+--- /dev/null
++++ b/.eslintrc
+@@ -0,0 +1,27 @@
++---
++# babel support more syntax stuff than eslint for now
++parser: babel-eslint
++
++ecmaFeatures:
++  modules: true
++
++env:
++  es6: true
++  browser: true
++  node: true
++
++# 0: off, 1: warning, 2: error
++rules:
++  # semicolons are useless
++  semi: [2, "never"]
++
++  quotes: [2, "double"]
++
++  # 2 spaces indentation
++  indent: [2, 2]
++
++  # trailing coma are cool for diff
++  comma-dangle: [2, "always-multiline"]
++
++  # enforce comma at eol (never before)
++  comma-style: [2, "last"]
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..1521c8b
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1 @@
++dist
+diff --git a/.travis.yml b/.travis.yml
+new file mode 100644
+index 0000000..31e6113
+--- /dev/null
++++ b/.travis.yml
+@@ -0,0 +1,2 @@
++sudo: false
++language: node_js
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100755
+index 0000000..31bf783
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,3 @@
++# 1.0.0 - 2015-04-30
++
++✨ First release
+diff --git a/LICENSE b/LICENSE
+new file mode 100755
+index 0000000..8b39b8f
+--- /dev/null
++++ b/LICENSE
+@@ -0,0 +1,20 @@
++The MIT License (MIT)
++
++Copyright (c) 2014 Maxime Thirouin
++
++Permission is hereby granted, free of charge, to any person obtaining a copy of
++this software and associated documentation files (the "Software"), to deal in
++the Software without restriction, including without limitation the rights to
++use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
++the Software, and to permit persons to whom the Software is furnished to do so,
++subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
++FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
++COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
++IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
++CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..c581001
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,42 @@
++# postcss-selector-not [![Build Status](https://travis-ci.org/postcss/postcss-selector-not.svg?branch=master)](https://travis-ci.org/postcss/postcss-selector-not)
++
++> PostCSS plugin to transform `:not()` W3C CSS leve 4 pseudo class to :not() CSS level 3 selectors
++
++## Installation
++
++```console
++$ npm install postcss-selector-not
++```
++
++## Usage
++
++```js
++var postcss = require("postcss")
++
++var output = postcss()
++  .use(require("postcss-selector-not"))
++  .process(require("fs").readFileSync("input.css", "utf8"))
++  .css
++```
++
++Using this `input.css`:
++
++```css
++p:not(:first-child, .special) {
++  color: red;
++}
++```
++
++you will get:
++
++```css
++p:not(:first-child), p:not(.special) {
++  color: red;
++}
++```
++
++---
++
++## [Changelog](CHANGELOG.md)
++
++## [License](LICENSE)
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..8535491
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,44 @@
++{
++  "name": "postcss-selector-not",
++  "version": "1.0.0",
++  "description": "PostCSS plugin to transform :not() W3C CSS leve 4 pseudo class to :not() CSS level 3 selectors",
++  "keywords": [
++    "postcss",
++    "selectors",
++    "selector",
++    "Not"
++  ],
++  "author": "Maxime Thirouin",
++  "license": "MIT",
++  "repository": {
++    "type": "git",
++    "url": "https://github.com/postcss/postcss-selector-not.git"
++  },
++  "homepage": "https://github.com/postcss/postcss-selector-not",
++  "bugs": {
++    "url": "https://github.com/postcss/postcss-selector-not/issues"
++  },
++  "files": [
++    "CHANGELOG.md",
++    "LICENSE",
++    "dist"
++  ],
++  "main": "dist/index.js",
++  "dependencies": {
++    "balanced-match": "^0.2.0",
++    "postcss": "^4.1.7"
++  },
++  "devDependencies": {
++    "babel": "^5.1.13",
++    "babel-eslint": "^3.0.1",
++    "babel-tape-runner": "^1.1.0",
++    "eslint": "^0.20.0",
++    "tape": "^4.0.0"
++  },
++  "scripts": {
++    "lint": "eslint .",
++    "tape": "babel-tape-runner 'test/*.js'",
++    "test": "npm run lint && npm run tape",
++    "prepublish": "babel src --out-dir dist"
++  }
++}
+diff --git a/src/index.js b/src/index.js
+new file mode 100644
+index 0000000..250a1eb
+--- /dev/null
++++ b/src/index.js
+@@ -0,0 +1,40 @@
++import postcss from "postcss"
++import list from "postcss/lib/list"
++
++import balancedMatch from "balanced-match"
++
++function explodeSelector(pseudoClass, selector) {
++  if (selector && selector.indexOf(pseudoClass) > -1) {
++    const start = `${pseudoClass}(`
++    const end = ")"
++    const matches = balancedMatch(start, end, selector)
++    const selectors = []
++    const bodySelectors = matches.body ?
++      list
++        .comma(matches.body)
++        .reduce((acc, s) => [...acc, ...explodeSelector(pseudoClass, s)], {})
++      : [""]
++    const postSelectors = matches.post ? explodeSelector(pseudoClass, matches.post) : [""]
++    postSelectors.forEach(postSelector => {
++      bodySelectors.forEach(bodySelector => {
++        selectors.push(`${matches.pre}${pseudoClass}(${bodySelector})${postSelector}`)
++      })
++    })
++    return selectors
++  }
++  return [selector]
++}
++
++function explodeSelectors(pseudoClass) {
++  return () => {
++    return (css) => {
++      css.eachRule(rule => {
++        if (rule.selector && rule.selector.indexOf(pseudoClass) > -1) {
++          rule.selector = explodeSelector(pseudoClass, rule.selector).join(", ")
++        }
++      })
++    }
++  }
++}
++
++export default postcss.plugin("postcss-selector-not", explodeSelectors(":not"))
+diff --git a/test/index.js b/test/index.js
+new file mode 100644
+index 0000000..17bd590
+--- /dev/null
++++ b/test/index.js
+@@ -0,0 +1,54 @@
++import tape from "tape"
++
++import postcss from "postcss"
++import selectorNot from "../src/index.js"
++
++function transform(css) {
++  return postcss(selectorNot).process(css).css
++}
++
++tape("postcss-selector-not", t => {
++  t.equal(
++    transform("body {}"),
++    "body {}",
++    "should do nothing if there is no :not"
++  )
++
++  t.equal(
++    transform("body, Not {}"),
++    "body, Not {}",
++    "should really do nothing if there is no :not"
++  )
++
++  t.equal(
++    transform(":not(a, b) {}"),
++    ":not(a), :not(b) {}",
++    "should transform simple :not()"
++  )
++
++  t.equal(
++    transform("tag:not(.class, .class2) {}"),
++    "tag:not(.class), tag:not(.class2) {}",
++    "should transform directes :not()"
++  )
++
++  t.equal(
++    transform("tag :not(tag2, tag3) {}"),
++    "tag :not(tag2), tag :not(tag3) {}",
++    "should transform :not()"
++  )
++
++  t.equal(
++    transform("tag :not(tag2, tag3) :not(tag4, tag5) {}"),
++    "tag :not(tag2) :not(tag4), tag :not(tag3) :not(tag4), tag :not(tag2) :not(tag5), tag :not(tag3) :not(tag5) {}",
++    "should transform mutltiples :not()"
++  )
++
++  t.equal(
++    transform("tag :not(tag2 :not(tag4, tag5), tag3) {}"),
++    "tag :not(tag2 :not(tag4)), tag :not(tag2 :not(tag5)), tag :not(tag3) {}",
++    "should transform :not() recursively"
++  )
++
++  t.end()
++})
+-- 
+2.35.1
+

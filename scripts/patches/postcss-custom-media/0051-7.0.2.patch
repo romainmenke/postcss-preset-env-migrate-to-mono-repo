@@ -1,0 +1,74 @@
+From 407c33cd8821a869db9dc6fac3d99681ee74a1ef Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 15 Sep 2018 15:35:35 -0400
+Subject: [PATCH 51/62] 7.0.2
+
+---
+ CHANGELOG.md                                                  | 4 ++++
+ lib/transform-atrules.js                                      | 4 ++--
+ ...orm-params-by-custom-params.js => transform-media-list.js} | 0
+ package.json                                                  | 4 ++--
+ 4 files changed, 8 insertions(+), 4 deletions(-)
+ rename lib/{transform-params-by-custom-params.js => transform-media-list.js} (100%)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index f7372c2..4284f45 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Custom Media
+ 
++### 7.0.2 (September 15, 2018)
++
++- Fixed: An issue with re-assigning params as a non-string
++
+ ### 7.0.1 (September 14, 2018)
+ 
+ - Fixed: An issue with how opposing queries are resolved.
+diff --git a/lib/transform-atrules.js b/lib/transform-atrules.js
+index 74f5431..b857588 100644
+--- a/lib/transform-atrules.js
++++ b/lib/transform-atrules.js
+@@ -1,4 +1,4 @@
+-import transformParamsByCustomParams from './transform-params-by-custom-params';
++import transformMediaList from './transform-media-list';
+ import mediaASTFromString from './media-ast-from-string';
+ 
+ // transform custom pseudo selectors with custom selectors
+@@ -6,7 +6,7 @@ export default (root, customMedia, opts) => {
+ 	root.walkAtRules(mediaAtRuleRegExp, atrule => {
+ 		if (customPseudoRegExp.test(atrule.params)) {
+ 			const mediaAST = mediaASTFromString(atrule.params);
+-			const params = transformParamsByCustomParams(mediaAST, customMedia, opts);
++			const params = String(transformMediaList(mediaAST, customMedia));
+ 
+ 			if (opts.preserve) {
+ 				atrule.cloneBefore({ params });
+diff --git a/lib/transform-params-by-custom-params.js b/lib/transform-media-list.js
+similarity index 100%
+rename from lib/transform-params-by-custom-params.js
+rename to lib/transform-media-list.js
+diff --git a/package.json b/package.json
+index 987ebba..4955b81 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-media",
+-  "version": "7.0.1",
++  "version": "7.0.2",
+   "description": "Use Custom Media Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -34,7 +34,7 @@
+     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+     "@babel/preset-env": "^7.0.0",
+     "babel-eslint": "^9.0.0",
+-    "eslint": "^5.5.0",
++    "eslint": "^5.6.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-- 
+2.35.1
+

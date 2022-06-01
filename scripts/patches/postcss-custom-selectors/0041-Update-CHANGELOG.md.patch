@@ -1,0 +1,26 @@
+From 721c576757c8b89b6960300b46c06ddfc5f54f85 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <yisibl@users.noreply.github.com>
+Date: Tue, 30 Jun 2015 23:10:33 +0800
+Subject: [PATCH 41/69] Update CHANGELOG.md
+
+---
+ CHANGELOG.md | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 91a415c..f94f66b 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,7 +1,7 @@
+ # 2.1.0 - 2015-06-30
+ 
+-* \- Fixed: the lineBreak option keeping the selectors indent #18.
+-* \- Fixed: the tip of an undefined selector #20.
++* \- Fixed: the lineBreak option keeping the selectors indent [#18](https://github.com/postcss/postcss-custom-selectors/issues/18).
++* \- Fixed: the tip of an undefined selector [#20](https://github.com/postcss/postcss-custom-selectors/issues/20).
+ 
+ # 2.1.0 - 2015-06-04
+ 
+-- 
+2.35.1
+

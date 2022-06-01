@@ -1,0 +1,24 @@
+From 81367451777303ac464a5b82eab549241df74992 Mon Sep 17 00:00:00 2001
+From: Dmitry Semigradsky <semigradskyd@gmail.com>
+Date: Fri, 2 Jun 2017 11:36:57 +0300
+Subject: [PATCH 44/62] Change link to specification
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index bcf5a79..254b9b2 100755
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # postcss-custom-media [![Build Status](https://travis-ci.org/postcss/postcss-custom-media.png)](https://travis-ci.org/postcss/postcss-custom-media)
+ 
+-> [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Media Queries](https://www.w3.org/TR/2016/WD-mediaqueries-4-20160126/#custom-mq) syntax to more compatible CSS.
++> [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Media Queries](https://drafts.csswg.org/mediaqueries-5/#custom-mq) syntax to more compatible CSS.
+ 
+ ## Installation
+ 
+-- 
+2.35.1
+

@@ -1,0 +1,84 @@
+From b06a327d9dd553333a2a1ce9cc8e061c96357998 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Sat, 13 Jun 2015 08:31:21 +0200
+Subject: [PATCH 04/30] Fixed: support of pseudo classes that use parenthesis
+
+Ref https://github.com/postcss/postcss-selector-matches/issues/2
+---
+ CHANGELOG.md  |  4 ++++
+ package.json  |  2 +-
+ src/index.js  | 10 +++++-----
+ test/index.js |  6 ++++++
+ 4 files changed, 16 insertions(+), 6 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index ac7b7b5..9a685aa 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 1.0.2 - 2015-06-13
++
++- Fixed: support of pseudo classes that use parenthesis
++
+ # 1.0.1 - 2015-04-30
+ 
+ - Fixed: the module now works in non babel environments
+diff --git a/package.json b/package.json
+index a8aa5a7..af25926 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-selector-not",
+-  "version": "1.0.1",
++  "version": "1.0.2",
+   "description": "PostCSS plugin to transform :not() W3C CSS leve 4 pseudo class to :not() CSS level 3 selectors",
+   "keywords": [
+     "postcss",
+diff --git a/src/index.js b/src/index.js
+index ce262d2..bbc775c 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -4,10 +4,10 @@ import list from "postcss/lib/list"
+ import balancedMatch from "balanced-match"
+ 
+ function explodeSelector(pseudoClass, selector) {
+-  if (selector && selector.indexOf(pseudoClass) > -1) {
+-    const start = `${pseudoClass}(`
+-    const end = ")"
+-    const matches = balancedMatch(start, end, selector)
++  const position = selector.indexOf(pseudoClass)
++  if (selector && position > -1) {
++    const pre = selector.slice(0, position)
++    const matches = balancedMatch("(", ")", selector.slice(position))
+     const selectors = []
+     const bodySelectors = matches.body ?
+       list
+@@ -17,7 +17,7 @@ function explodeSelector(pseudoClass, selector) {
+     const postSelectors = matches.post ? explodeSelector(pseudoClass, matches.post) : [""]
+     postSelectors.forEach(postSelector => {
+       bodySelectors.forEach(bodySelector => {
+-        selectors.push(`${matches.pre}${pseudoClass}(${bodySelector})${postSelector}`)
++        selectors.push(`${pre}${pseudoClass}(${bodySelector})${postSelector}`)
+       })
+     })
+     return selectors
+diff --git a/test/index.js b/test/index.js
+index 17bd590..5aeee21 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -50,5 +50,11 @@ tape("postcss-selector-not", t => {
+     "should transform :not() recursively"
+   )
+ 
++  t.equal(
++    transform(".foo:not(:nth-child(-n+2), .bar) {}"),
++    ".foo:not(:nth-child(-n+2)), .foo:not(.bar) {}",
++    "should transform childs with parenthesis"
++  )
++
+   t.end()
+ })
+-- 
+2.35.1
+

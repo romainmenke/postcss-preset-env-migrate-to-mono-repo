@@ -1,0 +1,198 @@
+From 297488a39bfb3da5c4ca0198941b1e63ed8c18bd Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 16 Jun 2015 08:15:40 +0200
+Subject: [PATCH 07/30] Fixed: spec has been previously misinterpreted and now
+ transform correctly `:not()` level 4 to collapsed level 3
+
+Close #1
+---
+ CHANGELOG.md  |  7 +++++++
+ LICENSE       |  2 +-
+ README.md     |  8 --------
+ package.json  |  2 +-
+ src/index.js  | 25 +++++++++++--------------
+ test/index.js | 26 +++++++-------------------
+ 6 files changed, 27 insertions(+), 43 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 36d56c8..67c8c0f 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,10 @@
++# 1.2.0 - 2015-06-13
++
++- Fixed: spec has been previously misinterpreted and now transform correctly
++`:not()` level 4 to collapsed level 3
++([#1](https://github.com/postcss/postcss-selector-not/issues/1))
++- Removed: `lineBreak` option (useless now)
++
+ # 1.1.0 - 2015-06-13
+ 
+ - Added: `lineBreak` option
+diff --git a/LICENSE b/LICENSE
+index 8b39b8f..372f030 100755
+--- a/LICENSE
++++ b/LICENSE
+@@ -1,6 +1,6 @@
+ The MIT License (MIT)
+ 
+-Copyright (c) 2014 Maxime Thirouin
++Copyright (c) 2015 Maxime Thirouin
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy of
+ this software and associated documentation files (the "Software"), to deal in
+diff --git a/README.md b/README.md
+index a228b67..9c097ca 100644
+--- a/README.md
++++ b/README.md
+@@ -37,14 +37,6 @@ p:not(:first-child), p:not(.special) {
+ }
+ ```
+ 
+-## Options
+-
+-### `lineBreak`
+-
+-(default: `false`)
+-
+-Allows you to introduce a line break between generated selectors.
+-
+ ---
+ 
+ ## [Changelog](CHANGELOG.md)
+diff --git a/package.json b/package.json
+index bf38ca6..2e654c8 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-selector-not",
+-  "version": "1.1.0",
++  "version": "1.2.0",
+   "description": "PostCSS plugin to transform :not() W3C CSS leve 4 pseudo class to :not() CSS level 3 selectors",
+   "keywords": [
+     "postcss",
+diff --git a/src/index.js b/src/index.js
+index e50babb..f8bccd8 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -9,34 +9,31 @@ function explodeSelector(pseudoClass, selector) {
+     const pre = selector.slice(0, position)
+     const matches = balancedMatch("(", ")", selector.slice(position))
+     const selectors = []
+-    const bodySelectors = matches.body ?
+-      list
++    const bodySelectors = matches.body
++      ? list
+         .comma(matches.body)
+-        .reduce((acc, s) => [...acc, ...explodeSelector(pseudoClass, s)], [])
+-      : [""]
+-    const postSelectors = matches.post ? explodeSelector(pseudoClass, matches.post) : [""]
+-    postSelectors.forEach(postSelector => {
+-      bodySelectors.forEach(bodySelector => {
+-        selectors.push(`${pre}${pseudoClass}(${bodySelector})${postSelector}`)
+-      })
+-    })
++        .map(s => explodeSelector(pseudoClass, s))
++        .join(`)${pseudoClass}(`)
++      : ""
++    const postSelectors = matches.post
++      ? explodeSelector(pseudoClass, matches.post)
++      : ""
++    selectors.push(`${pre}${pseudoClass}(${bodySelectors})${postSelectors}`)
+     return selectors
+   }
+-  return [selector]
++  return selector
+ }
+ 
+ function explodeSelectors(pseudoClass) {
+-  return (options = {}) => {
++  return () => {
+     return (css) => {
+       css.eachRule(rule => {
+         if (rule.selector && rule.selector.indexOf(pseudoClass) > -1) {
+           rule.selector = explodeSelector(pseudoClass, rule.selector)
+-            .join("," + (options.lineBreak ? "\n" + rule.before : " "))
+         }
+       })
+     }
+   }
+ }
+ 
+-
+ export default postcss.plugin("postcss-selector-not", explodeSelectors(":not"))
+diff --git a/test/index.js b/test/index.js
+index 3dbe62b..110a3b1 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -22,37 +22,37 @@ tape("postcss-selector-not", t => {
+ 
+   t.equal(
+     transform(":not(a, b) {}"),
+-    ":not(a), :not(b) {}",
++    ":not(a):not(b) {}",
+     "should transform simple :not()"
+   )
+ 
+   t.equal(
+     transform("tag:not(.class, .class2) {}"),
+-    "tag:not(.class), tag:not(.class2) {}",
++    "tag:not(.class):not(.class2) {}",
+     "should transform directes :not()"
+   )
+ 
+   t.equal(
+     transform("tag :not(tag2, tag3) {}"),
+-    "tag :not(tag2), tag :not(tag3) {}",
++    "tag :not(tag2):not(tag3) {}",
+     "should transform :not()"
+   )
+ 
+   t.equal(
+     transform("tag :not(tag2, tag3) :not(tag4, tag5) {}"),
+-    "tag :not(tag2) :not(tag4), tag :not(tag3) :not(tag4), tag :not(tag2) :not(tag5), tag :not(tag3) :not(tag5) {}",
++    "tag :not(tag2):not(tag3) :not(tag4):not(tag5) {}",
+     "should transform mutltiples :not()"
+   )
+ 
+   t.equal(
+     transform("tag :not(tag2 :not(tag4, tag5), tag3) {}"),
+-    "tag :not(tag2 :not(tag4)), tag :not(tag2 :not(tag5)), tag :not(tag3) {}",
++    "tag :not(tag2 :not(tag4):not(tag5)):not(tag3) {}",
+     "should transform :not() recursively"
+   )
+ 
+   t.equal(
+     transform(".foo:not(:nth-child(-n+2), .bar) {}"),
+-    ".foo:not(:nth-child(-n+2)), .foo:not(.bar) {}",
++    ".foo:not(:nth-child(-n+2)):not(.bar) {}",
+     "should transform childs with parenthesis"
+   )
+ 
+@@ -61,21 +61,9 @@ tape("postcss-selector-not", t => {
+   .b,
+   .c
+ ) {}`),
+-    "a:not(.b), a:not(.c) {}",
++    "a:not(.b):not(.c) {}",
+     "should works with lots of whitespace"
+   )
+ 
+-  t.equal(
+-    transform(".foo:not(:nth-child(-n+2), .bar) {}", {lineBreak: true}),
+-    ".foo:not(:nth-child(-n+2)),\n.foo:not(.bar) {}",
+-    "should add line break if asked too"
+-  )
+-
+-  t.equal(
+-    transform("  .foo:not(:nth-child(-n+2), .bar) {}", {lineBreak: true}),
+-    "  .foo:not(:nth-child(-n+2)),\n  .foo:not(.bar) {}",
+-    "should add line break if asked too, and respect indentation"
+-  )
+-
+   t.end()
+ })
+-- 
+2.35.1
+

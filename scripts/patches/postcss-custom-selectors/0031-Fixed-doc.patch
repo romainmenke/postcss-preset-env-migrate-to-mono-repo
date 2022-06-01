@@ -1,0 +1,25 @@
+From 8953a20e54539cbfa263c130788f33b7cea1f242 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <percyley@qq.com>
+Date: Wed, 3 Jun 2015 16:50:48 +0800
+Subject: [PATCH 31/69] Fixed doc
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 602e95f..125b337 100644
+--- a/README.md
++++ b/README.md
+@@ -110,7 +110,7 @@ Example 3:
+ @custom-selector :--heading h1, h2, h3, h4, h5, h6;
+ @custom-selector :--any-link :link, :visited;
+ 
+-.demo --heading, a:--any-link { 
++.demo :--heading, a:--any-link { 
+   font-size: 32px;
+ }
+ ```
+-- 
+2.35.1
+

@@ -1,0 +1,39 @@
+From 4427bb7acf8b56e78c33579f7c51a746abc460d0 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 12 Nov 2014 15:56:10 +0100
+Subject: [PATCH 18/62] update test to ensure postcss 3.0 compatibility
+
+---
+ package.json  | 2 +-
+ test/index.js | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/package.json b/package.json
+index b139a06..75b0655 100755
+--- a/package.json
++++ b/package.json
+@@ -24,7 +24,7 @@
+   "devDependencies": {
+     "jscs": "^1.6.2",
+     "jshint": "^2.5.6",
+-    "postcss": "^2.2.5",
++    "postcss": "^3.0.0",
+     "tape": "^3.0.0"
+   },
+   "scripts": {
+diff --git a/test/index.js b/test/index.js
+index a909889..a7e5d35 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -15,7 +15,7 @@ function compareFixtures(t, name, msg, opts, postcssOpts) {
+   var actual = postcss().use(plugin(opts)).process(read(postcssOpts.from), postcssOpts).css
+   var expected = read(filename("fixtures/" + name + ".expected"))
+   fs.writeFile(filename("fixtures/" + name + ".actual"), actual)
+-  t.equal(actual, expected, msg)
++  t.equal(actual.trim(), expected.trim(), msg)
+ }
+ 
+ test("@custom-media", function(t) {
+-- 
+2.35.1
+

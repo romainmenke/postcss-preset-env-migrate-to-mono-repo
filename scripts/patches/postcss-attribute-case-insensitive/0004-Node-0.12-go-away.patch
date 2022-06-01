@@ -1,0 +1,21 @@
+From 10d729f7aed8080482fe530e00e71067a97ef37f Mon Sep 17 00:00:00 2001
+From: Semigradsky <d.semigradsky@itransition.com>
+Date: Wed, 10 Aug 2016 12:53:47 +0300
+Subject: [PATCH 04/32] Node 0.12 - go away!
+
+---
+ .travis.yml | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/.travis.yml b/.travis.yml
+index 2e7fd10..52ad81f 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -2,4 +2,3 @@ language: node_js
+ node_js:
+   - "6"
+   - "4"
+-  - "0.12"
+-- 
+2.35.1
+

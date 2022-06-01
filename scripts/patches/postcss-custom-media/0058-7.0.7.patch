@@ -1,0 +1,199 @@
+From 5db224c00226e8e0eac296d9dcee9208db299766 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Fri, 19 Oct 2018 18:25:18 -0400
+Subject: [PATCH 58/62] 7.0.7
+
+---
+ CHANGELOG.md                   |  6 +++++-
+ lib/transform-media-list.js    |  5 ++++-
+ package.json                   |  4 ++--
+ test/basic.css                 | 14 ++++++++++++++
+ test/basic.expect.css          | 12 ++++++++++++
+ test/basic.preserve.expect.css | 26 ++++++++++++++++++++++++++
+ test/export-media.css          |  1 +
+ test/export-media.js           |  3 ++-
+ test/export-media.json         |  3 ++-
+ test/export-media.mjs          |  3 ++-
+ 10 files changed, 70 insertions(+), 7 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 0978112..a762390 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,8 +1,12 @@
+ # Changes to PostCSS Custom Media
+ 
++### 7.0.7 (October 19, 2018)
++
++- Fixed: Issue combining custom media media queries with `and`
++
+ ### 7.0.6 (October 12, 2018)
+ 
+-- Fixing: Issue combining multiple custom media
++- Fixed: Issue combining multiple custom media
+ 
+ ### 7.0.5 (October 5, 2018)
+ 
+diff --git a/lib/transform-media-list.js b/lib/transform-media-list.js
+index bacca25..d30a8ec 100644
+--- a/lib/transform-media-list.js
++++ b/lib/transform-media-list.js
+@@ -49,7 +49,10 @@ function transformMedia(media, customMedias) {
+ 
+ 				mediaClone.nodes.splice(index, 1, ...replacementMedia.clone().nodes.map(node => {
+ 					// use raws and spacing from the current usage
+-					node.raws = { ...media.nodes[index].raws };
++					if (media.nodes[index].raws.and) {
++						node.raws = { ...media.nodes[index].raws };
++					}
++
+ 					node.spaces = { ...media.nodes[index].spaces };
+ 
+ 					return node;
+diff --git a/package.json b/package.json
+index c58097e..505eb8e 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-media",
+-  "version": "7.0.6",
++  "version": "7.0.7",
+   "description": "Use Custom Media Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -34,7 +34,7 @@
+     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+     "@babel/preset-env": "^7.1.0",
+     "babel-eslint": "^10.0.1",
+-    "eslint": "^5.6.1",
++    "eslint": "^5.7.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+diff --git a/test/basic.css b/test/basic.css
+index 14bf480..d01c68b 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -67,3 +67,17 @@
+ 		order: 6;
+ 	}
+ }
++
++@custom-media --concat (min-width: 320px) and (max-width: 640px);
++
++@media (--concat) {
++	body {
++		order: 7;
++	}
++}
++
++@media (--concat) and (min-aspect-ratio: 16/9) {
++	body {
++		order: 8;
++	}
++}
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index ec332b8..0b70203 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -57,3 +57,15 @@
+ 		order: 6;
+ 	}
+ }
++
++@media (min-width: 320px) and (max-width: 640px) {
++	body {
++		order: 7;
++	}
++}
++
++@media (min-width: 320px) and (max-width: 640px) and (min-aspect-ratio: 16/9) {
++	body {
++		order: 8;
++	}
++}
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index 435a049..0d542ff 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -127,3 +127,29 @@
+ 		order: 6;
+ 	}
+ }
++
++@custom-media --concat (min-width: 320px) and (max-width: 640px);
++
++@media (min-width: 320px) and (max-width: 640px) {
++	body {
++		order: 7;
++	}
++}
++
++@media (--concat) {
++	body {
++		order: 7;
++	}
++}
++
++@media (min-width: 320px) and (max-width: 640px) and (min-aspect-ratio: 16/9) {
++	body {
++		order: 8;
++	}
++}
++
++@media (--concat) and (min-aspect-ratio: 16/9) {
++	body {
++		order: 8;
++	}
++}
+diff --git a/test/export-media.css b/test/export-media.css
+index 26b7f8b..f51e88c 100644
+--- a/test/export-media.css
++++ b/test/export-media.css
+@@ -5,3 +5,4 @@
+ @custom-media --circular-mq-b (--circular-mq-a);
+ @custom-media --min (min-width: 320px);
+ @custom-media --max (max-width: 640px);
++@custom-media --concat (min-width: 320px) and (max-width: 640px);
+diff --git a/test/export-media.js b/test/export-media.js
+index a1f29ef..acccd84 100644
+--- a/test/export-media.js
++++ b/test/export-media.js
+@@ -6,6 +6,7 @@ module.exports = {
+ 		'--circular-mq-a': '(--circular-mq-b)',
+ 		'--circular-mq-b': '(--circular-mq-a)',
+ 		'--min': '(min-width: 320px)',
+-		'--max': '(max-width: 640px)'
++		'--max': '(max-width: 640px)',
++		'--concat': '(min-width: 320px) and (max-width: 640px)'
+ 	}
+ };
+diff --git a/test/export-media.json b/test/export-media.json
+index f54f6fe..82eb9de 100644
+--- a/test/export-media.json
++++ b/test/export-media.json
+@@ -6,6 +6,7 @@
+     "--circular-mq-a": "(--circular-mq-b)",
+     "--circular-mq-b": "(--circular-mq-a)",
+     "--min": "(min-width: 320px)",
+-    "--max": "(max-width: 640px)"
++    "--max": "(max-width: 640px)",
++    "--concat": "(min-width: 320px) and (max-width: 640px)"
+   }
+ }
+diff --git a/test/export-media.mjs b/test/export-media.mjs
+index 6b84681..ea36519 100644
+--- a/test/export-media.mjs
++++ b/test/export-media.mjs
+@@ -5,5 +5,6 @@ export const customMedia = {
+ 	'--circular-mq-a': '(--circular-mq-b)',
+ 	'--circular-mq-b': '(--circular-mq-a)',
+ 	'--min': '(min-width: 320px)',
+-	'--max': '(max-width: 640px)'
++	'--max': '(max-width: 640px)',
++	'--concat': '(min-width: 320px) and (max-width: 640px)'
+ };
+-- 
+2.35.1
+

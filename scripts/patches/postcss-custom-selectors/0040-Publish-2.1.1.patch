@@ -1,0 +1,42 @@
+From e202b8b2d78fa270ba61add39045a2f22f7cd807 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <percyley@qq.com>
+Date: Tue, 30 Jun 2015 23:02:24 +0800
+Subject: [PATCH 40/69] Publish 2.1.1
+
+---
+ CHANGELOG.md | 7 ++++++-
+ package.json | 2 +-
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 897aaf8..91a415c 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,6 +1,11 @@
++# 2.1.0 - 2015-06-30
++
++* \- Fixed: the lineBreak option keeping the selectors indent #18.
++* \- Fixed: the tip of an undefined selector #20.
++
+ # 2.1.0 - 2015-06-04
+ 
+-* \- Fixed: Use PostCSS 4.1 plugin API.
++* \- Fixed: use PostCSS 4.1 plugin API.
+ 
+ # 2.0.1 - 2015-06-03
+ 
+diff --git a/package.json b/package.json
+index 63b1fc6..93561d0 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-selectors",
+-  "version": "2.1.0",
++  "version": "2.1.1",
+   "description": "PostCSS plugin to transform W3C CSS Extensions(Custom Selectors) to more compatible CSS",
+   "keywords": [
+     "css",
+-- 
+2.35.1
+

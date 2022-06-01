@@ -1,0 +1,69 @@
+From 20c908d3d79434d4d2e1f9489b3591040fc805cb Mon Sep 17 00:00:00 2001
+From: Dmitry Semigradsky <semigradskyd@gmail.com>
+Date: Fri, 12 May 2017 11:57:20 +0300
+Subject: [PATCH 42/62] Update dependencies
+
+---
+ .travis.yml   | 10 ++++------
+ package.json  | 11 ++++++-----
+ test/index.js |  2 +-
+ 3 files changed, 11 insertions(+), 12 deletions(-)
+
+diff --git a/.travis.yml b/.travis.yml
+index dd60f93..6e53823 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -1,8 +1,6 @@
++sudo: false
+ language: node_js
+-
+ node_js:
+-  - 4
+-  - 5
+-
+-matrix:
+-  fast_finish: true
++  - "stable"
++  - "6"
++  - "4"
+diff --git a/package.json b/package.json
+index a316688..6fa6152 100644
+--- a/package.json
++++ b/package.json
+@@ -19,13 +19,14 @@
+     "index.js"
+   ],
+   "dependencies": {
+-    "postcss": "^5.0.0"
++    "postcss": "^6.0.1"
+   },
+   "devDependencies": {
+-    "eslint": "^1.10.3",
+-    "eslint-config-i-am-meticulous": "^2.0.0",
+-    "npmpub": "^3.0.1",
+-    "tape": "^4.0.0"
++    "eslint": "^3.19.0",
++    "eslint-config-i-am-meticulous": "^6.0.1",
++    "eslint-plugin-import": "^1.7.0",
++    "npmpub": "^3.1.0",
++    "tape": "^4.6.3"
+   },
+   "scripts": {
+     "lint": "eslint --fix .",
+diff --git a/test/index.js b/test/index.js
+index 55801e0..043a83d 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -1,8 +1,8 @@
+ var fs = require("fs")
+ 
+ var test = require("tape")
+-
+ var postcss = require("postcss")
++
+ var plugin = require("..")
+ 
+ function filename(name) {
+-- 
+2.35.1
+

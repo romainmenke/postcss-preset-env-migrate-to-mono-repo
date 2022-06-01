@@ -1,0 +1,582 @@
+From 656e5b4df83f067ec0d715b6dde40ce99dd42ec3 Mon Sep 17 00:00:00 2001
+From: Daniel Swensson <daniel@doctrin.se>
+Date: Thu, 22 Oct 2020 22:41:02 +0200
+Subject: [PATCH 64/69] Migrate postcss@8
+
+---
+ .tape.js     | 440 +++++++++++++++++++++++++--------------------------
+ .travis.yml  |   2 +-
+ index.js     |  29 ++--
+ package.json |   9 +-
+ 4 files changed, 243 insertions(+), 237 deletions(-)
+
+diff --git a/.tape.js b/.tape.js
+index d4428d0..e17e504 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -1,248 +1,246 @@
+ module.exports = {
+-	'postcss-custom-selectors': {
+-		'basic': {
+-			message: 'supports basic usage'
+-		},
+-		'basic:preserve': {
+-			message: 'supports { preserve: true } usage',
+-			options: {
+-				preserve: true
++	'basic': {
++		message: 'supports basic usage'
++	},
++	'basic:preserve': {
++		message: 'supports { preserve: true } usage',
++		options: {
++			preserve: true
++		}
++	},
++	'safety': {
++		message: 'supports safe tag ordering (.foo:--h1 becomes h1.foo instead of .fooh1)'
++	},
++	'basic:import': {
++		message: 'supports { importFrom: { customSelectors: { ... } } } usage',
++		options: {
++			importFrom: {
++				customSelectors: {
++					':--heading': 'h1, h2, h3'
++				}
+ 			}
+-		},
+-		'safety': {
+-			message: 'supports safe tag ordering (.foo:--h1 becomes h1.foo instead of .fooh1)'
+-		},
+-		'basic:import': {
+-			message: 'supports { importFrom: { customSelectors: { ... } } } usage',
+-			options: {
+-				importFrom: {
++		}
++	},
++	'basic:import-fn': {
++		message: 'supports { importFrom() } usage',
++		options: {
++			importFrom() {
++				return {
+ 					customSelectors: {
+ 						':--heading': 'h1, h2, h3'
+ 					}
+-				}
++				};
+ 			}
+ 		},
+-		'basic:import-fn': {
+-			message: 'supports { importFrom() } usage',
+-			options: {
+-				importFrom() {
+-					return {
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
++	'basic:import-fn-promise': {
++		message: 'supports { async importFrom() } usage',
++		options: {
++			importFrom() {
++				return new Promise(resolve => {
++					resolve({
+ 						customSelectors: {
+ 							':--heading': 'h1, h2, h3'
+ 						}
+-					};
+-				}
+-			},
+-			expect: 'basic.import.expect.css',
+-			result: 'basic.import.result.css'
+-		},
+-		'basic:import-fn-promise': {
+-			message: 'supports { async importFrom() } usage',
+-			options: {
+-				importFrom() {
+-					return new Promise(resolve => {
+-						resolve({
+-							customSelectors: {
+-								':--heading': 'h1, h2, h3'
+-							}
+-						})
+-					});
+-				}
+-			},
+-			expect: 'basic.import.expect.css',
+-			result: 'basic.import.result.css'
+-		},
+-		'basic:import-json': {
+-			message: 'supports { importFrom: "test/import-selectors.json" } usage',
+-			options: {
+-				importFrom: 'test/import-selectors.json'
+-			},
+-			expect: 'basic.import.expect.css',
+-			result: 'basic.import.result.css'
+-		},
+-		'basic:import-js': {
+-			message: 'supports { importFrom: "test/import-selectors.js" } usage',
+-			options: {
+-				importFrom: 'test/import-selectors.js'
+-			},
+-			expect: 'basic.import.expect.css',
+-			result: 'basic.import.result.css'
+-		},
+-		'basic:import-css': {
+-			message: 'supports { importFrom: "test/import-selectors.css" } usage',
+-			options: {
+-				importFrom: 'test/import-selectors.css'
+-			},
+-			expect: 'basic.import.expect.css',
+-			result: 'basic.import.result.css'
+-		},
+-		'basic:import-css-from': {
+-			message: 'supports { importFrom: { from: "test/import-selectors.css" } } usage',
+-			options: {
+-				importFrom: { from: 'test/import-selectors.css' }
+-			},
+-			expect: 'basic.import.expect.css',
+-			result: 'basic.import.result.css'
+-		},
+-		'basic:import-css-from-multiple-files': {
+-			message: 'supports { importFrom: ["test/empty.css", "test/import-selectors.css"] } usage',
+-			options: {
+-				importFrom: ["test/empty.css", "test/import-selectors.css"]
+-			},
+-			expect: 'basic.import.expect.css',
+-			result: 'basic.import.result.css'
+-		},
+-		'basic:import-css-from-type': {
+-			message: 'supports { importFrom: [ { from: "test/import-selectors.css", type: "css" } ] } usage',
+-			options: {
+-				importFrom: [ { from: 'test/import-selectors.css', type: 'css' } ]
+-			},
+-			expect: 'basic.import.expect.css',
+-			result: 'basic.import.result.css'
+-		},
+-		'basic:import-empty': {
+-			message: 'supports { importFrom: {} } usage',
+-			options: {
+-				importFrom: {}
++					})
++				});
+ 			}
+ 		},
+-		'basic:export': {
+-			message: 'supports { exportTo: { customSelectors: { ... } } } usage',
+-			options: {
+-				exportTo: (global.__exportSelectorObject = global.__exportSelectorObject || {
+-					customSelectors: null
+-				})
+-			},
+-			expect: 'basic.expect.css',
+-			result: 'basic.result.css',
+-			after() {
+-				if (__exportSelectorObject.customSelectors[':--foo'] !== '.foo') {
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
++	'basic:import-json': {
++		message: 'supports { importFrom: "test/import-selectors.json" } usage',
++		options: {
++			importFrom: 'test/import-selectors.json'
++		},
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
++	'basic:import-js': {
++		message: 'supports { importFrom: "test/import-selectors.js" } usage',
++		options: {
++			importFrom: 'test/import-selectors.js'
++		},
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
++	'basic:import-css': {
++		message: 'supports { importFrom: "test/import-selectors.css" } usage',
++		options: {
++			importFrom: 'test/import-selectors.css'
++		},
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
++	'basic:import-css-from': {
++		message: 'supports { importFrom: { from: "test/import-selectors.css" } } usage',
++		options: {
++			importFrom: { from: 'test/import-selectors.css' }
++		},
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
++	'basic:import-css-from-multiple-files': {
++		message: 'supports { importFrom: ["test/empty.css", "test/import-selectors.css"] } usage',
++		options: {
++			importFrom: ["test/empty.css", "test/import-selectors.css"]
++		},
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
++	'basic:import-css-from-type': {
++		message: 'supports { importFrom: [ { from: "test/import-selectors.css", type: "css" } ] } usage',
++		options: {
++			importFrom: [ { from: 'test/import-selectors.css', type: 'css' } ]
++		},
++		expect: 'basic.import.expect.css',
++		result: 'basic.import.result.css'
++	},
++	'basic:import-empty': {
++		message: 'supports { importFrom: {} } usage',
++		options: {
++			importFrom: {}
++		}
++	},
++	'basic:export': {
++		message: 'supports { exportTo: { customSelectors: { ... } } } usage',
++		options: {
++			exportTo: (global.__exportSelectorObject = global.__exportSelectorObject || {
++				customSelectors: null
++			})
++		},
++		expect: 'basic.expect.css',
++		result: 'basic.result.css',
++		after() {
++			if (__exportSelectorObject.customSelectors[':--foo'] !== '.foo') {
++				throw new Error('The exportTo function failed');
++			}
++		}
++	},
++	'basic:export-fn': {
++		message: 'supports { exportTo() } usage',
++		options: {
++			exportTo(customProperties) {
++				if (customProperties[':--foo'] !== '.foo') {
+ 					throw new Error('The exportTo function failed');
+ 				}
+ 			}
+ 		},
+-		'basic:export-fn': {
+-			message: 'supports { exportTo() } usage',
+-			options: {
+-				exportTo(customProperties) {
++		expect: 'basic.expect.css',
++		result: 'basic.result.css'
++	},
++	'basic:export-fn-promise': {
++		message: 'supports { async exportTo() } usage',
++		options: {
++			exportTo(customProperties) {
++				return new Promise((resolve, reject) => {
+ 					if (customProperties[':--foo'] !== '.foo') {
+-						throw new Error('The exportTo function failed');
++						reject('The exportTo function failed');
++					} else {
++						resolve();
+ 					}
+-				}
+-			},
+-			expect: 'basic.expect.css',
+-			result: 'basic.result.css'
+-		},
+-		'basic:export-fn-promise': {
+-			message: 'supports { async exportTo() } usage',
+-			options: {
+-				exportTo(customProperties) {
+-					return new Promise((resolve, reject) => {
+-						if (customProperties[':--foo'] !== '.foo') {
+-							reject('The exportTo function failed');
+-						} else {
+-							resolve();
+-						}
+-					});
+-				}
+-			},
+-			expect: 'basic.expect.css',
+-			result: 'basic.result.css'
+-		},
+-		'basic:export-json': {
+-			message: 'supports { exportTo: "test/export-selectors.json" } usage',
+-			options: {
+-				exportTo: 'test/export-selectors.json'
+-			},
+-			expect: 'basic.expect.css',
+-			result: 'basic.result.css',
+-			before() {
+-				global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.json', 'utf8');
+-			},
+-			after() {
+-				if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.json', 'utf8')) {
+-					throw new Error('The original file did not match the freshly exported copy');
+-				}
++				});
+ 			}
+ 		},
+-		'basic:export-js': {
+-			message: 'supports { exportTo: "test/export-selectors.js" } usage',
+-			options: {
+-				exportTo: 'test/export-selectors.js'
+-			},
+-			expect: 'basic.expect.css',
+-			result: 'basic.result.css',
+-			before() {
+-				global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.js', 'utf8');
+-			},
+-			after() {
+-				if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.js', 'utf8')) {
+-					throw new Error('The original file did not match the freshly exported copy');
+-				}
++		expect: 'basic.expect.css',
++		result: 'basic.result.css'
++	},
++	'basic:export-json': {
++		message: 'supports { exportTo: "test/export-selectors.json" } usage',
++		options: {
++			exportTo: 'test/export-selectors.json'
++		},
++		expect: 'basic.expect.css',
++		result: 'basic.result.css',
++		before() {
++			global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.json', 'utf8');
++		},
++		after() {
++			if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.json', 'utf8')) {
++				throw new Error('The original file did not match the freshly exported copy');
+ 			}
+-		},
+-		'basic:export-mjs': {
+-			message: 'supports { exportTo: "test/export-selectors.mjs" } usage',
+-			options: {
+-				exportTo: 'test/export-selectors.mjs'
+-			},
+-			expect: 'basic.expect.css',
+-			result: 'basic.result.css',
+-			before() {
+-				global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.mjs', 'utf8');
+-			},
+-			after() {
+-				if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.mjs', 'utf8')) {
+-					throw new Error('The original file did not match the freshly exported copy');
+-				}
++		}
++	},
++	'basic:export-js': {
++		message: 'supports { exportTo: "test/export-selectors.js" } usage',
++		options: {
++			exportTo: 'test/export-selectors.js'
++		},
++		expect: 'basic.expect.css',
++		result: 'basic.result.css',
++		before() {
++			global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.js', 'utf8');
++		},
++		after() {
++			if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.js', 'utf8')) {
++				throw new Error('The original file did not match the freshly exported copy');
+ 			}
+-		},
+-		'basic:export-css': {
+-			message: 'supports { exportTo: "test/export-selectors.css" } usage',
+-			options: {
+-				exportTo: 'test/export-selectors.css'
+-			},
+-			expect: 'basic.expect.css',
+-			result: 'basic.result.css',
+-			before() {
+-				global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.css', 'utf8');
+-			},
+-			after() {
+-				if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.css', 'utf8')) {
+-					throw new Error('The original file did not match the freshly exported copy');
+-				}
++		}
++	},
++	'basic:export-mjs': {
++		message: 'supports { exportTo: "test/export-selectors.mjs" } usage',
++		options: {
++			exportTo: 'test/export-selectors.mjs'
++		},
++		expect: 'basic.expect.css',
++		result: 'basic.result.css',
++		before() {
++			global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.mjs', 'utf8');
++		},
++		after() {
++			if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.mjs', 'utf8')) {
++				throw new Error('The original file did not match the freshly exported copy');
+ 			}
+-		},
+-		'basic:export-css-to': {
+-			message: 'supports { exportTo: { to: "test/export-selectors.css" } } usage',
+-			options: {
+-				exportTo: { to: 'test/export-selectors.css' }
+-			},
+-			expect: 'basic.expect.css',
+-			result: 'basic.result.css',
+-			before() {
+-				global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.css', 'utf8');
+-			},
+-			after() {
+-				if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.css', 'utf8')) {
+-					throw new Error('The original file did not match the freshly exported copy');
+-				}
++		}
++	},
++	'basic:export-css': {
++		message: 'supports { exportTo: "test/export-selectors.css" } usage',
++		options: {
++			exportTo: 'test/export-selectors.css'
++		},
++		expect: 'basic.expect.css',
++		result: 'basic.result.css',
++		before() {
++			global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.css', 'utf8');
++		},
++		after() {
++			if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.css', 'utf8')) {
++				throw new Error('The original file did not match the freshly exported copy');
+ 			}
+-		},
+-		'basic:export-css-to-type': {
+-			message: 'supports { exportTo: { to: "test/export-selectors.css", type: "css" } } usage',
+-			options: {
+-				exportTo: { to: 'test/export-selectors.css', type: 'css' }
+-			},
+-			expect: 'basic.expect.css',
+-			result: 'basic.result.css',
+-			before() {
+-				global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.css', 'utf8');
+-			},
+-			after() {
+-				if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.css', 'utf8')) {
+-					throw new Error('The original file did not match the freshly exported copy');
+-				}
++		}
++	},
++	'basic:export-css-to': {
++		message: 'supports { exportTo: { to: "test/export-selectors.css" } } usage',
++		options: {
++			exportTo: { to: 'test/export-selectors.css' }
++		},
++		expect: 'basic.expect.css',
++		result: 'basic.result.css',
++		before() {
++			global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.css', 'utf8');
++		},
++		after() {
++			if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.css', 'utf8')) {
++				throw new Error('The original file did not match the freshly exported copy');
++			}
++		}
++	},
++	'basic:export-css-to-type': {
++		message: 'supports { exportTo: { to: "test/export-selectors.css", type: "css" } } usage',
++		options: {
++			exportTo: { to: 'test/export-selectors.css', type: 'css' }
++		},
++		expect: 'basic.expect.css',
++		result: 'basic.result.css',
++		before() {
++			global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.css', 'utf8');
++		},
++		after() {
++			if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.css', 'utf8')) {
++				throw new Error('The original file did not match the freshly exported copy');
+ 			}
+ 		}
+ 	}
+diff --git a/.travis.yml b/.travis.yml
+index e1f11a5..a9e32cd 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,7 +3,7 @@
+ language: node_js
+ 
+ node_js:
+-  - 6
++  - 10
+ 
+ install:
+   - npm install --ignore-scripts
+diff --git a/index.js b/index.js
+index df0b912..31c6602 100644
+--- a/index.js
++++ b/index.js
+@@ -1,10 +1,9 @@
+-import postcss from 'postcss';
+ import getCustomSelectors from './lib/custom-selectors-from-root';
+ import transformRules from './lib/transform-rules';
+ import importCustomSelectorsFromSources from './lib/import-from';
+ import exportCustomSelectorsToDestinations from './lib/export-to';
+ 
+-export default postcss.plugin('postcss-custom-selectors', opts => {
++const postcssCustomSelectors = (opts) => {
+ 	// whether to preserve custom selectors and rules using them
+ 	const preserve = Boolean(Object(opts).preserve);
+ 
+@@ -16,16 +15,22 @@ export default postcss.plugin('postcss-custom-selectors', opts => {
+ 
+ 	// promise any custom selectors are imported
+ 	const customSelectorsPromise = importCustomSelectorsFromSources(importFrom);
++	return {
++		postcssPlugin: 'postcss-custom-selectors',
++		async Once(root) {
++			const customProperties = Object.assign(
++				{},
++				await customSelectorsPromise,
++				getCustomSelectors(root, { preserve })
++			);
+ 
+-	return async root => {
+-		const customProperties = Object.assign(
+-			{},
+-			await customSelectorsPromise,
+-			getCustomSelectors(root, { preserve })
+-		);
++			await exportCustomSelectorsToDestinations(customProperties, exportTo);
+ 
+-		await exportCustomSelectorsToDestinations(customProperties, exportTo);
++			transformRules(root, customProperties, { preserve });
++		},
++	}
++};
+ 
+-		transformRules(root, customProperties, { preserve });
+-	};
+-});
++postcssCustomSelectors.postcss = true;
++
++export default postcssCustomSelectors;
+diff --git a/package.json b/package.json
+index a68c2cf..44ea6fc 100644
+--- a/package.json
++++ b/package.json
+@@ -27,10 +27,9 @@
+     "test:tape": "postcss-tape"
+   },
+   "engines": {
+-    "node": ">=6.0.0"
++    "node": ">=10.0.0"
+   },
+   "dependencies": {
+-    "postcss": "^7.0.2",
+     "postcss-selector-parser": "^5.0.0-rc.3"
+   },
+   "devDependencies": {
+@@ -40,11 +39,15 @@
+     "babel-eslint": "^9.0.0",
+     "eslint": "^5.6.0",
+     "eslint-config-dev": "^2.0.0",
+-    "postcss-tape": "^2.2.0",
++    "postcss": "^8.1.2",
++    "postcss-tape": "^6.0.0",
+     "pre-commit": "^1.2.2",
+     "rollup": "^0.66.1",
+     "rollup-plugin-babel": "^4.0.3"
+   },
++  "peerDependencies": {
++    "postcss": "^8.1.2"
++  },
+   "eslintConfig": {
+     "extends": "dev",
+     "parser": "babel-eslint"
+-- 
+2.35.1
+

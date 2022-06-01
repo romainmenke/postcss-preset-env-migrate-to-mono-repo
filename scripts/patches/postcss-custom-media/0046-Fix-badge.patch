@@ -1,0 +1,22 @@
+From d4721131336434f87325d4ad184460384c7a7165 Mon Sep 17 00:00:00 2001
+From: Dmitry Semigradsky <semigradskyd@gmail.com>
+Date: Tue, 10 Oct 2017 19:36:30 +0300
+Subject: [PATCH 46/62] Fix badge
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index c5824cb..d5ae057 100755
+--- a/README.md
++++ b/README.md
+@@ -1,4 +1,4 @@
+-# postcss-custom-media [![CSS Standard Status](https://jonathantneal.github.io/css-db/badge/mediaqueries-5-custom-mq.svg)](https://jonathantneal.github.io/css-db/#mediaqueries-5-custom-mq) [![Build Status](https://travis-ci.org/postcss/postcss-custom-media.png)](https://travis-ci.org/postcss/postcss-custom-media)
++# postcss-custom-media [![CSS Standard Status](https://jonathantneal.github.io/css-db/badge/mediaqueries-custom-mq.svg)](https://jonathantneal.github.io/css-db/#mediaqueries-custom-mq) [![Build Status](https://travis-ci.org/postcss/postcss-custom-media.png)](https://travis-ci.org/postcss/postcss-custom-media)
+ 
+ > [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Media Queries](https://drafts.csswg.org/mediaqueries-5/#custom-mq) syntax to more compatible CSS.
+ 
+-- 
+2.35.1
+

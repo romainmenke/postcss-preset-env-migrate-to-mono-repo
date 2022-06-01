@@ -1,0 +1,41 @@
+From ab85244e2f2cf317869faf6e396fcc4581a5efe4 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <yisibl@users.noreply.github.com>
+Date: Thu, 4 Dec 2014 14:55:00 +0800
+Subject: [PATCH 01/69] Initial commit
+
+---
+ LICENSE | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+ create mode 100644 LICENSE
+
+diff --git a/LICENSE b/LICENSE
+new file mode 100644
+index 0000000..9d10f01
+--- /dev/null
++++ b/LICENSE
+@@ -0,0 +1,22 @@
++The MIT License (MIT)
++
++Copyright (c) 2014 PostCSS
++
++Permission is hereby granted, free of charge, to any person obtaining a copy
++of this software and associated documentation files (the "Software"), to deal
++in the Software without restriction, including without limitation the rights
++to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++SOFTWARE.
++
+-- 
+2.35.1
+

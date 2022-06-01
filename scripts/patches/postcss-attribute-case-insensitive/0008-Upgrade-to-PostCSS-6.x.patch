@@ -1,0 +1,53 @@
+From f6a7360cfcd71be35ced0b9754171f5aebe310e8 Mon Sep 17 00:00:00 2001
+From: Dmitry Semigradsky <semigradskyd@gmail.com>
+Date: Sat, 6 May 2017 18:07:37 +0300
+Subject: [PATCH 08/32] Upgrade to PostCSS 6.x
+
+---
+ .babelrc     | 8 +++++++-
+ package.json | 6 +++---
+ 2 files changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/.babelrc b/.babelrc
+index 575abe5..a785d35 100644
+--- a/.babelrc
++++ b/.babelrc
+@@ -1,5 +1,11 @@
+ {
+-	"presets": ["es2015"],
++	"presets": [
++		["env", {
++			"targets": {
++				"node": 4
++			}
++		}]
++	],
+ 	"plugins": [
+ 		"add-module-exports"
+ 	]
+diff --git a/package.json b/package.json
+index 7ba627a..e7a0b29 100644
+--- a/package.json
++++ b/package.json
+@@ -30,7 +30,7 @@
+     "babel-cli": "^6.11.4",
+     "babel-eslint": "^7.0.0",
+     "babel-plugin-add-module-exports": "^0.2.1",
+-    "babel-preset-es2015": "^6.9.0",
++    "babel-preset-env": "^1.4.0",
+     "babel-register": "^6.11.6",
+     "chai": "^3.5.0",
+     "eslint": "^3.2.2",
+@@ -39,7 +39,7 @@
+     "mocha": "^3.0.1"
+   },
+   "dependencies": {
+-    "postcss": "^5.1.1",
+-    "postcss-selector-parser": "^2.2.0"
++    "postcss": "^6.0.0",
++    "postcss-selector-parser": "^2.2.3"
+   }
+ }
+-- 
+2.35.1
+

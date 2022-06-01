@@ -1,0 +1,39 @@
+From 59102f13a99c018ccb0675cb7f35186952a5729a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=D2=BC=CB=BF?= <jie.lijie@alibaba-inc.com>
+Date: Fri, 5 Dec 2014 23:03:27 +0800
+Subject: [PATCH 08/69] add gif
+
+---
+ README-zh.md | 2 ++
+ README.md    | 2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/README-zh.md b/README-zh.md
+index 6dd0ef4..0c653c1 100644
+--- a/README-zh.md
++++ b/README-zh.md
+@@ -4,6 +4,8 @@
+ 
+ [English](README.md)
+ 
++![GIF Demo](http://v2.freep.cn/3tb_141205230116f6ky512293.gif)
++
+ ## 安装
+ 
+     $ npm install postcss-custom-selectors
+diff --git a/README.md b/README.md
+index 1d1b36f..058c98d 100644
+--- a/README.md
++++ b/README.md
+@@ -4,6 +4,8 @@
+ 
+ [简体中文](README-zh.md)
+ 
++![GIF Demo](http://v2.freep.cn/3tb_141205230116f6ky512293.gif)
++
+ ## Install
+ 
+     $ npm install postcss-custom-selectors
+-- 
+2.35.1
+

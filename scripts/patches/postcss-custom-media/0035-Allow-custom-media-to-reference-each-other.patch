@@ -1,0 +1,237 @@
+From 47c800c8b66b4421cbfddae4a985f5f878b1ca4e Mon Sep 17 00:00:00 2001
+From: Glen Huang <hey.hgl@gmail.com>
+Date: Tue, 21 Apr 2015 00:01:55 +0800
+Subject: [PATCH 35/62] Allow custom media to reference each other
+
+---
+ index.js                                      | 61 +++++++++++++++++--
+ .../fixtures/transform-circular-reference.css | 10 +++
+ .../transform-circular-reference.expected.css |  1 +
+ test/fixtures/transform-reference.css         |  8 +++
+ .../fixtures/transform-reference.expected.css |  7 +++
+ test/fixtures/transform-self-reference.css    |  9 +++
+ .../transform-self-reference.expected.css     |  1 +
+ test/index.js                                 | 19 ++++++
+ 8 files changed, 112 insertions(+), 4 deletions(-)
+ create mode 100644 test/fixtures/transform-circular-reference.css
+ create mode 100644 test/fixtures/transform-circular-reference.expected.css
+ create mode 100644 test/fixtures/transform-reference.css
+ create mode 100644 test/fixtures/transform-reference.expected.css
+ create mode 100644 test/fixtures/transform-self-reference.css
+ create mode 100644 test/fixtures/transform-self-reference.expected.css
+
+diff --git a/index.js b/index.js
+index 4f7153d..be6f8d2 100755
+--- a/index.js
++++ b/index.js
+@@ -2,6 +2,33 @@ var postcss = require("postcss")
+ 
+ var EXTENSION_RE = /\(\s*(--[\w-]+)\s*\)/g
+ 
++/*
++ * Resolve custom media values.
++ */
++function resolveValue(value, map, result) {
++  if (!EXTENSION_RE.test(value)) {
++    return value
++  }
++  return value.replace(EXTENSION_RE, function(orig, name) {
++    if (!map[name]) {
++      return orig
++    }
++
++    var mq = map[name]
++    if (mq.resolved) {
++      return mq.value
++    }
++
++    if (mq.deps.indexOf(name) !== -1) {
++      mq.circular = true
++      return orig
++    }
++    mq.deps.push(name)
++    mq.value = resolveValue(mq.value, map, result)
++    return mq.value
++  })
++}
++
+ /*
+  * read & replace custom media queries by standard media queries
+  */
+@@ -32,7 +59,12 @@ function customMedia(options) {
+       var params = rule.params.split(" ")
+       // @custom-media <extension-name> <media-query-list>;
+       // map[<extension-name>] = <media-query-list>
+-      map[params.shift()] = params.join(" ")
++      map[params.shift()] = {
++        value: params.join(" "),
++        deps: [],
++        circular: false,
++        resolved: false,
++      }
+ 
+       if (!preserve) {
+         toRemove.push(rule)
+@@ -41,7 +73,17 @@ function customMedia(options) {
+ 
+     // apply js-defined media queries
+     Object.keys(extensions).forEach(function(name) {
+-      map[name] = extensions[name]
++      map[name] = {
++        value: extensions[name],
++        deps: [],
++        circular: false,
++        resolved: false,
++      }
++    })
++
++    Object.keys(map).forEach(function(name) {
++      map[name].value = resolveValue(map[name].value, map, result)
++      map[name].resolved = true
+     })
+ 
+     // transform custom media query aliases
+@@ -52,7 +94,15 @@ function customMedia(options) {
+ 
+       rule.params = rule.params.replace(EXTENSION_RE, function(_, name) {
+         if (map[name]) {
+-          return map[name]
++          if (map[name].circular) {
++            result.warn(
++              "Circular @custom-media definition for '" + name +
++                "'. The entire rule has been removed from the output.",
++              {node: rule}
++            )
++            toRemove.push(rule)
++          }
++          return map[name].value
+         }
+ 
+         result.warn(
+@@ -68,10 +118,13 @@ function customMedia(options) {
+       var names = Object.keys(map)
+       if (names.length) {
+         names.forEach(function(name) {
++          if (map[name].circular) {
++            return
++          }
+           var atRule = postcss.atRule({
+             name: "custom-media",
+             afterName: " ",
+-            params: name + " " + map[name],
++            params: name + " " + map[name].value,
+           })
+           styles.append(atRule)
+         })
+diff --git a/test/fixtures/transform-circular-reference.css b/test/fixtures/transform-circular-reference.css
+new file mode 100644
+index 0000000..5de9462
+--- /dev/null
++++ b/test/fixtures/transform-circular-reference.css
+@@ -0,0 +1,10 @@
++body { color: #000  }
++
++@custom-media --a (--b);
++@custom-media --b (--a);
++
++@media (--b) {
++  selector {
++    property: value;
++  }
++}
+diff --git a/test/fixtures/transform-circular-reference.expected.css b/test/fixtures/transform-circular-reference.expected.css
+new file mode 100644
+index 0000000..4746c87
+--- /dev/null
++++ b/test/fixtures/transform-circular-reference.expected.css
+@@ -0,0 +1 @@
++body { color: #000  }
+diff --git a/test/fixtures/transform-reference.css b/test/fixtures/transform-reference.css
+new file mode 100644
+index 0000000..e5e8a5b
+--- /dev/null
++++ b/test/fixtures/transform-reference.css
+@@ -0,0 +1,8 @@
++@custom-media --a (foo: bar);
++@custom-media --b (--a);
++
++@media (--b) {
++  selector {
++    property: value;
++  }
++}
+diff --git a/test/fixtures/transform-reference.expected.css b/test/fixtures/transform-reference.expected.css
+new file mode 100644
+index 0000000..c949741
+--- /dev/null
++++ b/test/fixtures/transform-reference.expected.css
+@@ -0,0 +1,7 @@
++
++
++@media (foo: bar) {
++  selector {
++    property: value;
++  }
++}
+diff --git a/test/fixtures/transform-self-reference.css b/test/fixtures/transform-self-reference.css
+new file mode 100644
+index 0000000..7907752
+--- /dev/null
++++ b/test/fixtures/transform-self-reference.css
+@@ -0,0 +1,9 @@
++body { color: #000  }
++
++@custom-media --a (--a);
++
++@media (--a) {
++  selector {
++    property: value;
++  }
++}
+diff --git a/test/fixtures/transform-self-reference.expected.css b/test/fixtures/transform-self-reference.expected.css
+new file mode 100644
+index 0000000..4746c87
+--- /dev/null
++++ b/test/fixtures/transform-self-reference.expected.css
+@@ -0,0 +1 @@
++body { color: #000  }
+diff --git a/test/index.js b/test/index.js
+index b73efe2..a11c177 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -40,6 +40,24 @@ test("@custom-media", function(t) {
+     "should replaces all extension names"
+   )
+ 
++  compareFixtures(
++    t,
++    "transform-reference",
++    "should transform custom media referencing another custom media"
++  )
++
++  compareFixtures(
++    t,
++    "transform-self-reference",
++    "should transform custom media with self reference"
++  )
++
++  compareFixtures(
++    t,
++    "transform-circular-reference",
++    "should transform custom media with circular reference"
++  )
++
+   var undefinedRes = compareFixtures(
+     t,
+     "undefined",
+@@ -89,6 +107,7 @@ test("@custom-media", function(t) {
+     {
+       extensions: {
+         "--viewport-max-s": "(max-width: 30em)",
++        "--a": "(--a)",
+       },
+       appendExtensions: true,
+     }
+-- 
+2.35.1
+

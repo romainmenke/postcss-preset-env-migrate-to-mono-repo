@@ -1,0 +1,37 @@
+From 67fcda48f4a1f822278be639baf00f02569691da Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=D2=BC=CB=BF?= <jie.lijie@alibaba-inc.com>
+Date: Sat, 6 Dec 2014 15:00:21 +0800
+Subject: [PATCH 14/69] Release 1.1.0
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 2 +-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index e4719cd..809d294 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 1.1.0 - 2014-12-06
++
++Add "lineBreak" option
++
+ # 1.0.0 - 2014-12-06
+ 
+ First release
+diff --git a/package.json b/package.json
+index a6e7f31..c9228d5 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-selectors",
+-  "version": "1.0.0",
++  "version": "1.1.0",
+   "description": "PostCSS plugin to transform W3C CSS Extensions(Custom Selectors) to more compatible CSS",
+   "keywords": [
+     "css",
+-- 
+2.35.1
+

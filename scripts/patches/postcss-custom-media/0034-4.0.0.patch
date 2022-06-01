@@ -1,0 +1,320 @@
+From 2c8f2538088be18c64d66f70f6803cb6ffb28896 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 17 Jun 2015 08:45:03 +0200
+Subject: [PATCH 34/62] 4.0.0
+
+---
+ .eslintrc     |  28 +++++++------
+ CHANGELOG.md  |   6 ++-
+ README.md     |  29 +++++++-------
+ index.js      |  23 +++++------
+ package.json  |   2 +-
+ test/index.js | 106 +++++++++++++++++++++++++++++++++++---------------
+ 6 files changed, 121 insertions(+), 73 deletions(-)
+
+diff --git a/.eslintrc b/.eslintrc
+index db38935..da2592a 100644
+--- a/.eslintrc
++++ b/.eslintrc
+@@ -7,20 +7,26 @@ env:
+   browser: true
+   node: true
+ 
+-# 0: off, 1: warning, 2: error
+ rules:
+-  # semicolons are useless
+-  semi: [2, "never"]
+-
++  indent: [2, 2] # 2 spaces indentation
++  max-len: [2, 80, 4]
+   quotes: [2, "double"]
++  semi: [2, "never"]
++  no-multiple-empty-lines: [2, {"max": 1}]
+ 
+-  # 2 spaces indentation
+-  indent: [2, 2]
+-
+-  # trailing coma are cool for diff
++  brace-style: [2, "stroustrup"]
+   comma-dangle: [2, "always-multiline"]
+-
+-  # enforce comma at eol (never before)
+   comma-style: [2, "last"]
++  computed-property-spacing: [2, "never"]
++  dot-location: [2, "property"]
++
++  one-var: [2, "never"]
++  no-bitwise: [2]
+ 
+-  valid-jsdoc: 2
++  object-shorthand: [2, "methods"]
++  space-after-keywords: [2, "always"]
++  space-before-blocks: [2, "always"]
++  space-before-function-paren: [2, "never"]
++  space-in-brackets: [2, "never"]
++  space-in-parens: [2, "never"]
++  spaced-line-comment: [2, "always"]
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index fa6561c..86b2809 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,6 +1,8 @@
+-# 4.0.0 - Unrelease
++# 4.0.0 - 2015-05-17
+ 
+-- Changed: warning messages are not sent via postcss API (^4.1.0)
++- Changed: warning messages are now sent via postcss messages api (^4.1.0)
++- Added: automatic custom media `--` prefixing
++([#11](https://github.com/postcss/postcss-custom-media/issues/11))
+ - Added: `preserve` allows you to preserve custom media query defintions
+ - Added: `appendExtensions` allows you (when `preserve` is truthy) to append your extensions as media queries
+ 
+diff --git a/README.md b/README.md
+index bbc416a..60a89a3 100755
+--- a/README.md
++++ b/README.md
+@@ -4,7 +4,9 @@
+ 
+ ## Installation
+ 
+-    $ npm install postcss-custom-media
++```console
++$ npm install postcss-custom-media
++```
+ 
+ ## Usage
+ 
+@@ -45,28 +47,27 @@ Checkout [tests](test) for more examples.
+ 
+ ### Options
+ 
+-#### `extensions` (default: `{}`)
++#### `extensions`
+ 
+-Allows you to pass an object to define the `<media-query-list>` for each `<extension-name>`. These definitions will override any that exist in the CSS.
++(default: `{}`)
+ 
+-#### `preserve` (default: `false`)
++Allows you to pass an object to define the `<media-query-list>` for each
++`<extension-name>`. These definitions will override any that exist in the CSS.
+ 
+-Allows you to preserve custom media query definitions in output.
++#### `preserve`
+ 
+-#### `appendExtensions` (default: `false`)
++(default: `false`)
+ 
+-If `preserve` is set to `true`, allows you to append your extensions at end of your CSS.
++Allows you to preserve custom media query definitions in output.
+ 
+----
++#### `appendExtensions`
+ 
+-## Contributing
++(default: `false`)
+ 
+-Work on a branch, install dev-dependencies, respect coding style & run tests before submitting a bug fix or a feature.
++**This option only works if `preserve` is truthy**.
++Allows you to append your extensions at end of your CSS.
+ 
+-    $ git clone https://github.com/postcss/postcss-custom-media.git
+-    $ git checkout -b patch-1
+-    $ npm install
+-    $ npm test
++---
+ 
+ ## [Changelog](CHANGELOG.md)
+ 
+diff --git a/index.js b/index.js
+index 13bc19c..4f7153d 100755
+--- a/index.js
++++ b/index.js
+@@ -1,18 +1,7 @@
+-/**
+- * Module dependencies
+- */
+ var postcss = require("postcss")
+ 
+-/**
+- * Constants.
+- */
+ var EXTENSION_RE = /\(\s*(--[\w-]+)\s*\)/g
+ 
+-/**
+- * Expose the plugin.
+- */
+-module.exports = postcss.plugin("postcss-custom-media", customMedia)
+-
+ /*
+  * read & replace custom media queries by standard media queries
+  */
+@@ -66,7 +55,11 @@ function customMedia(options) {
+           return map[name]
+         }
+ 
+-        result.warn("Missing @custom-media definition for '" + name + "'. The entire rule has been removed from the output.", {node: rule})
++        result.warn(
++          "Missing @custom-media definition for '" + name +
++            "'. The entire rule has been removed from the output.",
++          {node: rule}
++        )
+         toRemove.push(rule)
+       })
+     })
+@@ -88,6 +81,10 @@ function customMedia(options) {
+     }
+ 
+     // remove @custom-media
+-    toRemove.forEach(function(rule) { rule.removeSelf() })
++    toRemove.forEach(function(rule) {
++      rule.removeSelf()
++    })
+   }
+ }
++
++module.exports = postcss.plugin("postcss-custom-media", customMedia)
+diff --git a/package.json b/package.json
+index 503a9be..8d5ad43 100644
+--- a/package.json
++++ b/package.json
+@@ -24,7 +24,7 @@
+     "postcss": "^4.1.4"
+   },
+   "devDependencies": {
+-    "eslint": "^0.18.0",
++    "eslint": "^0.23.0",
+     "tape": "^4.0.0"
+   },
+   "scripts": {
+diff --git a/test/index.js b/test/index.js
+index 3e641b7..b73efe2 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -5,14 +5,20 @@ var test = require("tape")
+ var postcss = require("postcss")
+ var plugin = require("..")
+ 
+-function filename(name) { return "test/" + name + ".css" }
+-function read(name) { return fs.readFileSync(name, "utf8") }
++function filename(name) {
++  return "test/" + name + ".css"
++}
++function read(name) {
++  return fs.readFileSync(name, "utf8")
++}
+ 
+ function compareFixtures(t, name, msg, opts, postcssOpts) {
+   postcssOpts = postcssOpts || {}
+   postcssOpts.from = filename("fixtures/" + name)
+   opts = opts || {}
+-  var result = postcss().use(plugin(opts)).process(read(postcssOpts.from), postcssOpts)
++  var result = postcss()
++    .use(plugin(opts))
++    .process(read(postcssOpts.from), postcssOpts)
+   var actual = result.css
+   var expected = read(filename("fixtures/" + name + ".expected"))
+   fs.writeFile(filename("fixtures/" + name + ".actual"), actual)
+@@ -22,35 +28,71 @@ function compareFixtures(t, name, msg, opts, postcssOpts) {
+ }
+ 
+ test("@custom-media", function(t) {
+-  compareFixtures(t, "transform", "should transform custom media")
+-
+-  compareFixtures(t, "transform-all", "should replaces all extension names")
+-
+-  var undefinedRes = compareFixtures(t, "undefined", "should remove undefined @media")
+-  t.ok(undefinedRes.warnings()[0].text.match(/Missing @custom-media/), "should send warning to postcss")
+-
+-  compareFixtures(t, "js-defined", "should transform custom media and override local extensions", {
+-    extensions: {
+-      "--viewport-max-s": "(max-width: 30em)",
+-      "--viewport-min-s": "(min-width: 30.01em)",
+-    },
+-  })
+-
+-  compareFixtures(t, "js-defined", "should transform custom media and override local unprefixed extensions", {
+-    extensions: {
+-      "viewport-max-s": "(max-width: 30em)",
+-      "viewport-min-s": "(min-width: 30.01em)",
+-    },
+-  })
+-
+-  compareFixtures(t, "preserve", "should preserve custom media", {preserve: true})
+-
+-  compareFixtures(t, "append", "should append custom media", {
+-    extensions: {
+-      "--viewport-max-s": "(max-width: 30em)",
+-    },
+-    appendExtensions: true,
+-  })
++  compareFixtures(
++    t,
++    "transform",
++    "should transform custom media"
++  )
++
++  compareFixtures(
++    t,
++    "transform-all",
++    "should replaces all extension names"
++  )
++
++  var undefinedRes = compareFixtures(
++    t,
++    "undefined",
++    "should remove undefined @media"
++  )
++
++  t.ok(
++    undefinedRes.warnings()[0].text.match(/Missing @custom-media/),
++    "should send warning to postcss"
++  )
++
++  compareFixtures(
++    t,
++    "js-defined",
++    "should transform custom media and override local extensions",
++    {
++      extensions: {
++        "--viewport-max-s": "(max-width: 30em)",
++        "--viewport-min-s": "(min-width: 30.01em)",
++      },
++    }
++  )
++
++  compareFixtures(
++    t,
++    "js-defined",
++    "should transform custom media and override local unprefixed extensions",
++    {
++      extensions: {
++        "viewport-max-s": "(max-width: 30em)",
++        "viewport-min-s": "(min-width: 30.01em)",
++      },
++    }
++  )
++
++  compareFixtures(
++    t,
++    "preserve",
++    "should preserve custom media",
++    {preserve: true}
++  )
++
++  compareFixtures(
++    t,
++    "append",
++    "should append custom media",
++    {
++      extensions: {
++        "--viewport-max-s": "(max-width: 30em)",
++      },
++      appendExtensions: true,
++    }
++  )
+ 
+   t.end()
+ })
+-- 
+2.35.1
+

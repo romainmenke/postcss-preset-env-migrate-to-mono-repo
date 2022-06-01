@@ -1,0 +1,39 @@
+From e8656036bb6e4f3f38c898234c1c1c11b2f77f94 Mon Sep 17 00:00:00 2001
+From: Dmitry Semigradsky <semigradskyd@gmail.com>
+Date: Mon, 15 May 2017 10:08:55 +0300
+Subject: [PATCH 54/69] Fix incorrect export
+
+---
+ .babelrc     | 5 ++++-
+ package.json | 1 +
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/.babelrc b/.babelrc
+index 9fdb6b5..dd69366 100644
+--- a/.babelrc
++++ b/.babelrc
+@@ -6,5 +6,8 @@
+       }
+     }]
+   ],
+-  "plugins": ["transform-object-rest-spread"]
++  "plugins": [
++    "transform-object-rest-spread",
++    "add-module-exports"
++  ]
+ }
+diff --git a/package.json b/package.json
+index 6432a56..c82de1e 100644
+--- a/package.json
++++ b/package.json
+@@ -29,6 +29,7 @@
+   },
+   "devDependencies": {
+     "babel-cli": "^6.24.1",
++    "babel-plugin-add-module-exports": "^0.2.1",
+     "babel-plugin-transform-object-rest-spread": "^6.23.0",
+     "babel-preset-env": "^1.4.0",
+     "babel-register": "^6.24.1",
+-- 
+2.35.1
+

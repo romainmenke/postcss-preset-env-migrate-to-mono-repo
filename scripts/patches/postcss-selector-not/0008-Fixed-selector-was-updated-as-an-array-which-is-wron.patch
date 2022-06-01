@@ -1,0 +1,64 @@
+From 4ef33271e0926993d3983b5330bdbd235352366a Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 16 Jun 2015 14:33:58 +0200
+Subject: [PATCH 08/30] Fixed: selector was updated as an array, which is
+ wrong.
+
+---
+ CHANGELOG.md | 6 +++++-
+ package.json | 2 +-
+ src/index.js | 5 ++---
+ 3 files changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 67c8c0f..3d24638 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,4 +1,8 @@
+-# 1.2.0 - 2015-06-13
++# 1.2.1 - 2015-06-16
++
++- Fixed: selector was updated as an array, which is wrong.
++
++# 1.2.0 - 2015-06-16
+ 
+ - Fixed: spec has been previously misinterpreted and now transform correctly
+ `:not()` level 4 to collapsed level 3
+diff --git a/package.json b/package.json
+index 2e654c8..5ab0d5c 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-selector-not",
+-  "version": "1.2.0",
++  "version": "1.2.1",
+   "description": "PostCSS plugin to transform :not() W3C CSS leve 4 pseudo class to :not() CSS level 3 selectors",
+   "keywords": [
+     "postcss",
+diff --git a/src/index.js b/src/index.js
+index f8bccd8..38a61d5 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -8,7 +8,6 @@ function explodeSelector(pseudoClass, selector) {
+   if (selector && position > -1) {
+     const pre = selector.slice(0, position)
+     const matches = balancedMatch("(", ")", selector.slice(position))
+-    const selectors = []
+     const bodySelectors = matches.body
+       ? list
+         .comma(matches.body)
+@@ -18,8 +17,8 @@ function explodeSelector(pseudoClass, selector) {
+     const postSelectors = matches.post
+       ? explodeSelector(pseudoClass, matches.post)
+       : ""
+-    selectors.push(`${pre}${pseudoClass}(${bodySelectors})${postSelectors}`)
+-    return selectors
++
++    return `${pre}${pseudoClass}(${bodySelectors})${postSelectors}`
+   }
+   return selector
+ }
+-- 
+2.35.1
+

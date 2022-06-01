@@ -1,0 +1,22 @@
+From 8f03744c682995bd9f481dbb3f8db9eaf2a8e926 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 9 Sep 2017 21:55:28 -0400
+Subject: [PATCH 45/62] Add CSS Standard Status
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 254b9b2..c5824cb 100755
+--- a/README.md
++++ b/README.md
+@@ -1,4 +1,4 @@
+-# postcss-custom-media [![Build Status](https://travis-ci.org/postcss/postcss-custom-media.png)](https://travis-ci.org/postcss/postcss-custom-media)
++# postcss-custom-media [![CSS Standard Status](https://jonathantneal.github.io/css-db/badge/mediaqueries-5-custom-mq.svg)](https://jonathantneal.github.io/css-db/#mediaqueries-5-custom-mq) [![Build Status](https://travis-ci.org/postcss/postcss-custom-media.png)](https://travis-ci.org/postcss/postcss-custom-media)
+ 
+ > [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Media Queries](https://drafts.csswg.org/mediaqueries-5/#custom-mq) syntax to more compatible CSS.
+ 
+-- 
+2.35.1
+

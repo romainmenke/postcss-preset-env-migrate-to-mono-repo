@@ -1,0 +1,1306 @@
+From cfa6e226269658c8f5e8d31cb819a726f8892fde Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 14 Jul 2015 07:35:38 +0200
+Subject: [PATCH 46/69] Fixed: Nested/mixed selectors now works correctly
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This commit include a refactoring based on postcss-selector-matches and
+add the ability to limit the transformation to :matches() usage.
+Also in this commit:
+
+- add eslint
+- rewrite using babel (es6/7)
+- fixtures files removed in favor of es6 template string
+- should also fix some weird “undefined” warnings
+
+Close #19
+---
+ .babelrc                                 |   3 +
+ .eslintignore                            |   1 +
+ .eslintrc                                |  37 +++
+ .gitignore                               |   5 +-
+ CHANGELOG.md                             |   9 +-
+ README.md                                | 198 ++++++++-------
+ index.js                                 | 101 --------
+ package.json                             |  39 ++-
+ src/index.js                             |  78 ++++++
+ test/fixtures/comment/input.css          |  11 -
+ test/fixtures/comment/output.css         |   8 -
+ test/fixtures/extension/input.css        |  10 -
+ test/fixtures/extension/output.css       |  11 -
+ test/fixtures/heading/input.css          |   5 -
+ test/fixtures/heading/output.css         |   8 -
+ test/fixtures/line-break/input.css       |   6 -
+ test/fixtures/line-break/output.css      |   5 -
+ test/fixtures/matches/input.css          |  11 -
+ test/fixtures/matches/output.css         |  11 -
+ test/fixtures/multiline/input.css        |   7 -
+ test/fixtures/multiline/output.css       |   4 -
+ test/fixtures/multiple/input.css         |   5 -
+ test/fixtures/multiple/output.css        |   3 -
+ test/fixtures/pseudo/input.css           |   5 -
+ test/fixtures/pseudo/output.css          |   4 -
+ test/fixtures/similar-matches/input.css  |  18 --
+ test/fixtures/similar-matches/output.css |  15 --
+ test/fixtures/some-hyphen/input.css      |  10 -
+ test/fixtures/some-hyphen/output.css     |  11 -
+ test/index.js                            | 295 +++++++++++++++++++----
+ 30 files changed, 507 insertions(+), 427 deletions(-)
+ create mode 100644 .babelrc
+ create mode 120000 .eslintignore
+ create mode 100644 .eslintrc
+ delete mode 100644 index.js
+ create mode 100644 src/index.js
+ delete mode 100644 test/fixtures/comment/input.css
+ delete mode 100644 test/fixtures/comment/output.css
+ delete mode 100644 test/fixtures/extension/input.css
+ delete mode 100644 test/fixtures/extension/output.css
+ delete mode 100644 test/fixtures/heading/input.css
+ delete mode 100644 test/fixtures/heading/output.css
+ delete mode 100644 test/fixtures/line-break/input.css
+ delete mode 100644 test/fixtures/line-break/output.css
+ delete mode 100644 test/fixtures/matches/input.css
+ delete mode 100644 test/fixtures/matches/output.css
+ delete mode 100644 test/fixtures/multiline/input.css
+ delete mode 100644 test/fixtures/multiline/output.css
+ delete mode 100644 test/fixtures/multiple/input.css
+ delete mode 100644 test/fixtures/multiple/output.css
+ delete mode 100644 test/fixtures/pseudo/input.css
+ delete mode 100644 test/fixtures/pseudo/output.css
+ delete mode 100644 test/fixtures/similar-matches/input.css
+ delete mode 100644 test/fixtures/similar-matches/output.css
+ delete mode 100644 test/fixtures/some-hyphen/input.css
+ delete mode 100644 test/fixtures/some-hyphen/output.css
+
+diff --git a/.babelrc b/.babelrc
+new file mode 100644
+index 0000000..b0b9a96
+--- /dev/null
++++ b/.babelrc
+@@ -0,0 +1,3 @@
++{
++  "stage": 0
++}
+diff --git a/.eslintignore b/.eslintignore
+new file mode 120000
+index 0000000..3e4e48b
+--- /dev/null
++++ b/.eslintignore
+@@ -0,0 +1 @@
++.gitignore
+\ No newline at end of file
+diff --git a/.eslintrc b/.eslintrc
+new file mode 100644
+index 0000000..cb88f61
+--- /dev/null
++++ b/.eslintrc
+@@ -0,0 +1,37 @@
++---
++# babel support more syntax stuff than eslint for now
++parser: babel-eslint
++
++ecmaFeatures:
++  modules: true
++
++env:
++  es6: true
++  browser: true
++  node: true
++
++rules:
++  indent: [2, 2] # 2 spaces indentation
++  max-len: [2, 80, 4]
++  quotes: [2, "double"]
++  semi: [2, "never"]
++  no-multiple-empty-lines: [2, {"max": 1}]
++
++  brace-style: [2, "stroustrup"]
++  comma-dangle: [2, "always-multiline"]
++  comma-style: [2, "last"]
++  computed-property-spacing: [2, "never"]
++  dot-location: [2, "property"]
++
++  one-var: [2, "never"]
++  #no-var: [2]
++  prefer-const: [2]
++  no-bitwise: [2]
++
++  object-shorthand: [2, "methods"]
++  space-after-keywords: [2, "always"]
++  space-before-blocks: [2, "always"]
++  space-before-function-paren: [2, "never"]
++  space-in-brackets: [2, "never"]
++  space-in-parens: [2, "never"]
++  spaced-line-comment: [2, "always"]
+diff --git a/.gitignore b/.gitignore
+index a3e84c1..9d0bd2b 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,5 +1,6 @@
+ .DS_Store
+-node_modules
+-test/fixtures/*/actual.css
+ *.sublime-workspace
+ 
++node_modules
++test/fixtures/*/actual.css
++dist
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 7752d6b..3fad364 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,4 +1,11 @@
+-# 2.2.0 - 2015-06-30 (By @MoOx)
++# 2.3.0 - 2015-07-14
++
++* Fixed: Nested/mixed selectors now works correctly
++([#19](https://github.com/postcss/postcss-custom-selectors/issues/19))
++* Added: `transformMatches` option to limit transformation to :matches()
++replacements.
++
++# 2.2.0 - 2015-06-30
+ 
+ * Fixed: No more useless warnings for undefined non custom selectors
+ ([#22](https://github.com/postcss/postcss-custom-selectors/issues/22))
+diff --git a/README.md b/README.md
+index 125b337..3b27d76 100644
+--- a/README.md
++++ b/README.md
+@@ -1,9 +1,9 @@
+-# PostCSS Custom Selectors 
++# PostCSS Custom Selectors
+ 
+-[![Build Status](https://travis-ci.org/postcss/postcss-custom-selectors.svg?branch=master)](https://travis-ci.org/postcss/postcss-custom-selectors) 
+-[![NPM Downloads](https://img.shields.io/npm/dm/postcss-custom-selectors.svg?style=flat)](https://www.npmjs.com/package/postcss-custom-selectors) 
+-[![NPM Version](http://img.shields.io/npm/v/postcss-custom-selectors.svg?style=flat)](https://www.npmjs.com/package/postcss-custom-selectors) 
+-[![License](https://img.shields.io/npm/l/postcss-custom-selectors.svg?style=flat)](http://opensource.org/licenses/MIT) 
++[![Build Status](https://travis-ci.org/postcss/postcss-custom-selectors.svg?branch=master)](https://travis-ci.org/postcss/postcss-custom-selectors)
++[![NPM Downloads](https://img.shields.io/npm/dm/postcss-custom-selectors.svg?style=flat)](https://www.npmjs.com/package/postcss-custom-selectors)
++[![NPM Version](http://img.shields.io/npm/v/postcss-custom-selectors.svg?style=flat)](https://www.npmjs.com/package/postcss-custom-selectors)
++[![License](https://img.shields.io/npm/l/postcss-custom-selectors.svg?style=flat)](http://opensource.org/licenses/MIT)
+ 
+ > [PostCSS](https://github.com/postcss/postcss) plugin to transform  [W3C CSS Extensions(Custom Selectors)](http://dev.w3.org/csswg/css-extensions/#custom-selectors)  to more compatible CSS.
+ 
+@@ -13,12 +13,12 @@
+ 
+ ## Installation
+ 
+-    $ npm install postcss-custom-selectors
++```console
++$ npm install postcss-custom-selectors
++```
+ 
+ ## Quick Start
+ 
+-Example 1:
+-
+ ```js
+ // dependencies
+ var fs = require('fs')
+@@ -33,7 +33,7 @@ var output = postcss()
+   .use(selector())
+   .process(css)
+   .css
+-  
++
+ console.log('\n====>Output CSS:\n', output)  
+ ```
+ 
+@@ -50,7 +50,7 @@ input.css：
+ ```css
+ @custom-selector :--heading h1, h2, h3, h4, h5, h6;
+ 
+-article :--heading + p { 
++article :--heading + p {
+   margin-top: 0;
+ }
+ ```
+@@ -63,25 +63,22 @@ article h2 + p,
+ article h3 + p,
+ article h4 + p,
+ article h5 + p,
+-article h6 + p { 
++article h6 + p {
+   margin-top: 0;
+ }
+ ```
+ 
+ ## CSS syntax
+ 
+-    @custom-selector = @custom-selector :<extension-name> <selector>;
+-
++```css
++@custom-selector = @custom-selector :<extension-name> <selector>;
++```
+ 
+ ## How to use
+ 
+-The custom selector is a pseudo-class, so we must use the `:--` to defined it.
+-
+-For example to simulate [:any-link](http://dev.w3.org/csswg/selectors/#the-any-link-pseudo) selector：
+-
+-Example 2:
++The custom selector is a pseudo-class, so you must use `:--` to define it.
+ 
+-input.css:
++For example to simulate [:any-link](http://dev.w3.org/csswg/selectors/#the-any-link-pseudo) selector:
+ 
+ ```css
+ @custom-selector :--any-link :link, :visited;
+@@ -100,35 +97,100 @@ a:visited {
+ }
+ ```
+ 
+-### Multiple selectors
++## Options
+ 
+-`@custom-selector` it **doesn’t support** call multiple custom selector in the same selector, e.g.
++### `lineBreak`
+ 
+-Example 3:
++_(default: `true`)_
++
++Set whether  multiple selector wrap.The default is turning on to be a newline.
++
++Close the line breaks.
++
++```js
++var options = {
++  lineBreak: false
++}
++
++var output = postcss(selector(options))
++  .process(css)
++  .css
++```
++
++With the first example, the output will be:
+ 
+ ```css
+-@custom-selector :--heading h1, h2, h3, h4, h5, h6;
+-@custom-selector :--any-link :link, :visited;
++article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p, article h6 + p {
++  margin-top: 0;
++}
++```
++
++### `extensions`
++
++_(default: `{}`)_
++
++This option allows you to customize an object to set the `<extension-name>` (selector alias) and `<selector>`, these definitions will cover the same alias of `@custom-selector` in CSS.
++
++```js
++var options = {
++  extensions: {
++    ':--any' : 'section, article, aside, nav'
++  }
++}
++
++var output = postcss(selector(options))
++  .process(css)
++  .css;
++```
++
++input.css
++
++```css
++@custom-selector :--any .foo, .bar; /* No effect */
++:--any h1 {
++  margin-top: 16px;
++}
++```
++
++output:
++
++```css
++/* No effect */
++section h1,
++article h1,
++aside h1,
++nav h1 {
++  margin-top: 16px;
++}
++```
++
++### `transformMatches`
++
++_(default: `true`)_
+ 
+-.demo :--heading, a:--any-link { 
+-  font-size: 32px;
++Allows you to limit transformation to `:matches()` usage
++If set to false:
++
++input
++
++```css
++@custom-selector :--foo .bar, .baz;
++.foo:--foo {
++  margin-top: 16px;
+ }
+ ```
+ 
+-This will throw an error CSS code.
++output
+ 
+ ```css
+-.demo h1,
+-.demo h2,
+-.demo h3,
+-.demo h4,
+-.demo h5,
+-.demo h6,:link,
+-:visited  { 
+-  font-size: 32px;
++.foo:matches(.bar, .baz) {
++  margin-top: 16px;
+ }
+ ```
+ 
++
++## Usage
++
+ ### Node Watch
+ 
+ Dependence [chokidar](https://github.com/paulmillr/chokidar) module.
+@@ -205,72 +267,6 @@ gulp.task('default', function () {
+ gulp.watch('src/*.css', ['default']);
+ ```
+ 
+-
+-
+-### Options
+-
+-#### 1. **`lineBreak`**(default: `true`)
+-
+-Set whether  multiple selector wrap.The default is turning on to be a newline.
+-
+-Close the line breaks.
+-
+-```js
+-var options = {
+-  lineBreak: false
+-}
+-
+-var output = postcss(selector(options))
+-  .process(css)
+-  .css
+-```
+-
+-In the 'Example 1' `input.css` will output:
+-
+-```css
+-article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p, article h6 + p {
+-  margin-top: 0;
+-}
+-```
+-
+-#### 2. **`extensions`** (default: `{}`)
+-
+-This option allows you to customize an object to set the `<extension-name>` (selector alias) and `<selector>`, these definitions will cover the same alias of `@custom-selector` in CSS.
+-
+-```js
+-var options = {
+-  extensions: {
+-    ':--any' : 'section, article, aside, nav'
+-  }
+-}
+-
+-var output = postcss(selector(options))
+-  .process(css)
+-  .css;
+-```
+-
+-input.css
+-
+-```css
+-@custom-selector :--any .foo, .bar; /* No effect */
+-:--any h1 {
+-  margin-top: 16px;
+-}
+-```
+-
+-output:
+-
+-```css
+-/* No effect */
+-section h1,
+-article h1,
+-aside h1,
+-nav h1 {
+-  margin-top: 16px;
+-}
+-```
+-
+-
+ ## Contributing
+ 
+ * Install the relevant dependent module.
+diff --git a/index.js b/index.js
+deleted file mode 100644
+index 4140454..0000000
+--- a/index.js
++++ /dev/null
+@@ -1,101 +0,0 @@
+-var postcss = require("postcss")
+-/**
+- * 匹配自定义选择器
+- * :--foo
+- * 注意：CSS 选择器区分大小写
+- */
+-var re_CUSTOM_SELECTOR = /([^,]*?)(:-{2,}[\w-]+)(.*)/g
+-
+-// 匹配换行符与空白
+-var reBLANK_LINE       = /(\r\n|\n|\r)(\s*?\1)+/gi
+-
+-/**
+- * 暴露插件
+- */
+-module.exports = postcss.plugin("postcss-custom-selectors", function(options) {
+-  /**
+-   * 插件配置
+-   */
+-  options = options || {}
+-  var extensions = options.extensions || {}
+-  var line_break = '\n'
+-  var map = {}
+-  var toRemove = []
+-  var customSelectors = {}
+-
+-  /**
+-   * 读取和替换自定义选择器
+-   */
+-  return function(css, result) {
+-    // 读取自定义选择器
+-    css.eachAtRule(function(rule) {
+-      if (rule.name !== "custom-selector") {
+-        return
+-      }
+-
+-      var params = rule.params.split(/\s+/)
+-        // @custom-selector = @custom-selector <extension-name> <selector>
+-        // map[<extension-name>] = <selector>
+-
+-      var customName = params.shift()
+-      var string = rule.params
+-      string = string.replace(customName, "")
+-      customSelectors[customName] = string
+-
+-      map[params.shift()] = params.join(" ")
+-
+-      toRemove.push(rule)
+-    })
+-
+-    // JS 中设置一个自定义选择器
+-    Object.keys(extensions).forEach(function(extension) {
+-      map[extension] = extensions[extension]
+-      customSelectors[extension] = extensions[extension]
+-    })
+-
+-    // 转换自定义的选择器别名
+-    css.eachRule(function(rule) {
+-      if (rule.selector.indexOf(":--") > -1) {
+-        var flag = 0
+-        for (var prop in customSelectors) {
+-          if (rule.selector.indexOf(prop) >= 0) {
+-            customSelector = customSelectors[prop]
+-
+-            // $2 = <extension-name> （自定义的选择器名称）
+-            rule.selector = rule.selector.replace(re_CUSTOM_SELECTOR, function($0, $1, $2, $3) {
+-
+-              if ($2 === prop) {
+-                var newSelector = customSelector.split(",").map(function(selector) {
+-                  return $1 + selector.trim() + $3
+-                })
+-
+-                // 选择器不换行
+-                if (!options.lineBreak && options.lineBreak === false) {
+-                  line_break = " "
+-                  newSelector = newSelector.join("," + line_break)
+-                } else {
+-                  // 选择器换行，同时替换多个换行为一个
+-                  newSelector = newSelector.join("," + line_break + rule.before).replace(reBLANK_LINE, line_break)
+-                }
+-                flag ++
+-                return newSelector
+-              }
+-              else if ($2 !== prop) {
+-                return $2
+-              }
+-            })
+-            if(flag === 0){
+-              result.warn("The selector '" + rule.selector + "' is undefined", {node: rule})
+-            }
+-          }
+-        }
+-      }
+-    })
+-
+-    // 删除 @custom-selector
+-    toRemove.forEach(function(rule) {
+-      rule.removeSelf()
+-    })
+-
+-  }
+-})
+diff --git a/package.json b/package.json
+index e143272..e4a37ac 100644
+--- a/package.json
++++ b/package.json
+@@ -1,33 +1,50 @@
+ {
+   "name": "postcss-custom-selectors",
+-  "version": "2.2.0",
++  "version": "2.3.0",
+   "description": "PostCSS plugin to transform W3C CSS Extensions(Custom Selectors) to more compatible CSS",
+   "keywords": [
+-    "css",
+-    "css3",
+     "postcss",
+-    "postcss-plugins",
++    "postcss-plugin",
++    "css",
+     "selector",
+-    "custom-selector",
+-    "custom selector"
++    "custom-selector"
++  ],
++  "authors": [
++    "yisi",
++    "Maxime Thirouin"
+   ],
+-  "author": "yisi",
+   "license": "MIT",
+   "repository": {
+     "type": "git",
+     "url": "https://github.com/postcss/postcss-custom-selectors.git"
+   },
++  "homepage": "https://github.com/postcss/postcss-custom-selectors",
++  "bugs": {
++    "url": "https://github.com/postcss/postcss-custom-selectors/issues"
++  },
+   "files": [
+     "CHANGELOG.md",
+-    "README-zh.md",
+     "LICENSE",
+-    "index.js"
++    "dist",
++    "README-zh.md"
+   ],
++  "main": "dist/index.js",
++  "dependencies": {
++    "balanced-match": "^0.2.0",
++    "postcss": "^4.1.7",
++    "postcss-selector-matches": "^1.2.1"
++  },
+   "devDependencies": {
+-    "postcss": "^4.1.11",
++    "babel": "^5.5.8",
++    "babel-eslint": "^3.1.15",
++    "babel-tape-runner": "^1.1.0",
++    "eslint": "^0.23.0",
+     "tape": "^4.0.0"
+   },
+   "scripts": {
+-    "test": "tape test"
++    "prepublish": "babel src --out-dir dist",
++    "lint": "eslint .",
++    "tape": "babel-tape-runner 'test/*.js'",
++    "test": "npm run lint && npm run tape"
+   }
+ }
+diff --git a/src/index.js b/src/index.js
+new file mode 100644
+index 0000000..19c7121
+--- /dev/null
++++ b/src/index.js
+@@ -0,0 +1,78 @@
++import postcss from "postcss"
++import replaceRuleSelector
++  from "postcss-selector-matches/dist/replaceRuleSelector"
++
++const CUSTOM_SELECTOR_RE = /:--[\w-]+/g
++
++export default postcss.plugin("postcss-custom-selectors", function(options) {
++  const {
++    extensions,
++    lineBreak,
++    transformMatches,
++  } = {
++    extensions: {},
++    lineBreak: true,
++    transformMatches: true,
++    ...options || {},
++  }
++
++  const transformMatchesOnRule = transformMatches
++    ? (rule) => replaceRuleSelector(rule, {
++        lineBreak,
++      })
++    : (rule) => rule.selector
++
++  return function(css, result) {
++    const toRemove = []
++    const customSelectors = {}
++
++    // first, read custom selectors
++    css.eachAtRule(function(rule) {
++      if (rule.name !== "custom-selector") {
++        return
++      }
++
++      // @custom-selector = @custom-selector <extension-name> <selector>
++      const params = rule.params.split(/\s/)
++      const customName = params.shift()
++      const customList = rule.params.replace(customName, "").trim()
++      customSelectors[customName] = customList
++
++      toRemove.push(rule)
++    })
++
++    // Add JS defined selectors
++    Object.keys(extensions).forEach(function(extension) {
++      customSelectors[extension] = extensions[extension]
++    })
++
++    // Convert those selectors to :matches()
++    css.eachRule(function(rule) {
++      if (rule.selector.indexOf(":--") > -1) {
++        rule.selector = rule.selector.replace(
++          CUSTOM_SELECTOR_RE,
++          function(extensionName, matches, selector) {
++
++            if (!customSelectors[extensionName]) {
++              result.warn(
++                "The selector '" + rule.selector + "' is undefined",
++                {node: rule}
++              )
++
++              return selector
++            }
++
++            return ":matches(" + customSelectors[extensionName] + ")"
++          }
++        )
++
++        rule.selector = transformMatchesOnRule(rule)
++      }
++    })
++
++    toRemove.forEach(function(rule) {
++      rule.removeSelf()
++    })
++
++  }
++})
+diff --git a/test/fixtures/comment/input.css b/test/fixtures/comment/input.css
+deleted file mode 100644
+index c1fc9a9..0000000
+--- a/test/fixtures/comment/input.css
++++ /dev/null
+@@ -1,11 +0,0 @@
+-/* comment */
+-@custom-selector :--foo
+-  /* comment */
+-  .foo,
+-  .bar > .baz;
+-
+-
+-/* comment */
+-      :--foo + p {
+-    display: block;
+-  }
+diff --git a/test/fixtures/comment/output.css b/test/fixtures/comment/output.css
+deleted file mode 100644
+index f9df1ea..0000000
+--- a/test/fixtures/comment/output.css
++++ /dev/null
+@@ -1,8 +0,0 @@
+-/* comment */
+-
+-
+-/* comment */
+-      .foo + p,
+-      .bar > .baz + p {
+-    display: block;
+-  }
+diff --git a/test/fixtures/extension/input.css b/test/fixtures/extension/input.css
+deleted file mode 100644
+index d6fbcf7..0000000
+--- a/test/fixtures/extension/input.css
++++ /dev/null
+@@ -1,10 +0,0 @@
+-@custom-selector :--any .foo, .bar;
+-@custom-selector :--foo .baz;
+-
+-:--any h1 {
+-  margin-top: 16px;
+-}
+-
+-main :--foo + p {
+-  margin-top: 16px;
+-}
+diff --git a/test/fixtures/extension/output.css b/test/fixtures/extension/output.css
+deleted file mode 100644
+index 6cff275..0000000
+--- a/test/fixtures/extension/output.css
++++ /dev/null
+@@ -1,11 +0,0 @@
+-section h1,
+-article h1,
+-aside h1,
+-nav h1 {
+-  margin-top: 16px;
+-}
+-
+-main input[type="text"] > section + p,
+-main #nav .bar + p {
+-  margin-top: 16px;
+-}
+diff --git a/test/fixtures/heading/input.css b/test/fixtures/heading/input.css
+deleted file mode 100644
+index dbc7695..0000000
+--- a/test/fixtures/heading/input.css
++++ /dev/null
+@@ -1,5 +0,0 @@
+-@custom-selector :--heading h1, h2, h3, h4, h5, h6;
+-
+-article :--heading + p {
+-  margin-top: 0;
+-}
+diff --git a/test/fixtures/heading/output.css b/test/fixtures/heading/output.css
+deleted file mode 100644
+index a7ea6b4..0000000
+--- a/test/fixtures/heading/output.css
++++ /dev/null
+@@ -1,8 +0,0 @@
+-article h1 + p,
+-article h2 + p,
+-article h3 + p,
+-article h4 + p,
+-article h5 + p,
+-article h6 + p {
+-  margin-top: 0;
+-}
+diff --git a/test/fixtures/line-break/input.css b/test/fixtures/line-break/input.css
+deleted file mode 100644
+index e166077..0000000
+--- a/test/fixtures/line-break/input.css
++++ /dev/null
+@@ -1,6 +0,0 @@
+-@custom-selector :--heading h1, h2, h3, h4, h5, h6;
+-/* comment */
+-
+-  article :--heading + p {
+-    margin-top: 0;
+-  }
+diff --git a/test/fixtures/line-break/output.css b/test/fixtures/line-break/output.css
+deleted file mode 100644
+index c78f0e8..0000000
+--- a/test/fixtures/line-break/output.css
++++ /dev/null
+@@ -1,5 +0,0 @@
+-/* comment */
+-
+-  article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p, article h6 + p {
+-    margin-top: 0;
+-  }
+diff --git a/test/fixtures/matches/input.css b/test/fixtures/matches/input.css
+deleted file mode 100644
+index 4654549..0000000
+--- a/test/fixtures/matches/input.css
++++ /dev/null
+@@ -1,11 +0,0 @@
+-@custom-selector :--buttons button, .button;
+-
+-:--buttons:matches(:focus) {
+-    border: red;
+-    display: block;
+-}
+-
+-:--buttons:matches(:focus, .is-focused) {
+-    border: red;
+-    display: block;
+-}
+diff --git a/test/fixtures/matches/output.css b/test/fixtures/matches/output.css
+deleted file mode 100644
+index 7f93f4e..0000000
+--- a/test/fixtures/matches/output.css
++++ /dev/null
+@@ -1,11 +0,0 @@
+-button:matches(:focus),
+-.button:matches(:focus) {
+-    border: red;
+-    display: block;
+-}
+-
+-button:matches(:focus, .is-focused),
+-.button:matches(:focus, .is-focused) {
+-    border: red;
+-    display: block;
+-}
+diff --git a/test/fixtures/multiline/input.css b/test/fixtures/multiline/input.css
+deleted file mode 100644
+index c1f6402..0000000
+--- a/test/fixtures/multiline/input.css
++++ /dev/null
+@@ -1,7 +0,0 @@
+-@custom-selector :--multiline
+-  .foo,
+-  .bar > .baz;
+-
+-:--multiline {
+-  display: block;
+-}
+diff --git a/test/fixtures/multiline/output.css b/test/fixtures/multiline/output.css
+deleted file mode 100644
+index 8eca97d..0000000
+--- a/test/fixtures/multiline/output.css
++++ /dev/null
+@@ -1,4 +0,0 @@
+-.foo,
+-.bar > .baz {
+-  display: block;
+-}
+diff --git a/test/fixtures/multiple/input.css b/test/fixtures/multiple/input.css
+deleted file mode 100644
+index 75fe803..0000000
+--- a/test/fixtures/multiple/input.css
++++ /dev/null
+@@ -1,5 +0,0 @@
+-@custom-selector :--foo .foo;
+-
+-:--foo, :--foo.bar {
+-  color: white;
+-}
+diff --git a/test/fixtures/multiple/output.css b/test/fixtures/multiple/output.css
+deleted file mode 100644
+index 3da3e23..0000000
+--- a/test/fixtures/multiple/output.css
++++ /dev/null
+@@ -1,3 +0,0 @@
+-.foo, .foo.bar {
+-  color: white;
+-}
+diff --git a/test/fixtures/pseudo/input.css b/test/fixtures/pseudo/input.css
+deleted file mode 100644
+index b8feddc..0000000
+--- a/test/fixtures/pseudo/input.css
++++ /dev/null
+@@ -1,5 +0,0 @@
+-@custom-selector :--pseudo ::before, ::after;
+-
+-.foo > a:--pseudo img {
+-  display: block;
+-}
+diff --git a/test/fixtures/pseudo/output.css b/test/fixtures/pseudo/output.css
+deleted file mode 100644
+index 69a6404..0000000
+--- a/test/fixtures/pseudo/output.css
++++ /dev/null
+@@ -1,4 +0,0 @@
+-.foo > a::before img,
+-.foo > a::after img {
+-  display: block;
+-}
+diff --git a/test/fixtures/similar-matches/input.css b/test/fixtures/similar-matches/input.css
+deleted file mode 100644
+index afa9056..0000000
+--- a/test/fixtures/similar-matches/input.css
++++ /dev/null
+@@ -1,18 +0,0 @@
+-@custom-selector :--foo h1;
+-@custom-selector :--foo-bar-baz h4, h5, h6;
+-
+-:--foo {
+-  color: red;
+-}
+-
+-:--foo-bar-baz > span {
+-  color: blue;
+-}
+-
+-:--test p {
+-  display: block;
+-}
+-
+-.whatever {
+-  display: block;
+-}
+diff --git a/test/fixtures/similar-matches/output.css b/test/fixtures/similar-matches/output.css
+deleted file mode 100644
+index f4b0f33..0000000
+--- a/test/fixtures/similar-matches/output.css
++++ /dev/null
+@@ -1,15 +0,0 @@
+-h1 {
+-  color: red;
+-}
+-
+-h4 > span, h5 > span, h6 > span {
+-  color: blue;
+-}
+-
+-:--test p {
+-  display: block;
+-}
+-
+-.whatever {
+-  display: block;
+-}
+diff --git a/test/fixtures/some-hyphen/input.css b/test/fixtures/some-hyphen/input.css
+deleted file mode 100644
+index c69585e..0000000
+--- a/test/fixtures/some-hyphen/input.css
++++ /dev/null
+@@ -1,10 +0,0 @@
+-@custom-selector :--foo h1, h2, h3;
+-@custom-selector :--ba-----r h4, h5, h6;
+-
+-.fo--oo > :--foo {
+-  margin: auto;
+-}
+-
+-:--ba-----r:hover .ba--z {
+-  display: block;
+-}
+diff --git a/test/fixtures/some-hyphen/output.css b/test/fixtures/some-hyphen/output.css
+deleted file mode 100644
+index f545bd2..0000000
+--- a/test/fixtures/some-hyphen/output.css
++++ /dev/null
+@@ -1,11 +0,0 @@
+-.fo--oo > h1,
+-.fo--oo > h2,
+-.fo--oo > h3 {
+-  margin: auto;
+-}
+-
+-h4:hover .ba--z,
+-h5:hover .ba--z,
+-h6:hover .ba--z {
+-  display: block;
+-}
+diff --git a/test/index.js b/test/index.js
+index 8b9a240..02a2bd8 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -1,60 +1,269 @@
+-var fs      = require("fs")
+-var test    = require("tape")
++var test = require("tape")
+ var postcss = require("postcss")
+-var plugin  = require("..")
++var plugin = require("../src")
+ 
+-function filename(name) {
+-  return "test/" + name + ".css"
++function transform(input, opts = {}, postcssOpts = {}) {
++  return postcss()
++    .use(plugin(opts))
++    .process(input, postcssOpts)
+ }
+ 
+-function read(name) {
+-  return fs.readFileSync(name, "utf8")
++test("@custom-selector", function(t) {
++  t.equal(
++    transform(
++      ``
++    ).css,
++    ``,
++    "should works with nothing"
++  )
++
++  const undefinedResult = transform(":--undef {}")
++  t.ok(
++    undefinedResult.messages && undefinedResult.messages.length === 1,
++    "should add a message when a custom selectors is undefined"
++  )
++
++  t.equal(
++    transform(
++      `@custom-selector :--foo .bar, .baz;
++.foo:--foo {
++  margin-top: 16px;
++}`,
++      {transformMatches: false}
++    ).css,
++    `.foo:matches(.bar, .baz) {
++  margin-top: 16px;
++}`,
++    "should works be able to limit transformation to :matches()"
++  )
++
++  t.equal(
++    transform(
++      `@custom-selector :--heading h1, h2, h3, h4, h5, h6;
++
++article :--heading + p {}`
++    ).css,
++    `article h1 + p,
++article h2 + p,
++article h3 + p,
++article h4 + p,
++article h5 + p,
++article h6 + p {}`,
++    "should transform heading"
++  )
++
++  t.equal(
++    transform(
++      `@custom-selector :--foobar .foo, .bar;
++@custom-selector :--baz .baz;
++@custom-selector :--fizzbuzz .fizz, .buzz;
++@custom-selector :--button-types
++  .btn-primary,
++  .btn-success,
++  .btn-info,
++  .btn-warning,
++  .btn-danger;
++
++:--foobar > :--baz {}
++
++:--fizzbuzz > :--foobar {}
++
++:--button-types, :--button-types:active {}`
++    ).css,
++    `.foo > .baz,
++.bar > .baz {}
++
++.fizz > .foo,
++.buzz > .foo,
++.fizz > .bar,
++.buzz > .bar {}
++
++.btn-primary,
++.btn-success,
++.btn-info,
++.btn-warning,
++.btn-danger,
++.btn-primary:active,
++.btn-success:active,
++.btn-info:active,
++.btn-warning:active,
++.btn-danger:active {}`,
++    "should work with a complicated example"
++  )
++
++  t.equal(
++    transform(
++      `/* comment */
++@custom-selector :--foo
++  /* comment */
++  .foo,
++  .bar > .baz;
++
++
++/* comment */
++      :--foo + p {
++    display: block;
++  }`
++    ).css,
++    `/* comment */
++
++
++/* comment */
++      .foo + p,
++      .bar > .baz + p {
++    display: block;
++  }`,
++    "should works with comments"
++  )
++
++  t.equal(
++    transform(
++      `@custom-selector :--pseudo ::before, ::after;
++
++.foo > a:--pseudo img {
++  display: block;
+ }
++`
++    ).css,
++    `.foo > a::before img,
++.foo > a::after img {
++  display: block;
++}
++`,
++    "should works with pseudo elements"
++  )
+ 
+-function compareFixtures(t, name, msg, opts, postcssOpts) {
+-  postcssOpts = postcssOpts || {}
+-    //input
+-  postcssOpts.from = filename("fixtures/" + name + "/input")
+-  opts = opts || {}
+-  var result = postcss()
+-    .use(plugin(opts))
+-    .process(read(postcssOpts.from), postcssOpts)
++  t.equal(
++    transform(
++      `@custom-selector :--foo .foo;
+ 
+-  var actual = result.css
+-    //output
+-  var output = read(filename("fixtures/" + name + "/output"))
+-    //actual
+-  fs.writeFile(filename("fixtures/" + name + "/actual"), actual)
+-  t.equal(actual.trim(), output.trim(), msg)
++:--foo, :--foo.bar {
++  color: white;
++}
++`
++    ).css,
++    `.foo,
++.foo.bar {
++  color: white;
++}
++`,
++    "should works handle multiples combined selectors"
++  )
++
++  t.equal(
++    transform(
++      `@custom-selector :--foo h1, h2, h3;
++@custom-selector :--ba-----r h4, h5, h6;
+ 
+-  return result
++.fo--oo > :--foo {
++  margin: auto;
+ }
+ 
+-test("@custom-selector", function(t) {
+-  compareFixtures(t, "heading", "Should transform heading")
+-  compareFixtures(t, "pseudo", "Should transform pseudo")
+-  compareFixtures(t, "multiline", "Should transform multiline")
+-  compareFixtures(t, "some-hyphen", "Should transform some hyphen")
+-  compareFixtures(t, "matches", "Should transform matches selector")
+-  var similarMatchesResult = compareFixtures(t, "similar-matches", "Should transform matches selector")
+-  t.ok(
+-    similarMatchesResult.messages && similarMatchesResult.messages.length === 1,
+-    "Should add a message when a custom selectors is undefined"
++:--ba-----r:hover .ba--z {
++  display: block;
++}
++`
++    ).css,
++    `.fo--oo > h1,
++.fo--oo > h2,
++.fo--oo > h3 {
++  margin: auto;
++}
++
++h4:hover .ba--z,
++h5:hover .ba--z,
++h6:hover .ba--z {
++  display: block;
++}
++`,
++    "should works with weird identifiers"
+   )
+ 
+-  compareFixtures(t, "comment", "Should transform comment")
+-  compareFixtures(t, "line-break", "Should transform line break", {
+-    lineBreak: false
+-  })
++  t.equal(
++    transform(
++      `@custom-selector :--heading h1, h2, h3, h4, h5, h6;
++/* comment */
+ 
+-  compareFixtures(t, "extension", "Should transform local extensions", {
+-    extensions: {
+-      ':--any': 'section, article, aside, nav',
+-      ':--foo': 'input[type="text"] > section, #nav .bar'
+-    }
+-  })
++  article :--heading + p {
++    margin-top: 0;
++  }
++`,
++      {lineBreak: false}
++    ).css,
++    `/* comment */
++
++  article h1 + p, article h2 + p, article h3 + p, article h4 + p, ` +
++  `article h5 + p, article h6 + p {
++    margin-top: 0;
++  }
++`,
++    "should works works with no line breaks"
++  )
+ 
+-  compareFixtures(t, "multiple", "Should transform multiple selectors")
++  t.equal(
++    transform(
++      `@custom-selector :--multiline
++  .foo,
++  .bar > .baz;
++
++:--multiline {
++  display: block;
++}
++`
++    ).css,
++    `.foo,
++.bar > .baz {
++  display: block;
++}
++`,
++    "should works with multilines definition"
++  )
++
++  t.equal(
++    transform(
++      `@custom-selector :--any .foo, .bar;
++@custom-selector :--foo .baz;
++
++:--any h1 {
++  margin-top: 16px;
++}
++
++main :--foo + p {
++  margin-top: 16px;
++}
++`,
++      {
++        extensions: {
++          ":--any": "section, article, aside, nav",
++          ":--foo": "input[type=\"text\"] > section, #nav .bar",
++        },
++      }
++    ).css,
++    `section h1,
++article h1,
++aside h1,
++nav h1 {
++  margin-top: 16px;
++}
++
++main input[type="text"] > section + p,
++main #nav .bar + p {
++  margin-top: 16px;
++}
++`,
++    "should transform local extensions"
++  )
++
++  var postcssPlugin = postcss().use(plugin())
++  t.ok(
++    postcssPlugin.process("@custom-selector :--foobar .foo;:--foobar{}").css,
++    "should not create a memory"
++  )
++  t.equal(
++    postcssPlugin.process(":--foobar{}").css,
++    ":--foobar{}",
++    "should have no memory about previous processing"
++  )
+ 
+   t.end()
+ })
+-- 
+2.35.1
+

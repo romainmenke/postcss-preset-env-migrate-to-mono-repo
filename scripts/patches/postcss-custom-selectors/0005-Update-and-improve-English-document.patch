@@ -1,0 +1,476 @@
+From 73873d709f1ca4c12e04a6174132870c35ef9341 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=D2=BC=CB=BF?= <jie.lijie@alibaba-inc.com>
+Date: Fri, 5 Dec 2014 22:38:26 +0800
+Subject: [PATCH 05/69] Update and improve English document
+
+---
+ README-zh.md | 241 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ README.md    | 100 ++++++++++++---------
+ package.json |  10 ++-
+ 3 files changed, 307 insertions(+), 44 deletions(-)
+ create mode 100644 README-zh.md
+
+diff --git a/README-zh.md b/README-zh.md
+new file mode 100644
+index 0000000..67da407
+--- /dev/null
++++ b/README-zh.md
+@@ -0,0 +1,241 @@
++# PostCSS Custom Selectors [![Build Status](https://travis-ci.org/postcss/postcss-custom-selectors.svg)](https://travis-ci.org/postcss/postcss-custom-selectors)
++
++> [PostCSS](https://github.com/postcss/postcss) 实现 [W3C CSS Extensions(Custom Selectors)](http://dev.w3.org/csswg/css-extensions/#custom-selectors) 的插件。
++
++[English](README.md)
++
++## 安装
++
++    $ npm install postcss-custom-selectors
++
++## 快速开始
++
++示例1：
++
++```js
++// dependencies
++var fs = require('fs')
++var postcss = require('postcss')
++var selector = require('postcss-custom-selectors')
++
++// css to be processed
++var css = fs.readFileSync('input.css', 'utf8')
++
++// process css using postcss-custom-selectors
++var output = postcss()
++  .use(selector())
++  .process(css)
++  .css
++  
++console.log('\n====>Output CSS:\n', output)  
++```
++
++或者：
++
++```js
++var output = postcss(selector())
++  .process(css)
++  .css
++```
++
++input.css：
++
++```css
++@custom-selector --heading h1, h2, h3, h4, h5, h6;
++
++article --heading + p { 
++  margin-top: 0;
++}
++```
++
++你将得到：
++
++```css
++article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p, article h6 + p {
++  margin-top: 0;
++}
++```
++
++## CSS 语法
++
++    @custom-selector = @custom-selector <extension-name> <selector>;
++
++
++## 如何使用
++
++### 伪元素/伪类
++
++你可以使用 
++
++* `:` 自定义一个伪类。
++* `::`自定义一个伪元素。
++
++例如，模拟一个 [:any-link](http://dev.w3.org/csswg/selectors/#the-any-link-pseudo) 选择器：
++
++示例2：
++
++input.css:
++
++```css
++@custom-selector :--any-link :link, :visited;
++
++a:--any-link {
++  color: blue;
++}
++```
++
++output:
++
++```css
++a:link, a:visited {
++  color: blue;
++}
++```
++### 多个选择器
++
++`@custom-selector` 类似 CSS [`:matches()`](http://dev.w3.org/csswg/selectors-4/#matches) （[`-moz-any()`](https://developer.mozilla.org/en-US/docs/Web/CSS/:any)/[`-webkit-any()`](http://css-tricks.com/almanac/selectors/m/matches/)）选择器，但是目前**不支持**在同一个选择器中调用多个自定义选择器，例如：
++
++示例3：
++
++```css
++@custom-selector --heading h1, h2, h3, h4, h5, h6;
++@custom-selector :--any-link :link, :visited;
++
++.demo --heading, a:--any-link { 
++  font-size: 32px;
++}
++```
++将会输出错误的 CSS 代码。
++
++### Node Watch
++
++依赖 [chokidar](#) 模块。
++
++```js
++var fs = require('fs')
++var chokidar = require('chokidar')
++var postcss = require('postcss')
++var selector = require('postcss-custom-selector')
++
++var src = 'input.css'
++
++console.info('Watching…\nModify the input.css and save.')
++
++chokidar.watch(src, {
++  ignored: /[\/\\]\./,
++  persistent: true
++}).on('all',
++  function(event, path, stats) {
++    var css = fs.readFileSync(src, 'utf8')
++    var output = postcss(selector())
++      .process(css)
++      .css
++    fs.writeFileSync('output.css', output)
++  })
++```
++index.css 文件中的改动保存后将转换到 output.css
++
++### Grunt
++
++```js
++module.exports = function(grunt) {
++  grunt.initConfig({
++    pkg: grunt.file.readJSON('package.json'),
++    postcss: {
++      options: {
++        processors: [
++          require('autoprefixer-core')({ browsers: ['> 0%'] }).postcss, //Other plugin
++          require('postcss-custom-selector')(),
++        ]
++      },
++      dist: {
++        src: ['src/*.css'],
++        dest: 'build/grunt.css'
++      }
++    }
++  });
++
++  grunt.loadNpmTasks('grunt-contrib-uglify');
++  grunt.loadNpmTasks('grunt-postcss');
++
++  grunt.registerTask('default', ['postcss']);
++}
++```
++
++### Gulp
++
++```js
++var gulp = require('gulp');
++var rename = require('gulp-rename');
++var postcss = require('gulp-postcss');
++var selector = require('postcss-custom-selector')
++var autoprefixer = require('autoprefixer-core')
++
++gulp.task('default', function () {
++    var processors = [
++        autoprefixer({ browsers: ['> 0%'] }), //Other plugin
++        selector()
++    ];
++    gulp.src('src/*.css')
++        .pipe(postcss(processors))
++        .pipe(rename('gulp.css'))
++        .pipe(gulp.dest('build'))
++});
++gulp.watch('src/*.css', ['default']);
++```
++
++
++
++### 选项
++
++**`extensions`** (default: `{}`)
++
++该选项允许你自定义一个对象来设置 `<extension-name>`（选择器别名）和 `<selector>`，这些定义将覆盖 CSS 中相同别名的 `@custom-selector`。
++
++```js
++var options = {
++  extensions: {
++    ':--any' : 'section, article, aside, nav'
++  }
++}
++
++var output = postcss(selector(options))
++  .process(css)
++  .css;
++```
++
++input.css
++
++```css
++@custom-selector :--any .foo, .bar; /* 不会生效 */
++:--any h1 {
++  margin-top: 16px;
++}
++```
++
++output:
++
++```css
++section h1, article h1, aside h1, nav h1 {
++  margin-top: 16px;
++}
++```
++
++
++## 贡献
++
++* 安装相关的依赖模块。
++* 尊重编码风格（安装 [EditorConfig](http://editorconfig.org/)）。
++* 在[test](test)目录添加测试用例。
++* 运行测试。
++
++```
++$ git clone https://github.com/postcss/postcss-custom-selectors.git
++$ git checkout -b patch
++$ npm install
++$ npm test
++```
++
++## [Changelog](CHANGELOG.md)
++
++## [License](LICENSE)
+diff --git a/README.md b/README.md
+index 71a6c86..9a108fd 100644
+--- a/README.md
++++ b/README.md
+@@ -1,14 +1,16 @@
+-# PostCSS Custom Selectors [![Build Status](https://travis-ci.org/postcss/postcss-custom-selector.svg)](https://travis-ci.org/postcss/postcss-custom-selector)
++# PostCSS Custom Selectors [![Build Status](https://travis-ci.org/postcss/postcss-custom-selectors.svg)](https://travis-ci.org/postcss/postcss-custom-selectors)
+ 
+-> [PostCSS](https://github.com/postcss/postcss) 实现 [W3C CSS Extensions(Custom Selectors)](http://dev.w3.org/csswg/css-extensions/#custom-selectors) 的插件。
++> [PostCSS](https://github.com/postcss/postcss) plugin to transform  [W3C CSS Extensions(Custom Selectors)](http://dev.w3.org/csswg/css-extensions/#custom-selectors)  to more compatible CSS.
+ 
++[简体中文](README-zh.md)
+ 
+-
+-## 安装
++## Install
+ 
+     $ npm install postcss-custom-selectors
+ 
+-## 快速开始
++## Quick Start
++
++Example 1:
+ 
+ ```js
+ // dependencies
+@@ -25,10 +27,10 @@ var output = postcss()
+   .process(css)
+   .css
+   
+-console.log('\n\n ====>Output CSS:\n',output)  
++console.log('\n====>Output CSS:\n', output)  
+ ```
+ 
+-或者：
++Or just：
+ 
+ ```js
+ var output = postcss(selector())
+@@ -41,48 +43,36 @@ input.css：
+ ```css
+ @custom-selector --heading h1, h2, h3, h4, h5, h6;
+ 
+-article --heading + p{ 
++article --heading + p { 
+   margin-top: 0;
+ }
+ ```
+ 
+-你将得到：
++You will get:
+ 
+ ```css
+-article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p, article h6 + p{
++article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p, article h6 + p {
+   margin-top: 0;
+ }
+ ```
+ 
+-## CSS 语法
+-
+-A custom selector is defined with the `@custom-selector` rule:
++## CSS syntax
+ 
+     @custom-selector = @custom-selector <extension-name> <selector>;
+ 
+-This defines a custom selector which is written as a pseudo-class with the given `<extension-name>`, and represents a `:matches()` selector using the provided `<selector>` as its argument.
+ 
++## How to use it
+ 
+-For example, if an author wanted to easily refer to all heading elements in their HTML document, they could create an alias:
++### Pseudo-element/Pseudo-class
+ 
+-```css
+-@custom-selector :--heading h1, h2, h3, h4, h5, h6;
++You can use 
+ 
+-:--heading { /* styles for all headings */ }
+-:--heading + p { /* more styles */ }
+-/* etc */
+-```
++* `:` to customise a class.
++* `::`to customise a Pseudo-element.
+ 
+-## 如何使用
++For example to simulate [:any-link](http://dev.w3.org/csswg/selectors/#the-any-link-pseudo) selector：
+ 
+-### 伪元素/伪类
+-
+-你可以使用 
+-
+-* `:` 自定义一个伪类。
+-* `::`自定义一个伪元素。
+-
+-例如，模拟一个 :any-link 选择器：
++Example 2:
+ 
+ input.css:
+ 
+@@ -101,9 +91,11 @@ a:link, a:visited {
+   color: blue;
+ }
+ ```
+-### 多个选择器
++### Multiples selectors
++
++`@custom-selector` similar to CSS [`:matches()`](http://dev.w3.org/csswg/selectors-4/#matches) （[`-moz-any()`](https://developer.mozilla.org/en-US/docs/Web/CSS/:any)/[`-webkit-any()`](http://css-tricks.com/almanac/selectors/m/matches/)）selector,But it **doesn’t support** call multiple custom selector in the same selector, e.g.
+ 
+-`@custom-selector` 类似 CSS [`:matches()`](http://dev.w3.org/csswg/selectors-4/#matches) 选择器，但是目前**不支持**在同一个选择器中调用多个自定义选择器，例如：
++Example 3:
+ 
+ ```css
+ @custom-selector --heading h1, h2, h3, h4, h5, h6;
+@@ -113,7 +105,34 @@ a:link, a:visited {
+   font-size: 32px;
+ }
+ ```
+-将会输出错误的 CSS 代码。
++This will throw an error CSS code.
++
++### Node Watch
++
++Dependence [chokidar](#) module.
++
++```js
++var fs = require('fs')
++var chokidar = require('chokidar')
++var postcss = require('postcss')
++var selector = require('postcss-custom-selector')
++
++var src = 'input.css'
++
++console.info('Watching…\nModify the input.css and save.')
++
++chokidar.watch(src, {
++  ignored: /[\/\\]\./,
++  persistent: true
++}).on('all',
++  function(event, path, stats) {
++    var css = fs.readFileSync(src, 'utf8')
++    var output = postcss(selector())
++      .process(css)
++      .css
++    fs.writeFileSync('output.css', output)
++  })
++```
+ 
+ ### Grunt
+ 
+@@ -166,11 +185,11 @@ gulp.watch('src/*.css', ['default']);
+ 
+ 
+ 
+-### 选项
++### Options
+ 
+-**`extensions`** (默认: `{}`)
++**`extensions`** (default: `{}`)
+ 
+-该选项允许你自定义一个对象来设置 `<extension-name>`（选择器别名）和 `<selector>`，这些定义将覆盖 CSS 中相同别名的 `@custom-selector`。
++This option allows you to customize an object to set the `<extension-name>` (selector alias) and `<selector>`, these definitions will cover the same alias of `@custom-selector` in CSS.
+ 
+ ```js
+ var options = {
+@@ -202,11 +221,12 @@ section h1, article h1, aside h1, nav h1 {
+ ```
+ 
+ 
+-## 贡献
++## Contribution
+ 
+-* 安装相关依赖模块
+-* 尊重编码风格（安装 [EditorConfig](http://editorconfig.org/)）
+-* 运行测试
++* Install the relevant dependent module.
++* Respect coding style（Install [EditorConfig](http://editorconfig.org/)）.
++* Adding test cases in the [test](test) directory.
++* Run tests.
+ 
+ ```
+ $ git clone https://github.com/postcss/postcss-custom-selectors.git
+diff --git a/package.json b/package.json
+index e92bd62..e71788b 100644
+--- a/package.json
++++ b/package.json
+@@ -1,22 +1,24 @@
+ {
+-  "name": "postcss-custom-selector",
++  "name": "postcss-custom-selectors",
+   "version": "1.0.0",
+-  "description": "PostCSS plugin",
++  "description": "PostCSS plugin to transform W3C CSS Extensions(Custom Selectors) to more compatible CSS",
+   "keywords": [
+     "css",
++    "css3"
+     "postcss",
+     "postcss-plugins",
+     "selector",
+-    "custom selector"
++    "custom-selector"
+   ],
+   "author": "yisi",
+   "license": "MIT",
+   "repository": {
+     "type": "git",
+-    "url": "https://github.com/postcss/postcss-custom-selector.git"
++    "url": "https://github.com/postcss/postcss-custom-selectors.git"
+   },
+   "files": [
+     "CHANGELOG.md",
++    "README-zh.md",
+     "LICENSE",
+     "index.js"
+   ],
+-- 
+2.35.1
+

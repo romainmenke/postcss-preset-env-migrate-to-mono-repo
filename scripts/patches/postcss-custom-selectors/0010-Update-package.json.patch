@@ -1,0 +1,25 @@
+From 9988e49fab48e617b2d0570f9be0428441861ac7 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <yisibl@users.noreply.github.com>
+Date: Fri, 5 Dec 2014 23:34:47 +0800
+Subject: [PATCH 10/69] Update package.json
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index e71788b..a6e7f31 100644
+--- a/package.json
++++ b/package.json
+@@ -4,7 +4,7 @@
+   "description": "PostCSS plugin to transform W3C CSS Extensions(Custom Selectors) to more compatible CSS",
+   "keywords": [
+     "css",
+-    "css3"
++    "css3",
+     "postcss",
+     "postcss-plugins",
+     "selector",
+-- 
+2.35.1
+

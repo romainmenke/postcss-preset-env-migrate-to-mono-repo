@@ -1,0 +1,50 @@
+From efa6b4db7d1298e9956f4d380f4bb23cb1a05460 Mon Sep 17 00:00:00 2001
+From: Dmitry Semigradsky <semigradskyd@gmail.com>
+Date: Thu, 11 May 2017 09:42:41 +0300
+Subject: [PATCH 13/30] 3.0.0
+
+---
+ CHANGELOG.md | 4 ++++
+ LICENSE      | 2 +-
+ package.json | 2 +-
+ 3 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 0fbb5e6..8a43031 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 3.0.0 - 2017-05-11
++
++- Added: compatibility with postcss v6.x
++
+ # 2.0.0 - 2015-08-25
+ 
+ - Removed: compatibility with postcss v4.x
+diff --git a/LICENSE b/LICENSE
+index 372f030..b75f6e6 100755
+--- a/LICENSE
++++ b/LICENSE
+@@ -1,6 +1,6 @@
+ The MIT License (MIT)
+ 
+-Copyright (c) 2015 Maxime Thirouin
++Copyright (c) 2017 Maxime Thirouin
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy of
+ this software and associated documentation files (the "Software"), to deal in
+diff --git a/package.json b/package.json
+index f9f9bd0..402f8e8 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-selector-not",
+-  "version": "2.0.0",
++  "version": "3.0.0",
+   "description": "PostCSS plugin to transform :not() W3C CSS level 4 pseudo class to :not() CSS level 3 selectors",
+   "keywords": [
+     "postcss",
+-- 
+2.35.1
+

@@ -1,0 +1,54 @@
+From f6034c5f92234d08828a0b161963312cecb40c5b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <percyley@qq.com>
+Date: Wed, 3 Jun 2015 16:58:23 +0800
+Subject: [PATCH 32/69] Publish 2.0.1
+
+---
+ CHANGELOG.md | 12 ++++++++----
+ package.json |  2 +-
+ 2 files changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 60b8ab1..f5e9fee 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,16 +1,20 @@
++# 2.0.1 - 2015-06-03
++
++* \- Fixed: `(foo, bar)` conversion error exists in the selector(See also [:matches() test](test/fixtures/matches/input.css)).
++
+ # 2.0.0 - 2015-05-29
+ 
+-* x Remove: no longer support `::` or `--` to defined a custom selectors, we must use the `:--` to defined it.
++* \x Remove: no longer support `::` or `--` to defined a custom selectors, we must use the `:--` to defined it.
+ 
+-* - Fixed: two or more consecutive hyphens in selector outputs is "undefined".
++* \- Fixed: two or more consecutive hyphens in selector outputs is "undefined".
+ 
+ # 1.1.1 - 2015-04-06
+ 
+-* - Fixed: add support for multilines definition
++* \- Fixed: add support for multilines definition
+ 
+ # 1.1.0 - 2014-12-06
+ 
+-* - Added: "lineBreak" option
++* \- Added: "lineBreak" option
+ 
+ # 1.0.0 - 2014-12-06
+ 
+diff --git a/package.json b/package.json
+index b08f3d1..da70c74 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-selectors",
+-  "version": "2.0.0",
++  "version": "2.0.1",
+   "description": "PostCSS plugin to transform W3C CSS Extensions(Custom Selectors) to more compatible CSS",
+   "keywords": [
+     "css",
+-- 
+2.35.1
+

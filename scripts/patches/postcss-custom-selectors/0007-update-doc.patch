@@ -1,0 +1,48 @@
+From 42c7d98d44ab576237d09445d8cc79454a1a761f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=D2=BC=CB=BF?= <jie.lijie@alibaba-inc.com>
+Date: Fri, 5 Dec 2014 22:51:58 +0800
+Subject: [PATCH 07/69] update doc
+
+---
+ README-zh.md | 2 +-
+ README.md    | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/README-zh.md b/README-zh.md
+index 67da407..6dd0ef4 100644
+--- a/README-zh.md
++++ b/README-zh.md
+@@ -109,7 +109,7 @@ a:link, a:visited {
+ 
+ ### Node Watch
+ 
+-依赖 [chokidar](#) 模块。
++依赖 [chokidar](https://github.com/paulmillr/chokidar) 模块。
+ 
+ ```js
+ var fs = require('fs')
+diff --git a/README.md b/README.md
+index 69cb8ab..1d1b36f 100644
+--- a/README.md
++++ b/README.md
+@@ -93,7 +93,7 @@ a:link, a:visited {
+ ```
+ ### Multiples selectors
+ 
+-`@custom-selector` similar to CSS [`:matches()`](http://dev.w3.org/csswg/selectors-4/#matches) （[`-moz-any()`](https://developer.mozilla.org/en-US/docs/Web/CSS/:any)/[`-webkit-any()`](http://css-tricks.com/almanac/selectors/m/matches/)）selector,But it **doesn’t support** call multiple custom selector in the same selector, e.g.
++`@custom-selector` similar to CSS [`:matches()`](http://dev.w3.org/csswg/selectors-4/#matches)([`-moz-any()`](https://developer.mozilla.org/en-US/docs/Web/CSS/:any)/[`-webkit-any()`](http://css-tricks.com/almanac/selectors/m/matches/))selector,but it **doesn’t support** call multiple custom selector in the same selector, e.g.
+ 
+ Example 3:
+ 
+@@ -109,7 +109,7 @@ This will throw an error CSS code.
+ 
+ ### Node Watch
+ 
+-Dependence [chokidar](#) module.
++Dependence [chokidar](https://github.com/paulmillr/chokidar) module.
+ 
+ ```js
+ var fs = require('fs')
+-- 
+2.35.1
+

@@ -1,0 +1,25 @@
+From 64862c8e1d74fe4eb31cab522ea79684c431a3e1 Mon Sep 17 00:00:00 2001
+From: Reed Jones <develop@reedjones.com>
+Date: Thu, 30 May 2019 22:18:32 -0600
+Subject: [PATCH 22/30] Update README.md
+
+Fix typo from `leve` to `level`
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 810c9f5..a1b3ad5 100644
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # postcss-selector-not [![CSS Standard Status](https://cssdb.org/badge/not-pseudo-class.svg)](https://cssdb.org/#not-pseudo-class) [![Build Status](https://travis-ci.org/postcss/postcss-selector-not.svg?branch=master)](https://travis-ci.org/postcss/postcss-selector-not)
+ 
+-> PostCSS plugin to transform `:not()` W3C CSS leve 4 pseudo class to :not() CSS level 3 selectors
++> PostCSS plugin to transform `:not()` W3C CSS level 4 pseudo class to :not() CSS level 3 selectors
+ 
+ http://dev.w3.org/csswg/selectors-4/#negation
+ 
+-- 
+2.35.1
+

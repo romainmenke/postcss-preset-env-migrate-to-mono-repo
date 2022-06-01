@@ -1,0 +1,23 @@
+From f757fc28f7006c85e1b18dcd654b6c415618a878 Mon Sep 17 00:00:00 2001
+From: Shinnosuke Watanabe <snnskwtnb@gmail.com>
+Date: Thu, 4 Dec 2014 21:59:01 +0900
+Subject: [PATCH 03/69] Use SVG badge instead of PNG badge
+
+SVG badges look beautiful on retina displays.
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 444dc50..cef200f 100644
+--- a/README.md
++++ b/README.md
+@@ -1,4 +1,4 @@
+-# PostCSS Custom Selector [![Build Status](https://travis-ci.org/postcss/postcss-custom-selector.png)](https://travis-ci.org/postcss/postcss-custom-selector)
++# PostCSS Custom Selector [![Build Status](https://travis-ci.org/postcss/postcss-custom-selector.svg)](https://travis-ci.org/postcss/postcss-custom-selector)
+ 
+ > [PostCSS](https://github.com/postcss/postcss) 实现 [W3C CSS Extensions(Custom Selectors)](http://dev.w3.org/csswg/css-extensions/#custom-selectors) 的插件。
+ 
+-- 
+2.35.1
+

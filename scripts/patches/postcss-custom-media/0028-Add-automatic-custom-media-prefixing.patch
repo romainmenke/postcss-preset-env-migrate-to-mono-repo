@@ -1,0 +1,48 @@
+From 2dea507ab5b792e5366763f42d74bfb7c3defcc3 Mon Sep 17 00:00:00 2001
+From: Glen Huang <hey.hgl@gmail.com>
+Date: Mon, 6 Apr 2015 12:46:03 +0800
+Subject: [PATCH 28/62] Add automatic custom media prefixing
+
+---
+ index.js      | 6 ++++++
+ test/index.js | 7 +++++++
+ 2 files changed, 13 insertions(+)
+
+diff --git a/index.js b/index.js
+index e74d88c..87b4bc1 100755
+--- a/index.js
++++ b/index.js
+@@ -21,6 +21,12 @@ function customMedia(options) {
+   return function(styles) {
+     options = options || {}
+     var extensions = options.extensions || {}
++    Object.keys(extensions).forEach(function(name) {
++      if (name.slice(0, 2) !== "--") {
++        extensions["--" + name] = extensions[name]
++        delete extensions[name]
++      }
++    })
+     var append = options.append
+     var preserve = append || options.preserve
+     var map = {}
+diff --git a/test/index.js b/test/index.js
+index efd36d3..92abeff 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -32,6 +32,13 @@ test("@custom-media", function(t) {
+     }
+   })
+ 
++  compareFixtures(t, "js-defined", "should transform custom media and override local unprefixed extensions", {
++    extensions: {
++      "viewport-max-s": "(max-width: 30em)",
++      "viewport-min-s": "(min-width: 30.01em)"
++    }
++  })
++
+   compareFixtures(t, "preserve", "should preserve custom media", {preserve: true})
+ 
+   compareFixtures(t, "append", "should append custom media", {
+-- 
+2.35.1
+

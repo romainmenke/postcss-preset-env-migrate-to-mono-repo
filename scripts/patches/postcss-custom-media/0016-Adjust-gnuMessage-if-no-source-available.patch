@@ -1,0 +1,23 @@
+From 87067cecdc13025865512f287ddfc55624a8e9b8 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Sun, 9 Nov 2014 07:29:25 +0100
+Subject: [PATCH 16/62] Adjust gnuMessage if no source available
+
+---
+ index.js | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/index.js b/index.js
+index a785c9c..fb385ae 100755
+--- a/index.js
++++ b/index.js
+@@ -65,5 +65,5 @@ function customMedia(options) {
+  * @param {Object} source
+  */
+ function gnuMessage(message, source) {
+-  return (source ? (source.file ? source.file : "<css input>") + ":" + source.start.line + ":" + source.start.column : "") + " " + message
++  return (source ? (source.file ? source.file : "<css input>") + ":" + source.start.line + ":" + source.start.column + " " : "") + message
+ }
+-- 
+2.35.1
+

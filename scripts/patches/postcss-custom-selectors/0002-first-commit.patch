@@ -1,0 +1,517 @@
+From 7cf1085d91d8a304f0b3d5554c74bf416df9e779 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=D2=BC=CB=BF?= <jie.lijie@alibaba-inc.com>
+Date: Thu, 4 Dec 2014 19:52:24 +0800
+Subject: [PATCH 02/69] first commit
+
+---
+ .editorconfig                        |  13 ++
+ .gitignore                           |   5 +
+ .travis.yml                          |   1 +
+ CHANGELOG.md                         |   3 +
+ README.md                            | 201 +++++++++++++++++++++++++++
+ index.js                             |  75 ++++++++++
+ package.json                         |  30 ++++
+ test/fixtures/extension.css          |  10 ++
+ test/fixtures/extension.expected.css |   7 +
+ test/fixtures/heading.css            |   5 +
+ test/fixtures/heading.expected.css   |   3 +
+ test/fixtures/pseudo.css             |   5 +
+ test/fixtures/pseudo.expected.css    |   3 +
+ test/index.js                        |  33 +++++
+ 14 files changed, 394 insertions(+)
+ create mode 100644 .editorconfig
+ create mode 100644 .gitignore
+ create mode 100644 .travis.yml
+ create mode 100644 CHANGELOG.md
+ create mode 100644 README.md
+ create mode 100644 index.js
+ create mode 100644 package.json
+ create mode 100644 test/fixtures/extension.css
+ create mode 100644 test/fixtures/extension.expected.css
+ create mode 100644 test/fixtures/heading.css
+ create mode 100644 test/fixtures/heading.expected.css
+ create mode 100644 test/fixtures/pseudo.css
+ create mode 100644 test/fixtures/pseudo.expected.css
+ create mode 100644 test/index.js
+
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..dffb18a
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,13 @@
++# editorconfig.org
++root = true
++
++[*]
++charset = utf-8
++indent_style = space
++indent_size = 2
++end_of_line = lf
++trim_trailing_whitespace = true
++insert_final_newline = true
++
++[*.md]
++trim_trailing_whitespace = false
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..bf00805
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,5 @@
++.DS_Store
++node_modules
++test/fixtures/*.actual.css
++*.sublime-workspace
++
+diff --git a/.travis.yml b/.travis.yml
+new file mode 100644
+index 0000000..587bd3e
+--- /dev/null
++++ b/.travis.yml
+@@ -0,0 +1 @@
++language: node_js
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100644
+index 0000000..2b2be50
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,3 @@
++# 1.0.0 - 2014-12-04
++
++First release 
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..444dc50
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,201 @@
++# PostCSS Custom Selector [![Build Status](https://travis-ci.org/postcss/postcss-custom-selector.png)](https://travis-ci.org/postcss/postcss-custom-selector)
++
++> [PostCSS](https://github.com/postcss/postcss) 实现 [W3C CSS Extensions(Custom Selectors)](http://dev.w3.org/csswg/css-extensions/#custom-selectors) 的插件。
++
++
++
++## 安装(暂未发布)
++
++    $ npm install postcss-custom-selector
++
++## 快速开始
++
++```js
++// dependencies
++var fs = require('fs')
++var postcss = require('postcss')
++var selector = require('postcss-custom-selector')
++
++// css to be processed
++var css = fs.readFileSync('input.css', 'utf8')
++
++// process css using postcss-custom-selector
++var output = postcss()
++  .use(selector())
++  .process(css)
++  .css
++  
++console.log('\n\n ====>Output CSS:\n',output)  
++```
++
++或者：
++
++```js
++var output = postcss(selector())
++  .process(css)
++  .css
++```
++
++input.css：
++
++```css
++@custom-selector --heading h1, h2, h3, h4, h5, h6;
++
++article --heading + p{ 
++  margin-top: 0;
++}
++```
++
++你将得到：
++
++```css
++article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p, article h6 + p{
++  margin-top: 0;
++}
++```
++
++## CSS 语法
++
++A custom selector is defined with the `@custom-selector` rule:
++
++    @custom-selector = @custom-selector <extension-name> <selector>;
++
++This defines a custom selector which is written as a pseudo-class with the given `<extension-name>`, and represents a `:matches()` selector using the provided `<selector>` as its argument.
++
++
++For example, if an author wanted to easily refer to all heading elements in their HTML document, they could create an alias:
++
++```css
++@custom-selector :--heading h1, h2, h3, h4, h5, h6;
++
++:--heading { /* styles for all headings */ }
++:--heading + p { /* more styles */ }
++/* etc */
++```
++
++## 如何使用
++
++### 伪元素/伪类
++
++你可以使用 
++
++* `:` 自定义一个伪类。
++* `::`自定义一个伪元素。
++
++例如，模拟一个 :any-link 选择器：
++
++input.css:
++
++```css
++@custom-selector :--any-link :link, :visited;
++
++a:--any-link {
++  color: blue;
++}
++```
++
++output:
++
++```css
++a:link, a:visited {
++  color: blue;
++}
++```
++### 多个选择器
++
++`@custom-selector` 类似 CSS [`:matches()`](http://dev.w3.org/csswg/selectors-4/#matches) 选择器，但是目前**不支持**在同一个选择器中调用多个自定义选择器，例如：
++
++```css
++@custom-selector --heading h1, h2, h3, h4, h5, h6;
++@custom-selector :--any-link :link, :visited;
++
++.demo --heading, a:--any-link { 
++  font-size: 32px;
++}
++```
++将会输出错误的 CSS 代码。
++
++### Grunt
++
++```js
++grunt.initConfig({
++  postcss: {
++    options: {
++      processors: [require('postcss-custom-selector').postcss]
++    },
++    dist: {
++      src: 'css/*.css'
++    }
++  }
++});
++
++grunt.loadNpmTasks('grunt-postcss');
++```
++
++### Gulp
++
++```js
++var gulp = require('gulp');
++var postcss = require('gulp-postcss');
++
++gulp.task('css', function() {
++  return gulp.src('./src/*.css')
++    .pipe(postcss([require('postcss-custom-selector')]))
++    .pipe(gulp.dest('./dest'));
++});
++```
++
++
++
++### 选项
++
++**`extensions`** (默认: `{}`)
++
++该选项允许你自定义一个对象来设置 `<extension-name>`（选择器别名）和 `<selector>`，这些定义将覆盖 CSS 中相同别名的 `@custom-selector`。
++
++```js
++var options = {
++  extensions: {
++    ':--any' : 'section, article, aside, nav'
++  }
++}
++
++var output = postcss(selector(options))
++  .process(css)
++  .css;
++```
++
++input.css
++
++```css
++@custom-selector :--any .foo, .bar; /* 不会生效 */
++:--any h1 {
++  margin-top: 16px;
++}
++```
++
++output:
++
++```css
++section h1, article h1, aside h1, nav h1 {
++  margin-top: 16px;
++}
++```
++
++
++## 贡献
++
++* 安装相关依赖模块
++* 尊重编码风格（安装）
++* 运行测试
++
++```
++$ git clone https://github.com/postcss/postcss-custom-selector.git
++$ git checkout -b patch
++$ npm install
++$ npm test
++```
++
++## [Changelog](CHANGELOG.md)
++
++## [License](LICENSE)
+diff --git a/index.js b/index.js
+new file mode 100644
+index 0000000..05588d0
+--- /dev/null
++++ b/index.js
+@@ -0,0 +1,75 @@
++/**
++ * 匹配自定义选择器
++ * --foo, :--foo, ::--foo 三种类型
++ * 注意：CSS 选择器区分大小写
++ */
++var re_CUSTOM_SELECTOR = /([^,]*?)((?::|::)?(?:--[\w-]+))([^,]*)/g
++
++/**
++ * 暴露插件
++ */
++module.exports = customSelector
++
++/**
++ * 读取和替换自定义选择器
++ */
++function customSelector(options) {
++  return function(styles) {
++    options = options || {}
++    var extensions = options.extensions || {}
++    var map = {}
++    var toRemove = []
++    var customSelectors = {}
++
++    // 读取自定义选择器
++    styles.eachAtRule(function(rule) {
++      if (rule.name !== "custom-selector") {
++        return
++      }
++
++      var params = rule.params.split(" ")
++        // @custom-selector = @custom-selector <extension-name> <selector>
++        // map[<extension-name>] = <selector>
++
++      var customName = params.shift()
++      var string = rule.params
++      string = string.replace(customName, "")
++      customSelectors[customName] = string
++
++      map[params.shift()] = params.join(" ")
++
++      toRemove.push(rule)
++    })
++
++    // JS 中设置一个自定义选择器
++    Object.keys(extensions).forEach(function(extension) {
++      map[extension] = extensions[extension]
++      customSelectors[extension] = extensions[extension]
++    })
++
++    // 转换自定义的选择器别名
++    styles.eachRule(function(rule) {
++      for (var prop in customSelectors) {
++        if (rule.selector.indexOf(prop) >= 0) {
++          customSelector = customSelectors[prop]
++
++          // $2 = <extension-name> （自定义的选择器名称）
++          rule.selector = rule.selector.replace(re_CUSTOM_SELECTOR, function($0, $1, $2, $3) {
++            if ($2 == prop) {
++              return customSelector.split(",").map(function(selector) {
++                return $1 + selector.trim() + $3
++              }).join(", ")
++            }
++          })
++
++        }
++      }
++    })
++
++    // 删除 @custom-selector
++    toRemove.forEach(function(rule) {
++      rule.removeSelf()
++    })
++
++  }
++}
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..e92bd62
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,30 @@
++{
++  "name": "postcss-custom-selector",
++  "version": "1.0.0",
++  "description": "PostCSS plugin",
++  "keywords": [
++    "css",
++    "postcss",
++    "postcss-plugins",
++    "selector",
++    "custom selector"
++  ],
++  "author": "yisi",
++  "license": "MIT",
++  "repository": {
++    "type": "git",
++    "url": "https://github.com/postcss/postcss-custom-selector.git"
++  },
++  "files": [
++    "CHANGELOG.md",
++    "LICENSE",
++    "index.js"
++  ],
++  "devDependencies": {
++    "postcss": "^3.0.0",
++    "tape": "^3.0.0"
++  },
++  "scripts": {
++    "test": "tape test"
++  }
++}
+diff --git a/test/fixtures/extension.css b/test/fixtures/extension.css
+new file mode 100644
+index 0000000..95b234e
+--- /dev/null
++++ b/test/fixtures/extension.css
+@@ -0,0 +1,10 @@
++@custom-selector :--any .foo, .bar;
++@custom-selector --foo .baz;
++
++:--any h1 {
++  margin-top: 16px;
++}
++
++main --foo + p {
++  margin-top: 16px;
++}
+diff --git a/test/fixtures/extension.expected.css b/test/fixtures/extension.expected.css
+new file mode 100644
+index 0000000..c9752cb
+--- /dev/null
++++ b/test/fixtures/extension.expected.css
+@@ -0,0 +1,7 @@
++section h1, article h1, aside h1, nav h1 {
++  margin-top: 16px;
++}
++
++main input[type="text"] > section + p, main #nav .bar + p {
++  margin-top: 16px;
++}
+diff --git a/test/fixtures/heading.css b/test/fixtures/heading.css
+new file mode 100644
+index 0000000..2394abf
+--- /dev/null
++++ b/test/fixtures/heading.css
+@@ -0,0 +1,5 @@
++@custom-selector --heading h1, h2, h3, h4, h5, h6;
++
++article --heading + p{
++  margin-top: 0;
++}
+diff --git a/test/fixtures/heading.expected.css b/test/fixtures/heading.expected.css
+new file mode 100644
+index 0000000..0123afc
+--- /dev/null
++++ b/test/fixtures/heading.expected.css
+@@ -0,0 +1,3 @@
++article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p, article h6 + p{
++  margin-top: 0;
++}
+diff --git a/test/fixtures/pseudo.css b/test/fixtures/pseudo.css
+new file mode 100644
+index 0000000..8ab7951
+--- /dev/null
++++ b/test/fixtures/pseudo.css
+@@ -0,0 +1,5 @@
++@custom-selector ::--pseudo ::before, ::after;
++
++.foo > a::--pseudo img {
++  display: block;
++}
+diff --git a/test/fixtures/pseudo.expected.css b/test/fixtures/pseudo.expected.css
+new file mode 100644
+index 0000000..64b516a
+--- /dev/null
++++ b/test/fixtures/pseudo.expected.css
+@@ -0,0 +1,3 @@
++.foo > a::before img, .foo > a::after img {
++  display: block;
++}
+diff --git a/test/index.js b/test/index.js
+new file mode 100644
+index 0000000..f71e113
+--- /dev/null
++++ b/test/index.js
+@@ -0,0 +1,33 @@
++var fs = require("fs")
++
++var test = require("tape")
++
++var postcss = require("postcss")
++var plugin = require("..")
++
++function filename(name) { return "test/" + name + ".css" }
++function read(name) { return fs.readFileSync(name, "utf8") }
++
++function compareFixtures(t, name, msg, opts, postcssOpts) {
++  postcssOpts = postcssOpts || {}
++  postcssOpts.from = filename("fixtures/" + name)
++  opts = opts || {}
++  var actual = postcss().use(plugin(opts)).process(read(postcssOpts.from), postcssOpts).css
++  var expected = read(filename("fixtures/" + name + ".expected"))
++  fs.writeFile(filename("fixtures/" + name + ".actual"), actual)
++  t.equal(actual.trim(), expected.trim(), msg)
++}
++
++test("@custom-selector", function(t) {
++  compareFixtures(t, "heading", "should transform custom selector")
++  compareFixtures(t, "pseudo", "should transform custom selector")
++
++  compareFixtures(t, "extension", "local extensions", {
++    extensions: {
++      ':--any' : 'section, article, aside, nav',
++      '--foo': 'input[type="text"] > section, #nav .bar'
++    }
++  })
++
++  t.end()
++})
+-- 
+2.35.1
+

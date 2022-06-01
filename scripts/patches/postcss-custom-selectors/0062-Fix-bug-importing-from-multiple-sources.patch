@@ -1,0 +1,60 @@
+From babc7aa49b7cb26ccd265138c566cb8bf8d641fd Mon Sep 17 00:00:00 2001
+From: Erik Westra <ewestra@kaliber.net>
+Date: Thu, 5 Dec 2019 10:39:52 +0100
+Subject: [PATCH 62/69] Fix bug importing from multiple sources
+
+---
+ .tape.js           | 8 ++++++++
+ lib/import-from.js | 5 +++--
+ test/empty.css     | 0
+ 3 files changed, 11 insertions(+), 2 deletions(-)
+ create mode 100644 test/empty.css
+
+diff --git a/.tape.js b/.tape.js
+index c960d30..d4428d0 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -84,6 +84,14 @@ module.exports = {
+ 			expect: 'basic.import.expect.css',
+ 			result: 'basic.import.result.css'
+ 		},
++		'basic:import-css-from-multiple-files': {
++			message: 'supports { importFrom: ["test/empty.css", "test/import-selectors.css"] } usage',
++			options: {
++				importFrom: ["test/empty.css", "test/import-selectors.css"]
++			},
++			expect: 'basic.import.expect.css',
++			result: 'basic.import.result.css'
++		},
+ 		'basic:import-css-from-type': {
+ 			message: 'supports { importFrom: [ { from: "test/import-selectors.css", type: "css" } ] } usage',
+ 			options: {
+diff --git a/lib/import-from.js b/lib/import-from.js
+index faf76d3..558c0a4 100644
+--- a/lib/import-from.js
++++ b/lib/import-from.js
+@@ -81,7 +81,8 @@ export default function importCustomSelectorsFromSources(sources) {
+ 		const type = (opts.type || path.extname(from).slice(1)).toLowerCase();
+ 
+ 		return { type, from };
+-	}).reduce(async (customSelectors, source) => {
++	}).reduce(async (customSelectorsPromise, source) => {
++		const customSelectors = await customSelectorsPromise
+ 		const { type, from } = await source;
+ 
+ 		if (type === 'ast') {
+@@ -101,7 +102,7 @@ export default function importCustomSelectorsFromSources(sources) {
+ 		}
+ 
+ 		return Object.assign(customSelectors, importCustomSelectorsFromObject(await source));
+-	}, {});
++	}, Promise.resolve({}));
+ }
+ 
+ /* Helper utilities
+diff --git a/test/empty.css b/test/empty.css
+new file mode 100644
+index 0000000..e69de29
+-- 
+2.35.1
+

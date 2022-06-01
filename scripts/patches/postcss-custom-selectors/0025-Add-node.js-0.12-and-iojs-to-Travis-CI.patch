@@ -1,0 +1,23 @@
+From 45a848053177c46b9dd16c71982b6791c9a6089f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <percyley@qq.com>
+Date: Mon, 1 Jun 2015 11:33:23 +0800
+Subject: [PATCH 25/69] Add node.js 0.12 and iojs to Travis CI
+
+---
+ .travis.yml | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/.travis.yml b/.travis.yml
+index 587bd3e..ffb8b39 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -1 +1,6 @@
++sudo: false
+ language: node_js
++node_js:
++  - iojs
++  - "0.12"
++  - "0.10"
+-- 
+2.35.1
+

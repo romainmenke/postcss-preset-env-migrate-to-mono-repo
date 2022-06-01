@@ -1,0 +1,129 @@
+From a09bfb31b28ef494991db3739fd3ba4801c6eeae Mon Sep 17 00:00:00 2001
+From: Glen Huang <hey.hgl@gmail.com>
+Date: Mon, 6 Apr 2015 11:27:41 +0800
+Subject: [PATCH 27/62] Add append option
+
+---
+ index.js                          | 24 +++++++++++++++++++++---
+ package.json                      |  4 ++--
+ test/fixtures/append.css          |  3 +++
+ test/fixtures/append.expected.css |  4 ++++
+ test/index.js                     |  7 +++++++
+ 5 files changed, 37 insertions(+), 5 deletions(-)
+ create mode 100644 test/fixtures/append.css
+ create mode 100644 test/fixtures/append.expected.css
+
+diff --git a/index.js b/index.js
+index b15d6be..e74d88c 100755
+--- a/index.js
++++ b/index.js
+@@ -1,6 +1,7 @@
+ /**
+  * Module dependencies
+  */
++var postcss = require("postcss")
+ var helpers = require("postcss-message-helpers")
+ 
+ /**
+@@ -20,7 +21,8 @@ function customMedia(options) {
+   return function(styles) {
+     options = options || {}
+     var extensions = options.extensions || {}
+-    var preserve = options.preserve
++    var append = options.append
++    var preserve = append || options.preserve
+     var map = {}
+     var toRemove = []
+ 
+@@ -41,8 +43,8 @@ function customMedia(options) {
+     })
+ 
+     // apply js-defined media queries
+-    Object.keys(extensions).forEach(function(extension) {
+-      map[extension] = extensions[extension]
++    Object.keys(extensions).forEach(function(name) {
++      map[name] = extensions[name]
+     })
+ 
+     // transform custom media query aliases
+@@ -61,6 +63,22 @@ function customMedia(options) {
+       })
+     })
+ 
++    if (append) {
++      var names = Object.keys(map)
++      if (names.length) {
++        names.forEach(function(name) {
++          var atRule = postcss.atRule({
++            name: "custom-media",
++            afterName: " ",
++            params: name + " " + map[name],
++          })
++          styles.append(atRule)
++        })
++        styles.semicolon = true
++        styles.after = "\n"
++      }
++    }
++
+     // remove @custom-media
+     toRemove.forEach(function(rule) { rule.removeSelf() })
+   }
+diff --git a/package.json b/package.json
+index 58b177c..37897bb 100644
+--- a/package.json
++++ b/package.json
+@@ -21,12 +21,12 @@
+     "index.js"
+   ],
+   "dependencies": {
+-    "postcss-message-helpers": "^2.0.0"
++    "postcss-message-helpers": "^2.0.0",
++    "postcss": "^4.0.2"
+   },
+   "devDependencies": {
+     "jscs": "^1.6.2",
+     "jshint": "^2.5.6",
+-    "postcss": "^4.0.2",
+     "tape": "^3.0.0"
+   },
+   "scripts": {
+diff --git a/test/fixtures/append.css b/test/fixtures/append.css
+new file mode 100644
+index 0000000..945cc11
+--- /dev/null
++++ b/test/fixtures/append.css
+@@ -0,0 +1,3 @@
++@media (--viewport-max-s) {
++  body { font-size: 1rem; }
++}
+diff --git a/test/fixtures/append.expected.css b/test/fixtures/append.expected.css
+new file mode 100644
+index 0000000..6c44041
+--- /dev/null
++++ b/test/fixtures/append.expected.css
+@@ -0,0 +1,4 @@
++@media (max-width: 30em) {
++  body { font-size: 1rem; }
++}
++@custom-media --viewport-max-s (max-width: 30em);
+diff --git a/test/index.js b/test/index.js
+index 313dff8..efd36d3 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -34,5 +34,12 @@ test("@custom-media", function(t) {
+ 
+   compareFixtures(t, "preserve", "should preserve custom media", {preserve: true})
+ 
++  compareFixtures(t, "append", "should append custom media", {
++    extensions: {
++      "--viewport-max-s": "(max-width: 30em)",
++    },
++    append: true,
++  })
++
+   t.end()
+ })
+-- 
+2.35.1
+

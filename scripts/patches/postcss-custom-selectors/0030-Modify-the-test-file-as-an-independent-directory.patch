@@ -1,0 +1,131 @@
+From 1ca1db3b441238c8448630f55e9a00141a68f460 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <percyley@qq.com>
+Date: Wed, 3 Jun 2015 16:44:52 +0800
+Subject: [PATCH 30/69] Modify the test file as an independent directory.
+
+---
+ .gitignore                                         |  2 +-
+ .../{extension.css => extension/input.css}         |  0
+ .../output.css}                                    |  0
+ test/fixtures/{heading.css => heading/input.css}   |  0
+ .../{heading.expected.css => heading/output.css}   |  0
+ test/fixtures/{matches.css => matches/input.css}   |  0
+ .../{matches.expected.css => matches/output.css}   |  0
+ .../{multiline.css => multiline/input.css}         |  0
+ .../output.css}                                    |  0
+ test/fixtures/{pseudo.css => pseudo/input.css}     |  0
+ .../{pseudo.expected.css => pseudo/output.css}     |  0
+ .../input.css}                                     |  0
+ .../output.css}                                    |  0
+ test/index.js                                      | 14 +++++++++-----
+ 14 files changed, 10 insertions(+), 6 deletions(-)
+ rename test/fixtures/{extension.css => extension/input.css} (100%)
+ rename test/fixtures/{extension.expected.css => extension/output.css} (100%)
+ rename test/fixtures/{heading.css => heading/input.css} (100%)
+ rename test/fixtures/{heading.expected.css => heading/output.css} (100%)
+ rename test/fixtures/{matches.css => matches/input.css} (100%)
+ rename test/fixtures/{matches.expected.css => matches/output.css} (100%)
+ rename test/fixtures/{multiline.css => multiline/input.css} (100%)
+ rename test/fixtures/{multiline.expected.css => multiline/output.css} (100%)
+ rename test/fixtures/{pseudo.css => pseudo/input.css} (100%)
+ rename test/fixtures/{pseudo.expected.css => pseudo/output.css} (100%)
+ rename test/fixtures/{some-hyphen-selector.css => some-hyphen/input.css} (100%)
+ rename test/fixtures/{some-hyphen-selector.expected.css => some-hyphen/output.css} (100%)
+
+diff --git a/.gitignore b/.gitignore
+index bf00805..a3e84c1 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,5 +1,5 @@
+ .DS_Store
+ node_modules
+-test/fixtures/*.actual.css
++test/fixtures/*/actual.css
+ *.sublime-workspace
+ 
+diff --git a/test/fixtures/extension.css b/test/fixtures/extension/input.css
+similarity index 100%
+rename from test/fixtures/extension.css
+rename to test/fixtures/extension/input.css
+diff --git a/test/fixtures/extension.expected.css b/test/fixtures/extension/output.css
+similarity index 100%
+rename from test/fixtures/extension.expected.css
+rename to test/fixtures/extension/output.css
+diff --git a/test/fixtures/heading.css b/test/fixtures/heading/input.css
+similarity index 100%
+rename from test/fixtures/heading.css
+rename to test/fixtures/heading/input.css
+diff --git a/test/fixtures/heading.expected.css b/test/fixtures/heading/output.css
+similarity index 100%
+rename from test/fixtures/heading.expected.css
+rename to test/fixtures/heading/output.css
+diff --git a/test/fixtures/matches.css b/test/fixtures/matches/input.css
+similarity index 100%
+rename from test/fixtures/matches.css
+rename to test/fixtures/matches/input.css
+diff --git a/test/fixtures/matches.expected.css b/test/fixtures/matches/output.css
+similarity index 100%
+rename from test/fixtures/matches.expected.css
+rename to test/fixtures/matches/output.css
+diff --git a/test/fixtures/multiline.css b/test/fixtures/multiline/input.css
+similarity index 100%
+rename from test/fixtures/multiline.css
+rename to test/fixtures/multiline/input.css
+diff --git a/test/fixtures/multiline.expected.css b/test/fixtures/multiline/output.css
+similarity index 100%
+rename from test/fixtures/multiline.expected.css
+rename to test/fixtures/multiline/output.css
+diff --git a/test/fixtures/pseudo.css b/test/fixtures/pseudo/input.css
+similarity index 100%
+rename from test/fixtures/pseudo.css
+rename to test/fixtures/pseudo/input.css
+diff --git a/test/fixtures/pseudo.expected.css b/test/fixtures/pseudo/output.css
+similarity index 100%
+rename from test/fixtures/pseudo.expected.css
+rename to test/fixtures/pseudo/output.css
+diff --git a/test/fixtures/some-hyphen-selector.css b/test/fixtures/some-hyphen/input.css
+similarity index 100%
+rename from test/fixtures/some-hyphen-selector.css
+rename to test/fixtures/some-hyphen/input.css
+diff --git a/test/fixtures/some-hyphen-selector.expected.css b/test/fixtures/some-hyphen/output.css
+similarity index 100%
+rename from test/fixtures/some-hyphen-selector.expected.css
+rename to test/fixtures/some-hyphen/output.css
+diff --git a/test/index.js b/test/index.js
+index 6257465..1b466a0 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -10,21 +10,25 @@ function read(name) { return fs.readFileSync(name, "utf8") }
+ 
+ function compareFixtures(t, name, msg, opts, postcssOpts) {
+   postcssOpts = postcssOpts || {}
+-  postcssOpts.from = filename("fixtures/" + name)
++  //input
++  postcssOpts.from = filename("fixtures/" + name + "/input")
++  console.log('postcssOpts.from', postcssOpts.from)
+   opts = opts || {}
+   var actual = postcss()
+   .use(plugin(opts))
+   .process(read(postcssOpts.from), postcssOpts).css
+-  var expected = read(filename("fixtures/" + name + ".expected"))
+-  fs.writeFile(filename("fixtures/" + name + ".actual"), actual)
+-  t.equal(actual.trim(), expected.trim(), msg)
++  //output
++  var output = read(filename("fixtures/" + name + "/output"))
++  //actual
++  fs.writeFile(filename("fixtures/" + name + "/actual"), actual)
++  t.equal(actual.trim(), output.trim(), msg)
+ }
+ 
+ test("@custom-selector", function(t) {
+   compareFixtures(t, "heading", "should transform heading")
+   compareFixtures(t, "pseudo", "should transform pseudo")
+   compareFixtures(t, "multiline", "should transform multiline")
+-  compareFixtures(t, "some-hyphen-selector", "should transform some-hyphen-selector")
++  compareFixtures(t, "some-hyphen", "should transform some hyphen")
+   compareFixtures(t, "matches", "should transform matches selector")
+ 
+   compareFixtures(t, "extension", "should transform local extensions", {
+-- 
+2.35.1
+

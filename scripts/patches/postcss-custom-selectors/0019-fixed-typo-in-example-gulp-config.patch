@@ -1,0 +1,25 @@
+From 495a8db6f31e95c9879ad0f47f2a1da79fa95c1a Mon Sep 17 00:00:00 2001
+From: Kai <kai.hollberg@googlemail.com>
+Date: Wed, 22 Apr 2015 10:19:40 +0200
+Subject: [PATCH 19/69] fixed typo in example gulp config
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index de62ed6..1d9ccca 100644
+--- a/README.md
++++ b/README.md
+@@ -186,7 +186,7 @@ module.exports = function(grunt) {
+ var gulp = require('gulp');
+ var rename = require('gulp-rename');
+ var postcss = require('gulp-postcss');
+-var selector = require('postcss-custom-selector')
++var selector = require('postcss-custom-selectors')
+ var autoprefixer = require('autoprefixer-core')
+ 
+ gulp.task('default', function () {
+-- 
+2.35.1
+

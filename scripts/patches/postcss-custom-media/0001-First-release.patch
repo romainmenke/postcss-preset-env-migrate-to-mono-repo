@@ -1,0 +1,528 @@
+From aa7cd13509aa3bde294979a837b14be7212f8b80 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 12 Aug 2014 14:50:56 +0200
+Subject: [PATCH 01/62] First release
+
+based on rework-custom-media v0.1.1
+---
+ .editorconfig                        |  16 ++++
+ .gitignore                           |   2 +
+ .jscsrc                              | 130 +++++++++++++++++++++++++++
+ .jshintrc                            |   9 ++
+ .travis.yml                          |   1 +
+ CHANGELOG.md                         |   3 +
+ LICENSE                              |  20 +++++
+ README.md                            |  59 ++++++++++++
+ index.js                             |  62 +++++++++++++
+ package.json                         |  38 ++++++++
+ test/fixtures/transform.css          |  12 +++
+ test/fixtures/transform.expected.css |  11 +++
+ test/fixtures/undefined.css          |   5 ++
+ test/fixtures/undefined.expected.css |   1 +
+ test/index.js                        |  27 ++++++
+ 15 files changed, 396 insertions(+)
+ create mode 100644 .editorconfig
+ create mode 100644 .gitignore
+ create mode 100644 .jscsrc
+ create mode 100644 .jshintrc
+ create mode 100644 .travis.yml
+ create mode 100755 CHANGELOG.md
+ create mode 100755 LICENSE
+ create mode 100755 README.md
+ create mode 100755 index.js
+ create mode 100755 package.json
+ create mode 100755 test/fixtures/transform.css
+ create mode 100755 test/fixtures/transform.expected.css
+ create mode 100755 test/fixtures/undefined.css
+ create mode 100755 test/fixtures/undefined.expected.css
+ create mode 100755 test/index.js
+
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..8978b44
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,16 @@
++# editorconfig.org
++root = true
++
++[*]
++end_of_line = lf
++charset = utf-8
++trim_trailing_whitespace = true
++insert_final_newline = true
++indent_style = space
++indent_size = 2
++
++[*.md]
++trim_trailing_whitespace = false
++
++[Makefile]
++indent_style = tab
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..7ab649f
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,2 @@
++node_modules
++test/fixtures/*.actual.css
+diff --git a/.jscsrc b/.jscsrc
+new file mode 100644
+index 0000000..29720b3
+--- /dev/null
++++ b/.jscsrc
+@@ -0,0 +1,130 @@
++{
++  "excludeFiles": [
++    "node_modules/**"
++  ],
++  "fileExtensions": [
++    ".js"
++  ],
++  "requireCurlyBraces": [
++    "if",
++    "else",
++    "for",
++    "while",
++    "do",
++    "try",
++    "catch"
++  ],
++  "requireSpaceAfterKeywords": [
++    "if",
++    "else",
++    "for",
++    "while",
++    "do",
++    "switch",
++    "return",
++    "try",
++    "catch"
++  ],
++  "requireSpaceBeforeBlockStatements": true,
++  "requireParenthesesAroundIIFE": true,
++  "requireSpacesInConditionalExpression": {
++    "afterTest": true,
++    "beforeConsequent": true,
++    "afterConsequent": true,
++    "beforeAlternate": true
++  },
++  "requireSpacesInFunctionExpression": {
++    "beforeOpeningCurlyBrace": true
++  },
++  "disallowSpacesInFunctionExpression": {
++    "beforeOpeningRoundBrace": true
++  },
++  "disallowMultipleVarDecl": true,
++  "requireBlocksOnNewline": 1,
++  "disallowPaddingNewlinesInBlocks": true,
++  "disallowEmptyBlocks": true,
++  "disallowSpacesInsideObjectBrackets": true,
++  "disallowSpacesInsideArrayBrackets": true,
++  "disallowSpacesInsideParentheses": true,
++  "disallowQuotedKeysInObjects": "allButReserved",
++  "disallowSpaceAfterObjectKeys": true,
++  "requireCommaBeforeLineBreak": true,
++  "requireOperatorBeforeLineBreak": [
++    "?",
++    "+",
++    "-",
++    "/",
++    "*",
++    "=",
++    "==",
++    "===",
++    "!=",
++    "!==",
++    ">",
++    ">=",
++    "<",
++    "<="
++  ],
++  "disallowSpaceAfterPrefixUnaryOperators": [
++    "++",
++    "--",
++    "+",
++    "-",
++    "~",
++    "!"
++  ],
++  "disallowSpaceBeforePostfixUnaryOperators": [
++    "++",
++    "--"
++  ],
++  "requireSpaceBeforeBinaryOperators": [
++    "+",
++    "-",
++    "/",
++    "*",
++    "=",
++    "==",
++    "===",
++    "!=",
++    "!=="
++  ],
++  "requireSpaceAfterBinaryOperators": [
++    "+",
++    "-",
++    "/",
++    "*",
++    "=",
++    "==",
++    "===",
++    "!=",
++    "!=="
++  ],
++  "disallowImplicitTypeConversion": [
++    "numeric",
++    "boolean",
++    "binary",
++    "string"
++  ],
++  "requireCamelCaseOrUpperCaseIdentifiers": "ignoreProperties",
++  "disallowKeywords": [
++    "with"
++  ],
++  "disallowMultipleLineStrings": true,
++  "validateQuoteMarks": "\"",
++  "validateIndentation": 2,
++  "disallowMixedSpacesAndTabs": true,
++  "disallowTrailingWhitespace": true,
++  "requireKeywordsOnNewLine": [
++    "else"
++  ],
++  "requireLineFeedAtFileEnd": true,
++  "requireCapitalizedConstructors": true,
++  "safeContextKeyword": "that",
++  "requireDotNotation": true,
++  "validateJSDoc": {
++    "checkParamNames": true,
++    "checkRedundantParams": true,
++    "requireParamTypes": true
++  },
++  "requireSpaceAfterLineComment": true
++}
+diff --git a/.jshintrc b/.jshintrc
+new file mode 100644
+index 0000000..9f268f7
+--- /dev/null
++++ b/.jshintrc
+@@ -0,0 +1,9 @@
++{
++  "newcap": false,
++  "undef": true,
++  "unused": true,
++  "asi": true,
++  "esnext": true,
++  "node": true,
++  "browser": true
++}
+diff --git a/.travis.yml b/.travis.yml
+new file mode 100644
+index 0000000..587bd3e
+--- /dev/null
++++ b/.travis.yml
+@@ -0,0 +1 @@
++language: node_js
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+new file mode 100755
+index 0000000..dd8b91e
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,3 @@
++# 1.0.0 - 2014-08-12
++
++First release based on [rework-custom-media](https://github.com/reworkcss/rework-custom-media)
+diff --git a/LICENSE b/LICENSE
+new file mode 100755
+index 0000000..9abe4f5
+--- /dev/null
++++ b/LICENSE
+@@ -0,0 +1,20 @@
++The MIT License (MIT)
++
++Copyright (c) 2014 "MoOx" Maxime Thirouin
++
++Permission is hereby granted, free of charge, to any person obtaining a copy of
++this software and associated documentation files (the "Software"), to deal in
++the Software without restriction, including without limitation the rights to
++use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
++the Software, and to permit persons to whom the Software is furnished to do so,
++subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
++FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
++COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
++IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
++CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+diff --git a/README.md b/README.md
+new file mode 100755
+index 0000000..e42ecdc
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,59 @@
++# postcss-custom-media [![Build Status](https://travis-ci.org/postcss/postcss-custom-media.png)](https://travis-ci.org/postcss/postcss-custom-media)
++
++> A [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Media Queries syntax](http://dev.w3.org/csswg/mediaqueries/#custom-mq)  to more compatible CSS.
++
++## Installation
++
++    $ npm install postcss-custom-media
++
++## Usage
++
++```js
++// dependencies
++var postcss = require("postcss")
++var customMedia = require("postcss-custom-media")
++
++// css to be processed
++var css = fs.readFileSync("input.css", "utf8")
++
++// process css using postcss-custom-media
++var out = postcss()
++  .use(customMedia())
++  .process(css)
++  .css
++```
++
++Using this `input.css`:
++
++```css
++@custom-media --small-viewport (max-width: 30em);
++
++@media (--small-viewport) {
++  /* styles for small viewport */
++}
++```
++
++you will get:
++
++```css
++@media (max-width: 30em) {
++  /* styles for small viewport */
++}
++```
++
++Checkout [tests](test) for more examples.
++
++---
++
++## Contributing
++
++Work on a branch, install dev-dependencies, respect coding style & run tests before submitting a bug fix or a feature.
++
++    $ git clone https://github.com/postcss/postcss-custom-media.git
++    $ git checkout -b patch-1
++    $ npm install
++    $ npm test
++
++## [Changelog](CHANGELOG.md)
++
++## [License](LICENSE-MIT)
+diff --git a/index.js b/index.js
+new file mode 100755
+index 0000000..eb2d400
+--- /dev/null
++++ b/index.js
+@@ -0,0 +1,62 @@
++/**
++* Constants.
++*/
++var EXTENSION_RE = /\((--[\w-]+)\)/
++
++/**
++ * Expose the plugin.
++ */
++module.exports = customMedia
++
++/**
++ * read & replace custom media queries by standard media queries
++ */
++function customMedia() {
++  return function(styles) {
++    var map = {}
++    var toRemove = []
++
++    // read custom media queries
++    styles.eachAtRule(function(rule) {
++      if (rule.name !== "custom-media") {
++        return
++      }
++
++      var params = rule.params.split(" ")
++      // @custom-media <extension-name> <media-query-list>;
++      // map[<extension-name>] = <media-query-list>
++      map[params.shift()] = params.join(" ")
++
++      toRemove.push(rule)
++    })
++
++    // transform custom media query aliases
++    styles.eachAtRule(function(rule) {
++      if (rule.name !== "media") {
++        return
++      }
++
++      rule.params = rule.params.replace(EXTENSION_RE, function(_, name) {
++        if (map[name]) {
++          return map[name]
++        }
++
++        console.warn(gnuMessage("missing @custom-media definition for '" + name + "'. The entire rule has been removed from the output.", rule.source))
++        toRemove.push(rule)
++      })
++    })
++
++    // remove @custom-media
++    toRemove.forEach(function(rule) { rule.removeSelf() })
++  }
++}
++
++/**
++ * return GNU style message
++ *
++ * @param {String} message
++ * @param {Object} source
++ */
++function gnuMessage(message, source) {
++  return (source ? (source.file ? source.file : "<css input>") + ":" + source.start.line + ":" + source.start.column : "") + " " + message
++}
+diff --git a/package.json b/package.json
+new file mode 100755
+index 0000000..b5f05f7
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,38 @@
++{
++  "name": "postcss-custom-media",
++  "version": "0.0.0",
++  "description": "PostCSS plugin to import CSS files",
++  "keywords": [
++    "css",
++    "postcss",
++    "postcss-plugins",
++    "media queries",
++    "custom-media"
++  ],
++  "author": "MoOx",
++  "license": "MIT",
++  "repository": {
++    "type": "git",
++    "url": "https://github.com/postcss/postcss-custom-media.git"
++  },
++  "files": [
++    "CHANGELOG.md",
++    "LICENSE",
++    "README.md",
++    "index.js"
++  ],
++  "dependencies": {},
++  "devDependencies": {
++    "jscs": "^1.5.9",
++    "jshint": "^2.5.2",
++    "jshint-stylish": "^0.4.0",
++    "postcss": "^2.1.2",
++    "tap-colorize": "^1.2.0",
++    "tape": "^2.13.4"
++  },
++  "scripts": {
++    "jscs": "jscs *.js **/*.js",
++    "jshint": "jshint . --exclude node_modules --reporter node_modules/jshint-stylish/stylish.js",
++    "test": "npm run jscs && npm run jshint && tape test | tap-colorize"
++  }
++}
+diff --git a/test/fixtures/transform.css b/test/fixtures/transform.css
+new file mode 100755
+index 0000000..775cd1c
+--- /dev/null
++++ b/test/fixtures/transform.css
+@@ -0,0 +1,12 @@
++@custom-media --viewport-max-s (max-width: 30em);
++@custom-media --viewport-min-s (min-width: 30.01em);
++
++body { color: #000  }
++
++@media (--viewport-max-s) {
++  body { font-size: 1rem; }
++}
++
++@media (--viewport-min-s) {
++  body { font-size: 1.2rem; }
++}
+diff --git a/test/fixtures/transform.expected.css b/test/fixtures/transform.expected.css
+new file mode 100755
+index 0000000..bacf50c
+--- /dev/null
++++ b/test/fixtures/transform.expected.css
+@@ -0,0 +1,11 @@
++
++
++body { color: #000  }
++
++@media (max-width: 30em) {
++  body { font-size: 1rem; }
++}
++
++@media (min-width: 30.01em) {
++  body { font-size: 1.2rem; }
++}
+diff --git a/test/fixtures/undefined.css b/test/fixtures/undefined.css
+new file mode 100755
+index 0000000..4c36cd1
+--- /dev/null
++++ b/test/fixtures/undefined.css
+@@ -0,0 +1,5 @@
++body { color: #000  }
++
++@media (--undefined-custom-media) {
++  body { font-size: 1rem; }
++}
+diff --git a/test/fixtures/undefined.expected.css b/test/fixtures/undefined.expected.css
+new file mode 100755
+index 0000000..4746c87
+--- /dev/null
++++ b/test/fixtures/undefined.expected.css
+@@ -0,0 +1 @@
++body { color: #000  }
+diff --git a/test/index.js b/test/index.js
+new file mode 100755
+index 0000000..49b120e
+--- /dev/null
++++ b/test/index.js
+@@ -0,0 +1,27 @@
++var fs = require("fs")
++
++var test = require("tape")
++
++var postcss = require("postcss")
++var plugin = require("..")
++
++function filename(name) { return "test/" + name + ".css" }
++function read(name) { return fs.readFileSync(name, "utf8") }
++
++function compareFixtures(t, name, msg, opts, postcssOpts) {
++  postcssOpts = postcssOpts || {}
++  postcssOpts.from = filename("fixtures/" + name)
++  opts = opts || {}
++  var actual = postcss().use(plugin(opts)).process(read(postcssOpts.from), postcssOpts).css
++  var expected = read(filename("fixtures/" + name + ".expected"))
++  fs.writeFile(filename("fixtures/" + name + ".actual"), actual)
++  t.equal(actual, expected, msg)
++}
++
++test("@custom-media", function(t) {
++  compareFixtures(t, "transform", "should transform custom med")
++
++  compareFixtures(t, "undefined", "should remove undefined @media")
++
++  t.end()
++})
+-- 
+2.35.1
+

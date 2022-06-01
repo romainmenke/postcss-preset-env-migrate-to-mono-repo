@@ -1,0 +1,104 @@
+From 70adb94bea5b3396f1d4c9012e761dcb09b2b1a6 Mon Sep 17 00:00:00 2001
+From: semigradsky <semigradskyd@gmail.com>
+Date: Sun, 5 Feb 2017 15:02:02 +0300
+Subject: [PATCH 50/69] Fix `npm test` error
+
+---
+ .eslintignore |  3 ++-
+ .eslintrc     | 13 ++++++-------
+ package.json  |  6 ++----
+ test/index.js |  4 ++--
+ 4 files changed, 12 insertions(+), 14 deletions(-)
+
+diff --git a/.eslintignore b/.eslintignore
+index 3e4e48b..3eb98cd 120000
+--- a/.eslintignore
++++ b/.eslintignore
+@@ -1 +1,2 @@
+-.gitignore
+\ No newline at end of file
++.gitignore
++dist
+\ No newline at end of file
+diff --git a/.eslintrc b/.eslintrc
+index db21f05..8fb0de3 100644
+--- a/.eslintrc
++++ b/.eslintrc
+@@ -1,16 +1,15 @@
+ ---
+-# babel support more syntax stuff than eslint for now
+-parser: babel-eslint
+ 
+ root: true
+ extends: eslint:recommended
+ 
+-ecmaFeatures:
+-  modules: true
++parserOptions:
++  sourceType: "module"
++  ecmaVersion: 6
++  ecmaFeatures:
++    experimentalObjectRestSpread: true
+ 
+ env:
+-  es6: true
+-  browser: true
+   node: true
+ 
+ rules:
+@@ -35,7 +34,7 @@ rules:
+   computed-property-spacing: [2, "never"]
+ 
+   space-unary-ops: [2, {"words": true, "nonwords": false}]
+-  space-after-keywords: [2, "always"]
++  keyword-spacing: [2, {"before": true, "after": true}]
+   space-before-blocks: [2, "always"]
+   space-before-function-paren: [2, "never"]
+   space-in-parens: [2, "never"]
+diff --git a/package.json b/package.json
+index 12c204c..bc92f04 100644
+--- a/package.json
++++ b/package.json
+@@ -24,21 +24,19 @@
+     "README-zh.md"
+   ],
+   "dependencies": {
+-    "balanced-match": "^0.2.0",
+     "postcss": "^5.0.0",
+     "postcss-selector-matches": "^2.0.0"
+   },
+   "devDependencies": {
+     "babel": "^5.5.8",
+-    "babel-eslint": "^3.1.15",
+     "babel-tape-runner": "^1.1.0",
+-    "eslint": "^1.0.0",
++    "eslint": "^3.15.0",
+     "tape": "^4.0.0"
+   },
+   "scripts": {
+     "prepublish": "babel src --out-dir dist",
+     "lint": "eslint .",
+-    "tape": "babel-tape-runner 'test/*.js'",
++    "tape": "babel-tape-runner test/*.js",
+     "test": "npm run lint && npm run tape"
+   }
+ }
+diff --git a/test/index.js b/test/index.js
+index 8dc2e09..5fadaec 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -11,9 +11,9 @@ function transform(input, opts = {}, postcssOpts = {}) {
+ test("@custom-selector", function(t) {
+   t.equal(
+     transform(
+-      ``
++      ""
+     ).css,
+-    ``,
++    "",
+     "should works with nothing"
+   )
+ 
+-- 
+2.35.1
+

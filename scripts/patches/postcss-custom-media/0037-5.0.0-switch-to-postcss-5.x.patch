@@ -1,0 +1,158 @@
+From 4fc56724a73d54d803301a6a3004c97995a4aa92 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 25 Aug 2015 06:55:30 +0200
+Subject: [PATCH 37/62] 5.0.0 (switch to postcss 5.x)
+
+---
+ .eslintrc    | 21 ++++++++++++++-------
+ CHANGELOG.md |  5 +++++
+ index.js     | 14 ++++++++------
+ package.json | 12 +++++-------
+ 4 files changed, 32 insertions(+), 20 deletions(-)
+
+diff --git a/.eslintrc b/.eslintrc
+index da2592a..18d7c97 100644
+--- a/.eslintrc
++++ b/.eslintrc
+@@ -1,9 +1,12 @@
+ ---
+-ecmaFeatures:
+-  modules: true
++root: true
++extends: eslint:recommended
++
++#ecmaFeatures:
++#  modules: true
+ 
+ env:
+-  es6: true
++#  es6: true
+   browser: true
+   node: true
+ 
+@@ -17,16 +20,20 @@ rules:
+   brace-style: [2, "stroustrup"]
+   comma-dangle: [2, "always-multiline"]
+   comma-style: [2, "last"]
+-  computed-property-spacing: [2, "never"]
+   dot-location: [2, "property"]
+ 
+   one-var: [2, "never"]
++#  no-var: [2]
++#  prefer-const: [2]
+   no-bitwise: [2]
+ 
+-  object-shorthand: [2, "methods"]
++  object-curly-spacing: [2, "never"]
++  array-bracket-spacing: [2, "never"]
++  computed-property-spacing: [2, "never"]
++
++  space-unary-ops: [2, {"words": true, "nonwords": false}]
+   space-after-keywords: [2, "always"]
+   space-before-blocks: [2, "always"]
+   space-before-function-paren: [2, "never"]
+-  space-in-brackets: [2, "never"]
+   space-in-parens: [2, "never"]
+-  spaced-line-comment: [2, "always"]
++  spaced-comment: [2, "always"]
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 36d2ca3..f83ce47 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,8 @@
++# 5.0.0 - 2015-08-25
++
++- Removed: compatibility with postcss v4.x
++- Added: compatibility with postcss v5.x
++
+ # 4.1.0 - 2015-06-30
+ 
+ - Added: Allow custom media to reference each other
+diff --git a/index.js b/index.js
+index be6f8d2..cd0b178 100755
+--- a/index.js
++++ b/index.js
+@@ -51,7 +51,7 @@ function customMedia(options) {
+     var toRemove = []
+ 
+     // read custom media queries
+-    styles.eachAtRule(function(rule) {
++    styles.walkAtRules(function(rule) {
+       if (rule.name !== "custom-media") {
+         return
+       }
+@@ -87,7 +87,7 @@ function customMedia(options) {
+     })
+ 
+     // transform custom media query aliases
+-    styles.eachAtRule(function(rule) {
++    styles.walkAtRules(function(rule) {
+       if (rule.name !== "media") {
+         return
+       }
+@@ -123,19 +123,21 @@ function customMedia(options) {
+           }
+           var atRule = postcss.atRule({
+             name: "custom-media",
+-            afterName: " ",
+             params: name + " " + map[name].value,
++            raws: {
++              afterName: " ",
++            },
+           })
+           styles.append(atRule)
+         })
+-        styles.semicolon = true
+-        styles.after = "\n"
++        styles.raws.semicolon = true
++        styles.raws.after = "\n"
+       }
+     }
+ 
+     // remove @custom-media
+     toRemove.forEach(function(rule) {
+-      rule.removeSelf()
++      rule.remove()
+     })
+   }
+ }
+diff --git a/package.json b/package.json
+index dcd419b..2af41a5 100644
+--- a/package.json
++++ b/package.json
+@@ -1,11 +1,11 @@
+ {
+   "name": "postcss-custom-media",
+-  "version": "4.1.0",
+-  "description": " PostCSS plugin to transform W3C CSS Custom Media Queries to more compatible CSS",
++  "version": "5.0.0",
++  "description": "PostCSS plugin to transform W3C CSS Custom Media Queries to more compatible CSS",
+   "keywords": [
+     "css",
+     "postcss",
+-    "postcss-plugins",
++    "postcss-plugin",
+     "media queries",
+     "custom-media"
+   ],
+@@ -16,15 +16,13 @@
+     "url": "https://github.com/postcss/postcss-custom-media.git"
+   },
+   "files": [
+-    "CHANGELOG.md",
+-    "LICENSE",
+     "index.js"
+   ],
+   "dependencies": {
+-    "postcss": "^4.1.4"
++    "postcss": "^5.0.0"
+   },
+   "devDependencies": {
+-    "eslint": "^0.23.0",
++    "eslint": "^1.0.0",
+     "tape": "^4.0.0"
+   },
+   "scripts": {
+-- 
+2.35.1
+

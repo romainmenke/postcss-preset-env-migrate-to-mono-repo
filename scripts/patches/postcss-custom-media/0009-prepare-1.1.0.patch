@@ -1,0 +1,24 @@
+From 54523695949fa886186f2f50f5955a495e35c26d Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 30 Sep 2014 06:37:16 +0200
+Subject: [PATCH 09/62] prepare 1.1.0
+
+---
+ CHANGELOG.md | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index fcf923e..94c30cd 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 1.1.0 - 2014-09-30
++
++- add support for js-defined media queries (fix [#3](https://github.com/postcss/postcss-custom-media/issues/3))
++
+ # 1.0.1 - 2014-09-16
+ 
+ - allow whitespace around custom media name (fix [#2](https://github.com/postcss/postcss-custom-media/issues/2))
+-- 
+2.35.1
+

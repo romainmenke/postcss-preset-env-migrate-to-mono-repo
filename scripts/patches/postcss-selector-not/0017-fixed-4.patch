@@ -1,0 +1,26 @@
+From 52d91194510bb6871b48708ad71087d44af44623 Mon Sep 17 00:00:00 2001
+From: Marco Pfeiffer <m4pfeiffer+github@gmail.com>
+Date: Sat, 12 May 2018 21:53:51 +0200
+Subject: [PATCH 17/30] fixed #4
+
+The implementation is correct, the documentation is not.
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 098cb6e..0279afa 100644
+--- a/README.md
++++ b/README.md
+@@ -32,7 +32,7 @@ p:not(:first-child, .special) {
+ you will get:
+ 
+ ```css
+-p:not(:first-child), p:not(.special) {
++p:not(:first-child):not(.special) {
+   color: red;
+ }
+ ```
+-- 
+2.35.1
+

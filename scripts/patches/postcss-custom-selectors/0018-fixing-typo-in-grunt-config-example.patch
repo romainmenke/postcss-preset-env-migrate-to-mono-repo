@@ -1,0 +1,39 @@
+From 6b2259c47b9a749552b543b0f0c25bd392e7c8c5 Mon Sep 17 00:00:00 2001
+From: vlad saling <vladislavsaling@gmail.com>
+Date: Sun, 22 Feb 2015 23:30:11 +0100
+Subject: [PATCH 18/69] fixing typo in grunt config example
+
+---
+ README-zh.md | 2 +-
+ README.md    | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/README-zh.md b/README-zh.md
+index 113d4ad..32e204f 100644
+--- a/README-zh.md
++++ b/README-zh.md
+@@ -163,7 +163,7 @@ module.exports = function(grunt) {
+       options: {
+         processors: [
+           require('autoprefixer-core')({ browsers: ['> 0%'] }).postcss, //Other plugin
+-          require('postcss-custom-selector')(),
++          require('postcss-custom-selectors')(),
+         ]
+       },
+       dist: {
+diff --git a/README.md b/README.md
+index 0f6ce43..de62ed6 100644
+--- a/README.md
++++ b/README.md
+@@ -163,7 +163,7 @@ module.exports = function(grunt) {
+       options: {
+         processors: [
+           require('autoprefixer-core')({ browsers: ['> 0%'] }).postcss, //Other plugin
+-          require('postcss-custom-selector')(),
++          require('postcss-custom-selectors')(),
+         ]
+       },
+       dist: {
+-- 
+2.35.1
+

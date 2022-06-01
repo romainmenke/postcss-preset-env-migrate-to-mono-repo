@@ -1,0 +1,25 @@
+From 20213fc0fc63adf13c23c6d82d2c51cbb6a8d233 Mon Sep 17 00:00:00 2001
+From: David Clark <david.dave.clark@gmail.com>
+Date: Fri, 9 Dec 2016 11:47:09 -0500
+Subject: [PATCH 40/62] Fix broken link to spec draft
+
+The existing link does not seem to work anymore, so I substituted a Working Draft link that does.
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 60a89a3..98c34d1 100755
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # postcss-custom-media [![Build Status](https://travis-ci.org/postcss/postcss-custom-media.png)](https://travis-ci.org/postcss/postcss-custom-media)
+ 
+-> [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Media Queries](http://dev.w3.org/csswg/mediaqueries/#custom-mq) syntax to more compatible CSS.
++> [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Media Queries](https://www.w3.org/TR/2016/WD-mediaqueries-4-20160126/#custom-mq) syntax to more compatible CSS.
+ 
+ ## Installation
+ 
+-- 
+2.35.1
+

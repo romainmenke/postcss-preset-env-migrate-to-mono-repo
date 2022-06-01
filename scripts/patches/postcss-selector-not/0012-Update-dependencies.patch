@@ -1,0 +1,149 @@
+From c260886eaf53a4d540f8a87be16c097f925df697 Mon Sep 17 00:00:00 2001
+From: semigradsky <semigradskyd@gmail.com>
+Date: Tue, 9 May 2017 17:36:56 +0300
+Subject: [PATCH 12/30] Update dependencies
+
+---
+ .babelrc                   |  8 +++++++-
+ .eslintignore              |  2 +-
+ .eslintrc => .eslintrc.yml | 16 ++++------------
+ .gitignore                 |  1 +
+ .travis.yml                |  4 ++++
+ package.json               | 23 ++++++++++++-----------
+ test/index.js              |  4 ++--
+ 7 files changed, 31 insertions(+), 27 deletions(-)
+ rename .eslintrc => .eslintrc.yml (78%)
+
+diff --git a/.babelrc b/.babelrc
+index b0b9a96..f0ab75d 100644
+--- a/.babelrc
++++ b/.babelrc
+@@ -1,3 +1,9 @@
+ {
+-  "stage": 0
++  "presets": [
++		["env", {
++			"targets": {
++				"node": 4
++			}
++		}]
++	]
+ }
+diff --git a/.eslintignore b/.eslintignore
+index 3e4e48b..1521c8b 120000
+--- a/.eslintignore
++++ b/.eslintignore
+@@ -1 +1 @@
+-.gitignore
+\ No newline at end of file
++dist
+diff --git a/.eslintrc b/.eslintrc.yml
+similarity index 78%
+rename from .eslintrc
+rename to .eslintrc.yml
+index db21f05..ec22acd 100644
+--- a/.eslintrc
++++ b/.eslintrc.yml
+@@ -1,17 +1,9 @@
+----
+-# babel support more syntax stuff than eslint for now
+-parser: babel-eslint
+-
+ root: true
+ extends: eslint:recommended
+ 
+-ecmaFeatures:
+-  modules: true
+-
+-env:
+-  es6: true
+-  browser: true
+-  node: true
++parserOptions:
++  ecmaVersion: 6
++  sourceType: "module"
+ 
+ rules:
+   indent: [2, 2] # 2 spaces indentation
+@@ -35,7 +27,7 @@ rules:
+   computed-property-spacing: [2, "never"]
+ 
+   space-unary-ops: [2, {"words": true, "nonwords": false}]
+-  space-after-keywords: [2, "always"]
++  keyword-spacing: [2, {"before": true, "after": true}]
+   space-before-blocks: [2, "always"]
+   space-before-function-paren: [2, "never"]
+   space-in-parens: [2, "never"]
+diff --git a/.gitignore b/.gitignore
+index 1521c8b..f06235c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1 +1,2 @@
++node_modules
+ dist
+diff --git a/.travis.yml b/.travis.yml
+index 31e6113..4c4eac6 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -1,2 +1,6 @@
+ sudo: false
+ language: node_js
++node_js:
++  - "6"
++  - "4"
++  - "stable"
+diff --git a/package.json b/package.json
+index 3c2296d..f9f9bd0 100644
+--- a/package.json
++++ b/package.json
+@@ -20,20 +20,21 @@
+     "dist"
+   ],
+   "dependencies": {
+-    "balanced-match": "^0.2.0",
+-    "postcss": "^5.0.0"
++    "balanced-match": "^0.4.2",
++    "postcss": "^6.0.1"
+   },
+   "devDependencies": {
+-    "babel": "^5.1.13",
+-    "babel-eslint": "^3.1.15",
+-    "babel-tape-runner": "^1.1.0",
+-    "eslint": "^1.0.0",
+-    "tape": "^4.0.0"
++    "babel-cli": "^6.24.1",
++    "babel-preset-env": "^1.4.0",
++    "babel-register": "^6.24.1",
++    "eslint": "^3.19.0",
++    "tape": "^4.6.3"
+   },
+   "scripts": {
+-    "lint": "eslint .",
+-    "tape": "babel-tape-runner 'test/*.js'",
+-    "test": "npm run lint && npm run tape",
+-    "prepublish": "babel src --out-dir dist"
++    "lint": "eslint *.js ./src/ ./test/",
++    "tape": "tape -r babel-register test/*.js",
++    "test": "npm run lint && npm run babelify && npm run tape",
++    "babelify": "babel src --out-dir dist",
++    "prepublish": "npm run babelify"
+   }
+ }
+diff --git a/test/index.js b/test/index.js
+index 7278786..cd145e6 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -72,8 +72,8 @@ tape("postcss-selector-not", t => {
+   )
+ 
+   t.equal(
+-    transform(`.foo:not(:hover, :focus)::before {}`),
+-    `.foo:not(:hover):not(:focus)::before {}`,
++    transform(".foo:not(:hover, :focus)::before {}"),
++    ".foo:not(:hover):not(:focus)::before {}",
+     "should work with something after :not()"
+   )
+ 
+-- 
+2.35.1
+

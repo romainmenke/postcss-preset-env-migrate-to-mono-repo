@@ -1,0 +1,79 @@
+From 8fe998431e956264520f9185d94699680ff5cc55 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 1 Oct 2014 07:03:15 +0200
+Subject: [PATCH 11/62] Remove redundant parts in fixtures
+
+---
+ test/fixtures/js-defined.css          | 8 --------
+ test/fixtures/js-defined.expected.css | 8 --------
+ test/fixtures/transform.css           | 8 --------
+ test/fixtures/transform.expected.css  | 8 --------
+ 4 files changed, 32 deletions(-)
+
+diff --git a/test/fixtures/js-defined.css b/test/fixtures/js-defined.css
+index 8fe0815..46334f5 100755
+--- a/test/fixtures/js-defined.css
++++ b/test/fixtures/js-defined.css
+@@ -13,11 +13,3 @@ body { color: #000  }
+ @media (--viewport-min-s ) {
+ 
+ }
+-
+-@media ( --viewport-min-s ) {
+-
+-}
+-
+-@media ( --viewport-min-s) {
+-
+-}
+diff --git a/test/fixtures/js-defined.expected.css b/test/fixtures/js-defined.expected.css
+index e2dd8a3..b53bb46 100755
+--- a/test/fixtures/js-defined.expected.css
++++ b/test/fixtures/js-defined.expected.css
+@@ -13,11 +13,3 @@ body { color: #000  }
+ @media (min-width: 30.01em) {
+ 
+ }
+-
+-@media (min-width: 30.01em) {
+-
+-}
+-
+-@media (min-width: 30.01em) {
+-
+-}
+diff --git a/test/fixtures/transform.css b/test/fixtures/transform.css
+index 3e08c4d..8114b74 100755
+--- a/test/fixtures/transform.css
++++ b/test/fixtures/transform.css
+@@ -14,11 +14,3 @@ body { color: #000  }
+ @media (--viewport-min-s ) {
+ 
+ }
+-
+-@media ( --viewport-min-s ) {
+-
+-}
+-
+-@media ( --viewport-min-s) {
+-
+-}
+diff --git a/test/fixtures/transform.expected.css b/test/fixtures/transform.expected.css
+index e2dd8a3..b53bb46 100755
+--- a/test/fixtures/transform.expected.css
++++ b/test/fixtures/transform.expected.css
+@@ -13,11 +13,3 @@ body { color: #000  }
+ @media (min-width: 30.01em) {
+ 
+ }
+-
+-@media (min-width: 30.01em) {
+-
+-}
+-
+-@media (min-width: 30.01em) {
+-
+-}
+-- 
+2.35.1
+

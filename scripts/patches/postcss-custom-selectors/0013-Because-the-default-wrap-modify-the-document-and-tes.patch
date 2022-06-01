@@ -1,0 +1,216 @@
+From cc35989547e9dd09501eb58cf2c513b2ebd32fa5 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=D2=BC=CB=BF?= <jie.lijie@alibaba-inc.com>
+Date: Sat, 6 Dec 2014 14:50:10 +0800
+Subject: [PATCH 13/69] Because the default wrap, modify the document and test
+ file.
+
+---
+ README-zh.md                         | 29 +++++++++++++++++++++-----
+ README.md                            | 31 +++++++++++++++++++++++-----
+ test/fixtures/extension.expected.css |  8 +++++--
+ test/fixtures/heading.css            |  2 +-
+ test/fixtures/heading.expected.css   |  7 ++++++-
+ test/fixtures/pseudo.expected.css    |  3 ++-
+ 6 files changed, 65 insertions(+), 15 deletions(-)
+
+diff --git a/README-zh.md b/README-zh.md
+index 150fd3b..113d4ad 100644
+--- a/README-zh.md
++++ b/README-zh.md
+@@ -53,7 +53,12 @@ article --heading + p {
+ 你将得到：
+ 
+ ```css
+-article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p, article h6 + p {
++article h1 + p,
++article h2 + p,
++article h3 + p,
++article h4 + p,
++article h5 + p,
++article h6 + p { 
+   margin-top: 0;
+ }
+ ```
+@@ -89,7 +94,8 @@ a:--any-link {
+ output:
+ 
+ ```css
+-a:link, a:visited {
++a:link,
++a:visited {
+   color: blue;
+ }
+ ```
+@@ -109,6 +115,17 @@ a:link, a:visited {
+ ```
+ 将会输出错误的 CSS 代码。
+ 
++```css
++.demo h1,
++.demo h2,
++.demo h3,
++.demo h4,
++.demo h5,
++.demo h6,undefined { 
++  font-size: 32px;
++}
++```
++
+ ### Node Watch
+ 
+ 依赖 [chokidar](https://github.com/paulmillr/chokidar) 模块。
+@@ -135,7 +152,6 @@ chokidar.watch(src, {
+     fs.writeFileSync('output.css', output)
+   })
+ ```
+-index.css 文件中的改动保存后将转换到 output.css
+ 
+ ### Grunt
+ 
+@@ -233,8 +249,11 @@ var output = postcss(selector(options))
+ input.css
+ 
+ ```css
+-@custom-selector :--any .foo, .bar; /* 不会生效 */
+-:--any h1 {
++/* 不会生效 */
++section h1,
++article h1,
++aside h1,
++nav h1 {
+   margin-top: 16px;
+ }
+ ```
+diff --git a/README.md b/README.md
+index ef9e5eb..74c3c49 100644
+--- a/README.md
++++ b/README.md
+@@ -53,7 +53,12 @@ article --heading + p {
+ You will get:
+ 
+ ```css
+-article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p, article h6 + p {
++article h1 + p,
++article h2 + p,
++article h3 + p,
++article h4 + p,
++article h5 + p,
++article h6 + p { 
+   margin-top: 0;
+ }
+ ```
+@@ -63,7 +68,7 @@ article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p,
+     @custom-selector = @custom-selector <extension-name> <selector>;
+ 
+ 
+-## How to use it
++## How to use
+ 
+ ### Pseudo-element/Pseudo-class
+ 
+@@ -89,7 +94,8 @@ a:--any-link {
+ output:
+ 
+ ```css
+-a:link, a:visited {
++a:link,
++a:visited {
+   color: blue;
+ }
+ ```
+@@ -109,6 +115,17 @@ Example 3:
+ ```
+ This will throw an error CSS code.
+ 
++```css
++.demo h1,
++.demo h2,
++.demo h3,
++.demo h4,
++.demo h5,
++.demo h6,undefined { 
++  font-size: 32px;
++}
++```
++
+ ### Node Watch
+ 
+ Dependence [chokidar](https://github.com/paulmillr/chokidar) module.
+@@ -191,7 +208,7 @@ gulp.watch('src/*.css', ['default']);
+ 
+ #### 1. **`lineBreak`**(default: `true`)
+ 
+-Setting multiple selector whether wrap.
++Set whether  multiple selector wrap.The default is turning on to be a newline.
+ 
+ Close the line breaks.
+ 
+@@ -241,7 +258,11 @@ input.css
+ output:
+ 
+ ```css
+-section h1, article h1, aside h1, nav h1 {
++/* No effect */
++section h1,
++article h1,
++aside h1,
++nav h1 {
+   margin-top: 16px;
+ }
+ ```
+diff --git a/test/fixtures/extension.expected.css b/test/fixtures/extension.expected.css
+index c9752cb..6cff275 100644
+--- a/test/fixtures/extension.expected.css
++++ b/test/fixtures/extension.expected.css
+@@ -1,7 +1,11 @@
+-section h1, article h1, aside h1, nav h1 {
++section h1,
++article h1,
++aside h1,
++nav h1 {
+   margin-top: 16px;
+ }
+ 
+-main input[type="text"] > section + p, main #nav .bar + p {
++main input[type="text"] > section + p,
++main #nav .bar + p {
+   margin-top: 16px;
+ }
+diff --git a/test/fixtures/heading.css b/test/fixtures/heading.css
+index 2394abf..5f0a1b5 100644
+--- a/test/fixtures/heading.css
++++ b/test/fixtures/heading.css
+@@ -1,5 +1,5 @@
+ @custom-selector --heading h1, h2, h3, h4, h5, h6;
+ 
+-article --heading + p{
++article --heading + p {
+   margin-top: 0;
+ }
+diff --git a/test/fixtures/heading.expected.css b/test/fixtures/heading.expected.css
+index 0123afc..a7ea6b4 100644
+--- a/test/fixtures/heading.expected.css
++++ b/test/fixtures/heading.expected.css
+@@ -1,3 +1,8 @@
+-article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p, article h6 + p{
++article h1 + p,
++article h2 + p,
++article h3 + p,
++article h4 + p,
++article h5 + p,
++article h6 + p {
+   margin-top: 0;
+ }
+diff --git a/test/fixtures/pseudo.expected.css b/test/fixtures/pseudo.expected.css
+index 64b516a..69a6404 100644
+--- a/test/fixtures/pseudo.expected.css
++++ b/test/fixtures/pseudo.expected.css
+@@ -1,3 +1,4 @@
+-.foo > a::before img, .foo > a::after img {
++.foo > a::before img,
++.foo > a::after img {
+   display: block;
+ }
+-- 
+2.35.1
+

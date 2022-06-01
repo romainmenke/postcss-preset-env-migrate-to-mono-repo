@@ -1,0 +1,132 @@
+From 4813a5b9b455fd5ef6e07d4adbac9ac62f9d7f81 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=D2=BC=CB=BF?= <jie.lijie@alibaba-inc.com>
+Date: Sat, 6 Dec 2014 12:08:21 +0800
+Subject: [PATCH 12/69] Add lineBreak option
+
+---
+ CHANGELOG.md |  4 ++--
+ README-zh.md | 26 +++++++++++++++++++++++++-
+ README.md    | 26 +++++++++++++++++++++++++-
+ index.js     |  8 +++++++-
+ 4 files changed, 59 insertions(+), 5 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 2b2be50..e4719cd 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,3 @@
+-# 1.0.0 - 2014-12-04
++# 1.0.0 - 2014-12-06
+ 
+-First release 
++First release
+diff --git a/README-zh.md b/README-zh.md
+index 3e6687f..150fd3b 100644
+--- a/README-zh.md
++++ b/README-zh.md
+@@ -190,7 +190,31 @@ gulp.watch('src/*.css', ['default']);
+ 
+ ### 选项
+ 
+-**`extensions`** (default: `{}`)
++#### 1. **`lineBreak`**(default: `true`)
++
++设置多个选择器是否换行，默认开启换行。
++
++关闭换行：
++
++```js
++var options = {
++  lineBreak: false
++}
++
++var output = postcss(selector(options))
++  .process(css)
++  .css
++```
++
++「示例1」中的 `input.css` 将输出为：
++
++```css
++article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p, article h6 + p {
++  margin-top: 0;
++}
++```
++
++#### 2. **`extensions`** (default: `{}`)
+ 
+ 该选项允许你自定义一个对象来设置 `<extension-name>`（选择器别名）和 `<selector>`，这些定义将覆盖 CSS 中相同别名的 `@custom-selector`。
+ 
+diff --git a/README.md b/README.md
+index e5e319b..e7f6078 100644
+--- a/README.md
++++ b/README.md
+@@ -189,7 +189,31 @@ gulp.watch('src/*.css', ['default']);
+ 
+ ### Options
+ 
+-**`extensions`** (default: `{}`)
++#### 1. **`lineBreak`**(default: `true`)
++
++Setting multiple selector whether wrap.
++
++Close the line breaks.
++
++```js
++var options = {
++  lineBreak: false
++}
++
++var output = postcss(selector(options))
++  .process(css)
++  .css
++```
++
++In the 'Example 1' `input.css` will output:
++
++```css
++article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p, article h6 + p {
++  margin-top: 0;
++}
++```
++
++#### 2. **`extensions`** (default: `{}`)
+ 
+ This option allows you to customize an object to set the `<extension-name>` (selector alias) and `<selector>`, these definitions will cover the same alias of `@custom-selector` in CSS.
+ 
+diff --git a/index.js b/index.js
+index 05588d0..93e670f 100644
+--- a/index.js
++++ b/index.js
+@@ -17,6 +17,7 @@ function customSelector(options) {
+   return function(styles) {
+     options = options || {}
+     var extensions = options.extensions || {}
++    var line_break = '\n'
+     var map = {}
+     var toRemove = []
+     var customSelectors = {}
+@@ -47,6 +48,11 @@ function customSelector(options) {
+       customSelectors[extension] = extensions[extension]
+     })
+ 
++    //控制选择器是否换行
++    if (!options.lineBreak  && options.lineBreak == false) {
++       line_break = ' '
++    }
++
+     // 转换自定义的选择器别名
+     styles.eachRule(function(rule) {
+       for (var prop in customSelectors) {
+@@ -58,7 +64,7 @@ function customSelector(options) {
+             if ($2 == prop) {
+               return customSelector.split(",").map(function(selector) {
+                 return $1 + selector.trim() + $3
+-              }).join(", ")
++              }).join("," + line_break)
+             }
+           })
+ 
+-- 
+2.35.1
+

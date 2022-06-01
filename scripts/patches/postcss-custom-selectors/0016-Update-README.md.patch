@@ -1,0 +1,25 @@
+From adf671e0b14fba70b303977482a1fb493cb87b7a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <yisibl@users.noreply.github.com>
+Date: Sat, 6 Dec 2014 20:26:25 +0800
+Subject: [PATCH 16/69] Update README.md
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 9b8673d..d12185e 100644
+--- a/README.md
++++ b/README.md
+@@ -6,7 +6,7 @@
+ 
+ ![GIF Demo](http://gtms01.alicdn.com/tps/i1/TB1ZCe3GVXXXXbzXFXXRi48IXXX-780-610.gif)
+ 
+-## Install
++## Installation
+ 
+     $ npm install postcss-custom-selectors
+ 
+-- 
+2.35.1
+

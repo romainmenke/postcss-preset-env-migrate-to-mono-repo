@@ -1,0 +1,24 @@
+From 2255ac40bf0bfe64148c54caedca599e12b21ad2 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 26 Jun 2018 10:03:07 -0400
+Subject: [PATCH 16/32] 3.0.1
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 6b1483e..38f236d 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-attribute-case-insensitive",
+-  "version": "3.0.0",
++  "version": "3.0.1",
+   "description": "PostCSS plugin to support case insensitive attributes",
+   "main": "dist/index.js",
+   "scripts": {
+-- 
+2.35.1
+

@@ -1,0 +1,119 @@
+From 0b36054dd4ad88fb3b35ae219c77ee72b6d3846f Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Thu, 9 Apr 2015 08:02:07 +0200
+Subject: [PATCH 32/62] Changed: warning messages are not sent via postcss API
+
+---
+ CHANGELOG.md  | 3 ++-
+ index.js      | 7 +++----
+ package.json  | 6 +++---
+ test/index.js | 8 ++++++--
+ 4 files changed, 14 insertions(+), 10 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index ad99f95..fa6561c 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,6 @@
+-# Unrelease
++# 4.0.0 - Unrelease
+ 
++- Changed: warning messages are not sent via postcss API (^4.1.0)
+ - Added: `preserve` allows you to preserve custom media query defintions
+ - Added: `appendExtensions` allows you (when `preserve` is truthy) to append your extensions as media queries
+ 
+diff --git a/index.js b/index.js
+index dc64a3c..13bc19c 100755
+--- a/index.js
++++ b/index.js
+@@ -2,7 +2,6 @@
+  * Module dependencies
+  */
+ var postcss = require("postcss")
+-var helpers = require("postcss-message-helpers")
+ 
+ /**
+  * Constants.
+@@ -12,13 +11,13 @@ var EXTENSION_RE = /\(\s*(--[\w-]+)\s*\)/g
+ /**
+  * Expose the plugin.
+  */
+-module.exports = customMedia
++module.exports = postcss.plugin("postcss-custom-media", customMedia)
+ 
+ /*
+  * read & replace custom media queries by standard media queries
+  */
+ function customMedia(options) {
+-  return function(styles) {
++  return function(styles, result) {
+     options = options || {}
+     var extensions = {}
+     if (options.extensions) {
+@@ -67,7 +66,7 @@ function customMedia(options) {
+           return map[name]
+         }
+ 
+-        console.warn(helpers.message("missing @custom-media definition for '" + name + "'. The entire rule has been removed from the output.", rule.source))
++        result.warn("Missing @custom-media definition for '" + name + "'. The entire rule has been removed from the output.", {node: rule})
+         toRemove.push(rule)
+       })
+     })
+diff --git a/package.json b/package.json
+index bd23728..503a9be 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-media",
+-  "version": "3.0.0",
++  "version": "4.0.0",
+   "description": " PostCSS plugin to transform W3C CSS Custom Media Queries to more compatible CSS",
+   "keywords": [
+     "css",
+@@ -21,11 +21,11 @@
+     "index.js"
+   ],
+   "dependencies": {
+-    "postcss-message-helpers": "^2.0.0",
+-    "postcss": "^4.0.2"
++    "postcss": "^4.1.4"
+   },
+   "devDependencies": {
+     "eslint": "^0.18.0",
++    "tape": "^4.0.0"
+   },
+   "scripts": {
+     "test": "eslint . && tape test"
+diff --git a/test/index.js b/test/index.js
+index 22c5534..3e641b7 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -12,10 +12,13 @@ function compareFixtures(t, name, msg, opts, postcssOpts) {
+   postcssOpts = postcssOpts || {}
+   postcssOpts.from = filename("fixtures/" + name)
+   opts = opts || {}
+-  var actual = postcss().use(plugin(opts)).process(read(postcssOpts.from), postcssOpts).css
++  var result = postcss().use(plugin(opts)).process(read(postcssOpts.from), postcssOpts)
++  var actual = result.css
+   var expected = read(filename("fixtures/" + name + ".expected"))
+   fs.writeFile(filename("fixtures/" + name + ".actual"), actual)
+   t.equal(actual.trim(), expected.trim(), msg)
++
++  return result
+ }
+ 
+ test("@custom-media", function(t) {
+@@ -23,7 +26,8 @@ test("@custom-media", function(t) {
+ 
+   compareFixtures(t, "transform-all", "should replaces all extension names")
+ 
+-  compareFixtures(t, "undefined", "should remove undefined @media")
++  var undefinedRes = compareFixtures(t, "undefined", "should remove undefined @media")
++  t.ok(undefinedRes.warnings()[0].text.match(/Missing @custom-media/), "should send warning to postcss")
+ 
+   compareFixtures(t, "js-defined", "should transform custom media and override local extensions", {
+     extensions: {
+-- 
+2.35.1
+

@@ -1,0 +1,89 @@
+From a980515a51843d043ae95bbd462f090dd35d77e1 Mon Sep 17 00:00:00 2001
+From: Jordan Pittman <jordan@cryptica.me>
+Date: Tue, 18 Sep 2018 01:13:10 -0400
+Subject: [PATCH 20/30] Ensure escaped colons do not break selector
+ transformations
+
+* Add failing tests
+
+* Use a regex for pseudo selectors searches
+
+The regex is set up to ensure that escaped colons are not considered when looking for :not.
+
+This slows down selector transformation by about 25%
+
+* Cache generated regular expressions
+
+This provides a pretty decent speedup. Overall selector matching is now slight slower by about 6% instead of 25%.
+---
+ src/index.js  | 24 +++++++++++++++++++++++-
+ test/index.js | 12 ++++++++++++
+ 2 files changed, 35 insertions(+), 1 deletion(-)
+
+diff --git a/src/index.js b/src/index.js
+index b6f1530..645dfb4 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -4,7 +4,7 @@ import list from "postcss/lib/list"
+ import balancedMatch from "balanced-match"
+ 
+ function explodeSelector(pseudoClass, selector) {
+-  const position = selector.indexOf(pseudoClass)
++  const position = locatePseudoClass(selector, pseudoClass)
+   if (selector && position > -1) {
+     const pre = selector.slice(0, position)
+     const matches = balancedMatch("(", ")", selector.slice(position))
+@@ -23,6 +23,28 @@ function explodeSelector(pseudoClass, selector) {
+   return selector
+ }
+ 
++const patternCache = {}
++
++function locatePseudoClass(selector, pseudoClass) {
++  patternCache[pseudoClass] = patternCache[pseudoClass]
++    || new RegExp(`([^\\\\]|^)${pseudoClass}`)
++
++  // The regex is used to ensure that selectors with
++  // escaped colons in them are treated properly
++  // Ex: .foo\:not-bar is a valid CSS selector
++  // But it is not a reference to a pseudo selector
++  const pattern = patternCache[pseudoClass]
++  const position = selector.search(pattern)
++
++  if (position === -1) {
++    return -1
++  }
++
++  // The offset returned by the regex may be off by one because
++  // of it including the negated character match in the position
++  return position + selector.slice(position).indexOf(pseudoClass)
++}
++
+ function explodeSelectors(pseudoClass) {
+   return () => {
+     return (css) => {
+diff --git a/test/index.js b/test/index.js
+index cd145e6..ce0c605 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -77,5 +77,17 @@ tape("postcss-selector-not", t => {
+     "should work with something after :not()"
+   )
+ 
++  t.equal(
++    transform(".foo\\:not-italic {}"),
++    ".foo\\:not-italic {}",
++    "should not replace selectors with escaped colons followed by not"
++  )
++
++  t.equal(
++    transform(".foo\\:not-italic:not(:hover, :focus) {}"),
++    ".foo\\:not-italic:not(:hover):not(:focus) {}",
++    "should replace pseudo selectors without touching escaped colons"
++  )
++
+   t.end()
+ })
+-- 
+2.35.1
+

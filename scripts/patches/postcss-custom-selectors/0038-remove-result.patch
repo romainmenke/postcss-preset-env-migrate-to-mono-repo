@@ -1,0 +1,34 @@
+From 4a38cb16e1a1b496abd6399d1528ab417bc6d9b9 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <percyley@qq.com>
+Date: Tue, 30 Jun 2015 22:41:50 +0800
+Subject: [PATCH 38/69] remove result
+
+---
+ index.js | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/index.js b/index.js
+index 2917e0e..a13c860 100644
+--- a/index.js
++++ b/index.js
+@@ -26,7 +26,7 @@ module.exports = postcss.plugin("postcss-custom-selectors", function(options) {
+   /**
+    * 读取和替换自定义选择器
+    */
+-  return function(styles, result) {
++  return function(styles) {
+     // 读取自定义选择器
+     styles.eachAtRule(function(rule) {
+       if (rule.name !== "custom-selector") {
+@@ -54,7 +54,7 @@ module.exports = postcss.plugin("postcss-custom-selectors", function(options) {
+     })
+ 
+     // 转换自定义的选择器别名
+-    styles.eachRule(function(rule, result) {
++    styles.eachRule(function(rule) {
+       var flag = 0
+       for (var prop in customSelectors) {
+         if (rule.selector.indexOf(prop) >= 0) {
+-- 
+2.35.1
+

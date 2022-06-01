@@ -1,0 +1,43 @@
+From 6e0c90c4312c9ea030e9bc80baf97c6e3f12bf77 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 6 May 2015 06:46:04 +0200
+Subject: [PATCH 21/69] 1.1.1
+
+---
+ CHANGELOG.md | 8 ++++++--
+ package.json | 2 +-
+ 2 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 809d294..b438f96 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,7 +1,11 @@
++# 1.1.1 - 2015-04-06
++
++- Fixed: add support for multilines definition
++
+ # 1.1.0 - 2014-12-06
+ 
+-Add "lineBreak" option
++- Added: "lineBreak" option
+ 
+ # 1.0.0 - 2014-12-06
+ 
+-First release
++✨ First release
+diff --git a/package.json b/package.json
+index c9228d5..36fe717 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-selectors",
+-  "version": "1.1.0",
++  "version": "1.1.1",
+   "description": "PostCSS plugin to transform W3C CSS Extensions(Custom Selectors) to more compatible CSS",
+   "keywords": [
+     "css",
+-- 
+2.35.1
+

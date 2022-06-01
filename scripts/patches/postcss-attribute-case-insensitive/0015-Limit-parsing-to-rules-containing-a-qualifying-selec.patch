@@ -1,0 +1,29 @@
+From d4964022cb83dcc3b0027042fbfdbeffeab6a9f4 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 26 Jun 2018 10:02:48 -0400
+Subject: [PATCH 15/32] Limit parsing to rules containing a qualifying selector
+ pattern
+
+---
+ src/index.js | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/index.js b/src/index.js
+index c1e50d0..2100522 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -85,8 +85,10 @@ function transform(selectors) {
+ 	}
+ }
+ 
++const caseInsensitiveRegExp = /i(\s*\/\*[\W\w]*?\*\/)*\s*\]/;
++
+ export default postcss.plugin('postcss-attribute-case-insensitive', () => css => {
+-	css.walkRules(rule => {
++	css.walkRules(caseInsensitiveRegExp, rule => {
+ 		rule.selector = parser(transform).processSync(rule.selector);
+ 	});
+ });
+-- 
+2.35.1
+

@@ -1,0 +1,25 @@
+From 1df6d6fcb3ea4bdaaf281b545d37dfa4cf3294f2 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <yisibl@users.noreply.github.com>
+Date: Fri, 5 Dec 2014 23:54:14 +0800
+Subject: [PATCH 11/69] Update README.md
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index e5e319b..8fb2e76 100644
+--- a/README.md
++++ b/README.md
+@@ -93,7 +93,7 @@ a:link, a:visited {
+   color: blue;
+ }
+ ```
+-### Multiples selectors
++### Multiple selectors
+ 
+ `@custom-selector` similar to CSS [`:matches()`](http://dev.w3.org/csswg/selectors-4/#matches)([`-moz-any()`](https://developer.mozilla.org/en-US/docs/Web/CSS/:any)/[`-webkit-any()`](http://css-tricks.com/almanac/selectors/m/matches/))selector,but it **doesn’t support** call multiple custom selector in the same selector, e.g.
+ 
+-- 
+2.35.1
+

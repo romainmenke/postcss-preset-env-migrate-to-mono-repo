@@ -1,0 +1,47 @@
+From f0dfac37533606ebb9145acb9834a33c308ea268 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 8 May 2018 08:37:25 -0400
+Subject: [PATCH 11/32] Update dependencies
+
+---
+ package.json | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/package.json b/package.json
+index 4b92402..a923579 100644
+--- a/package.json
++++ b/package.json
+@@ -4,7 +4,7 @@
+   "description": "PostCSS plugin to support case insensitive attributes",
+   "main": "dist/index.js",
+   "scripts": {
+-    "test": "eslint src && npm run prepublish && mocha --compilers js:babel-register",
++    "test": "eslint src && npm run prepublish && mocha --require babel-register",
+     "prepublish": "babel src --out-dir dist"
+   },
+   "repository": {
+@@ -28,15 +28,15 @@
+   "homepage": "https://github.com/Semigradsky/postcss-attribute-case-insensitive#readme",
+   "devDependencies": {
+     "babel-cli": "^6.11.4",
+-    "babel-eslint": "^7.0.0",
++    "babel-eslint": "^8.2.3",
+     "babel-plugin-add-module-exports": "^0.2.1",
+     "babel-preset-env": "^1.4.0",
+     "babel-register": "^6.11.6",
+-    "chai": "^3.5.0",
+-    "eslint": "^3.2.2",
+-    "eslint-config-airbnb-base": "^8.0.0",
+-    "eslint-plugin-import": "^1.12.0",
+-    "mocha": "^3.0.1"
++    "chai": "^4.1.2",
++    "eslint": "^4.19.1",
++    "eslint-config-airbnb-base": "^12.1.0",
++    "eslint-plugin-import": "^2.11.0",
++    "mocha": "^5.1.1"
+   },
+   "dependencies": {
+     "postcss": "^6.0.22",
+-- 
+2.35.1
+

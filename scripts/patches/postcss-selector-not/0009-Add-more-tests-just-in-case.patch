@@ -1,0 +1,41 @@
+From 9774424b1b872daa54d2793defd676fbf6fba746 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Mon, 29 Jun 2015 11:00:26 +0200
+Subject: [PATCH 09/30] Add more tests (just in case)
+
+---
+ test/index.js | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/test/index.js b/test/index.js
+index 110a3b1..7278786 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -44,6 +44,12 @@ tape("postcss-selector-not", t => {
+     "should transform mutltiples :not()"
+   )
+ 
++  t.equal(
++    transform("tag :not(tag2, tag3) :not(tag4, tag5), test {}"),
++    "tag :not(tag2):not(tag3) :not(tag4):not(tag5), test {}",
++    "should transform mutltiples :not() with stuff after"
++  )
++
+   t.equal(
+     transform("tag :not(tag2 :not(tag4, tag5), tag3) {}"),
+     "tag :not(tag2 :not(tag4):not(tag5)):not(tag3) {}",
+@@ -65,5 +71,11 @@ tape("postcss-selector-not", t => {
+     "should works with lots of whitespace"
+   )
+ 
++  t.equal(
++    transform(`.foo:not(:hover, :focus)::before {}`),
++    `.foo:not(:hover):not(:focus)::before {}`,
++    "should work with something after :not()"
++  )
++
+   t.end()
+ })
+-- 
+2.35.1
+

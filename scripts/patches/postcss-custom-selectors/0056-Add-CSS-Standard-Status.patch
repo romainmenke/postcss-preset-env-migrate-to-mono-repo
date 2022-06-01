@@ -1,0 +1,23 @@
+From bc926c538285b71c161870ef0d4c695855fd9ff6 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sat, 9 Sep 2017 21:50:42 -0400
+Subject: [PATCH 56/69] Add CSS Standard Status
+
+---
+ README.md | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/README.md b/README.md
+index 4f09621..83a88b1 100644
+--- a/README.md
++++ b/README.md
+@@ -1,5 +1,6 @@
+ # PostCSS Custom Selectors
+ 
++[![CSS Standard Status](https://jonathantneal.github.io/css-db/badge/css-extensions-custom-selectors.svg)](https://jonathantneal.github.io/css-db/#css-extensions-custom-selectors)
+ [![Build Status](https://travis-ci.org/postcss/postcss-custom-selectors.svg?branch=master)](https://travis-ci.org/postcss/postcss-custom-selectors)
+ [![NPM Downloads](https://img.shields.io/npm/dm/postcss-custom-selectors.svg?style=flat)](https://www.npmjs.com/package/postcss-custom-selectors)
+ [![NPM Version](http://img.shields.io/npm/v/postcss-custom-selectors.svg?style=flat)](https://www.npmjs.com/package/postcss-custom-selectors)
+-- 
+2.35.1
+

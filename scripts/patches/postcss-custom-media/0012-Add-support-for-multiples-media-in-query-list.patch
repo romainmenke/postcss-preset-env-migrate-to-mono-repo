@@ -1,0 +1,94 @@
+From 0c49edd0dc1b050a98a8ff276b1a2c947605a13d Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 1 Oct 2014 07:08:16 +0200
+Subject: [PATCH 12/62] Add support for multiples media in query list
+
+Credit to @ooflorent
+https://github.com/reworkcss/rework-custom-media/pull/5
+---
+ CHANGELOG.md                             | 8 ++++++--
+ index.js                                 | 2 +-
+ test/fixtures/transform-all.css          | 8 ++++++++
+ test/fixtures/transform-all.expected.css | 7 +++++++
+ test/index.js                            | 2 ++
+ 5 files changed, 24 insertions(+), 3 deletions(-)
+ create mode 100644 test/fixtures/transform-all.css
+ create mode 100644 test/fixtures/transform-all.expected.css
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 94c30cd..f00c615 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,10 +1,14 @@
++# 1.2.0 - 2014-10-01
++
++- Add support for multiples media in query list (ref [#rework-custom-media/5](https://github.com/reworkcss/rework-custom-media/pull/5))
++
+ # 1.1.0 - 2014-09-30
+ 
+-- add support for js-defined media queries (fix [#3](https://github.com/postcss/postcss-custom-media/issues/3))
++- Add support for js-defined media queries (fix [#3](https://github.com/postcss/postcss-custom-media/issues/3))
+ 
+ # 1.0.1 - 2014-09-16
+ 
+-- allow whitespace around custom media name (fix [#2](https://github.com/postcss/postcss-custom-media/issues/2))
++- Allow whitespace around custom media name (fix [#2](https://github.com/postcss/postcss-custom-media/issues/2))
+ 
+ 
+ # 1.0.0 - 2014-08-12
+diff --git a/index.js b/index.js
+index 015428e..a785c9c 100755
+--- a/index.js
++++ b/index.js
+@@ -1,7 +1,7 @@
+ /**
+  * Constants.
+  */
+-var EXTENSION_RE = /\(\s*(--[\w-]+)\s*\)/
++var EXTENSION_RE = /\(\s*(--[\w-]+)\s*\)/g
+ 
+ /**
+  * Expose the plugin.
+diff --git a/test/fixtures/transform-all.css b/test/fixtures/transform-all.css
+new file mode 100644
+index 0000000..72f8501
+--- /dev/null
++++ b/test/fixtures/transform-all.css
+@@ -0,0 +1,8 @@
++@custom-media --a (foo: bar);
++@custom-media --b (bar: baz);
++
++@media (--a), (--b) {
++  selector {
++    property: value;
++  }
++}
+diff --git a/test/fixtures/transform-all.expected.css b/test/fixtures/transform-all.expected.css
+new file mode 100644
+index 0000000..e08678c
+--- /dev/null
++++ b/test/fixtures/transform-all.expected.css
+@@ -0,0 +1,7 @@
++
++
++@media (foo: bar), (bar: baz) {
++  selector {
++    property: value;
++  }
++}
+diff --git a/test/index.js b/test/index.js
+index 6a7f650..a909889 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -21,6 +21,8 @@ function compareFixtures(t, name, msg, opts, postcssOpts) {
+ test("@custom-media", function(t) {
+   compareFixtures(t, "transform", "should transform custom media")
+ 
++  compareFixtures(t, "transform-all", "should replaces all extension names")
++
+   compareFixtures(t, "undefined", "should remove undefined @media")
+ 
+   compareFixtures(t, "js-defined", "should transform custom media and override local extensions", {
+-- 
+2.35.1
+

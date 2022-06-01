@@ -1,0 +1,24 @@
+From bbecd0ca415a2de799e0ce894835b95c5203530c Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 16 Sep 2014 06:17:50 +0200
+Subject: [PATCH 06/62] v1.0.1
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 1ff9fde..c3bf895 100755
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-media",
+-  "version": "1.0.0",
++  "version": "1.0.1",
+   "description": "PostCSS plugin to import CSS files",
+   "keywords": [
+     "css",
+-- 
+2.35.1
+

@@ -1,0 +1,24 @@
+From eb883df80504c641673cf69aa4d3e41e20d2e043 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Sun, 9 Nov 2014 07:29:42 +0100
+Subject: [PATCH 17/62] v1.2.1
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index febf3d7..b139a06 100755
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-media",
+-  "version": "1.2.0",
++  "version": "1.2.1",
+   "description": " PostCSS plugin to transform W3C CSS Custom Media Queries to more compatible CSS",
+   "keywords": [
+     "css",
+-- 
+2.35.1
+

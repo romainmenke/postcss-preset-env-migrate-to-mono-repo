@@ -1,0 +1,151 @@
+From 74ee82ee7dd668466c2af2ee44ffa2cd2ef11ce5 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <percyley@qq.com>
+Date: Tue, 30 Jun 2015 11:52:19 +0800
+Subject: [PATCH 36/69] Fix the lineBreak option keeping the selectors indent
+
+---
+ index.js                            | 22 +++++++++++++++-------
+ test/fixtures/comment/input.css     | 11 +++++++++++
+ test/fixtures/comment/output.css    |  8 ++++++++
+ test/fixtures/line-break/input.css  |  6 ++++++
+ test/fixtures/line-break/output.css |  5 +++++
+ test/index.js                       | 16 ++++++++++------
+ 6 files changed, 55 insertions(+), 13 deletions(-)
+ create mode 100644 test/fixtures/comment/input.css
+ create mode 100644 test/fixtures/comment/output.css
+ create mode 100644 test/fixtures/line-break/input.css
+ create mode 100644 test/fixtures/line-break/output.css
+
+diff --git a/index.js b/index.js
+index d0ead53..5ee8e42 100644
+--- a/index.js
++++ b/index.js
+@@ -6,6 +6,9 @@ var postcss = require("postcss")
+  */
+ var re_CUSTOM_SELECTOR = /([^,]*?)(:-{2,}[\w-]+)(.*)/g
+ 
++// 匹配换行符与空白
++var reBLANK_LINE       = /(\r\n|\n|\r)(\s*?\1)+/gi
++
+ /**
+  * 暴露插件
+  */
+@@ -50,11 +53,6 @@ module.exports = postcss.plugin("postcss-custom-selectors", function(options) {
+       customSelectors[extension] = extensions[extension]
+     })
+ 
+-    //控制选择器是否换行
+-    if (!options.lineBreak && options.lineBreak == false) {
+-      line_break = ' '
+-    }
+-
+     // 转换自定义的选择器别名
+     styles.eachRule(function(rule) {
+       for (var prop in customSelectors) {
+@@ -64,9 +62,19 @@ module.exports = postcss.plugin("postcss-custom-selectors", function(options) {
+           // $2 = <extension-name> （自定义的选择器名称）
+           rule.selector = rule.selector.replace(re_CUSTOM_SELECTOR, function($0, $1, $2, $3) {
+             if ($2 === prop) {
+-              return customSelector.split(",").map(function(selector) {
++              var newSelector = customSelector.split(",").map(function(selector) {
+                 return $1 + selector.trim() + $3
+-              }).join("," + line_break)
++              })
++
++              // 选择器不换行
++              if (!options.lineBreak && options.lineBreak === false) {
++                line_break = " "
++                newSelector = newSelector.join("," + line_break)
++              } else {
++                // 选择器换行，同时替换多个换行为一个
++                newSelector = newSelector.join("," + line_break + rule.before).replace(reBLANK_LINE, line_break)
++              }
++              return newSelector
+             } else if ($2 !== prop) {
+               console.log("Warning: The selector '" + $2 + "' is undefined in CSS!")
+               return $2
+diff --git a/test/fixtures/comment/input.css b/test/fixtures/comment/input.css
+new file mode 100644
+index 0000000..c1fc9a9
+--- /dev/null
++++ b/test/fixtures/comment/input.css
+@@ -0,0 +1,11 @@
++/* comment */
++@custom-selector :--foo
++  /* comment */
++  .foo,
++  .bar > .baz;
++
++
++/* comment */
++      :--foo + p {
++    display: block;
++  }
+diff --git a/test/fixtures/comment/output.css b/test/fixtures/comment/output.css
+new file mode 100644
+index 0000000..f9df1ea
+--- /dev/null
++++ b/test/fixtures/comment/output.css
+@@ -0,0 +1,8 @@
++/* comment */
++
++
++/* comment */
++      .foo + p,
++      .bar > .baz + p {
++    display: block;
++  }
+diff --git a/test/fixtures/line-break/input.css b/test/fixtures/line-break/input.css
+new file mode 100644
+index 0000000..e166077
+--- /dev/null
++++ b/test/fixtures/line-break/input.css
+@@ -0,0 +1,6 @@
++@custom-selector :--heading h1, h2, h3, h4, h5, h6;
++/* comment */
++
++  article :--heading + p {
++    margin-top: 0;
++  }
+diff --git a/test/fixtures/line-break/output.css b/test/fixtures/line-break/output.css
+new file mode 100644
+index 0000000..c78f0e8
+--- /dev/null
++++ b/test/fixtures/line-break/output.css
+@@ -0,0 +1,5 @@
++/* comment */
++
++  article h1 + p, article h2 + p, article h3 + p, article h4 + p, article h5 + p, article h6 + p {
++    margin-top: 0;
++  }
+diff --git a/test/index.js b/test/index.js
+index ff8283d..4efdc6c 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -31,13 +31,17 @@ test("@custom-selector", function(t) {
+   compareFixtures(t, "some-hyphen", "should transform some hyphen")
+   compareFixtures(t, "matches", "should transform matches selector")
+   compareFixtures(t, "similar-matches", "should transform matches selector")
+-
+-  compareFixtures(t, "extension", "should transform local extensions", {
+-    extensions: {
+-      ':--any' : 'section, article, aside, nav',
+-      ':--foo': 'input[type="text"] > section, #nav .bar'
+-    }
++  compareFixtures(t, "comment", "should transform comment")
++  compareFixtures(t, "line-break", "should transform line break", {
++      lineBreak: false
+   })
+ 
++  // compareFixtures(t, "extension", "should transform local extensions", {
++  //   extensions: {
++  //     ':--any' : 'section, article, aside, nav',
++  //     ':--foo': 'input[type="text"] > section, #nav .bar'
++  //   }
++  // })
++
+   t.end()
+ })
+-- 
+2.35.1
+

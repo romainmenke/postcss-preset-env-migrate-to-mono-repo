@@ -1,0 +1,22 @@
+From d4a9e2d168fb346b7e23f47f7254c74a13a57896 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <percyley@qq.com>
+Date: Wed, 1 Jul 2015 10:33:25 +0800
+Subject: [PATCH 44/69] Add contributor
+
+---
+ CHANGELOG.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 6b1494b..7752d6b 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,4 +1,4 @@
+-# 2.2.0 - 2015-06-30
++# 2.2.0 - 2015-06-30 (By @MoOx)
+ 
+ * Fixed: No more useless warnings for undefined non custom selectors
+ ([#22](https://github.com/postcss/postcss-custom-selectors/issues/22))
+-- 
+2.35.1
+

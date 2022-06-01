@@ -1,0 +1,21 @@
+From 50da4e19bdbc8b3a9bfdad4c6875c502774c8c2f Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 26 Jun 2018 10:08:04 -0400
+Subject: [PATCH 17/32] Test in Node 6
+
+---
+ .travis.yml | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/.travis.yml b/.travis.yml
+index 52ad81f..4909f83 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -1,4 +1,3 @@
+ language: node_js
+ node_js:
+   - "6"
+-  - "4"
+-- 
+2.35.1
+

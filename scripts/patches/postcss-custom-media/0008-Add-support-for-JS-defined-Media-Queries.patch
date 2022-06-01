@@ -1,0 +1,139 @@
+From ad1b153549aaafe0f94d62fae6906de375d7ea8b Mon Sep 17 00:00:00 2001
+From: Nicolas Gallagher <nicolasgallagher@twitter.com>
+Date: Sat, 27 Sep 2014 12:19:14 -0700
+Subject: [PATCH 08/62] Add support for JS-defined Media Queries
+
+Fix #3
+---
+ README.md                             |  6 ++++++
+ index.js                              |  9 ++++++++-
+ test/fixtures/js-defined.css          | 23 +++++++++++++++++++++++
+ test/fixtures/js-defined.expected.css | 23 +++++++++++++++++++++++
+ test/index.js                         |  7 +++++++
+ 5 files changed, 67 insertions(+), 1 deletion(-)
+ create mode 100755 test/fixtures/js-defined.css
+ create mode 100755 test/fixtures/js-defined.expected.css
+
+diff --git a/README.md b/README.md
+index 0f4bfc8..cb3cbb2 100755
+--- a/README.md
++++ b/README.md
+@@ -43,6 +43,12 @@ you will get:
+ 
+ Checkout [tests](test) for more examples.
+ 
++### Options
++
++#### `extensions` (default: `{}`)
++
++Allows you to pass an object to define the `<media-query-list>` for each `<extension-name>`. These definitions will override any that exist in the CSS.
++
+ ---
+ 
+ ## Contributing
+diff --git a/index.js b/index.js
+index d72fac6..015428e 100755
+--- a/index.js
++++ b/index.js
+@@ -11,8 +11,10 @@ module.exports = customMedia
+ /**
+  * read & replace custom media queries by standard media queries
+  */
+-function customMedia() {
++function customMedia(options) {
+   return function(styles) {
++    options = options || {}
++    var extensions = options.extensions || {}
+     var map = {}
+     var toRemove = []
+ 
+@@ -30,6 +32,11 @@ function customMedia() {
+       toRemove.push(rule)
+     })
+ 
++    // apply js-defined media queries
++    Object.keys(extensions).forEach(function(extension) {
++      map[extension] = extensions[extension]
++    })
++
+     // transform custom media query aliases
+     styles.eachAtRule(function(rule) {
+       if (rule.name !== "media") {
+diff --git a/test/fixtures/js-defined.css b/test/fixtures/js-defined.css
+new file mode 100755
+index 0000000..8fe0815
+--- /dev/null
++++ b/test/fixtures/js-defined.css
+@@ -0,0 +1,23 @@
++@custom-media --viewport-max-s (max-width: 50em);
++
++body { color: #000  }
++
++@media (--viewport-max-s) {
++  body { font-size: 1rem; }
++}
++
++@media (--viewport-min-s) {
++  body { font-size: 1.2rem; }
++}
++
++@media (--viewport-min-s ) {
++
++}
++
++@media ( --viewport-min-s ) {
++
++}
++
++@media ( --viewport-min-s) {
++
++}
+diff --git a/test/fixtures/js-defined.expected.css b/test/fixtures/js-defined.expected.css
+new file mode 100755
+index 0000000..e2dd8a3
+--- /dev/null
++++ b/test/fixtures/js-defined.expected.css
+@@ -0,0 +1,23 @@
++
++
++body { color: #000  }
++
++@media (max-width: 30em) {
++  body { font-size: 1rem; }
++}
++
++@media (min-width: 30.01em) {
++  body { font-size: 1.2rem; }
++}
++
++@media (min-width: 30.01em) {
++
++}
++
++@media (min-width: 30.01em) {
++
++}
++
++@media (min-width: 30.01em) {
++
++}
+diff --git a/test/index.js b/test/index.js
+index 0a4ece9..6a7f650 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -23,5 +23,12 @@ test("@custom-media", function(t) {
+ 
+   compareFixtures(t, "undefined", "should remove undefined @media")
+ 
++  compareFixtures(t, "js-defined", "should transform custom media and override local extensions", {
++    extensions: {
++      "--viewport-max-s": "(max-width: 30em)",
++      "--viewport-min-s": "(min-width: 30.01em)"
++    }
++  })
++
+   t.end()
+ })
+-- 
+2.35.1
+

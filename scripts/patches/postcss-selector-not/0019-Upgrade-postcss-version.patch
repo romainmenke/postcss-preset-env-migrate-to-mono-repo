@@ -1,0 +1,25 @@
+From 0508237c9adfadf1557de04f857f67e2eee2920a Mon Sep 17 00:00:00 2001
+From: Eduard Kyvenko <edu@june.dk>
+Date: Thu, 9 Aug 2018 22:20:39 +0200
+Subject: [PATCH 19/30] Upgrade postcss version
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 7197895..6f361b0 100644
+--- a/package.json
++++ b/package.json
+@@ -21,7 +21,7 @@
+   ],
+   "dependencies": {
+     "balanced-match": "^0.4.2",
+-    "postcss": "^6.0.1"
++    "postcss": "^7.0.2"
+   },
+   "devDependencies": {
+     "babel-cli": "^6.24.1",
+-- 
+2.35.1
+

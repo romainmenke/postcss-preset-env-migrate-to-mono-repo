@@ -1,0 +1,26 @@
+From 70ee277a101dc05fa0b8245ff4fad683277142fc Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 11 Oct 2018 09:10:28 -0400
+Subject: [PATCH 56/62] Update README.md
+
+cli should only reference the published branch, master
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 89276ee..12a145e 100755
+--- a/README.md
++++ b/README.md
+@@ -164,7 +164,7 @@ See example exports written to [CSS](test/export-media.css),
+ [JS](test/export-media.js), [MJS](test/export-media.mjs), and
+ [JSON](test/export-media.json).
+ 
+-[cli-img]: https://img.shields.io/travis/postcss/postcss-custom-media.svg
++[cli-img]: https://img.shields.io/travis/postcss/postcss-custom-media/master.svg
+ [cli-url]: https://travis-ci.org/postcss/postcss-custom-media
+ [css-img]: https://cssdb.org/badge/custom-media-queries.svg
+ [css-url]: https://cssdb.org/#custom-media-queries
+-- 
+2.35.1
+

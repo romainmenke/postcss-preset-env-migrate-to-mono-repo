@@ -1,0 +1,62 @@
+From 955ba959b4357f5b97ddd377e597d422c3c7f844 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 8 May 2018 00:52:41 -0400
+Subject: [PATCH 10/32] Update dependencies
+
+- Update: postcss-selector-parser v4 (major)
+- Update: postcss (patch)
+---
+ package.json |  4 ++--
+ src/index.js | 15 +++++++++------
+ 2 files changed, 11 insertions(+), 8 deletions(-)
+
+diff --git a/package.json b/package.json
+index 143bbba..4b92402 100644
+--- a/package.json
++++ b/package.json
+@@ -39,7 +39,7 @@
+     "mocha": "^3.0.1"
+   },
+   "dependencies": {
+-    "postcss": "^6.0.0",
+-    "postcss-selector-parser": "^2.2.3"
++    "postcss": "^6.0.22",
++    "postcss-selector-parser": "^4.0.0"
+   }
+ }
+diff --git a/src/index.js b/src/index.js
+index 05d3e02..c1e50d0 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -29,12 +29,15 @@ function createSensitiveAtributes(attribute) {
+ 	const attributes = transformString([''], 0, attribute.value);
+ 	return attributes.map(x => {
+ 		const newAttribute = attribute.clone({
+-			value: x,
+-			insensitive: false,
+-			raws: {
+-				insensitive: ''
+-			}
++			spaces: {
++				after: attribute.spaces.after,
++				before: attribute.spaces.before
++			},
++			insensitive: false
+ 		});
++
++		newAttribute.setValue(x);
++
+ 		return newAttribute;
+ 	});
+ }
+@@ -84,6 +87,6 @@ function transform(selectors) {
+ 
+ export default postcss.plugin('postcss-attribute-case-insensitive', () => css => {
+ 	css.walkRules(rule => {
+-		rule.selector = parser(transform).process(rule.selector).result;
++		rule.selector = parser(transform).processSync(rule.selector);
+ 	});
+ });
+-- 
+2.35.1
+

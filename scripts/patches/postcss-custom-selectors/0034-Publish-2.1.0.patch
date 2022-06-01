@@ -1,0 +1,37 @@
+From 675bad97f1014bb770a1ebca2d744cd54cc2cb9d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <percyley@qq.com>
+Date: Thu, 4 Jun 2015 14:17:36 +0800
+Subject: [PATCH 34/69] Publish 2.1.0
+
+---
+ CHANGELOG.md | 4 ++++
+ package.json | 2 +-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index f5e9fee..897aaf8 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 2.1.0 - 2015-06-04
++
++* \- Fixed: Use PostCSS 4.1 plugin API.
++
+ # 2.0.1 - 2015-06-03
+ 
+ * \- Fixed: `(foo, bar)` conversion error exists in the selector(See also [:matches() test](test/fixtures/matches/input.css)).
+diff --git a/package.json b/package.json
+index c909227..63b1fc6 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-selectors",
+-  "version": "2.0.1",
++  "version": "2.1.0",
+   "description": "PostCSS plugin to transform W3C CSS Extensions(Custom Selectors) to more compatible CSS",
+   "keywords": [
+     "css",
+-- 
+2.35.1
+

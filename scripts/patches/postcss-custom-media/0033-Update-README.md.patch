@@ -1,0 +1,25 @@
+From 084eeca93f706c11a75c6e1be6cc6af75cc0f8cf Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Thu, 9 Apr 2015 08:11:45 +0200
+Subject: [PATCH 33/62] Update README.md
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 6351e90..bbc416a 100755
+--- a/README.md
++++ b/README.md
+@@ -53,7 +53,7 @@ Allows you to pass an object to define the `<media-query-list>` for each `<exten
+ 
+ Allows you to preserve custom media query definitions in output.
+ 
+-### `appendExtensions` (default: `false`)
++#### `appendExtensions` (default: `false`)
+ 
+ If `preserve` is set to `true`, allows you to append your extensions at end of your CSS.
+ 
+-- 
+2.35.1
+

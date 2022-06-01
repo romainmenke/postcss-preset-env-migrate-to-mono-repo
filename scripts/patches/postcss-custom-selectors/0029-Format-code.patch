@@ -1,0 +1,68 @@
+From d8455e7f852a127c216cfa9b814e9eb43f026e2f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <percyley@qq.com>
+Date: Wed, 3 Jun 2015 14:46:48 +0800
+Subject: [PATCH 29/69] Format code
+
+---
+ index.js                           | 8 ++++----
+ test/fixtures/matches.css          | 2 +-
+ test/fixtures/matches.expected.css | 2 +-
+ 3 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/index.js b/index.js
+index 0e94305..1847f3b 100644
+--- a/index.js
++++ b/index.js
+@@ -49,8 +49,8 @@ function customSelector(options) {
+     })
+ 
+     //控制选择器是否换行
+-    if (!options.lineBreak  && options.lineBreak == false) {
+-       line_break = ' '
++    if (!options.lineBreak && options.lineBreak == false) {
++      line_break = ' '
+     }
+ 
+     // 转换自定义的选择器别名
+@@ -58,14 +58,14 @@ function customSelector(options) {
+       for (var prop in customSelectors) {
+         if (rule.selector.indexOf(prop) >= 0) {
+           customSelector = customSelectors[prop]
+-          
++
+           // $2 = <extension-name> （自定义的选择器名称）
+           rule.selector = rule.selector.replace(re_CUSTOM_SELECTOR, function($0, $1, $2, $3) {
+             if ($2 === prop) {
+               return customSelector.split(",").map(function(selector) {
+                 return $1 + selector.trim() + $3
+               }).join("," + line_break)
+-            } else if ($2 !== prop){
++            } else if ($2 !== prop) {
+               console.log("Warning: The selector '" + $2 + "' is undefined in CSS!")
+               return $2
+             }
+diff --git a/test/fixtures/matches.css b/test/fixtures/matches.css
+index 70390fb..4654549 100644
+--- a/test/fixtures/matches.css
++++ b/test/fixtures/matches.css
+@@ -8,4 +8,4 @@
+ :--buttons:matches(:focus, .is-focused) {
+     border: red;
+     display: block;
+-}
+\ No newline at end of file
++}
+diff --git a/test/fixtures/matches.expected.css b/test/fixtures/matches.expected.css
+index eaa6cae..7f93f4e 100644
+--- a/test/fixtures/matches.expected.css
++++ b/test/fixtures/matches.expected.css
+@@ -8,4 +8,4 @@ button:matches(:focus, .is-focused),
+ .button:matches(:focus, .is-focused) {
+     border: red;
+     display: block;
+-}
+\ No newline at end of file
++}
+-- 
+2.35.1
+

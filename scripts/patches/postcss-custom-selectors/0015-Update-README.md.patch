@@ -1,0 +1,31 @@
+From 9fcb5ce57a264592121f13bc5cf14bf2b9e62b89 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <yisibl@users.noreply.github.com>
+Date: Sat, 6 Dec 2014 20:11:21 +0800
+Subject: [PATCH 15/69] Update README.md
+
+---
+ README.md | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/README.md b/README.md
+index 74c3c49..9b8673d 100644
+--- a/README.md
++++ b/README.md
+@@ -268,12 +268,12 @@ nav h1 {
+ ```
+ 
+ 
+-## Contribution
++## Contributing
+ 
+ * Install the relevant dependent module.
+ * Respect coding style（Install [EditorConfig](http://editorconfig.org/)）.
+ * Adding test cases in the [test](test) directory.
+-* Run tests.
++* Run test.
+ 
+ ```console
+ $ git clone https://github.com/postcss/postcss-custom-selectors.git
+-- 
+2.35.1
+

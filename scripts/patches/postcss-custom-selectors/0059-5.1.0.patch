@@ -1,0 +1,740 @@
+From 6380b0095095740f6aeade7da6a31739ecb51f5a Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 13 Sep 2018 21:43:39 -0400
+Subject: [PATCH 59/69] 5.1.0
+
+---
+ .tape.js                   | 185 +++++++++++++++++++++++++++++++++++++
+ CHANGELOG.md               |   5 +
+ CONTRIBUTING.md            |   2 +-
+ INSTALL.md                 |   2 +-
+ README.md                  |  55 +++++++++--
+ index.js                   |   8 +-
+ lib/export-to.js           | 129 ++++++++++++++++++++++++++
+ lib/import-from.js         |  41 ++++----
+ package.json               |  15 ++-
+ test/export-selectors.css  |  20 ++++
+ test/export-selectors.js   |  18 ++++
+ test/export-selectors.json |  18 ++++
+ test/export-selectors.mjs  |  16 ++++
+ 13 files changed, 474 insertions(+), 40 deletions(-)
+ create mode 100644 lib/export-to.js
+ create mode 100644 test/export-selectors.css
+ create mode 100644 test/export-selectors.js
+ create mode 100644 test/export-selectors.json
+ create mode 100644 test/export-selectors.mjs
+
+diff --git a/.tape.js b/.tape.js
+index c4485d4..846b95e 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -19,6 +19,36 @@ module.exports = {
+ 				}
+ 			}
+ 		},
++		'basic:import-fn': {
++			message: 'supports { importFrom() } usage',
++			options: {
++				importFrom() {
++					return {
++						customSelectors: {
++							':--heading': 'h1, h2, h3'
++						}
++					};
++				}
++			},
++			expect: 'basic.import.expect.css',
++			result: 'basic.import.result.css'
++		},
++		'basic:import-fn-promise': {
++			message: 'supports { async importFrom() } usage',
++			options: {
++				importFrom() {
++					return new Promise(resolve => {
++						resolve({
++							customSelectors: {
++								':--heading': 'h1, h2, h3'
++							}
++						})
++					});
++				}
++			},
++			expect: 'basic.import.expect.css',
++			result: 'basic.import.result.css'
++		},
+ 		'basic:import-json': {
+ 			message: 'supports { importFrom: "test/import-selectors.json" } usage',
+ 			options: {
+@@ -42,6 +72,161 @@ module.exports = {
+ 			},
+ 			expect: 'basic.import.expect.css',
+ 			result: 'basic.import.result.css'
++		},
++		'basic:import-css-from': {
++			message: 'supports { importFrom: { from: "test/import-selectors.css" } } usage',
++			options: {
++				importFrom: { from: 'test/import-selectors.css' }
++			},
++			expect: 'basic.import.expect.css',
++			result: 'basic.import.result.css'
++		},
++		'basic:import-css-from-type': {
++			message: 'supports { importFrom: [ { from: "test/import-selectors.css", type: "css" } ] } usage',
++			options: {
++				importFrom: [ { from: 'test/import-selectors.css', type: 'css' } ]
++			},
++			expect: 'basic.import.expect.css',
++			result: 'basic.import.result.css'
++		},
++		'basic:export': {
++			message: 'supports { exportTo: { customSelectors: { ... } } } usage',
++			options: {
++				exportTo: (global.__exportSelectorObject = global.__exportSelectorObject || {
++					customSelectors: null
++				})
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			after() {
++				if (__exportSelectorObject.customSelectors[':--foo'] !== '.foo') {
++					throw new Error('The exportTo function failed');
++				}
++			}
++		},
++		'basic:export-fn': {
++			message: 'supports { exportTo() } usage',
++			options: {
++				exportTo(customProperties) {
++					if (customProperties[':--foo'] !== '.foo') {
++						throw new Error('The exportTo function failed');
++					}
++				}
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css'
++		},
++		'basic:export-fn-promise': {
++			message: 'supports { async exportTo() } usage',
++			options: {
++				exportTo(customProperties) {
++					return new Promise((resolve, reject) => {
++						if (customProperties[':--foo'] !== '.foo') {
++							reject('The exportTo function failed');
++						} else {
++							resolve();
++						}
++					});
++				}
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css'
++		},
++		'basic:export-json': {
++			message: 'supports { exportTo: "test/export-selectors.json" } usage',
++			options: {
++				exportTo: 'test/export-selectors.json'
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			before() {
++				global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.json', 'utf8');
++			},
++			after() {
++				if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.json', 'utf8')) {
++					throw new Error('The original file did not match the freshly exported copy');
++				}
++			}
++		},
++		'basic:export-js': {
++			message: 'supports { exportTo: "test/export-selectors.js" } usage',
++			options: {
++				exportTo: 'test/export-selectors.js'
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			before() {
++				global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.js', 'utf8');
++			},
++			after() {
++				if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.js', 'utf8')) {
++					throw new Error('The original file did not match the freshly exported copy');
++				}
++			}
++		},
++		'basic:export-mjs': {
++			message: 'supports { exportTo: "test/export-selectors.mjs" } usage',
++			options: {
++				exportTo: 'test/export-selectors.mjs'
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			before() {
++				global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.mjs', 'utf8');
++			},
++			after() {
++				if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.mjs', 'utf8')) {
++					throw new Error('The original file did not match the freshly exported copy');
++				}
++			}
++		},
++		'basic:export-css': {
++			message: 'supports { exportTo: "test/export-selectors.css" } usage',
++			options: {
++				exportTo: 'test/export-selectors.css'
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			before() {
++				global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.css', 'utf8');
++			},
++			after() {
++				if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.css', 'utf8')) {
++					throw new Error('The original file did not match the freshly exported copy');
++				}
++			}
++		},
++		'basic:export-css-to': {
++			message: 'supports { exportTo: { to: "test/export-selectors.css" } } usage',
++			options: {
++				exportTo: { to: 'test/export-selectors.css' }
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			before() {
++				global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.css', 'utf8');
++			},
++			after() {
++				if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.css', 'utf8')) {
++					throw new Error('The original file did not match the freshly exported copy');
++				}
++			}
++		},
++		'basic:export-css-to-type': {
++			message: 'supports { exportTo: { to: "test/export-selectors.css", type: "css" } } usage',
++			options: {
++				exportTo: { to: 'test/export-selectors.css', type: 'css' }
++			},
++			expect: 'basic.expect.css',
++			result: 'basic.result.css',
++			before() {
++				global.__exportSelectorsString = require('fs').readFileSync('test/export-selectors.css', 'utf8');
++			},
++			after() {
++				if (global.__exportSelectorsString !== require('fs').readFileSync('test/export-selectors.css', 'utf8')) {
++					throw new Error('The original file did not match the freshly exported copy');
++				}
++			}
+ 		}
+ 	}
+ };
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index cebfe28..7d2a884 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ # Changes to PostCSS Custom Selectors
+ 
++### 5.1.0 (September 12, 2018)
++
++- Added: New `exportTo` function to specify where to export custom selectors
++- Updated: `importFrom` option to support passing it a function
++
+ ### 5.0.0 (September 7, 2018)
+ 
+ - Added: New `preserve` option to preserve custom selectors and rules using them
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+index c345221..02d0608 100644
+--- a/CONTRIBUTING.md
++++ b/CONTRIBUTING.md
+@@ -26,7 +26,7 @@ scope and avoid unrelated commits.
+    cd postcss-custom-selectors
+ 
+    # Assign the original repo to a remote called "upstream"
+-   git remote add upstream git@github.com:jonathantneal/postcss-custom-selectors.git
++   git remote add upstream git@github.com:postcss/postcss-custom-selectors.git
+ 
+    # Install the tools necessary for testing
+    npm install
+diff --git a/INSTALL.md b/INSTALL.md
+index ae9a9ce..6cd5dbf 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -164,7 +164,7 @@ grunt.initConfig({
+ [Grunt PostCSS]: https://github.com/nDmitry/grunt-postcss
+ [PostCSS]: https://github.com/postcss/postcss
+ [PostCSS CLI]: https://github.com/postcss/postcss-cli
+-[PostCSS Custom Selectors]: https://github.com/jonathantneal/postcss-custom-selectors
++[PostCSS Custom Selectors]: https://github.com/postcss/postcss-custom-selectors
+ [PostCSS Loader]: https://github.com/postcss/postcss-loader
+ [React App Rewire PostCSS]: https://github.com/csstools/react-app-rewire-postcss
+ [React App Rewired]: https://github.com/timarney/react-app-rewired
+diff --git a/README.md b/README.md
+index 5000430..163f5f5 100644
+--- a/README.md
++++ b/README.md
+@@ -76,12 +76,12 @@ article :--heading + p {}
+ ### importFrom
+ 
+ The `importFrom` option specifies sources where custom selectors can be
+-imported from, which might be CSS, JS, and JSON files, and directly passed
+-objects.
++imported from, which might be CSS, JS, and JSON files, functions, and directly
++passed objects.
+ 
+ ```js
+ postcssCustomSelectors({
+-  importFrom: 'path/to/file.css' // => @custom-selector h1, h2, h3
++  importFrom: 'path/to/file.css' // => @custom-selector :--heading h1, h2, h3;
+ });
+ ```
+ 
+@@ -95,9 +95,9 @@ article :--heading + p {
+ article h1 + p, article h2 + p, article h3 + p {}
+ ```
+ 
+-Multiple files can be passed into this option, and they will be parsed in the
+-order they are received. JavaScript files, JSON files, and objects will need
+-to namespace custom selectors using the `customProperties` or
++Multiple sources can be passed into this option, and they will be parsed in the
++order they are received. JavaScript files, JSON files, functions, and objects
++will need to namespace custom selectors using the `customProperties` or
+ `custom-properties` key.
+ 
+ ```js
+@@ -107,9 +107,46 @@ postcssCustomSelectors({
+     'and/then/this.js',
+     'and/then/that.json',
+     {
+-      customSelectors: {
+-        ':--heading': 'h1, h2, h3'
+-      }
++      customSelectors: { ':--heading': 'h1, h2, h3' }
++    },
++    () => {
++      const customProperties = { ':--heading': 'h1, h2, h3' };
++
++      return { customProperties };
++    }
++  ]
++});
++```
++
++### exportTo
++
++The `exportTo` option specifies destinations where custom selectors can be
++exported to, which might be CSS, JS, and JSON files, functions, and directly
++passed objects.
++
++```js
++postcssCustomSelectors({
++  exportTo: 'path/to/file.css' // @custom-selector :--heading h1, h2, h3;
++});
++```
++
++Multiple destinations can be passed into this option, and they will be parsed
++in the order they are received. JavaScript files, JSON files, and objects will
++need to namespace custom selectors using the `customProperties` or
++`custom-properties` key.
++
++```js
++const cachedObject = { customSelectors: {} };
++
++postcssCustomSelectors({
++  exportTo: [
++    'path/to/file.css',   // @custom-selector :--heading h1, h2, h3;
++    'and/then/this.js',   // module.exports = { customSelectors: { ':--heading': 'h1, h2, h3' } }
++    'and/then/this.mjs',  // export const customSelectors = { ':--heading': 'h1, h2, h3' } }
++    'and/then/that.json', // { "custom-selectors": { ":--heading": "h1, h2, h3" } }
++    cachedObject,
++    customProperties => {
++      customProperties    // { ':--heading': 'h1, h2, h3' }
+     }
+   ]
+ });
+diff --git a/index.js b/index.js
+index e12e5b3..9dad15e 100644
+--- a/index.js
++++ b/index.js
+@@ -2,14 +2,18 @@ import postcss from 'postcss';
+ import getCustomSelectors from './lib/custom-selectors-from-root';
+ import transformRules from './lib/transform-rules';
+ import importCustomSelectorsFromSources from './lib/import-from';
++import exportCustomSelectorsToDestinations from './lib/export-to';
+ 
+ export default postcss.plugin('postcss-custom-selectors', opts => {
+ 	// whether to preserve custom selectors and rules using them
+ 	const preserve = Boolean(Object(opts).preserve);
+ 
+-	// sources from where to import custom selectors
++	// sources to import custom selectors from
+ 	const importFrom = [].concat(Object(opts).importFrom || []);
+ 
++	// destinations to export custom selectors to
++	const exportTo = [].concat(Object(opts).exportTo || []);
++
+ 	// promise any custom selectors are imported
+ 	const customSelectorsPromise = importCustomSelectorsFromSources(importFrom);
+ 
+@@ -19,6 +23,8 @@ export default postcss.plugin('postcss-custom-selectors', opts => {
+ 			getCustomSelectors(root, { preserve })
+ 		);
+ 
++		await exportCustomSelectorsToDestinations(customProperties, exportTo);
++
+ 		transformRules(root, customProperties, { preserve });
+ 	};
+ });
+diff --git a/lib/export-to.js b/lib/export-to.js
+new file mode 100644
+index 0000000..f589f5d
+--- /dev/null
++++ b/lib/export-to.js
+@@ -0,0 +1,129 @@
++import fs from 'fs';
++import path from 'path';
++
++/* Import Custom Selectors from CSS File
++/* ========================================================================== */
++
++async function exportCustomSelectorsToCssFile(to, customSelectors) {
++	const cssContent = Object.keys(customSelectors).reduce((cssLines, name) => {
++		cssLines.push(`@custom-selector ${name} ${customSelectors[name]};`);
++
++		return cssLines;
++	}, []).join('\n');
++	const css = `${cssContent}\n`;
++
++	await writeFile(to, css);
++}
++
++/* Import Custom Selectors from JSON file
++/* ========================================================================== */
++
++async function exportCustomSelectorsToJsonFile(to, customSelectors) {
++	const jsonContent = JSON.stringify({
++		'custom-selectors': customSelectors
++	}, null, '  ');
++	const json = `${jsonContent}\n`;
++
++	await writeFile(to, json);
++}
++
++/* Import Custom Selectors from Common JS file
++/* ========================================================================== */
++
++async function exportCustomSelectorsToCjsFile(to, customSelectors) {
++	const jsContents = Object.keys(customSelectors).reduce((jsLines, name) => {
++		jsLines.push(`\t\t'${escapeForJS(name)}': '${escapeForJS(customSelectors[name])}'`);
++
++		return jsLines;
++	}, []).join(',\n');
++	const js = `module.exports = {\n\tcustomSelectors: {\n${jsContents}\n\t}\n};\n`;
++
++	await writeFile(to, js);
++}
++
++/* Import Custom Selectors from Module JS file
++/* ========================================================================== */
++
++async function exportCustomSelectorsToMjsFile(to, customSelectors) {
++	const mjsContents = Object.keys(customSelectors).reduce((mjsLines, name) => {
++		mjsLines.push(`\t'${escapeForJS(name)}': '${escapeForJS(customSelectors[name])}'`);
++
++		return mjsLines;
++	}, []).join(',\n');
++	const mjs = `export const customSelectors = {\n${mjsContents}\n};\n`;
++
++	await writeFile(to, mjs);
++}
++
++/* Export Custom Selectors to Destinations
++/* ========================================================================== */
++
++export default function exportCustomSelectorsToDestinations(customSelectors, destinations) {
++	return Promise.all(destinations.map(async destination => {
++		if (destination instanceof Function) {
++			await destination(defaultCustomSelectorsToJSON(customSelectors));
++		} else {
++			// read the destination as an object
++			const opts = destination === Object(destination) ? destination : { to: String(destination) };
++
++			// transformer for custom selectors into a JSON-compatible object
++			const toJSON = opts.toJSON || defaultCustomSelectorsToJSON;
++
++			if ('customSelectors' in opts) {
++				// write directly to an object as customSelectors
++				opts.customSelectors = toJSON(customSelectors);
++			} else if ('custom-selectors' in opts) {
++				// write directly to an object as custom-selectors
++				opts['custom-selectors'] = toJSON(customSelectors);
++			} else {
++				// destination pathname
++				const to = String(opts.to || '');
++
++				// type of file being written to
++				const type = (opts.type || path.extname(opts.to).slice(1)).toLowerCase();
++
++				// transformed custom selectors
++				const customSelectorsJSON = toJSON(customSelectors);
++
++				if (type === 'css') {
++					await exportCustomSelectorsToCssFile(to, customSelectorsJSON);
++				}
++
++				if (type === 'js') {
++					await exportCustomSelectorsToCjsFile(to, customSelectorsJSON);
++				}
++
++				if (type === 'json') {
++					await exportCustomSelectorsToJsonFile(to, customSelectorsJSON);
++				}
++
++				if (type === 'mjs') {
++					await exportCustomSelectorsToMjsFile(to, customSelectorsJSON);
++				}
++			}
++		}
++	}));
++}
++
++/* Helper utilities
++/* ========================================================================== */
++
++const defaultCustomSelectorsToJSON = customSelectors => {
++	return Object.keys(customSelectors).reduce((customSelectorsJSON, key) => {
++		customSelectorsJSON[key] = String(customSelectors[key]);
++
++		return customSelectorsJSON;
++	}, {});
++};
++
++const writeFile = (to, text) => new Promise((resolve, reject) => {
++	fs.writeFile(to, text, error => {
++		if (error) {
++			reject(error);
++		} else {
++			resolve();
++		}
++	});
++});
++
++const escapeForJS = string => string.replace(/\\([\s\S])|(')/g, '\\$1$2').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+diff --git a/lib/import-from.js b/lib/import-from.js
+index f89e6dd..5201d63 100644
+--- a/lib/import-from.js
++++ b/lib/import-from.js
+@@ -60,20 +60,29 @@ async function importCustomSelectorsFromJSFile(from) {
+ 
+ export default function importCustomSelectorsFromSources(sources) {
+ 	return sources.map(source => {
+-		if (typeof source === 'string') {
+-			if (isCSSPath(source)) {
+-				return [ 'css', source ]
+-			} else if (isJSPath(source)) {
+-				return [ 'js', source ]
+-			} else if (isJSONPath(source)) {
+-				return [ 'json', source ]
+-			}
++		if (source instanceof Promise) {
++			return source;
++		} else if (source instanceof Function) {
++			return source();
+ 		}
+ 
+-		return Object(source);
++		// read the source as an object
++		const opts = source === Object(source) ? source : { from: String(source) };
++
++		// skip objects with custom selectors
++		if (Object(opts).customSelectors || Object(opts)['custom-selectors']) {
++			return opts
++		}
++
++		// source pathname
++		const from = String(opts.from || '');
++
++		// type of file being read from
++		const type = (opts.type || path.extname(opts.from).slice(1)).toLowerCase();
++
++		return { type, from };
+ 	}).reduce(async (customSelectors, source) => {
+-		const type = source[0];
+-		const from = source[1];
++		const { type, from } = await source;
+ 
+ 		if (type === 'ast') {
+ 			return Object.assign(customSelectors, importCustomSelectorsFromCSSAST(from));
+@@ -91,21 +100,13 @@ export default function importCustomSelectorsFromSources(sources) {
+ 			return Object.assign(customSelectors, await importCustomSelectorsFromJSONFile(from));
+ 		}
+ 
+-		return Object.assign(customSelectors, importCustomSelectorsFromObject(source));
++		return Object.assign(customSelectors, importCustomSelectorsFromObject(await source));
+ 	}, {});
+ }
+ 
+ /* Helper utilities
+ /* ========================================================================== */
+ 
+-const matchCSSPath = /\.\w*css/i;
+-const matchJSPath = /\.\w*js/i;
+-const matchJSONPath = /\.\w*json/i;
+-
+-const isCSSPath = from => matchCSSPath.test(from);
+-const isJSPath = from => matchJSPath.test(from);
+-const isJSONPath = from => matchJSONPath.test(from);
+-
+ const readFile = from => new Promise((resolve, reject) => {
+ 	fs.readFile(from, 'utf8', (error, result) => {
+ 		if (error) {
+diff --git a/package.json b/package.json
+index 6711a8a..5314c27 100644
+--- a/package.json
++++ b/package.json
+@@ -1,16 +1,16 @@
+ {
+   "name": "postcss-custom-selectors",
+-  "version": "5.0.0",
++  "version": "5.1.0",
+   "description": "Use Custom Selectors in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+     "yisi",
+     "Maxime Thirouin"
+   ],
+-  "license": "CC0-1.0",
+-  "repository": "jonathantneal/postcss-custom-selectors",
+-  "homepage": "https://github.com/jonathantneal/postcss-custom-selectors#readme",
+-  "bugs": "https://github.com/jonathantneal/postcss-custom-selectors/issues",
++  "license": "MIT",
++  "repository": "postcss/postcss-custom-selectors",
++  "homepage": "https://github.com/postcss/postcss-custom-selectors#readme",
++  "bugs": "https://github.com/postcss/postcss-custom-selectors/issues",
+   "main": "index.cjs.js",
+   "module": "index.es.mjs",
+   "files": [
+@@ -21,7 +21,6 @@
+     "prepublishOnly": "npm test",
+     "pretest": "rollup -c .rollup.js --silent",
+     "test": "echo 'Running tests...'; npm run test:js && npm run test:tape",
+-    "test:ec": "echint --ignore index.*.js test",
+     "test:js": "eslint *.js lib/*.js --cache --ignore-path .gitignore --quiet",
+     "test:tape": "postcss-tape"
+   },
+@@ -33,7 +32,7 @@
+     "postcss-selector-parser": "^5.0.0-rc.3"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.0.0",
++    "@babel/core": "^7.0.1",
+     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+     "@babel/preset-env": "^7.0.0",
+     "babel-eslint": "^9.0.0",
+@@ -42,7 +41,7 @@
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+     "rollup": "^0.65.2",
+-    "rollup-plugin-babel": "^4.0.1"
++    "rollup-plugin-babel": "^4.0.3"
+   },
+   "eslintConfig": {
+     "extends": "dev",
+diff --git a/test/export-selectors.css b/test/export-selectors.css
+new file mode 100644
+index 0000000..7973b78
+--- /dev/null
++++ b/test/export-selectors.css
+@@ -0,0 +1,20 @@
++@custom-selector :--foo .foo;
++@custom-selector :--any-heading h1, h2, h3, h4, h5, h6;
++@custom-selector :--foobar .foo;
++@custom-selector :--baz .baz;
++@custom-selector :--fizzbuzz .fizz, .buzz;
++@custom-selector :--button-types .btn-primary,
++	.btn-success,
++	.btn-info,
++	.btn-warning,
++	.btn-danger;
++@custom-selector :--commented-foo .foo,
++	.bar > .baz;
++@custom-selector :--pseudo ::before, ::after;
++@custom-selector :--fo-----o h1, h2, h3;
++@custom-selector :--ba-----r h4, h5, h6;
++@custom-selector :--multiline .foo,
++	.bar > .baz;
++@custom-selector :--button button, .button;
++@custom-selector :--enter :hover, :focus;
++@custom-selector :--any-foobar .foo, .bar;
+diff --git a/test/export-selectors.js b/test/export-selectors.js
+new file mode 100644
+index 0000000..e6ed9f0
+--- /dev/null
++++ b/test/export-selectors.js
+@@ -0,0 +1,18 @@
++module.exports = {
++	customSelectors: {
++		':--foo': '.foo',
++		':--any-heading': 'h1, h2, h3, h4, h5, h6',
++		':--foobar': '.foo',
++		':--baz': '.baz',
++		':--fizzbuzz': '.fizz, .buzz',
++		':--button-types': '.btn-primary,\n	.btn-success,\n	.btn-info,\n	.btn-warning,\n	.btn-danger',
++		':--commented-foo': '.foo,\n	.bar > .baz',
++		':--pseudo': '::before, ::after',
++		':--fo-----o': 'h1, h2, h3',
++		':--ba-----r': 'h4, h5, h6',
++		':--multiline': '.foo,\n	.bar > .baz',
++		':--button': 'button, .button',
++		':--enter': ':hover, :focus',
++		':--any-foobar': '.foo, .bar'
++	}
++};
+diff --git a/test/export-selectors.json b/test/export-selectors.json
+new file mode 100644
+index 0000000..089840c
+--- /dev/null
++++ b/test/export-selectors.json
+@@ -0,0 +1,18 @@
++{
++  "custom-selectors": {
++    ":--foo": ".foo",
++    ":--any-heading": "h1, h2, h3, h4, h5, h6",
++    ":--foobar": ".foo",
++    ":--baz": ".baz",
++    ":--fizzbuzz": ".fizz, .buzz",
++    ":--button-types": ".btn-primary,\n\t.btn-success,\n\t.btn-info,\n\t.btn-warning,\n\t.btn-danger",
++    ":--commented-foo": ".foo,\n\t.bar > .baz",
++    ":--pseudo": "::before, ::after",
++    ":--fo-----o": "h1, h2, h3",
++    ":--ba-----r": "h4, h5, h6",
++    ":--multiline": ".foo,\n\t.bar > .baz",
++    ":--button": "button, .button",
++    ":--enter": ":hover, :focus",
++    ":--any-foobar": ".foo, .bar"
++  }
++}
+diff --git a/test/export-selectors.mjs b/test/export-selectors.mjs
+new file mode 100644
+index 0000000..f445eb2
+--- /dev/null
++++ b/test/export-selectors.mjs
+@@ -0,0 +1,16 @@
++export const customSelectors = {
++	':--foo': '.foo',
++	':--any-heading': 'h1, h2, h3, h4, h5, h6',
++	':--foobar': '.foo',
++	':--baz': '.baz',
++	':--fizzbuzz': '.fizz, .buzz',
++	':--button-types': '.btn-primary,\n	.btn-success,\n	.btn-info,\n	.btn-warning,\n	.btn-danger',
++	':--commented-foo': '.foo,\n	.bar > .baz',
++	':--pseudo': '::before, ::after',
++	':--fo-----o': 'h1, h2, h3',
++	':--ba-----r': 'h4, h5, h6',
++	':--multiline': '.foo,\n	.bar > .baz',
++	':--button': 'button, .button',
++	':--enter': ':hover, :focus',
++	':--any-foobar': '.foo, .bar'
++};
+-- 
+2.35.1
+

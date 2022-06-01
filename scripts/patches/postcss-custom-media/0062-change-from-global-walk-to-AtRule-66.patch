@@ -1,0 +1,102 @@
+From acc8c99e5198edf0fe960e85ba006892dd279fdd Mon Sep 17 00:00:00 2001
+From: alexgagnon <alexgagnon@users.noreply.github.com>
+Date: Mon, 24 May 2021 19:25:41 -0400
+Subject: [PATCH 62/62] change from global walk to AtRule (#66)
+
+* change to using atrule
+
+* cleanup
+
+Co-authored-by: alexgagnon <alex@monad.media>
+---
+ index.js                 | 21 +++++++++++++--------
+ lib/transform-atrules.js | 28 ++++++++++++++++++----------
+ 2 files changed, 31 insertions(+), 18 deletions(-)
+
+diff --git a/index.js b/index.js
+index 5aef4af..f4679d0 100755
+--- a/index.js
++++ b/index.js
+@@ -14,22 +14,27 @@ const creator = opts => {
+ 	const exportTo = [].concat(Object(opts).exportTo || []);
+ 
+ 	// promise any custom media are imported
+-	const customMediaPromise = getCustomMediaFromImports(importFrom);
++	const customMediaImportsPromise = getCustomMediaFromImports(importFrom);
+ 
+ 	return {
+ 		postcssPlugin: 'postcss-custom-media',
+-		Once: async root => {
+-			const customMedia = Object.assign(
+-				await customMediaPromise,
++		Once: async (root, helpers) => {
++
++			// combine rules from root and from imports
++			helpers.customMedia = Object.assign(
++				await customMediaImportsPromise,
+ 				getCustomMediaFromRoot(root, { preserve })
+ 			);
+ 
+-			await writeCustomMediaToExports(customMedia, exportTo);
+-
+-			transformAtrules(root, customMedia, { preserve });
++			await writeCustomMediaToExports(helpers.customMedia, exportTo);
++		},
++		AtRule: {
++			media: (atrule, helpers) => {
++				transformAtrules(atrule, {preserve}, helpers)
++			}
+ 		}
+ 	}
+-};
++}
+ 
+ creator.postcss = true
+ 
+diff --git a/lib/transform-atrules.js b/lib/transform-atrules.js
+index b857588..aab3b92 100644
+--- a/lib/transform-atrules.js
++++ b/lib/transform-atrules.js
+@@ -1,21 +1,29 @@
+-import transformMediaList from './transform-media-list';
+-import mediaASTFromString from './media-ast-from-string';
++import transformMediaList from "./transform-media-list";
++import mediaASTFromString from "./media-ast-from-string";
+ 
+ // transform custom pseudo selectors with custom selectors
+-export default (root, customMedia, opts) => {
+-	root.walkAtRules(mediaAtRuleRegExp, atrule => {
+-		if (customPseudoRegExp.test(atrule.params)) {
++export default (atrule, { preserve }, { customMedia }) => {
++	if (customPseudoRegExp.test(atrule.params)) {
++		// prevent infinite loops when using 'preserve' option
++		if (!atrule[visitedFlag]) {
++			atrule[visitedFlag] = true;
++
+ 			const mediaAST = mediaASTFromString(atrule.params);
+ 			const params = String(transformMediaList(mediaAST, customMedia));
+ 
+-			if (opts.preserve) {
+-				atrule.cloneBefore({ params });
+-			} else {
++			if (preserve) {
++				// keep an original copy
++				const node = atrule.cloneAfter();
++				node[visitedFlag] = true;
++			}
++			// replace the variable with the params from @custom-media rule
++			// skip if the variable is undefined
++			if (params != null) {
+ 				atrule.params = params;
+ 			}
+ 		}
+-	});
++	}
+ };
+ 
+-const mediaAtRuleRegExp = /^media$/i;
++const visitedFlag = Symbol("customMediaVisited");
+ const customPseudoRegExp = /\(--[A-z][\w-]*\)/;
+-- 
+2.35.1
+

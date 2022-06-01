@@ -1,0 +1,25 @@
+From dbaacb2f36a2bf717e1ff1099cdeb5063cf132af Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <yisibl@users.noreply.github.com>
+Date: Sun, 7 Dec 2014 23:41:16 +0800
+Subject: [PATCH 17/69] Update README.md
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index d12185e..0f6ce43 100644
+--- a/README.md
++++ b/README.md
+@@ -272,7 +272,7 @@ nav h1 {
+ 
+ * Install the relevant dependent module.
+ * Respect coding style（Install [EditorConfig](http://editorconfig.org/)）.
+-* Adding test cases in the [test](test) directory.
++* Add test cases in the [test](test) directory.
+ * Run test.
+ 
+ ```console
+-- 
+2.35.1
+

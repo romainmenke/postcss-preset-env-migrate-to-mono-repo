@@ -1,0 +1,22 @@
+From 62698a864886670fa538e6509786b1c3179f6645 Mon Sep 17 00:00:00 2001
+From: Maurici Abad Gutierrez <hello@mauriciabad.com>
+Date: Fri, 22 May 2020 12:11:41 +0200
+Subject: [PATCH 31/32] Replace necessary for recommended
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 79a06ca..d8aba59 100644
+--- a/README.md
++++ b/README.md
+@@ -20,4 +20,4 @@
+ ```
+ 
+ ### Notes
+-- As you see in example, it is not necessary to use this plugin with very long attributes.
++- As you see in example, it is not recommended to use this plugin with very long attributes.
+-- 
+2.35.1
+

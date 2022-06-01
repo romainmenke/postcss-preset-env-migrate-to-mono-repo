@@ -1,0 +1,127 @@
+From 39a25e05f39b5cc5f879b8e828ee8ced197750a9 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 20 Sep 2018 16:23:37 -0400
+Subject: [PATCH 52/62] 7.0.3
+
+---
+ .tape.js                     |  6 ++++++
+ CHANGELOG.md                 |  4 ++++
+ lib/import-from.js           |  2 +-
+ package.json                 |  8 ++++----
+ test/import.empty.expect.css | 29 +++++++++++++++++++++++++++++
+ 5 files changed, 44 insertions(+), 5 deletions(-)
+ create mode 100644 test/import.empty.expect.css
+
+diff --git a/.tape.js b/.tape.js
+index 72204e3..d5ce77c 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -92,6 +92,12 @@ module.exports = {
+ 			expect: 'import.expect.css',
+ 			result: 'import.result.css'
+ 		},
++		'import:empty': {
++			message: 'supports { importFrom: {} } usage',
++			options: {
++				importFrom: {}
++			}
++		},
+ 		'basic:export': {
+ 			message: 'supports { exportTo: { customMedia: { ... } } } usage',
+ 			options: {
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 4284f45..6a89585 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Custom Media
+ 
++### 7.0.3 (September 20, 2018)
++
++- Fixed: Do not break on an empty `importFrom` object
++
+ ### 7.0.2 (September 15, 2018)
+ 
+ - Fixed: An issue with re-assigning params as a non-string
+diff --git a/lib/import-from.js b/lib/import-from.js
+index 79f3bf4..47038f6 100644
+--- a/lib/import-from.js
++++ b/lib/import-from.js
+@@ -78,7 +78,7 @@ export default function importCustomMediaFromSources(sources) {
+ 		const from = String(opts.from || '');
+ 
+ 		// type of file being read from
+-		const type = (opts.type || path.extname(opts.from).slice(1)).toLowerCase();
++		const type = (opts.type || path.extname(from).slice(1)).toLowerCase();
+ 
+ 		return { type, from };
+ 	}).reduce(async (customMedia, source) => {
+diff --git a/package.json b/package.json
+index 4955b81..a7479bc 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-media",
+-  "version": "7.0.2",
++  "version": "7.0.3",
+   "description": "Use Custom Media Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -30,15 +30,15 @@
+     "postcss": "^7.0.2"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.0.1",
++    "@babel/core": "^7.1.0",
+     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+-    "@babel/preset-env": "^7.0.0",
++    "@babel/preset-env": "^7.1.0",
+     "babel-eslint": "^9.0.0",
+     "eslint": "^5.6.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.65.2",
++    "rollup": "^0.66.1",
+     "rollup-plugin-babel": "^4.0.3"
+   },
+   "eslintConfig": {
+diff --git a/test/import.empty.expect.css b/test/import.empty.expect.css
+new file mode 100644
+index 0000000..f37220e
+--- /dev/null
++++ b/test/import.empty.expect.css
+@@ -0,0 +1,29 @@
++@media (--mq-a) {
++	body {
++		order: 1;
++	}
++}
++
++@media (--mq-a), (--mq-a) {
++	body {
++		order: 1;
++	}
++}
++
++@media not all and (--mq-a) {
++	body {
++		order: 2;
++	}
++}
++
++@media (--not-mq-a) {
++	body {
++		order: 1;
++	}
++}
++
++@media not all and (--not-mq-a) {
++	body {
++		order: 2;
++	}
++}
+-- 
+2.35.1
+

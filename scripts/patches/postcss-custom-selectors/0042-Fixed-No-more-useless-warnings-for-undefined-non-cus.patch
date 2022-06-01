@@ -1,0 +1,243 @@
+From ac9a18c7c3bf542f12e17447e7094074101f7577 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 30 Jun 2015 22:47:49 +0200
+Subject: [PATCH 42/69] Fixed: No more useless warnings for undefined non
+ custom selectors
+
+Also:
+- Changed: simpler message when a custom selector is undefined
+- Changed: warnings now use PostCSS message API
+- Some fixes in the Changelog + simpler formatting
+- Added some references in the Changelog
+
+Prepared as 2.2.0
+
+Close #22
+---
+ CHANGELOG.md                             | 31 +++++++++----
+ index.js                                 | 56 ++++++++++++------------
+ package.json                             |  2 +-
+ test/fixtures/similar-matches/input.css  |  4 ++
+ test/fixtures/similar-matches/output.css |  4 ++
+ test/index.js                            | 16 +++++--
+ 6 files changed, 72 insertions(+), 41 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index f94f66b..6b1494b 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,29 +1,42 @@
+-# 2.1.0 - 2015-06-30
++# 2.2.0 - 2015-06-30
+ 
+-* \- Fixed: the lineBreak option keeping the selectors indent [#18](https://github.com/postcss/postcss-custom-selectors/issues/18).
+-* \- Fixed: the tip of an undefined selector [#20](https://github.com/postcss/postcss-custom-selectors/issues/20).
++* Fixed: No more useless warnings for undefined non custom selectors
++([#22](https://github.com/postcss/postcss-custom-selectors/issues/22))
++* Changed: warnings now use PostCSS message API
++
++# 2.1.1 - 2015-06-30
++
++* Fixed: the lineBreak option keeping the selectors indent
++([#18](https://github.com/postcss/postcss-custom-selectors/issues/18))
++* Fixed: the tip of an undefined selector
++([#20](https://github.com/postcss/postcss-custom-selectors/issues/20))
+ 
+ # 2.1.0 - 2015-06-04
+ 
+-* \- Fixed: use PostCSS 4.1 plugin API.
++* Changed: use PostCSS 4.1 plugin API
++([#13](https://github.com/postcss/postcss-custom-selectors/issues/13))
+ 
+ # 2.0.1 - 2015-06-03
+ 
+-* \- Fixed: `(foo, bar)` conversion error exists in the selector(See also [:matches() test](test/fixtures/matches/input.css)).
++* Fixed: `(foo, bar)` conversion error exists in the selector
++(See also [:matches() test](test/fixtures/matches/input.css))
+ 
+ # 2.0.0 - 2015-05-29
+ 
+-* \x Remove: no longer support `::` or `--` to defined a custom selectors, we must use the `:--` to defined it.
++* Removed: no longer support `::` or `--` to defined a custom selectors,
++you must use the syntax `:--` to define it.
++([#6](https://github.com/postcss/postcss-custom-selectors/issues/6))
++* Fixed: two or more consecutive hyphens in selector don't output `undefined`
++([#14](https://github.com/postcss/postcss-custom-selectors/issues/14))
+ 
+-* \- Fixed: two or more consecutive hyphens in selector outputs is "undefined".
+ 
+ # 1.1.1 - 2015-04-06
+ 
+-* \- Fixed: add support for multilines definition
++* Fixed: add support for multilines definition
+ 
+ # 1.1.0 - 2014-12-06
+ 
+-* \- Added: "lineBreak" option
++* Added: "lineBreak" option
+ 
+ # 1.0.0 - 2014-12-06
+ 
+diff --git a/index.js b/index.js
+index 17ee614..4140454 100644
+--- a/index.js
++++ b/index.js
+@@ -26,7 +26,7 @@ module.exports = postcss.plugin("postcss-custom-selectors", function(options) {
+   /**
+    * 读取和替换自定义选择器
+    */
+-  return function(css) {
++  return function(css, result) {
+     // 读取自定义选择器
+     css.eachAtRule(function(rule) {
+       if (rule.name !== "custom-selector") {
+@@ -55,39 +55,41 @@ module.exports = postcss.plugin("postcss-custom-selectors", function(options) {
+ 
+     // 转换自定义的选择器别名
+     css.eachRule(function(rule) {
+-      var flag = 0
+-      for (var prop in customSelectors) {
+-        if (rule.selector.indexOf(prop) >= 0) {
+-          customSelector = customSelectors[prop]
++      if (rule.selector.indexOf(":--") > -1) {
++        var flag = 0
++        for (var prop in customSelectors) {
++          if (rule.selector.indexOf(prop) >= 0) {
++            customSelector = customSelectors[prop]
+ 
+-          // $2 = <extension-name> （自定义的选择器名称）
+-          rule.selector = rule.selector.replace(re_CUSTOM_SELECTOR, function($0, $1, $2, $3) {
++            // $2 = <extension-name> （自定义的选择器名称）
++            rule.selector = rule.selector.replace(re_CUSTOM_SELECTOR, function($0, $1, $2, $3) {
+ 
+-            if ($2 === prop) {
+-              var newSelector = customSelector.split(",").map(function(selector) {
+-                return $1 + selector.trim() + $3
+-              })
++              if ($2 === prop) {
++                var newSelector = customSelector.split(",").map(function(selector) {
++                  return $1 + selector.trim() + $3
++                })
+ 
+-              // 选择器不换行
+-              if (!options.lineBreak && options.lineBreak === false) {
+-                line_break = " "
+-                newSelector = newSelector.join("," + line_break)
+-              } else {
+-                // 选择器换行，同时替换多个换行为一个
+-                newSelector = newSelector.join("," + line_break + rule.before).replace(reBLANK_LINE, line_break)
++                // 选择器不换行
++                if (!options.lineBreak && options.lineBreak === false) {
++                  line_break = " "
++                  newSelector = newSelector.join("," + line_break)
++                } else {
++                  // 选择器换行，同时替换多个换行为一个
++                  newSelector = newSelector.join("," + line_break + rule.before).replace(reBLANK_LINE, line_break)
++                }
++                flag ++
++                return newSelector
+               }
+-              flag ++
+-              return newSelector
+-            }
+-            else if ($2 !== prop) {
+-              return $2
++              else if ($2 !== prop) {
++                return $2
++              }
++            })
++            if(flag === 0){
++              result.warn("The selector '" + rule.selector + "' is undefined", {node: rule})
+             }
+-          })
++          }
+         }
+       }
+-      if(flag === 0){
+-        console.log("Warning: The selector '" + rule.selector + "' is undefined in CSS!")
+-      }
+     })
+ 
+     // 删除 @custom-selector
+diff --git a/package.json b/package.json
+index 93561d0..e143272 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-selectors",
+-  "version": "2.1.1",
++  "version": "2.2.0",
+   "description": "PostCSS plugin to transform W3C CSS Extensions(Custom Selectors) to more compatible CSS",
+   "keywords": [
+     "css",
+diff --git a/test/fixtures/similar-matches/input.css b/test/fixtures/similar-matches/input.css
+index 9ed5369..dbc7543 100644
+--- a/test/fixtures/similar-matches/input.css
++++ b/test/fixtures/similar-matches/input.css
+@@ -12,3 +12,7 @@
+ :--test p {
+   display: block;
+ }
++
++whatever {
++  display: block;
++}
+diff --git a/test/fixtures/similar-matches/output.css b/test/fixtures/similar-matches/output.css
+index adff0a1..1b86cc7 100644
+--- a/test/fixtures/similar-matches/output.css
++++ b/test/fixtures/similar-matches/output.css
+@@ -9,3 +9,7 @@ h4 h5 h6 {
+ :--test p {
+   display: block;
+ }
++
++whatever {
++  display: block;
++}
+diff --git a/test/index.js b/test/index.js
+index bba9e1a..f443bb2 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -13,15 +13,18 @@ function compareFixtures(t, name, msg, opts, postcssOpts) {
+   //input
+   postcssOpts.from = filename("fixtures/" + name + "/input")
+   opts = opts || {}
+-  var actual = postcss()
++  var result = postcss()
+   .use(plugin(opts))
+   .process(read(postcssOpts.from), postcssOpts)
+-  .css
++
++  var actual = result.css
+   //output
+   var output = read(filename("fixtures/" + name + "/output"))
+   //actual
+   fs.writeFile(filename("fixtures/" + name + "/actual"), actual)
+   t.equal(actual.trim(), output.trim(), msg)
++
++  return result
+ }
+ 
+ test("@custom-selector", function(t) {
+@@ -30,10 +33,15 @@ test("@custom-selector", function(t) {
+   compareFixtures(t, "multiline", "should transform multiline")
+   compareFixtures(t, "some-hyphen", "should transform some hyphen")
+   compareFixtures(t, "matches", "should transform matches selector")
+-  compareFixtures(t, "similar-matches", "should transform matches selector")
++  var similarMatchesResult = compareFixtures(t, "similar-matches", "should transform matches selector")
++  t.ok(
++    similarMatchesResult.messages && similarMatchesResult.messages.length === 1,
++    "should add a message when a custom selectors is undefined"
++  )
++
+   compareFixtures(t, "comment", "should transform comment")
+   compareFixtures(t, "line-break", "should transform line break", {
+-      lineBreak: false
++    lineBreak: false
+   })
+ 
+   compareFixtures(t, "extension", "should transform local extensions", {
+-- 
+2.35.1
+

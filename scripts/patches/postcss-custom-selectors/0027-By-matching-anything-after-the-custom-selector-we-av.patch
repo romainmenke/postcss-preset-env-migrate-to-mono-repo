@@ -1,0 +1,89 @@
+From 9d337b6f148e595add605a527d0a84e5535ebd6a Mon Sep 17 00:00:00 2001
+From: Jared Wyles <wyles@adobe.com>
+Date: Wed, 3 Jun 2015 08:34:07 +1000
+Subject: [PATCH 27/69] By matching anything after the custom selector we avoid
+ a potential problem with commas. We should trust postcss to not give us
+ multiple selectors in its array
+
+---
+ index.js                           |  4 ++--
+ test/fixtures/matches.css          | 11 +++++++++++
+ test/fixtures/matches.expected.css | 11 +++++++++++
+ test/index.js                      |  1 +
+ 4 files changed, 25 insertions(+), 2 deletions(-)
+ create mode 100644 test/fixtures/matches.css
+ create mode 100644 test/fixtures/matches.expected.css
+
+diff --git a/index.js b/index.js
+index 84dcb4a..72c3570 100644
+--- a/index.js
++++ b/index.js
+@@ -3,7 +3,8 @@
+  * :--foo
+  * 注意：CSS 选择器区分大小写
+  */
+-var re_CUSTOM_SELECTOR = /([^,]*?)(:-{2,}[\w-]+)([^,]*)/g
++//var re_CUSTOM_SELECTOR = /([^,]*?)(:-{2,}[\w-]+)([^,]*)/g
++var re_CUSTOM_SELECTOR = /([^,]*?)(:-{2,}[\w-]+)(.*)/g
+ 
+ /**
+  * 暴露插件
+@@ -52,7 +53,6 @@ function customSelector(options) {
+     if (!options.lineBreak  && options.lineBreak == false) {
+        line_break = ' '
+     }
+-
+     // 转换自定义的选择器别名
+     styles.eachRule(function(rule) {
+       for (var prop in customSelectors) {
+diff --git a/test/fixtures/matches.css b/test/fixtures/matches.css
+new file mode 100644
+index 0000000..70390fb
+--- /dev/null
++++ b/test/fixtures/matches.css
+@@ -0,0 +1,11 @@
++@custom-selector :--buttons button, .button;
++
++:--buttons:matches(:focus) {
++    border: red;
++    display: block;
++}
++
++:--buttons:matches(:focus, .is-focused) {
++    border: red;
++    display: block;
++}
+\ No newline at end of file
+diff --git a/test/fixtures/matches.expected.css b/test/fixtures/matches.expected.css
+new file mode 100644
+index 0000000..eaa6cae
+--- /dev/null
++++ b/test/fixtures/matches.expected.css
+@@ -0,0 +1,11 @@
++button:matches(:focus),
++.button:matches(:focus) {
++    border: red;
++    display: block;
++}
++
++button:matches(:focus, .is-focused),
++.button:matches(:focus, .is-focused) {
++    border: red;
++    display: block;
++}
+\ No newline at end of file
+diff --git a/test/index.js b/test/index.js
+index b343735..6257465 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -25,6 +25,7 @@ test("@custom-selector", function(t) {
+   compareFixtures(t, "pseudo", "should transform pseudo")
+   compareFixtures(t, "multiline", "should transform multiline")
+   compareFixtures(t, "some-hyphen-selector", "should transform some-hyphen-selector")
++  compareFixtures(t, "matches", "should transform matches selector")
+ 
+   compareFixtures(t, "extension", "should transform local extensions", {
+     extensions: {
+-- 
+2.35.1
+

@@ -1,0 +1,67 @@
+From 8f03ebe94ea29304d2e38334ec66f2fcae0860b5 Mon Sep 17 00:00:00 2001
+From: Glen Huang <hey.hgl@gmail.com>
+Date: Thu, 9 Apr 2015 13:09:50 +0800
+Subject: [PATCH 29/62] Refactor
+
+---
+ index.js      | 23 +++++++++++++----------
+ test/index.js |  2 +-
+ 2 files changed, 14 insertions(+), 11 deletions(-)
+
+diff --git a/index.js b/index.js
+index 87b4bc1..007ea58 100755
+--- a/index.js
++++ b/index.js
+@@ -20,15 +20,18 @@ module.exports = customMedia
+ function customMedia(options) {
+   return function(styles) {
+     options = options || {}
+-    var extensions = options.extensions || {}
+-    Object.keys(extensions).forEach(function(name) {
+-      if (name.slice(0, 2) !== "--") {
+-        extensions["--" + name] = extensions[name]
+-        delete extensions[name]
+-      }
+-    })
+-    var append = options.append
+-    var preserve = append || options.preserve
++    var extensions = {}
++    if (options.extensions) {
++      Object.keys(options.extensions).forEach(function(name) {
++        var val = options.extensions[name]
++        if (name.slice(0, 2) !== "--") {
++          name = "--" + name
++        }
++        extensions[name] = val
++      })
++    }
++    var appendExtensions = options.appendExtensions
++    var preserve = options.preserve
+     var map = {}
+     var toRemove = []
+ 
+@@ -69,7 +72,7 @@ function customMedia(options) {
+       })
+     })
+ 
+-    if (append) {
++    if (appendExtensions) {
+       var names = Object.keys(map)
+       if (names.length) {
+         names.forEach(function(name) {
+diff --git a/test/index.js b/test/index.js
+index 92abeff..2a40677 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -45,7 +45,7 @@ test("@custom-media", function(t) {
+     extensions: {
+       "--viewport-max-s": "(max-width: 30em)",
+     },
+-    append: true,
++    appendExtensions: true,
+   })
+ 
+   t.end()
+-- 
+2.35.1
+

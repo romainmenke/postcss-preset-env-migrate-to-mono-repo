@@ -1,0 +1,24 @@
+From f43a62c4ed1526f3e50a4046dcf5041ef555faa9 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E4=B8=80=E4=B8=9D?= <percyley@qq.com>
+Date: Mon, 1 Jun 2015 11:34:03 +0800
+Subject: [PATCH 26/69] Remove postcss-selector-matches
+
+---
+ test/index.js | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/test/index.js b/test/index.js
+index 34c24ba..b343735 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -4,7 +4,6 @@ var test = require("tape")
+ 
+ var postcss = require("postcss")
+ var plugin = require("..")
+-var matches = require("postcss-selector-matches")
+ 
+ function filename(name) { return "test/" + name + ".css" }
+ function read(name) { return fs.readFileSync(name, "utf8") }
+-- 
+2.35.1
+

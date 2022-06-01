@@ -1,0 +1,499 @@
+From 83292da01b5dab20a7fd5ebd3ab8f18735bfca71 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 18 Sep 2018 23:36:13 -0400
+Subject: [PATCH 60/69] 5.1.1
+
+---
+ .rollup.js                                    |   4 +-
+ .tape.js                                      |   3 +
+ CHANGELOG.md                                  |   4 +
+ ...transform-selectors-by-custom-selectors.js |  35 ++
+ package.json                                  |  14 +-
+ test/index.js                                 | 299 ------------------
+ test/safety.css                               |  13 +
+ test/safety.expect.css                        |  11 +
+ 8 files changed, 76 insertions(+), 307 deletions(-)
+ delete mode 100644 test/index.js
+ create mode 100644 test/safety.css
+ create mode 100644 test/safety.expect.css
+
+diff --git a/.rollup.js b/.rollup.js
+index eab5c0d..3f28a55 100644
+--- a/.rollup.js
++++ b/.rollup.js
+@@ -3,8 +3,8 @@ import babel from 'rollup-plugin-babel';
+ export default {
+ 	input: 'index.js',
+ 	output: [
+-		{ file: 'index.cjs.js', format: 'cjs' },
+-		{ file: 'index.es.mjs', format: 'es' }
++		{ file: 'index.cjs.js', format: 'cjs', sourcemap: true },
++		{ file: 'index.es.mjs', format: 'es', sourcemap: true }
+ 	],
+ 	plugins: [
+ 		babel({
+diff --git a/.tape.js b/.tape.js
+index 846b95e..366f841 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -9,6 +9,9 @@ module.exports = {
+ 				preserve: true
+ 			}
+ 		},
++		'safety': {
++			message: 'supports safe tag ordering (.foo:--h1 becomes h1.foo instead of .fooh1)'
++		},
+ 		'basic:import': {
+ 			message: 'supports { importFrom: { customSelectors: { ... } } } usage',
+ 			options: {
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 7d2a884..3f23dbe 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Custom Selectors
+ 
++### 5.1.1 (September 18, 2018)
++
++- Fixed: Selectors like `.foo:--h1` become `h1.foo` instead of `.fooh1`
++
+ ### 5.1.0 (September 12, 2018)
+ 
+ - Added: New `exportTo` function to specify where to export custom selectors
+diff --git a/lib/transform-selectors-by-custom-selectors.js b/lib/transform-selectors-by-custom-selectors.js
+index 8ca1138..2a3daf2 100644
+--- a/lib/transform-selectors-by-custom-selectors.js
++++ b/lib/transform-selectors-by-custom-selectors.js
+@@ -35,6 +35,8 @@ function transformSelector(selector, customSelectors) {
+ 
+ 				const retranspiledSelectors = transformSelector(selectorClone, customSelectors);
+ 
++				adjustNodesBySelectorEnds(selectorClone.nodes, Number(index));
++
+ 				if (retranspiledSelectors.length) {
+ 					transpiledSelectors.push(...retranspiledSelectors);
+ 				} else {
+@@ -50,3 +52,36 @@ function transformSelector(selector, customSelectors) {
+ 
+ 	return transpiledSelectors;
+ }
++
++// match selectors by difficult-to-separate ends
++const withoutSelectorStartMatch = /^(tag|universal)$/;
++const withoutSelectorEndMatch = /^(class|id|pseudo|tag|universal)$/;
++
++const isWithoutSelectorStart = node => withoutSelectorStartMatch.test(Object(node).type);
++const isWithoutSelectorEnd = node => withoutSelectorEndMatch.test(Object(node).type);
++
++// adjust nodes by selector ends (so that .class:--h1 becomes h1.class rather than .classh1)
++const adjustNodesBySelectorEnds = (nodes, index) => {
++	if (index && isWithoutSelectorStart(nodes[index]) && isWithoutSelectorEnd(nodes[index - 1])) {
++		let safeIndex = index - 1;
++
++		while (safeIndex && isWithoutSelectorEnd(nodes[safeIndex])) {
++			--safeIndex;
++		}
++
++		if (safeIndex < index) {
++			const node = nodes.splice(index, 1)[0];
++
++			nodes.splice(safeIndex, 0, node);
++
++			nodes[safeIndex].spaces.before = nodes[safeIndex + 1].spaces.before;
++			nodes[safeIndex + 1].spaces.before = '';
++
++			if (nodes[index]) {
++				nodes[index].spaces.after = nodes[safeIndex].spaces.after;
++				nodes[safeIndex].spaces.after = '';
++			}
++		}
++	}
++};
++
+diff --git a/package.json b/package.json
+index 5314c27..58453b3 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-selectors",
+-  "version": "5.1.0",
++  "version": "5.1.1",
+   "description": "Use Custom Selectors in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -15,7 +15,9 @@
+   "module": "index.es.mjs",
+   "files": [
+     "index.cjs.js",
+-    "index.es.mjs"
++    "index.cjs.js.map",
++    "index.es.mjs",
++    "index.es.mjs.map"
+   ],
+   "scripts": {
+     "prepublishOnly": "npm test",
+@@ -32,15 +34,15 @@
+     "postcss-selector-parser": "^5.0.0-rc.3"
+   },
+   "devDependencies": {
+-    "@babel/core": "^7.0.1",
++    "@babel/core": "^7.1.0",
+     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+-    "@babel/preset-env": "^7.0.0",
++    "@babel/preset-env": "^7.1.0",
+     "babel-eslint": "^9.0.0",
+-    "eslint": "^5.5.0",
++    "eslint": "^5.6.0",
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.65.2",
++    "rollup": "^0.66.0",
+     "rollup-plugin-babel": "^4.0.3"
+   },
+   "eslintConfig": {
+diff --git a/test/index.js b/test/index.js
+deleted file mode 100644
+index 5fadaec..0000000
+--- a/test/index.js
++++ /dev/null
+@@ -1,299 +0,0 @@
+-import test from "tape"
+-import postcss from "postcss"
+-import plugin from "../src"
+-
+-function transform(input, opts = {}, postcssOpts = {}) {
+-  return postcss()
+-    .use(plugin(opts))
+-    .process(input, postcssOpts)
+-}
+-
+-test("@custom-selector", function(t) {
+-  t.equal(
+-    transform(
+-      ""
+-    ).css,
+-    "",
+-    "should works with nothing"
+-  )
+-
+-  const undefinedResult = transform(":--undef {}")
+-  t.ok(
+-    undefinedResult.messages && undefinedResult.messages.length === 1,
+-    "should add a message when a custom selectors is undefined"
+-  )
+-
+-  t.equal(
+-    transform(
+-      `@custom-selector :--foo .bar, .baz;
+-.foo:--foo {
+-  margin-top: 16px;
+-}`,
+-      {transformMatches: false}
+-    ).css,
+-    `.foo:matches(.bar, .baz) {
+-  margin-top: 16px;
+-}`,
+-    "should works be able to limit transformation to :matches()"
+-  )
+-
+-  t.equal(
+-    transform(
+-      `@custom-selector :--heading h1, h2, h3, h4, h5, h6;
+-
+-article :--heading + p {}`
+-    ).css,
+-    `article h1 + p,
+-article h2 + p,
+-article h3 + p,
+-article h4 + p,
+-article h5 + p,
+-article h6 + p {}`,
+-    "should transform heading"
+-  )
+-
+-  t.equal(
+-    transform(
+-      `@custom-selector :--foobar .foo, .bar;
+-@custom-selector :--baz .baz;
+-@custom-selector :--fizzbuzz .fizz, .buzz;
+-@custom-selector :--button-types
+-  .btn-primary,
+-  .btn-success,
+-  .btn-info,
+-  .btn-warning,
+-  .btn-danger;
+-
+-:--foobar > :--baz {}
+-
+-:--fizzbuzz > :--foobar {}
+-
+-:--button-types, :--button-types:active {}`
+-    ).css,
+-    `.foo > .baz,
+-.bar > .baz {}
+-
+-.fizz > .foo,
+-.buzz > .foo,
+-.fizz > .bar,
+-.buzz > .bar {}
+-
+-.btn-primary,
+-.btn-success,
+-.btn-info,
+-.btn-warning,
+-.btn-danger,
+-.btn-primary:active,
+-.btn-success:active,
+-.btn-info:active,
+-.btn-warning:active,
+-.btn-danger:active {}`,
+-    "should work with a complicated example"
+-  )
+-
+-  t.equal(
+-    transform(
+-      `/* comment */
+-@custom-selector :--foo
+-  /* comment */
+-  .foo,
+-  .bar > .baz;
+-
+-
+-/* comment */
+-      :--foo + p {
+-    display: block;
+-  }`
+-    ).css,
+-    `/* comment */
+-
+-
+-/* comment */
+-      .foo + p,
+-      .bar > .baz + p {
+-    display: block;
+-  }`,
+-    "should works with comments"
+-  )
+-
+-  t.equal(
+-    transform(
+-      `@custom-selector :--pseudo ::before, ::after;
+-
+-.foo > a:--pseudo img {
+-  display: block;
+-}
+-`
+-    ).css,
+-    `.foo > a::before img,
+-.foo > a::after img {
+-  display: block;
+-}
+-`,
+-    "should works with pseudo elements"
+-  )
+-
+-  t.equal(
+-    transform(
+-      `@custom-selector :--foo .foo;
+-
+-:--foo, :--foo.bar {
+-  color: white;
+-}
+-`
+-    ).css,
+-    `.foo,
+-.foo.bar {
+-  color: white;
+-}
+-`,
+-    "should works handle multiples combined selectors"
+-  )
+-
+-  t.equal(
+-    transform(
+-      `@custom-selector :--foo .foo;
+-
+-:--foo :--foo:hover {
+-  color: white;
+-}
+-`
+-    ).css,
+-    `.foo .foo:hover {
+-  color: white;
+-}
+-`,
+-    "should works handle multiples combined selectors with pseudo classes"
+-  )
+-
+-  t.equal(
+-    transform(
+-      `@custom-selector :--foo h1, h2, h3;
+-@custom-selector :--ba-----r h4, h5, h6;
+-
+-.fo--oo > :--foo {
+-  margin: auto;
+-}
+-
+-:--ba-----r:hover .ba--z {
+-  display: block;
+-}
+-`
+-    ).css,
+-    `.fo--oo > h1,
+-.fo--oo > h2,
+-.fo--oo > h3 {
+-  margin: auto;
+-}
+-
+-h4:hover .ba--z,
+-h5:hover .ba--z,
+-h6:hover .ba--z {
+-  display: block;
+-}
+-`,
+-    "should works with weird identifiers"
+-  )
+-
+-  t.equal(
+-    transform(
+-      `@custom-selector :--heading h1, h2, h3, h4, h5, h6;
+-/* comment */
+-
+-  article :--heading + p {
+-    margin-top: 0;
+-  }
+-`,
+-      {lineBreak: false}
+-    ).css,
+-    `/* comment */
+-
+-  article h1 + p, article h2 + p, article h3 + p, article h4 + p, ` +
+-  `article h5 + p, article h6 + p {
+-    margin-top: 0;
+-  }
+-`,
+-    "should works works with no line breaks"
+-  )
+-
+-  t.equal(
+-    transform(
+-      `@custom-selector :--multiline
+-  .foo,
+-  .bar > .baz;
+-
+-:--multiline {
+-  display: block;
+-}
+-`
+-    ).css,
+-    `.foo,
+-.bar > .baz {
+-  display: block;
+-}
+-`,
+-    "should works with multilines definition"
+-  )
+-
+-  t.equal(
+-    transform(
+-      `@custom-selector :--button button, .button;
+-@custom-selector :--enter :hover, :focus;
+-
+-:--button:--enter {}`
+-    ).css,
+-    `button:hover,
+-.button:hover,
+-button:focus,
+-.button:focus {}`,
+-    "should works with collapsed custom selectors"
+-  )
+-
+-  t.equal(
+-    transform(
+-      `@custom-selector :--any .foo, .bar;
+-@custom-selector :--foo .baz;
+-
+-:--any h1 {
+-  margin-top: 16px;
+-}
+-
+-main :--foo + p {
+-  margin-top: 16px;
+-}
+-`,
+-      {
+-        extensions: {
+-          ":--any": "section, article, aside, nav",
+-          ":--foo": "input[type=\"text\"] > section, #nav .bar",
+-        },
+-      }
+-    ).css,
+-    `section h1,
+-article h1,
+-aside h1,
+-nav h1 {
+-  margin-top: 16px;
+-}
+-
+-main input[type="text"] > section + p,
+-main #nav .bar + p {
+-  margin-top: 16px;
+-}
+-`,
+-    "should transform local extensions"
+-  )
+-
+-  const postcssPlugin = postcss().use(plugin())
+-  t.ok(
+-    postcssPlugin.process("@custom-selector :--foobar .foo;:--foobar{}").css,
+-    "should not create a memory"
+-  )
+-  t.equal(
+-    postcssPlugin.process(":--foobar{}").css,
+-    ":--foobar{}",
+-    "should have no memory about previous processing"
+-  )
+-
+-  t.end()
+-})
+diff --git a/test/safety.css b/test/safety.css
+new file mode 100644
+index 0000000..7dc80f7
+--- /dev/null
++++ b/test/safety.css
+@@ -0,0 +1,13 @@
++@custom-selector :--h1 h1;
++
++.class:--h1,   #id:--h1,   ::before:--h1,   *:--h1 {
++	order: 1;
++}
++
++.foo.class:--h1   , .foo#id:--h1   , .foo::before:--h1   {
++	order: 2;
++}
++
++.foo.class:--h1   ,   .foo#id:--h1   ,   .foo::before:--h1   {
++	order: 3;
++}
+diff --git a/test/safety.expect.css b/test/safety.expect.css
+new file mode 100644
+index 0000000..2184ce4
+--- /dev/null
++++ b/test/safety.expect.css
+@@ -0,0 +1,11 @@
++h1.class,   h1#id,   h1::before,   h1* {
++	order: 1;
++}
++
++h1.foo.class   , h1.foo#id   , h1.foo::before   {
++	order: 2;
++}
++
++h1.foo.class   ,   h1.foo#id   ,   h1.foo::before   {
++	order: 3;
++}
+-- 
+2.35.1
+

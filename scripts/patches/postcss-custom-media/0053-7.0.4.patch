@@ -1,0 +1,259 @@
+From 75c2768ad997711e5020b2b296dea1398c8ce36a Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Sun, 23 Sep 2018 23:47:32 -0400
+Subject: [PATCH 53/62] 7.0.4
+
+---
+ CHANGELOG.md                   |  4 ++++
+ lib/export-to.js               |  2 +-
+ lib/media-ast-from-string.js   |  2 +-
+ lib/transform-media-list.js    | 11 ++++++++++-
+ package.json                   |  4 ++--
+ test/basic.css                 |  7 +++++++
+ test/basic.expect.css          |  6 ++++++
+ test/basic.preserve.expect.css | 13 +++++++++++++
+ test/export-media.css          |  1 +
+ test/export-media.js           |  1 +
+ test/export-media.json         |  1 +
+ test/export-media.mjs          |  1 +
+ test/import.plugin.expect.css  | 29 +++++++++++++++++++++++++++++
+ 13 files changed, 77 insertions(+), 5 deletions(-)
+ create mode 100644 test/import.plugin.expect.css
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 6a89585..f3a83ce 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Custom Media
+ 
++### 7.0.4 (September 23, 2018)
++
++- Added: `importFromPlugins` option to process imports
++
+ ### 7.0.3 (September 20, 2018)
+ 
+ - Fixed: Do not break on an empty `importFrom` object
+diff --git a/lib/export-to.js b/lib/export-to.js
+index 0059757..e92518d 100644
+--- a/lib/export-to.js
++++ b/lib/export-to.js
+@@ -80,7 +80,7 @@ export default function exportCustomMediaToDestinations(customMedia, destination
+ 				const to = String(opts.to || '');
+ 
+ 				// type of file being written to
+-				const type = (opts.type || path.extname(opts.to).slice(1)).toLowerCase();
++				const type = (opts.type || path.extname(to).slice(1)).toLowerCase();
+ 
+ 				// transformed custom media
+ 				const customMediaJSON = toJSON(customMedia);
+diff --git a/lib/media-ast-from-string.js b/lib/media-ast-from-string.js
+index 38e3b63..d055849 100644
+--- a/lib/media-ast-from-string.js
++++ b/lib/media-ast-from-string.js
+@@ -65,7 +65,7 @@ class MediaQuery {
+ 	constructor(string) {
+ 		const [, before, media, after ] = string.match(spaceWrapRegExp);
+ 		const [, modifier = '', afterModifier = ' ', type = '', beforeAnd = '', and = '', beforeExpression = '', expression1 = '', expression2 = ''] = media.match(mediaRegExp) || [];
+-		const raws = { before, after, afterModifier, originalModifier: modifier || 'not', beforeAnd, and, beforeExpression };
++		const raws = { before, after, afterModifier, originalModifier: modifier || '', beforeAnd, and, beforeExpression };
+ 		const nodes = parse(expression1 || expression2, true);
+ 
+ 		Object.assign(this, {
+diff --git a/lib/transform-media-list.js b/lib/transform-media-list.js
+index 5a3d598..33c0ec7 100644
+--- a/lib/transform-media-list.js
++++ b/lib/transform-media-list.js
+@@ -35,9 +35,18 @@ function transformMedia(media, customMedias) {
+ 					raws: !modifier || media.modifier
+ 						? { ...media.raws }
+ 					: { ...replacementMedia.raws },
+-					type: media.type || replacementMedia.type
++					type: media.type || replacementMedia.type,
+ 				});
+ 
++				// conditionally include more replacement raws when the type is present
++				if (mediaClone.type === replacementMedia.type) {
++					Object.assign(mediaClone.raws, {
++						and: replacementMedia.raws.and,
++						beforeAnd: replacementMedia.raws.beforeAnd,
++						beforeExpression: replacementMedia.raws.beforeExpression
++					});
++				}
++
+ 				mediaClone.nodes.splice(index, 1, ...replacementMedia.clone().nodes.map(node => {
+ 					// use spacing from the current usage
+ 					node.spaces = { ...media.nodes[index].spaces };
+diff --git a/package.json b/package.json
+index a7479bc..2a36668 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-media",
+-  "version": "7.0.3",
++  "version": "7.0.4",
+   "description": "Use Custom Media Queries in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -38,7 +38,7 @@
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.1",
++    "rollup": "^0.66.2",
+     "rollup-plugin-babel": "^4.0.3"
+   },
+   "eslintConfig": {
+diff --git a/test/basic.css b/test/basic.css
+index 360bb9e..ee34098 100644
+--- a/test/basic.css
++++ b/test/basic.css
+@@ -1,4 +1,5 @@
+ @custom-media --mq-a (max-width: 30em), (max-height: 30em);
++@custom-media --mq-b screen and (max-width: 30em);
+ @custom-media --not-mq-a not all and (--mq-a);
+ 
+ @media (--mq-a) {
+@@ -7,6 +8,12 @@
+ 	}
+ }
+ 
++@media (--mq-b) {
++	body {
++		order: 1;
++	}
++}
++
+ @media (--mq-a), (--mq-a) {
+ 	body {
+ 		order: 1;
+diff --git a/test/basic.expect.css b/test/basic.expect.css
+index 6d15f5e..c55e511 100644
+--- a/test/basic.expect.css
++++ b/test/basic.expect.css
+@@ -4,6 +4,12 @@
+ 	}
+ }
+ 
++@media screen and (max-width: 30em) {
++	body {
++		order: 1;
++	}
++}
++
+ @media (max-width: 30em),(max-height: 30em), (max-width: 30em), (max-height: 30em) {
+ 	body {
+ 		order: 1;
+diff --git a/test/basic.preserve.expect.css b/test/basic.preserve.expect.css
+index 3fa5361..3ec9f68 100644
+--- a/test/basic.preserve.expect.css
++++ b/test/basic.preserve.expect.css
+@@ -1,4 +1,5 @@
+ @custom-media --mq-a (max-width: 30em), (max-height: 30em);
++@custom-media --mq-b screen and (max-width: 30em);
+ @custom-media --not-mq-a not all and (--mq-a);
+ 
+ @media (max-width: 30em),(max-height: 30em) {
+@@ -13,6 +14,18 @@
+ 	}
+ }
+ 
++@media screen and (max-width: 30em) {
++	body {
++		order: 1;
++	}
++}
++
++@media (--mq-b) {
++	body {
++		order: 1;
++	}
++}
++
+ @media (max-width: 30em),(max-height: 30em), (max-width: 30em), (max-height: 30em) {
+ 	body {
+ 		order: 1;
+diff --git a/test/export-media.css b/test/export-media.css
+index fc776fc..0f65a29 100644
+--- a/test/export-media.css
++++ b/test/export-media.css
+@@ -1,4 +1,5 @@
+ @custom-media --mq-a (max-width: 30em), (max-height: 30em);
++@custom-media --mq-b screen and (max-width: 30em);
+ @custom-media --not-mq-a not all and (--mq-a);
+ @custom-media --circular-mq-a (--circular-mq-b);
+ @custom-media --circular-mq-b (--circular-mq-a);
+diff --git a/test/export-media.js b/test/export-media.js
+index 579c929..65bc566 100644
+--- a/test/export-media.js
++++ b/test/export-media.js
+@@ -1,6 +1,7 @@
+ module.exports = {
+ 	customMedia: {
+ 		'--mq-a': '(max-width: 30em), (max-height: 30em)',
++		'--mq-b': 'screen and (max-width: 30em)',
+ 		'--not-mq-a': 'not all and (--mq-a)',
+ 		'--circular-mq-a': '(--circular-mq-b)',
+ 		'--circular-mq-b': '(--circular-mq-a)'
+diff --git a/test/export-media.json b/test/export-media.json
+index b0a2587..250d9ae 100644
+--- a/test/export-media.json
++++ b/test/export-media.json
+@@ -1,6 +1,7 @@
+ {
+   "custom-media": {
+     "--mq-a": "(max-width: 30em), (max-height: 30em)",
++    "--mq-b": "screen and (max-width: 30em)",
+     "--not-mq-a": "not all and (--mq-a)",
+     "--circular-mq-a": "(--circular-mq-b)",
+     "--circular-mq-b": "(--circular-mq-a)"
+diff --git a/test/export-media.mjs b/test/export-media.mjs
+index c1a4a72..cad637d 100644
+--- a/test/export-media.mjs
++++ b/test/export-media.mjs
+@@ -1,5 +1,6 @@
+ export const customMedia = {
+ 	'--mq-a': '(max-width: 30em), (max-height: 30em)',
++	'--mq-b': 'screen and (max-width: 30em)',
+ 	'--not-mq-a': 'not all and (--mq-a)',
+ 	'--circular-mq-a': '(--circular-mq-b)',
+ 	'--circular-mq-b': '(--circular-mq-a)'
+diff --git a/test/import.plugin.expect.css b/test/import.plugin.expect.css
+new file mode 100644
+index 0000000..0bc2bbf
+--- /dev/null
++++ b/test/import.plugin.expect.css
+@@ -0,0 +1,29 @@
++@media (max-width: 30em),(max-height: 30em) {
++	body {
++		order: 1;
++	}
++}
++
++@media (max-width: 30em),(max-height: 30em), (max-width: 30em), (max-height: 30em) {
++	body {
++		order: 1;
++	}
++}
++
++@media not all and (max-width: 30em),not all and (max-height: 30em) {
++	body {
++		order: 2;
++	}
++}
++
++@media not all and (max-width: 30em),not all and (max-height: 30em) {
++	body {
++		order: 1;
++	}
++}
++
++@media all and (max-width: 30em),all and (max-height: 30em) {
++	body {
++		order: 2;
++	}
++}
+-- 
+2.35.1
+

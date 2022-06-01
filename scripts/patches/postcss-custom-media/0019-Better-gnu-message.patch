@@ -1,0 +1,80 @@
+From ffd375b6dbc2a5314aa556c24f7e4d1b94010db3 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 25 Nov 2014 09:02:34 +0100
+Subject: [PATCH 19/62] Better gnu message
+
+---
+ CHANGELOG.md |  4 ++++
+ index.js     | 17 ++++++-----------
+ package.json |  4 +++-
+ 3 files changed, 13 insertions(+), 12 deletions(-)
+ mode change 100755 => 100644 package.json
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 9810cc5..cf703f5 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 1.3.0 - 2014-11-25
++
++- Better gnu message
++
+ # 1.2.1 - 2014-10-09
+ 
+ - Fix npm description
+diff --git a/index.js b/index.js
+index fb385ae..ac706a9 100755
+--- a/index.js
++++ b/index.js
+@@ -1,3 +1,8 @@
++/**
++ * Module dependencies
++ */
++var helpers = require("postcss-message-helpers")
++
+ /**
+  * Constants.
+  */
+@@ -48,7 +53,7 @@ function customMedia(options) {
+           return map[name]
+         }
+ 
+-        console.warn(gnuMessage("missing @custom-media definition for '" + name + "'. The entire rule has been removed from the output.", rule.source))
++        console.warn(helpers.message("missing @custom-media definition for '" + name + "'. The entire rule has been removed from the output.", rule.source))
+         toRemove.push(rule)
+       })
+     })
+@@ -57,13 +62,3 @@ function customMedia(options) {
+     toRemove.forEach(function(rule) { rule.removeSelf() })
+   }
+ }
+-
+-/**
+- * return GNU style message
+- *
+- * @param {String} message
+- * @param {Object} source
+- */
+-function gnuMessage(message, source) {
+-  return (source ? (source.file ? source.file : "<css input>") + ":" + source.start.line + ":" + source.start.column + " " : "") + message
+-}
+diff --git a/package.json b/package.json
+old mode 100755
+new mode 100644
+index 75b0655..6a7ec84
+--- a/package.json
++++ b/package.json
+@@ -20,7 +20,9 @@
+     "LICENSE",
+     "index.js"
+   ],
+-  "dependencies": {},
++  "dependencies": {
++    "postcss-message-helpers": "^1.1.0"
++  },
+   "devDependencies": {
+     "jscs": "^1.6.2",
+     "jshint": "^2.5.6",
+-- 
+2.35.1
+

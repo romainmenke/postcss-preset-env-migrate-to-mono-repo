@@ -1,0 +1,51 @@
+From 62ca821a4ba19ced444bad42e95aef15ad0d54f4 Mon Sep 17 00:00:00 2001
+From: semigradsky <semigradskyd@gmail.com>
+Date: Sun, 5 Feb 2017 15:48:40 +0300
+Subject: [PATCH 51/69] Fix travis config
+
+---
+ .eslintignore | 2 --
+ .travis.yml   | 6 +++---
+ package.json  | 2 +-
+ 3 files changed, 4 insertions(+), 6 deletions(-)
+ delete mode 120000 .eslintignore
+
+diff --git a/.eslintignore b/.eslintignore
+deleted file mode 120000
+index 3eb98cd..0000000
+--- a/.eslintignore
++++ /dev/null
+@@ -1,2 +0,0 @@
+-.gitignore
+-dist
+\ No newline at end of file
+diff --git a/.travis.yml b/.travis.yml
+index ffb8b39..39024ba 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -1,6 +1,6 @@
+ sudo: false
+ language: node_js
+ node_js:
+-  - iojs
+-  - "0.12"
+-  - "0.10"
++  - stable
++  - "6"
++  - "4"
+diff --git a/package.json b/package.json
+index bc92f04..fcf7c97 100644
+--- a/package.json
++++ b/package.json
+@@ -35,7 +35,7 @@
+   },
+   "scripts": {
+     "prepublish": "babel src --out-dir dist",
+-    "lint": "eslint .",
++    "lint": "eslint src test",
+     "tape": "babel-tape-runner test/*.js",
+     "test": "npm run lint && npm run tape"
+   }
+-- 
+2.35.1
+

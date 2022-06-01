@@ -1,0 +1,73 @@
+From 8228db12f30a1fc51921a6e8b6a1c203070fbfc4 Mon Sep 17 00:00:00 2001
+From: michgeek <>
+Date: Fri, 18 Dec 2020 00:52:12 +0100
+Subject: [PATCH 24/30] Add edge case about attribute selectors containing :not
+
+---
+ src/index.js  |  5 +++++
+ test/index.js | 26 +++++++++++++++++++++++++-
+ 2 files changed, 30 insertions(+), 1 deletion(-)
+
+diff --git a/src/index.js b/src/index.js
+index 645dfb4..d43142b 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -8,6 +8,11 @@ function explodeSelector(pseudoClass, selector) {
+   if (selector && position > -1) {
+     const pre = selector.slice(0, position)
+     const matches = balancedMatch("(", ")", selector.slice(position))
++
++    if (!matches) {
++      return selector
++    }
++
+     const bodySelectors = matches.body
+       ? list
+         .comma(matches.body)
+diff --git a/test/index.js b/test/index.js
+index ce0c605..682d5fa 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -20,6 +20,30 @@ tape("postcss-selector-not", t => {
+     "should really do nothing if there is no :not"
+   )
+ 
++  t.equal(
++    transform("em[attr=:not] {}"),
++    "em[attr=:not] {}",
++    "should do nothing if an attribute selector value contains :not"
++  )
++
++  t.equal(
++    transform("em[attr~=:not] {}"),
++    "em[attr~=:not] {}",
++    "should really do nothing if an attribute selector value contains :not"
++  )
++
++  t.equal(
++    transform("em[:not=abc] {}"),
++    "em[:not=abc] {}",
++    "should do nothing if a selector on an attribute named :not"
++  )
++
++  t.equal(
++    transform(":not {}"),
++    ":not {}",
++    "should do nothing if :not has missing parenthesis"
++  )
++
+   t.equal(
+     transform(":not(a, b) {}"),
+     ":not(a):not(b) {}",
+@@ -29,7 +53,7 @@ tape("postcss-selector-not", t => {
+   t.equal(
+     transform("tag:not(.class, .class2) {}"),
+     "tag:not(.class):not(.class2) {}",
+-    "should transform directes :not()"
++    "should transform into multiple :not()"
+   )
+ 
+   t.equal(
+-- 
+2.35.1
+

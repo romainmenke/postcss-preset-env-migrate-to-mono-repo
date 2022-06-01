@@ -1,0 +1,79 @@
+From 6e4954cad35cb03cfe73e347cd75bfb7bfd42bd9 Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Tue, 8 May 2018 08:37:40 -0400
+Subject: [PATCH 12/32] Lint test.js
+
+---
+ test/test.js | 32 +++++++++++++++++++++++---------
+ 1 file changed, 23 insertions(+), 9 deletions(-)
+
+diff --git a/test/test.js b/test/test.js
+index 1adc885..3a54d28 100644
+--- a/test/test.js
++++ b/test/test.js
+@@ -4,11 +4,17 @@ import { expect } from 'chai';
+ import plugin from '../';
+ 
+ const test = (input, output, opts, done) => {
+-	postcss([ plugin(opts) ]).process(input).then((result) => {
+-		expect(result.css).to.eql(output);
+-		expect(result.warnings()).to.be.empty;
+-		done();
+-	}).catch(done);
++	postcss([
++		plugin(opts)
++	])
++		.process(input, { from: '<inline>' })
++		.then(result => {
++			expect(result.css).to.eql(output);
++			expect(result.warnings()).to.be.empty; // eslint-disable-line no-unused-expressions
++
++			done();
++		})
++		.catch(done);
+ };
+ 
+ describe('postcss-attribute-case-insensitive', () => {
+@@ -16,27 +22,35 @@ describe('postcss-attribute-case-insensitive', () => {
+ 		test(
+ 			'[data-foo=test i] { display: block; }',
+ 			'[data-foo=test],[data-foo=Test],[data-foo=tEst],[data-foo=TEst],[data-foo=teSt],[data-foo=TeSt],[data-foo=tESt],[data-foo=TESt],[data-foo=tesT],[data-foo=TesT],[data-foo=tEsT],[data-foo=TEsT],[data-foo=teST],[data-foo=TeST],[data-foo=tEST],[data-foo=TEST] { display: block; }',
+-		{}, done);
++			{},
++			done
++		);
+ 	});
+ 
+ 	it('with spaces', done => {
+ 		test(
+ 			'[foo="a b" i]{}',
+ 			'[foo="a b"],[foo="A b"],[foo="a B"],[foo="A B"]{}',
+-		{}, done);
++			{},
++			done
++		);
+ 	});
+ 
+ 	it('not insensitive', done => {
+ 		test(
+ 			'[foo=a]{}',
+ 			'[foo=a]{}',
+-		{}, done);
++			{},
++			done
++		);
+ 	});
+ 
+ 	it('several attributes', done => {
+ 		test(
+ 			'[foo=a i],[foobar=b],[bar=c i]{}',
+ 			'[foobar=b],[foo=a],[foo=A],[bar=c],[bar=C]{}',
+-		{}, done);
++			{},
++			done
++		);
+ 	});
+ });
+-- 
+2.35.1
+

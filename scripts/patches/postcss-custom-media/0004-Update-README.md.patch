@@ -1,0 +1,24 @@
+From 790105c766cb80cadb1598917adc2af20f0dba95 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Wed, 13 Aug 2014 08:16:01 +0200
+Subject: [PATCH 04/62] Update README.md
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index a619047..b196ff6 100755
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # postcss-custom-media [![Build Status](https://travis-ci.org/postcss/postcss-custom-media.png)](https://travis-ci.org/postcss/postcss-custom-media)
+ 
+-> A [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Media Queries](http://dev.w3.org/csswg/mediaqueries/#custom-mq) to more compatible CSS.
++> [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Media Queries](http://dev.w3.org/csswg/mediaqueries/#custom-mq) to more compatible CSS.
+ 
+ ## Installation
+ 
+-- 
+2.35.1
+

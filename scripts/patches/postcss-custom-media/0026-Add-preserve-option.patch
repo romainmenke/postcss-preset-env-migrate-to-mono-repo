@@ -1,0 +1,72 @@
+From 085f5ac8e59b88e161774eedbde3f59f79ae9feb Mon Sep 17 00:00:00 2001
+From: Glen Huang <hey.hgl@gmail.com>
+Date: Mon, 6 Apr 2015 10:59:47 +0800
+Subject: [PATCH 26/62] Add preserve option
+
+---
+ index.js                            | 5 ++++-
+ test/fixtures/preserve.css          | 4 ++++
+ test/fixtures/preserve.expected.css | 4 ++++
+ test/index.js                       | 2 ++
+ 4 files changed, 14 insertions(+), 1 deletion(-)
+ create mode 100644 test/fixtures/preserve.css
+ create mode 100644 test/fixtures/preserve.expected.css
+
+diff --git a/index.js b/index.js
+index ac706a9..b15d6be 100755
+--- a/index.js
++++ b/index.js
+@@ -20,6 +20,7 @@ function customMedia(options) {
+   return function(styles) {
+     options = options || {}
+     var extensions = options.extensions || {}
++    var preserve = options.preserve
+     var map = {}
+     var toRemove = []
+ 
+@@ -34,7 +35,9 @@ function customMedia(options) {
+       // map[<extension-name>] = <media-query-list>
+       map[params.shift()] = params.join(" ")
+ 
+-      toRemove.push(rule)
++      if (!preserve) {
++        toRemove.push(rule)
++      }
+     })
+ 
+     // apply js-defined media queries
+diff --git a/test/fixtures/preserve.css b/test/fixtures/preserve.css
+new file mode 100644
+index 0000000..46a14f7
+--- /dev/null
++++ b/test/fixtures/preserve.css
+@@ -0,0 +1,4 @@
++@custom-media --viewport-max-s (max-width: 30em);
++@media (--viewport-max-s) {
++  body { font-size: 1rem; }
++}
+diff --git a/test/fixtures/preserve.expected.css b/test/fixtures/preserve.expected.css
+new file mode 100644
+index 0000000..5bfb3c8
+--- /dev/null
++++ b/test/fixtures/preserve.expected.css
+@@ -0,0 +1,4 @@
++@custom-media --viewport-max-s (max-width: 30em);
++@media (max-width: 30em) {
++  body { font-size: 1rem; }
++}
+diff --git a/test/index.js b/test/index.js
+index a7e5d35..313dff8 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -32,5 +32,7 @@ test("@custom-media", function(t) {
+     }
+   })
+ 
++  compareFixtures(t, "preserve", "should preserve custom media", {preserve: true})
++
+   t.end()
+ })
+-- 
+2.35.1
+

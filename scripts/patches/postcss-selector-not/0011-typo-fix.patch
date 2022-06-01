@@ -1,0 +1,25 @@
+From 94858d5e20bbf665d0a22d43993f165cfa7aef77 Mon Sep 17 00:00:00 2001
+From: Anton Wilhelm <timaschew@users.noreply.github.com>
+Date: Thu, 11 Feb 2016 18:02:40 +0100
+Subject: [PATCH 11/30] typo fix
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 6f6441f..3c2296d 100644
+--- a/package.json
++++ b/package.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "postcss-selector-not",
+   "version": "2.0.0",
+-  "description": "PostCSS plugin to transform :not() W3C CSS leve 4 pseudo class to :not() CSS level 3 selectors",
++  "description": "PostCSS plugin to transform :not() W3C CSS level 4 pseudo class to :not() CSS level 3 selectors",
+   "keywords": [
+     "postcss",
+     "postcss-plugin",
+-- 
+2.35.1
+

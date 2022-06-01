@@ -1,0 +1,32 @@
+From 41c1a5045f328eb064428da6dc30640768c991ee Mon Sep 17 00:00:00 2001
+From: Jiayi Hu <jiayi.ghu@gmail.com>
+Date: Mon, 2 Jan 2017 10:04:17 +0100
+Subject: [PATCH 41/62] docs: explain better usage of extensions option (#23)
+
+---
+ README.md | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/README.md b/README.md
+index 98c34d1..bcf5a79 100755
+--- a/README.md
++++ b/README.md
+@@ -54,6 +54,15 @@ Checkout [tests](test) for more examples.
+ Allows you to pass an object to define the `<media-query-list>` for each
+ `<extension-name>`. These definitions will override any that exist in the CSS.
+ 
++```javascript
++{
++  '--phone': '(min-width: 544px)',
++  '--tablet': '(min-width: 768px)',
++  '--desktop': '(min-width: 992px)',
++  '--large-desktop': '(min-width: 1200px)',
++}
++```
++
+ #### `preserve`
+ 
+ (default: `false`)
+-- 
+2.35.1
+

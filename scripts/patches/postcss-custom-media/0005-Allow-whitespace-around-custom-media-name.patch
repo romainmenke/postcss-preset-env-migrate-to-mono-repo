@@ -1,0 +1,118 @@
+From 7dcc3345b2c55e59b51aaab2697a25af8d7b8547 Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Tue, 16 Sep 2014 06:16:56 +0200
+Subject: [PATCH 05/62] Allow whitespace around custom media name
+
+Close #2
+---
+ CHANGELOG.md                         |  7 ++++++-
+ README.md                            |  4 ++--
+ index.js                             |  6 +++---
+ test/fixtures/transform.css          | 12 ++++++++++++
+ test/fixtures/transform.expected.css | 12 ++++++++++++
+ test/index.js                        |  2 +-
+ 6 files changed, 36 insertions(+), 7 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index dd8b91e..fcf923e 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,8 @@
++# 1.0.1 - 2014-09-16
++
++- allow whitespace around custom media name (fix [#2](https://github.com/postcss/postcss-custom-media/issues/2))
++
++
+ # 1.0.0 - 2014-08-12
+ 
+-First release based on [rework-custom-media](https://github.com/reworkcss/rework-custom-media)
++First release based on [rework-custom-media](https://github.com/reworkcss/rework-custom-media) v0.1.1
+diff --git a/README.md b/README.md
+index b196ff6..0f4bfc8 100755
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # postcss-custom-media [![Build Status](https://travis-ci.org/postcss/postcss-custom-media.png)](https://travis-ci.org/postcss/postcss-custom-media)
+ 
+-> [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Media Queries](http://dev.w3.org/csswg/mediaqueries/#custom-mq) to more compatible CSS.
++> [PostCSS](https://github.com/postcss/postcss) plugin to transform [W3C CSS Custom Media Queries](http://dev.w3.org/csswg/mediaqueries/#custom-mq) syntax to more compatible CSS.
+ 
+ ## Installation
+ 
+@@ -56,4 +56,4 @@ Work on a branch, install dev-dependencies, respect coding style & run tests bef
+ 
+ ## [Changelog](CHANGELOG.md)
+ 
+-## [License](LICENSE-MIT)
++## [License](LICENSE)
+diff --git a/index.js b/index.js
+index eb2d400..d72fac6 100755
+--- a/index.js
++++ b/index.js
+@@ -1,7 +1,7 @@
+ /**
+-* Constants.
+-*/
+-var EXTENSION_RE = /\((--[\w-]+)\)/
++ * Constants.
++ */
++var EXTENSION_RE = /\(\s*(--[\w-]+)\s*\)/
+ 
+ /**
+  * Expose the plugin.
+diff --git a/test/fixtures/transform.css b/test/fixtures/transform.css
+index 775cd1c..3e08c4d 100755
+--- a/test/fixtures/transform.css
++++ b/test/fixtures/transform.css
+@@ -10,3 +10,15 @@ body { color: #000  }
+ @media (--viewport-min-s) {
+   body { font-size: 1.2rem; }
+ }
++
++@media (--viewport-min-s ) {
++
++}
++
++@media ( --viewport-min-s ) {
++
++}
++
++@media ( --viewport-min-s) {
++
++}
+diff --git a/test/fixtures/transform.expected.css b/test/fixtures/transform.expected.css
+index bacf50c..e2dd8a3 100755
+--- a/test/fixtures/transform.expected.css
++++ b/test/fixtures/transform.expected.css
+@@ -9,3 +9,15 @@ body { color: #000  }
+ @media (min-width: 30.01em) {
+   body { font-size: 1.2rem; }
+ }
++
++@media (min-width: 30.01em) {
++
++}
++
++@media (min-width: 30.01em) {
++
++}
++
++@media (min-width: 30.01em) {
++
++}
+diff --git a/test/index.js b/test/index.js
+index 49b120e..0a4ece9 100755
+--- a/test/index.js
++++ b/test/index.js
+@@ -19,7 +19,7 @@ function compareFixtures(t, name, msg, opts, postcssOpts) {
+ }
+ 
+ test("@custom-media", function(t) {
+-  compareFixtures(t, "transform", "should transform custom med")
++  compareFixtures(t, "transform", "should transform custom media")
+ 
+   compareFixtures(t, "undefined", "should remove undefined @media")
+ 
+-- 
+2.35.1
+

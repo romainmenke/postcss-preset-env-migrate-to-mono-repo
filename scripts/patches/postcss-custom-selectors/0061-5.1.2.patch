@@ -1,0 +1,145 @@
+From 4a422f0eaba5b47fd53abe36e92f9092ad63858f Mon Sep 17 00:00:00 2001
+From: Jonathan Neal <jonathantneal@hotmail.com>
+Date: Thu, 20 Sep 2018 16:26:45 -0400
+Subject: [PATCH 61/69] 5.1.2
+
+---
+ .tape.js                           |  6 ++++
+ CHANGELOG.md                       |  4 +++
+ lib/import-from.js                 |  2 +-
+ package.json                       |  4 +--
+ test/basic.import-empty.expect.css | 57 ++++++++++++++++++++++++++++++
+ 5 files changed, 70 insertions(+), 3 deletions(-)
+ create mode 100644 test/basic.import-empty.expect.css
+
+diff --git a/.tape.js b/.tape.js
+index 366f841..c960d30 100644
+--- a/.tape.js
++++ b/.tape.js
+@@ -92,6 +92,12 @@ module.exports = {
+ 			expect: 'basic.import.expect.css',
+ 			result: 'basic.import.result.css'
+ 		},
++		'basic:import-empty': {
++			message: 'supports { importFrom: {} } usage',
++			options: {
++				importFrom: {}
++			}
++		},
+ 		'basic:export': {
+ 			message: 'supports { exportTo: { customSelectors: { ... } } } usage',
+ 			options: {
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 3f23dbe..9c8f563 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,9 @@
+ # Changes to PostCSS Custom Selectors
+ 
++### 5.1.2 (September 20, 2018)
++
++- Fixed: Do not break on an empty `importFrom` object
++
+ ### 5.1.1 (September 18, 2018)
+ 
+ - Fixed: Selectors like `.foo:--h1` become `h1.foo` instead of `.fooh1`
+diff --git a/lib/import-from.js b/lib/import-from.js
+index 5201d63..faf76d3 100644
+--- a/lib/import-from.js
++++ b/lib/import-from.js
+@@ -78,7 +78,7 @@ export default function importCustomSelectorsFromSources(sources) {
+ 		const from = String(opts.from || '');
+ 
+ 		// type of file being read from
+-		const type = (opts.type || path.extname(opts.from).slice(1)).toLowerCase();
++		const type = (opts.type || path.extname(from).slice(1)).toLowerCase();
+ 
+ 		return { type, from };
+ 	}).reduce(async (customSelectors, source) => {
+diff --git a/package.json b/package.json
+index 58453b3..a68c2cf 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-custom-selectors",
+-  "version": "5.1.1",
++  "version": "5.1.2",
+   "description": "Use Custom Selectors in CSS",
+   "author": "Jonathan Neal <jonathantneal@hotmail.com>",
+   "contributors": [
+@@ -42,7 +42,7 @@
+     "eslint-config-dev": "^2.0.0",
+     "postcss-tape": "^2.2.0",
+     "pre-commit": "^1.2.2",
+-    "rollup": "^0.66.0",
++    "rollup": "^0.66.1",
+     "rollup-plugin-babel": "^4.0.3"
+   },
+   "eslintConfig": {
+diff --git a/test/basic.import-empty.expect.css b/test/basic.import-empty.expect.css
+new file mode 100644
+index 0000000..c473452
+--- /dev/null
++++ b/test/basic.import-empty.expect.css
+@@ -0,0 +1,57 @@
++.foo.foo {
++	margin-top: 16px;
++}
++
++h1 + p,h2 + p,h3 + p,h4 + p,h5 + p,h6 + p {}
++
++.foo > .baz {}
++.fizz > .foo,.buzz > .foo {}
++.btn-primary,.btn-success,.btn-info,.btn-warning,.btn-danger, .btn-primary:active, .btn-success:active, .btn-info:active, .btn-warning:active, .btn-danger:active {}
++
++.foo + p,.bar>.baz + p {
++	display: block;
++}
++
++.foo > a::before img,.foo > a::after img {
++	display: block;
++}
++
++.foo, .foo.bar {
++	color: white;
++}
++
++.foo .foo:hover {
++	color: white;
++}
++
++.fo--oo > h1,.fo--oo > h2,.fo--oo > h3 {
++	margin: auto;
++}
++
++h4:hover .ba--z,h5:hover .ba--z,h6:hover .ba--z {
++	display: block;
++}
++
++/* comment */
++
++article :--heading + p {
++	margin-top: 0;
++}
++
++.foo,.bar>.baz {
++	display: block;
++}
++
++/* should works with collapsed custom selectors */
++
++button:hover,button:focus,.button:hover,.button:focus {}
++
++.foo h1,.bar h1 {
++	margin-top: 16px;
++}
++
++main .foo + p {
++	margin-top: 16px;
++}
++
++.foo {}
+-- 
+2.35.1
+

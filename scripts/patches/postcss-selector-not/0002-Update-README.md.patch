@@ -1,0 +1,25 @@
+From a84b04195d1f8e5b85c53f83b52be77d5699713e Mon Sep 17 00:00:00 2001
+From: Maxime Thirouin <m@moox.io>
+Date: Thu, 30 Apr 2015 07:54:50 +0200
+Subject: [PATCH 02/30] Update README.md
+
+---
+ README.md | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/README.md b/README.md
+index c581001..9c097ca 100644
+--- a/README.md
++++ b/README.md
+@@ -2,6 +2,8 @@
+ 
+ > PostCSS plugin to transform `:not()` W3C CSS leve 4 pseudo class to :not() CSS level 3 selectors
+ 
++http://dev.w3.org/csswg/selectors-4/#negation
++
+ ## Installation
+ 
+ ```console
+-- 
+2.35.1
+

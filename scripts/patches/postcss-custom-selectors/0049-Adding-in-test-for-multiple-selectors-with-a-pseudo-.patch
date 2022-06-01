@@ -1,0 +1,40 @@
+From cf0f7dcb82797f3d3475efd431b48ff273abbec2 Mon Sep 17 00:00:00 2001
+From: Jonathan Kingston <jonathan@jooped.co.uk>
+Date: Mon, 26 Oct 2015 22:04:00 +0000
+Subject: [PATCH 49/69] Adding in test for multiple selectors with a pseudo
+ class
+
+---
+ test/index.js | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/test/index.js b/test/index.js
+index 9c7fac8..8dc2e09 100644
+--- a/test/index.js
++++ b/test/index.js
+@@ -150,6 +150,22 @@ article h6 + p {}`,
+     "should works handle multiples combined selectors"
+   )
+ 
++  t.equal(
++    transform(
++      `@custom-selector :--foo .foo;
++
++:--foo :--foo:hover {
++  color: white;
++}
++`
++    ).css,
++    `.foo .foo:hover {
++  color: white;
++}
++`,
++    "should works handle multiples combined selectors with pseudo classes"
++  )
++
+   t.equal(
+     transform(
+       `@custom-selector :--foo h1, h2, h3;
+-- 
+2.35.1
+

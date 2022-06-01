@@ -1,0 +1,42 @@
+From fabefa2444c59b0bcb78406bf07a040b560aae89 Mon Sep 17 00:00:00 2001
+From: "dependabot[bot]" <49699333+dependabot[bot]@users.noreply.github.com>
+Date: Sun, 15 Mar 2020 08:52:51 +0000
+Subject: [PATCH 30/32] Bump acorn from 5.7.3 to 5.7.4
+
+Bumps [acorn](https://github.com/acornjs/acorn) from 5.7.3 to 5.7.4.
+- [Release notes](https://github.com/acornjs/acorn/releases)
+- [Commits](https://github.com/acornjs/acorn/compare/5.7.3...5.7.4)
+
+Signed-off-by: dependabot[bot] <support@github.com>
+---
+ package-lock.json | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/package-lock.json b/package-lock.json
+index 9bd6c23..ce50e09 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "postcss-attribute-case-insensitive",
+-  "version": "4.0.1",
++  "version": "4.0.2",
+   "lockfileVersion": 1,
+   "requires": true,
+   "dependencies": {
+@@ -1050,9 +1050,9 @@
+       }
+     },
+     "acorn": {
+-      "version": "5.7.3",
+-      "resolved": "https://registry.npmjs.org/acorn/-/acorn-5.7.3.tgz",
+-      "integrity": "sha512-T/zvzYRfbVojPWahDsE5evJdHb3oJoQfFbsrKM7w5Zcs++Tr257tia3BmMP8XYVjp1S9RZXQMh7gao96BlqZOw==",
++      "version": "5.7.4",
++      "resolved": "https://registry.npmjs.org/acorn/-/acorn-5.7.4.tgz",
++      "integrity": "sha512-1D++VG7BhrtvQpNbBzovKNc1FLGGEE/oGe7b9xJm/RFHMBeUaUGpluV9RLjZa47YFdPcDAenEYuq9pQPcMdLJg==",
+       "dev": true
+     },
+     "acorn-jsx": {
+-- 
+2.35.1
+
