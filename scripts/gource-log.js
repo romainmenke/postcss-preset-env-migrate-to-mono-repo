@@ -40,11 +40,12 @@ type: 'A',
 		}
 
 		if (line.startsWith('user:')) {
-			lastCommit.usernames.push(line.slice(5));
-
-			if (lastCommit.username === 'romainmenke') {
-				lastCommit.username = 'Romain Menke';
+			let username = line.slice(5);
+			if (username === 'romainmenke') {
+				username = 'Romain Menke';
 			}
+
+			lastCommit.usernames.push(lusername);
 			return;
 		}
 
