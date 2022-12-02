@@ -45,7 +45,7 @@ type: 'A',
 				username = 'Romain Menke';
 			}
 
-			lastCommit.usernames.push(lusername);
+			lastCommit.usernames.push(username);
 			return;
 		}
 
