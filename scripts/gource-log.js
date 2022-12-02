@@ -2,7 +2,7 @@
 // From root mono repo dir run
 // $ git --no-pager log --pretty=format:user:%aN%n%at --reverse --raw --encoding=UTF-8 --no-renames --no-show-signature | node ./.github/bin/format-git-log-for-gource.cjs > custom.log
 // $ gource custom.log --auto-skip-seconds 1 --file-idle-time 0 --seconds-per-day 2
-// $ gource custom.log --auto-skip-seconds 1 --file-idle-time 0 --seconds-per-day 2 --hide mouse,progress -1280x720 -o - | ffmpeg -y -r 60 -f image2pipe -vcodec ppm -i - -vcodec libvpx -b 10000K gource.webm
+// $ gource custom.log --auto-skip-seconds 1 --file-idle-time 0 --seconds-per-day 0.2 --hide mouse,progress --output-framerate 25 -1280x720 -o - | ffmpeg -y -r 25 -f image2pipe -vcodec ppm -i - -vcodec libvpx -b 10000K gource.webm
 
 const readline = require('readline');
 const path = require('path');
@@ -11,73 +11,87 @@ const rl = readline.createInterface({
 	input: process.stdin,
 });
 
-const files = [];
-let lastFile = {
+const commits = [];
+let lastCommit = {
 	// timestamp - A unix timestamp of when the update occurred.
 	timestamp: 0,
 	// username - The name of the user who made the update.
-	username: '',
-	// type - initial for the update type - (A)dded, (M)odified or (D)eleted.
-	type: 'A',
-	// file - Path of the file updated.
-	file: '',
-	// colour - A colour for the file in hex (FFFFFF) format. Optional.
-	colour: '',
+	usernames: [],
+
+	files: []
 }
 
-rl.on('line', (line) => {
-	line = line.trim();
-	if (line.startsWith('user:')) {
-		lastFile = {};
-		files.push(lastFile);
+// // type - initial for the update type - (A)dded, (M)odified or (D)eleted.
+type: 'A',
+	// // file - Path of the file updated.
+	// file: '',
+	// 	// color - A color for the file in hex (FFFFFF) format. Optional.
+	// 	color: '',
 
-		lastFile.username = line.slice(5);
-
-		if (lastFile.username === 'romainmenke') {
-			lastFile.username = 'Romain Menke';
-		}
-		return;
-	}
-
-	if (!lastFile.timestamp && parseInt(line, 10).toString() === line) {
-		lastFile.timestamp = parseInt(line, 10);
-		return;
-	}
-
-	if (line.startsWith(':')) {
-		const parts = line.split('\t');
-		const type = parts[0].slice(-1).trim();
-		const file = parts[1].trim();
-
-		lastFile.type = type;
-		lastFile.file = file;
-		lastFile.colour = pathColor(file.toLowerCase());
-	}
-
-}).on('close', () => {
-	process.stdout.write(files.filter((x) => {
-		return !!x.file && !!x.type;
-	}).sort((a, b) => {
-		if (a.timestamp < b.timestamp) {
-			return -1;
+	rl.on('line', (line) => {
+		line = line.trim();
+		if (!line) {
+			lastCommit = {
+				usernames: [],
+				files: []
+			};
+			commits.push(lastCommit);
+			return;
 		}
 
-		if (a.timestamp > b.timestamp) {
-			return 1;
+		if (line.startsWith('user:')) {
+			lastCommit.usernames.push(line.slice(5));
+
+			if (lastCommit.username === 'romainmenke') {
+				lastCommit.username = 'Romain Menke';
+			}
+			return;
 		}
 
-		if (a.file < b.file) {
-			return -1;
-		}
-		if (a.file > b.file) {
-			return 1;
+		if (!lastCommit.timestamp && parseInt(line, 10).toString() === line) {
+			lastCommit.timestamp = parseInt(line, 10);
+			return;
 		}
 
-		return 0;
-	}).map((file) => {
-		return `${file.timestamp.toString()}|${file.username}|${file.type}|${file.file}|${file.colour}`;
-	}).join('\n') + '\n');
-});
+		if (line.startsWith(':')) {
+			const parts = line.split('\t');
+			const type = parts[0].slice(-1).trim();
+			const file = parts[1].trim();
+
+			if (file && type) {
+				lastCommit.files.push({
+					color: pathColor(file.toLowerCase()),
+					file: file,
+					type: type,
+				})
+			}
+		}
+
+	}).on('close', () => {
+		process.stdout.write(commits.filter((x) => {
+			return !!x.files.length;
+		}).sort((a, b) => {
+			if (a.timestamp < b.timestamp) {
+				return -1;
+			}
+
+			if (a.timestamp > b.timestamp) {
+				return 1;
+			}
+
+			return 0;
+		}).flatMap((commit) => {
+			let result = [];
+
+			commit.usernames.forEach((username) => {
+				commit.files.forEach((file) => {
+					result.push(`${commit.timestamp.toString()}|${username}|${file.type}|${file.file}|${file.color}`)
+				})
+			});
+
+			return result;
+		}).join('\n') + '\n');
+	});
 
 function pathColor(p) {
 	let dir = path.parse(p).dir;
