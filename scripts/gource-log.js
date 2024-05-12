@@ -2,7 +2,7 @@
 // From root mono repo dir run
 // $ git --no-pager log --pretty=format:user:%aN%n%at --reverse --raw --encoding=UTF-8 --no-renames --no-show-signature | node ./.github/bin/format-git-log-for-gource.cjs > custom.log
 // $ gource custom.log --auto-skip-seconds 1 --file-idle-time 0 --seconds-per-day 2
-// $ gource custom.log --auto-skip-seconds 1 --file-idle-time 0 --seconds-per-day 0.2 --hide mouse,progress --output-framerate 25 -1280x720 -o - | ffmpeg -y -r 25 -f image2pipe -vcodec ppm -i - -vcodec libvpx -b 10000K gource.webm
+// $ gource custom.log --auto-skip-seconds 0.5 --file-idle-time 0 --seconds-per-day 0.2 --hide mouse,progress --output-framerate 25 -2560x1440 -o - | ffmpeg -y -r 25 -f image2pipe -vcodec ppm -i - -vcodec libvpx -b 20000K gource.webm
 
 const readline = require('readline');
 const path = require('path');
@@ -43,6 +43,9 @@ type: 'A',
 			let username = line.slice(5);
 			if (username === 'romainmenke') {
 				username = 'Romain Menke';
+			}
+			if (username === 'dependabot[bot]') {
+				username = 'Dependabot';
 			}
 
 			lastCommit.usernames.push(username);
